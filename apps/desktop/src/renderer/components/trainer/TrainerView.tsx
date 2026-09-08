@@ -1,46 +1,116 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { TrainerLaunchInput, TrainerStatus } from '../../../shared/trainer-types';
+import { AlertTriangle, Check, CloudSun, Globe, Loader2, Plane, Rocket } from 'lucide-react';
+import type {
+  TrainerCatalogue,
+  TrainerConditions,
+  TrainerLaunchInput,
+  TrainerStatus,
+} from '../../../shared/trainer-types';
+import { NewRegionDialog } from './NewRegionDialog';
+import { TrainerRegionStep } from './TrainerRegionStep';
+import { TrainerConditionsStep } from './TrainerConditionsStep';
+import { TrainerVehicleStep, type CameraChoice } from './TrainerVehicleStep';
 
 /**
- * Fly what is planned here, in the Trainer, in one action.
+ * Choosing a flight and starting it, without leaving ArduDeck.
  *
- * The flow this replaces was: plan a mission, start SITL, open a terminal, start the game, try
- * to take the flight controller off this app, pick a region, start, come back here, take off,
- * switch windows, then cycle the camera by hand until the right one appeared. Every one of
- * those steps except planning and taking off is a consequence of the two programs not knowing
- * about each other.
+ * The choices are the launcher's, but none of them are DECIDED here: the regions, their
+ * imagery, the cameras, the weather wording and the limits on a new region all come from the
+ * Trainer over `--trainer-query`, and what goes back is intent, not configuration. That is what
+ * lets this be the launcher without becoming a second copy of it in a second repository.
  *
- * There is deliberately almost nothing to set. The region comes from where the flight
- * controller is standing, the airframe from what the stack is mixing for. What is left is one
- * button and an honest account of why it is disabled.
+ * There is no launch summary column. The launcher needs one because it is a front door with
+ * nothing else on screen; here the vehicle, its telemetry and its camera are already one click
+ * away, so a panel restating them would be the third place the same numbers appear.
  */
 
 const LOG_LINES = 200;
 
+type StepId = 'region' | 'conditions' | 'vehicle';
+
+const STEPS: { id: StepId; label: string; hint: string; icon: JSX.Element }[] = [
+  { id: 'region', label: 'Region', hint: 'Where you fly', icon: <Globe className="h-4 w-4" /> },
+  {
+    id: 'conditions',
+    label: 'Conditions',
+    hint: 'Time, weather and wind',
+    icon: <CloudSun className="h-4 w-4" />,
+  },
+  { id: 'vehicle', label: 'Vehicle', hint: 'Camera and frame', icon: <Plane className="h-4 w-4" /> },
+];
+
 export function TrainerView(): JSX.Element {
+  const [step, setStep] = useState<StepId>('region');
   const [status, setStatus] = useState<TrainerStatus | null>(null);
+  const [catalogue, setCatalogue] = useState<TrainerCatalogue | null>(null);
+  const [catalogueError, setCatalogueError] = useState<string | null>(null);
+  const [rescanning, setRescanning] = useState(false);
+  const [region, setRegion] = useState<string | null>(null);
+  // Null means "whatever the launcher last set up". A choice here is by KIND, so a gimbal can
+  // be asked for even when the launcher has only ever had its default FPV camera.
+  const [camera, setCamera] = useState<CameraChoice | null>(null);
+  const [conditions, setConditions] = useState<TrainerConditions>({
+    time: 'now',
+    preset: 'fair',
+    // Live by default, as the launcher is. Defaulting to a preset made every flight start in
+    // dead calm under a sky nobody chose, which is what "still air" was reporting.
+    weatherMode: 'live',
+    windMode: 'live',
+    windMs: 0,
+    windFromDeg: 0,
+    gust: 'light',
+  });
+  const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
 
   const refresh = useCallback(async () => {
-    setStatus(await window.electronAPI.trainerStatus());
+    try {
+      setStatus(await window.electronAPI.trainerStatus());
+    } catch {
+      // An older main process has no handler. Leaving the status null keeps the view usable
+      // and disabled rather than throwing out of a polling timer every two seconds.
+      setStatus(null);
+    }
+  }, []);
+
+  const reloadCatalogue = useCallback(async () => {
+    setRescanning(true);
+    try {
+      const res = await window.electronAPI.trainerCatalogue();
+      if (res.ok) {
+        setCatalogue(res.catalogue);
+        setCatalogueError(null);
+      } else {
+        setCatalogueError(res.error);
+      }
+    } catch (err) {
+      setCatalogueError(
+        `${(err as Error).message}. Restart ArduDeck if the Trainer was just updated.`,
+      );
+    } finally {
+      setRescanning(false);
+    }
   }, []);
 
   useEffect(() => {
     void refresh();
     // The take-off point appears when the flight controller gets a fix, which is not an event
-    // this view is told about, so it is polled rather than left showing "no GPS fix" forever.
+    // this view is told about, so it is polled rather than left saying "no GPS fix" forever.
     const timer = setInterval(() => void refresh(), 2000);
     return () => clearInterval(timer);
   }, [refresh]);
 
   useEffect(() => {
-    return window.electronAPI.onTrainerLog((line) => {
-      setLog((prev) => [...prev, line].slice(-LOG_LINES));
-    });
-  }, []);
+    void reloadCatalogue();
+  }, [reloadCatalogue]);
+
+  useEffect(
+    () => window.electronAPI.onTrainerLog((line) => setLog((p) => [...p, line].slice(-LOG_LINES))),
+    [],
+  );
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
@@ -51,9 +121,20 @@ export function TrainerView(): JSX.Element {
     setError(null);
     setLog([]);
     try {
-      // The feed comes back into this app's camera panel, so the picture is here rather than in
-      // another window: that is the "switch to the sim to show people" step, deleted.
-      const input: TrainerLaunchInput = { stream: { enabled: true } };
+      const input: TrainerLaunchInput = {
+        // Null on purpose when nothing is picked: the Trainer then works the region out from
+        // where the flight controller stands, which is right more often than a remembered
+        // selection.
+        region,
+        camera,
+        conditions,
+        // The feed comes back into this app's camera panel, so the picture is here rather than
+        // in another window: that is the "switch to the sim to show people" step, deleted.
+        stream: { enabled: true },
+        // Launched to be shown to somebody, on a stand or a second screen. A windowed sim is
+        // the one nobody can see from more than a metre away.
+        fullscreen: true,
+      };
       const result = await window.electronAPI.trainerLaunch(input);
       if (!result.ok) setError(result.error ?? 'The Trainer did not start.');
     } catch (err) {
@@ -64,63 +145,138 @@ export function TrainerView(): JSX.Element {
     }
   };
 
-  const home = status?.home;
+  const ready = status?.canLaunch === true;
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-auto p-6">
-      <header>
-        <h1 className="text-xl font-semibold tracking-tight">Trainer</h1>
-        <p className="mt-1 text-sm text-content-secondary">
-          Fly this vehicle, from where it stands, in the simulator. This app keeps the flight
-          controller.
-        </p>
-      </header>
+    <div className="flex h-full overflow-hidden">
+      <nav className="w-56 shrink-0 space-y-1.5 border-r border-subtle p-4">
+        {STEPS.map((s, i) => {
+          const active = step === s.id;
+          const done = i === 0 && region !== null;
+          return (
+            <button
+              key={s.id}
+              onClick={() => setStep(s.id)}
+              className={`flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                active
+                  ? 'border-blue-500/50 bg-blue-500/10'
+                  : 'border-transparent hover:bg-surface-raised'
+              }`}
+            >
+              <span
+                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-semibold ${
+                  done
+                    ? 'bg-emerald-500/15 text-emerald-400'
+                    : active
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-surface-raised text-content-tertiary'
+                }`}
+              >
+                {done ? <Check className="h-3 w-3" /> : i + 1}
+              </span>
+              <span className="min-w-0">
+                <span
+                  className={`flex items-center gap-1.5 text-sm font-medium ${active ? 'text-blue-400' : 'text-content'}`}
+                >
+                  {s.icon}
+                  {s.label}
+                </span>
+                <span className="block truncate text-[11px] text-content-tertiary">{s.hint}</span>
+              </span>
+            </button>
+          );
+        })}
 
-      <section className="rounded-lg border p-4">
-        <dl className="grid grid-cols-[10rem_1fr] gap-y-2 text-sm">
-          <dt className="text-content-tertiary">Take-off point</dt>
-          <dd>
-            {home ? `${home.lat.toFixed(5)}, ${home.lon.toFixed(5)}` : 'waiting for a GPS fix'}
-          </dd>
-          <dt className="text-content-tertiary">Trainer</dt>
-          <dd>{status?.installed ? `${status.path} (${status.kind})` : 'not installed'}</dd>
-        </dl>
+        <div className="!mt-4 border-t border-subtle pt-4">
+          <div className="mb-2 flex items-center gap-2 text-xs">
+            <span
+              className={`h-2 w-2 shrink-0 rounded-full ${ready ? 'bg-emerald-400' : 'bg-amber-400'}`}
+            />
+            <span className="text-content-secondary">
+              {ready ? 'Ready to fly' : (status?.reason ?? 'Checking…')}
+            </span>
+          </div>
+          <button
+            className="btn btn-primary w-full gap-2"
+            disabled={busy || !ready}
+            onClick={() => void fly()}
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
+            {busy ? 'Starting…' : 'Fly in Trainer'}
+          </button>
+          {status?.home && (
+            <p className="mt-2 font-mono text-[10px] leading-relaxed text-content-tertiary">
+              {status.home.lat.toFixed(5)}, {status.home.lon.toFixed(5)}
+            </p>
+          )}
+        </div>
+      </nav>
 
-        {status && !status.installed && (
-          <details className="mt-3 text-xs text-content-tertiary">
-            <summary className="cursor-pointer">Where this looked</summary>
-            <ul className="mt-1 list-disc pl-5">
-              {status.searched.map((path) => (
-                <li key={path}>{path}</li>
+      <div className="min-w-0 flex-1 overflow-auto">
+        <div className="mx-auto max-w-4xl space-y-5 p-6">
+          {step === 'region' && (
+            <TrainerRegionStep
+              catalogue={catalogue}
+              error={catalogueError}
+              selected={region}
+              onSelect={setRegion}
+              onNew={() => setCreating(true)}
+              onRescan={() => void reloadCatalogue()}
+              onDeleted={(name) => {
+                if (region === name) setRegion(null);
+                void reloadCatalogue();
+              }}
+              rescanning={rescanning}
+            />
+          )}
+
+          {step === 'conditions' && catalogue && (
+            <TrainerConditionsStep
+              catalogue={catalogue}
+              conditions={conditions}
+              onChange={(patch) => setConditions((prev) => ({ ...prev, ...patch }))}
+            />
+          )}
+
+          {step === 'vehicle' && catalogue && (
+            <TrainerVehicleStep
+              catalogue={catalogue}
+              camera={camera}
+              onCamera={setCamera}
+              status={status}
+            />
+          )}
+
+          {error && (
+            <p className="flex items-start gap-2 text-sm text-red-400">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              {error}
+            </p>
+          )}
+
+          {log.length > 0 && (
+            <div
+              ref={logRef}
+              className="h-48 overflow-auto rounded-xl border border-subtle bg-surface-inset p-3 font-mono text-[11px] leading-relaxed text-content-tertiary"
+            >
+              {log.map((line, i) => (
+                <div key={i}>{line}</div>
               ))}
-            </ul>
-          </details>
-        )}
-      </section>
-
-      <div className="flex items-center gap-3">
-        <button
-          className="rounded-md bg-accent px-4 py-2 font-medium text-black disabled:opacity-40"
-          disabled={busy || !status?.canLaunch}
-          onClick={() => void fly()}
-        >
-          {busy ? 'Starting the Trainer…' : 'Fly in Trainer'}
-        </button>
-        {/* The reason a button is disabled belongs beside it, not in a log nobody opens. */}
-        {status?.reason && <span className="text-sm text-content-tertiary">{status.reason}</span>}
+            </div>
+          )}
+        </div>
       </div>
 
-      {error && <p className="text-sm text-warn">{error}</p>}
-
-      {log.length > 0 && (
-        <div
-          ref={logRef}
-          className="min-h-0 flex-1 overflow-auto rounded-lg border bg-surface-inset p-3 font-mono text-xs"
-        >
-          {log.map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
-        </div>
+      {creating && catalogue && (
+        <NewRegionDialog
+          catalogue={catalogue}
+          onClose={() => setCreating(false)}
+          onBuilt={(name) => {
+            setCreating(false);
+            setRegion(name);
+            void reloadCatalogue();
+          }}
+        />
       )}
     </div>
   );

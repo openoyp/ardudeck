@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { useNavigationStore, type ViewId } from '../../stores/navigation-store';
 import { useConnectionStore } from '../../stores/connection-store';
 import { useSettingsStore, type ThemePreference } from '../../stores/settings-store';
 import { isViewAvailable, useEnabledCapabilitySlugs } from '../../modules/capabilities';
+import { useTrainerAvailable, useTrainerStore } from '../../stores/trainer-store';
 
 interface NavItem {
   id: ViewId;
@@ -249,8 +251,15 @@ export function NavigationRail({ onViewChange }: NavigationRailProps) {
   // Hide views gated behind an activatable module that isn't enabled. With no
   // gated capabilities defined this is a no-op (every view stays visible).
   const enabledCapabilitySlugs = useEnabledCapabilitySlugs();
+  // The Trainer answers for itself: its cargo is one way in, a local path override is the
+  // other, and only the main process can see the second.
+  const trainerAvailable = useTrainerAvailable();
+  const refreshTrainer = useTrainerStore((s) => s.refresh);
+  useEffect(() => {
+    void refreshTrainer();
+  }, [refreshTrainer]);
   const visibleNavItems = allNavItems.filter((item) =>
-    isViewAvailable(item.id, enabledCapabilitySlugs) &&
+    (item.id === 'trainer' ? trainerAvailable : isViewAvailable(item.id, enabledCapabilitySlugs)) &&
     !(isPx4 && arduPilotOnlyViews.has(item.id)),
   );
 

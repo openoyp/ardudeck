@@ -773,6 +773,11 @@ export const IPC_CHANNELS = {
 
   // ArduDeck Trainer: fly what is planned here, in the simulator, without leaving the app.
   TRAINER_STATUS: 'trainer:status',
+  TRAINER_CATALOGUE: 'trainer:catalogue',
+  TRAINER_BAKE: 'trainer:bake',
+  TRAINER_BAKE_PROGRESS: 'trainer:bake-progress',
+  TRAINER_BAKE_CANCEL: 'trainer:bake-cancel',
+  TRAINER_DELETE_REGION: 'trainer:delete-region',
   TRAINER_LAUNCH: 'trainer:launch',
   TRAINER_LOG: 'trainer:log',
 

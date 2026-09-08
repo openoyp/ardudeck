@@ -10,7 +10,16 @@ import {
   type TrainerTarget,
 } from './trainer-locator.js';
 import { buildTrainerRequest } from './trainer-request.js';
-import { launchTrainer, type TrainerLaunchOutcome } from './trainer-process.js';
+import {
+  bakeRegion,
+  deleteRegion,
+  launchTrainer,
+  queryTrainer,
+  type BakeHandle,
+  type TrainerCatalogueResult,
+  type TrainerLaunchOutcome,
+} from './trainer-process.js';
+import type { TrainerBakeDone } from '../../shared/trainer-types.js';
 
 /**
  * Flying what is planned here, in the Trainer, without leaving this app first.
@@ -33,6 +42,8 @@ export interface TrainerDeps {
   frame: () => { frameClass: number | null; frameType: number | null; framePath: string | null };
   /** Lets go of UDP 9002, because the Trainer binds it before it does anything else. */
   releasePhysics: () => Promise<boolean>;
+  /** Takes it back when the flight ends. Without this the vehicle never returns. */
+  reclaimPhysics: () => Promise<boolean>;
   log?: (level: 'info' | 'warn', message: string) => void;
 }
 
@@ -56,6 +67,7 @@ export function trainerStatus(deps: TrainerDeps): TrainerStatus {
   const { target, searched } = find();
   const home = deps.home();
   return {
+    available: cargoPath() !== undefined || Boolean(process.env[TRAINER_PATH_ENV]),
     installed: target !== null,
     kind: target?.kind ?? null,
     path: target?.path ?? null,
@@ -80,6 +92,60 @@ export function setupTrainerHandlers(mainWindow: BrowserWindow | null, deps: Tra
 
   ipcMain.handle(IPC_CHANNELS.TRAINER_STATUS, (): TrainerStatus => trainerStatus(deps));
 
+  // One bake at a time. The pipeline writes into a single region directory and leans on public
+  // services that rate-limit, so a second concurrent run corrupts the first and gets both
+  // throttled.
+  let bake: BakeHandle | null = null;
+
+  ipcMain.handle(
+    IPC_CHANNELS.TRAINER_BAKE,
+    async (_e, request: unknown): Promise<TrainerBakeDone> => {
+      if (bake) return { kind: 'done', ok: false, error: 'A region is already being built.' };
+      const { target, searched } = find();
+      if (!target) {
+        return {
+          kind: 'done',
+          ok: false,
+          error: `The Trainer is not installed. Looked in: ${searched.join(', ')}`,
+        };
+      }
+      bake = bakeRegion(request, {
+        target,
+        userDataPath: app.getPath('userData'),
+        onLog: send,
+        onProgress: (p) => {
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send(IPC_CHANNELS.TRAINER_BAKE_PROGRESS, p);
+          }
+        },
+      });
+      try {
+        return await bake.done;
+      } finally {
+        bake = null;
+      }
+    },
+  );
+
+  ipcMain.handle(IPC_CHANNELS.TRAINER_BAKE_CANCEL, (): void => bake?.cancel());
+
+  ipcMain.handle(
+    IPC_CHANNELS.TRAINER_DELETE_REGION,
+    async (_e, name: string): Promise<{ ok: boolean; error?: string }> => {
+      const { target } = find();
+      if (!target) return { ok: false, error: 'The Trainer is not installed.' };
+      return deleteRegion(target, name);
+    },
+  );
+
+  ipcMain.handle(IPC_CHANNELS.TRAINER_CATALOGUE, async (): Promise<TrainerCatalogueResult> => {
+    const { target, searched } = find();
+    if (!target) {
+      return { ok: false, error: `The Trainer is not installed. Looked in: ${searched.join(', ')}` };
+    }
+    return queryTrainer(target);
+  });
+
   ipcMain.handle(
     IPC_CHANNELS.TRAINER_LAUNCH,
     async (_e, input: TrainerLaunchInput = {}): Promise<TrainerLaunchOutcome> => {
@@ -101,21 +167,33 @@ export function setupTrainerHandlers(mainWindow: BrowserWindow | null, deps: Tra
       });
       if (!built.ok) return { ok: false, error: built.error };
 
-      // BEFORE the spawn, not after: the Trainer binds UDP 9002 first and drops to a silent
-      // hover when it cannot, so a race here produces an aircraft that looks like it is flying
-      // and answers to nothing.
-      if (!(await deps.releasePhysics())) {
-        return {
-          ok: false,
-          error: 'Could not stop this app’s own flight model, so the Trainer cannot take it.',
-        };
-      }
-      deps.log?.('info', 'trainer: physics released, starting the Trainer');
-
+      // NOT released here. The Trainer asks for the port at the last possible moment, once it
+      // has compiled and prepared its region, because until then this app's flight controller
+      // is happily flying its own model and there is no reason to take it away.
       return launchTrainer(built.request, {
         target,
         userDataPath: app.getPath('userData'),
         onLog: send,
+        onNeedsPort: () => {
+          void deps.releasePhysics().then((ok) => {
+            deps.log?.(
+              ok ? 'info' : 'warn',
+              ok
+                ? 'trainer: physics released to the Trainer'
+                : 'trainer: could not release the physics engine',
+            );
+          });
+        },
+        onExit: () => {
+          void deps.reclaimPhysics().then((ok) => {
+            deps.log?.(
+              ok ? 'info' : 'warn',
+              ok
+                ? 'trainer: flight over, physics engine reclaimed'
+                : 'trainer: flight over but the physics engine did not restart',
+            );
+          });
+        },
       });
     },
   );

@@ -42,6 +42,7 @@ const EMPTY_DEVICE: RawDevice = { axes: [], buttons: [] };
  * window sits there with `enabled: false` and never streams anything.
  */
 const ENABLED_KEY = 'ardudeck.pseudoTx.enabled';
+const MAPPING_KEY = 'ardudeck.pseudoTx.mapping';
 
 function readEnabledFlag(): boolean {
   try {
@@ -56,6 +57,31 @@ function writeEnabledFlag(on: boolean): void {
     localStorage.setItem(ENABLED_KEY, on ? '1' : '0');
   } catch {
     // Private mode / storage disabled: the switch still works in this window.
+  }
+}
+
+function readStoredMapping(): ChannelMap[] | null {
+  try {
+    const raw = localStorage.getItem(MAPPING_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return null;
+    const base = defaultMapping();
+    return base.map((def, i) => {
+      const m = parsed[i];
+      if (!m || typeof m !== 'object') return def;
+      return { ...def, ...(m as Partial<ChannelMap>) };
+    });
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredMapping(mapping: ChannelMap[]): void {
+  try {
+    localStorage.setItem(MAPPING_KEY, JSON.stringify(mapping));
+  } catch {
+    // Private mode / storage disabled: mapping just stays session-local.
   }
 }
 
@@ -130,7 +156,7 @@ export const usePseudoTxStore = create<PseudoTxState>((set, get) => ({
   isTransmitter: false,
   mappingMode: '',
   channels: Array(RC_CHANNEL_COUNT).fill(RC_MID),
-  mapping: defaultMapping(),
+  mapping: readStoredMapping() ?? defaultMapping(),
   raw: EMPTY_DEVICE,
   sendError: null,
   sentFrames: 0,
@@ -250,6 +276,7 @@ export const usePseudoTxStore = create<PseudoTxState>((set, get) => ({
     if (!cur) return;
     mapping[channel] = { ...cur, source };
     set({ mapping });
+    writeStoredMapping(mapping);
   },
 
   updateMap: (channel, patch) => {
@@ -258,9 +285,14 @@ export const usePseudoTxStore = create<PseudoTxState>((set, get) => ({
     if (!cur) return;
     mapping[channel] = { ...cur, ...patch };
     set({ mapping });
+    writeStoredMapping(mapping);
   },
 
-  resetMapping: () => set({ mapping: defaultMapping() }),
+  resetMapping: () => {
+    const mapping = defaultMapping();
+    set({ mapping });
+    writeStoredMapping(mapping);
+  },
 }));
 
 /**
@@ -275,6 +307,11 @@ export function initPseudoTx(): void {
   if (readEnabledFlag()) usePseudoTxStore.getState().enable();
 
   window.addEventListener('storage', (e) => {
+    if (e.key === MAPPING_KEY) {
+      const stored = readStoredMapping();
+      if (stored) usePseudoTxStore.setState({ mapping: stored });
+      return;
+    }
     if (e.key !== ENABLED_KEY) return;
     const s = usePseudoTxStore.getState();
     const on = e.newValue === '1';

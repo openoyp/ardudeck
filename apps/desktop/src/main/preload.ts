@@ -31,7 +31,14 @@ import type { CalibrationData, CalibrationProgressEvent, CalibrationCompleteEven
 import type { MissionSummary, StoredMission, SaveMissionPayload, FlightLog, MissionListFilter, MissionSortOptions } from '../shared/mission-library-types.js';
 import type { DroneBridgeInfo, DroneBridgeStats, DroneBridgeSettings, DroneBridgeClients, DroneBridgeDetected } from '../shared/dronebridge-types.js';
 import type { RainViewerMeta, AirspaceData, AirportData, GeocodeResult } from '../shared/overlay-types.js';
-import type { TrainerLaunchInput, TrainerStatus } from '../shared/trainer-types.js';
+import type {
+  TrainerBakeDone,
+  TrainerBakeProgress,
+  TrainerBakeRequest,
+  TrainerCatalogue,
+  TrainerLaunchInput,
+  TrainerStatus,
+} from '../shared/trainer-types.js';
 import type { WindField, WindFetchParams } from '../shared/wind-types.js';
 
 type TelemetryUpdate =
@@ -2513,6 +2520,19 @@ const api = {
 
   // ─── ArduDeck Trainer ───
   trainerStatus: (): Promise<TrainerStatus> => ipcRenderer.invoke(IPC_CHANNELS.TRAINER_STATUS),
+  trainerBake: (request: TrainerBakeRequest): Promise<TrainerBakeDone> =>
+    ipcRenderer.invoke(IPC_CHANNELS.TRAINER_BAKE, request),
+  trainerBakeCancel: (): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.TRAINER_BAKE_CANCEL),
+  trainerDeleteRegion: (name: string): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke(IPC_CHANNELS.TRAINER_DELETE_REGION, name),
+  onTrainerBakeProgress: (cb: (p: TrainerBakeProgress) => void): (() => void) => {
+    const handler = (_: unknown, p: TrainerBakeProgress) => cb(p);
+    ipcRenderer.on(IPC_CHANNELS.TRAINER_BAKE_PROGRESS, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.TRAINER_BAKE_PROGRESS, handler);
+  },
+  trainerCatalogue: (): Promise<
+    { ok: true; catalogue: TrainerCatalogue } | { ok: false; error: string }
+  > => ipcRenderer.invoke(IPC_CHANNELS.TRAINER_CATALOGUE),
   trainerLaunch: (
     input?: TrainerLaunchInput,
   ): Promise<{ ok: boolean; error?: string; pid?: number; configPath?: string }> =>

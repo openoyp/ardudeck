@@ -12624,6 +12624,17 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
       ardupilotRcSender.setExternalOwner(true);
       return true;
     },
+    // The mirror of the release, and in the mirror order: RC first, then the engine, then the
+    // SITL lifecycle is told it owns the engine again. Without this the flight controller keeps
+    // running with no flight model after the Trainer closes, so the vehicle never comes back
+    // and the only way out is restarting the app.
+    reclaimPhysics: async () => {
+      ardupilotRcSender.setExternalOwner(false);
+      const back = await simEngineProcess.restartLast();
+      if (!back.success) return false;
+      ardupilotSitlProcess.setEngineManaged(true);
+      return true;
+    },
     log: (level, message) => sendLog(mainWindow, level, message),
   });
 

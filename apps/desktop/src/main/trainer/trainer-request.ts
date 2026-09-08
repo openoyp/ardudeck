@@ -12,6 +12,8 @@
  * something this side could get wrong.
  */
 
+import type { TrainerConditions } from '../../shared/trainer-types.js';
+
 /** Matches `TRAINER_REQUEST_VERSION` in the game's `shared/trainer-launch.ts`. */
 export const TRAINER_REQUEST_VERSION = 1;
 
@@ -21,6 +23,7 @@ export interface TrainerRequest {
   region?: string;
   frame?: { frameClass: number; frameType: number; specPath: string | null };
   camera?: { kind: string; tiltDeg?: number; lensFovDeg?: number };
+  conditions?: TrainerConditions;
   stream?: { enabled: boolean; port?: number };
   fullscreen?: boolean;
 }
@@ -34,6 +37,7 @@ export interface TrainerRequestInput {
   /** The custom frame JSON: mass, props, disc area, battery. */
   framePath?: string | null;
   camera?: { kind: string; tiltDeg?: number; lensFovDeg?: number } | null;
+  conditions?: TrainerConditions | null;
   region?: string | null;
   /** The FPV feed back into this app's camera panel. */
   stream?: { enabled: boolean; port?: number } | null;
@@ -86,6 +90,7 @@ export function buildTrainerRequest(input: TrainerRequestInput): TrainerRequestR
   }
 
   if (input.camera?.kind) request.camera = input.camera;
+  if (input.conditions) request.conditions = input.conditions;
   if (input.region) request.region = input.region;
   if (input.stream) request.stream = input.stream;
   if (input.fullscreen !== undefined) request.fullscreen = input.fullscreen;

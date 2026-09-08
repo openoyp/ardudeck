@@ -47,6 +47,7 @@ function MappingPanel(): JSX.Element {
   const startLearn = usePseudoTxStore((s) => s.startLearn);
   const cancelLearn = usePseudoTxStore((s) => s.cancelLearn);
   const setSource = usePseudoTxStore((s) => s.setSource);
+  const updateMap = usePseudoTxStore((s) => s.updateMap);
   const resetMapping = usePseudoTxStore((s) => s.resetMapping);
 
   return (
@@ -87,6 +88,20 @@ function MappingPanel(): JSX.Element {
               >
                 {sourceLabel(m.source)}
               </span>
+
+              <button
+                type="button"
+                onClick={() => updateMap(i, { reverse: !m.reverse })}
+                disabled={m.source.kind === 'none'}
+                data-tip={m.reverse ? 'Channel is reversed - click to restore' : 'Reverse this channel'}
+                className={`shrink-0 px-1.5 py-1 rounded-lg text-xs border transition-colors disabled:opacity-30 ${
+                  m.reverse
+                    ? 'bg-amber-500/15 text-amber-400 border-amber-500/40'
+                    : 'bg-surface-raised text-content-secondary border-subtle hover:text-content'
+                }`}
+              >
+                Rev
+              </button>
 
               <button
                 type="button"
