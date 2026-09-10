@@ -1109,6 +1109,14 @@ export const useSettingsStore = create<SettingsStore>()(
     const state = get();
     const now = new Date().toISOString();
 
+    // Non-unique ids (SITL's lane, the no-hardware-UID fallback) must never
+    // bind a profile: every such board shares the key and would merge into one
+    // vehicle. They stay unbound; the vault's "new vehicle" action assigns a
+    // real identity when the user wants one.
+    if (boardUid.startsWith('mavlink-') || boardUid.startsWith('sitl-')) {
+      return state.activeVehicleId ?? '';
+    }
+
     // 1. Check if any existing profile already has this boardUid
     const existingProfile = state.vehicles.find(v => v.boardUid === boardUid);
     if (existingProfile) {

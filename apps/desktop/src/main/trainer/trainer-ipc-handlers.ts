@@ -1,4 +1,4 @@
-import { app, ipcMain, type BrowserWindow } from 'electron';
+import { app, ipcMain, BrowserWindow } from 'electron';
 import { existsSync } from 'node:fs';
 import { IPC_CHANNELS } from '../../shared/ipc-channels.js';
 import type { TrainerLaunchInput, TrainerStatus } from '../../shared/trainer-types.js';
@@ -61,6 +61,21 @@ function find(): { target: TrainerTarget | null; searched: string[] } {
     cargoPath: cargoPath(),
     homeDir: app.getPath('home'),
   });
+}
+
+// The running Trainer owns the sticks; every ArduDeck RC sender gates on this.
+let trainerSessionActive = false;
+
+export function isTrainerSessionActive(): boolean {
+  return trainerSessionActive;
+}
+
+function setTrainerSession(active: boolean): void {
+  if (trainerSessionActive === active) return;
+  trainerSessionActive = active;
+  for (const w of BrowserWindow.getAllWindows()) {
+    if (!w.isDestroyed()) w.webContents.send(IPC_CHANNELS.TRAINER_SESSION, active);
+  }
 }
 
 export function trainerStatus(deps: TrainerDeps): TrainerStatus {
@@ -177,7 +192,8 @@ export function setupTrainerHandlers(mainWindow: BrowserWindow | null, deps: Tra
       // NOT released here. The Trainer asks for the port at the last possible moment, once it
       // has compiled and prepared its region, because until then this app's flight controller
       // is happily flying its own model and there is no reason to take it away.
-      return launchTrainer(built.request, {
+      setTrainerSession(true);
+      const outcome = await launchTrainer(built.request, {
         target,
         userDataPath: app.getPath('userData'),
         onLog: send,
@@ -192,6 +208,7 @@ export function setupTrainerHandlers(mainWindow: BrowserWindow | null, deps: Tra
           });
         },
         onExit: () => {
+          setTrainerSession(false);
           void deps.reclaimPhysics().then((ok) => {
             deps.log?.(
               ok ? 'info' : 'warn',
@@ -202,6 +219,10 @@ export function setupTrainerHandlers(mainWindow: BrowserWindow | null, deps: Tra
           });
         },
       });
+      if (!outcome.ok) setTrainerSession(false);
+      return outcome;
     },
   );
+
+  ipcMain.handle(IPC_CHANNELS.TRAINER_SESSION_ACTIVE, (): boolean => trainerSessionActive);
 }

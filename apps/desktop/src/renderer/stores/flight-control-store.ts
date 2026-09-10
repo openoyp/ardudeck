@@ -13,6 +13,7 @@
 import { create } from 'zustand';
 import { useConnectionStore } from './connection-store';
 import { rcOverrideCall } from '../utils/rc-override-dispatch';
+import { claimRcOverride, releaseRcOverride, onTrainerActive } from '../utils/rc-source-arbiter';
 
 /**
  * Transmit one RC-override frame over the correct protocol. MAVLink links use
@@ -353,6 +354,11 @@ export const useFlightControlStore = create<FlightControlStore>((set, get) => ({
       console.log('[FlightControl] RC override already active, skipping start');
       return;
     }
+    const claim = claimRcOverride('sliders');
+    if (!claim.ok) {
+      set({ overrideError: claim.reason ?? 'RC override unavailable' });
+      return;
+    }
 
     console.log('[FlightControl] Starting RC override with channels:', channels.slice(0, 8).join(','));
 
@@ -376,6 +382,7 @@ export const useFlightControlStore = create<FlightControlStore>((set, get) => ({
     if (overrideInterval) {
       clearInterval(overrideInterval);
     }
+    releaseRcOverride('sliders');
     set({
       isOverrideActive: false,
       overrideInterval: null,
@@ -638,3 +645,10 @@ export function getModeName(boxId: number, fcVariant?: string): string {
   const nameMap = fcVariant === 'BTFL' ? BTFL_MODE_NAMES : INAV_MODE_NAMES;
   return nameMap[boxId] || `Mode ${boxId}`;
 }
+
+onTrainerActive((active) => {
+  if (active && useFlightControlStore.getState().isOverrideActive) {
+    useFlightControlStore.getState().stopOverride();
+    useFlightControlStore.setState({ overrideError: 'Trainer session active - the Trainer owns the sticks' });
+  }
+});

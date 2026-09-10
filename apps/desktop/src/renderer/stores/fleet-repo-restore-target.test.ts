@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isRestoreTargetMatch, isRestoreFirmwareMatch } from './fleet-repo-store';
+import { isRestoreTargetMatch, isRestoreFirmwareMatch, isWeakBoardUid } from './fleet-repo-store';
 
 const BOARD = '0102030405060708090a0b0c0d0e0f1011';
 const OTHER = 'ffeeddccbbaa99887766554433221100ff';
@@ -57,5 +57,20 @@ describe('isRestoreFirmwareMatch', () => {
     expect(isRestoreFirmwareMatch(undefined, 'px4')).toBe(true);
     expect(isRestoreFirmwareMatch('px4', undefined)).toBe(true);
     expect(isRestoreFirmwareMatch(undefined, undefined)).toBe(true);
+  });
+});
+
+describe('isWeakBoardUid', () => {
+  it('treats SITL and the no-UID mavlink fallback as weak', () => {
+    expect(isWeakBoardUid('sitl-1')).toBe(true);
+    expect(isWeakBoardUid('mavlink-1')).toBe(true);
+    expect(isWeakBoardUid(null)).toBe(true);
+    expect(isWeakBoardUid(undefined)).toBe(true);
+    expect(isWeakBoardUid('')).toBe(true);
+  });
+
+  it('treats a real hardware uid and a minted vehicle id as strong', () => {
+    expect(isWeakBoardUid(BOARD)).toBe(false);
+    expect(isWeakBoardUid('vehicle-abc-123')).toBe(false);
   });
 });

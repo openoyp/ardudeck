@@ -191,7 +191,7 @@ import { mediaEngine } from './media/media-engine.js';
 import { ardupilotSitlProcess, swarmSitlProcess, ardupilotSitlDownloader, ardupilotRcSender } from './sitl/index.js';
 import { px4SitlProcess, px4SitlDownloader } from './sitl/index.js';
 import { startSimHandoverServer, stopSimHandoverServer } from './sim/sim-handover-server.js';
-import { setupTrainerHandlers } from './trainer/trainer-ipc-handlers.js';
+import { setupTrainerHandlers, isTrainerSessionActive } from './trainer/trainer-ipc-handlers.js';
 import { resolveReconnectTarget } from './connection/reconnect-target.js';
 import { orchestratorProcess } from './orchestrator/orchestrator-process.js';
 import {
@@ -9075,6 +9075,9 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   // for outputs assigned to mixer functions (Aileron/Elevator/Throttle/etc).
   // Assumes default RCMAP (Roll=RC1, Pitch=RC2, Throttle=RC3, Yaw=RC4).
   ipcMain.handle(IPC_CHANNELS.RC_OVERRIDE_SET, async (_, request: { roll: number; pitch: number; throttle: number; yaw: number; modeChannel?: number; modePwm?: number }) => {
+    if (isTrainerSessionActive()) {
+      return { success: false, error: 'Trainer session active - the Trainer owns the sticks' };
+    }
     if (!currentTransport?.isOpen || !connectionState.isConnected) {
       return { success: false, error: 'Not connected' };
     }
@@ -9116,7 +9119,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
   // Release RC override by sending UINT16_MAX on every channel - ArduPilot's
   // documented signal that the GCS is no longer overriding RC.
-  ipcMain.handle(IPC_CHANNELS.RC_OVERRIDE_RELEASE, async () => {
+  const sendOverrideReleaseFrame = async (): Promise<{ success: boolean; error?: string }> => {
     if (!currentTransport?.isOpen || !connectionState.isConnected) {
       return { success: false, error: 'Not connected' };
     }
@@ -9143,6 +9146,66 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
       const message = error instanceof Error ? error.message : 'Unknown error';
       return { success: false, error: message };
     }
+  };
+
+  // Stalled joystick frames must not leave the vehicle holding stale sticks.
+  let joystickWatchdog: NodeJS.Timeout | null = null;
+  const disarmJoystickWatchdog = (): void => {
+    if (joystickWatchdog) {
+      clearTimeout(joystickWatchdog);
+      joystickWatchdog = null;
+    }
+  };
+  const armJoystickWatchdog = (): void => {
+    disarmJoystickWatchdog();
+    joystickWatchdog = setTimeout(() => {
+      joystickWatchdog = null;
+      sendLog(mainWindow, 'warn', 'Joystick override frames stalled - releasing RC override');
+      void sendOverrideReleaseFrame();
+    }, 700);
+  };
+
+  // Full-channel override for the joystick path: pwm per channel, 65535 = ignore.
+  ipcMain.handle(IPC_CHANNELS.RC_OVERRIDE_SET_CHANNELS, async (_, channels: number[]) => {
+    if (isTrainerSessionActive()) {
+      return { success: false, error: 'Trainer session active - the Trainer owns the sticks' };
+    }
+    if (!currentTransport?.isOpen || !connectionState.isConnected) {
+      return { success: false, error: 'Not connected' };
+    }
+    if (connectionState.protocol !== 'mavlink') {
+      return { success: false, error: 'RC override requires MAVLink connection' };
+    }
+    try {
+      const IGNORE = 65535;
+      const ch = (i: number): number => {
+        const v = channels[i];
+        if (v === undefined || v === IGNORE) return IGNORE;
+        return Math.max(800, Math.min(2200, Math.round(v)));
+      };
+      const payload = serializeRcChannelsOverride({
+        targetSystem: connectionState.systemId ?? 1,
+        targetComponent: 1,
+        chan1Raw: ch(0), chan2Raw: ch(1), chan3Raw: ch(2), chan4Raw: ch(3),
+        chan5Raw: ch(4), chan6Raw: ch(5), chan7Raw: ch(6), chan8Raw: ch(7),
+        chan9Raw: ch(8), chan10Raw: ch(9), chan11Raw: ch(10), chan12Raw: ch(11),
+        chan13Raw: ch(12), chan14Raw: ch(13), chan15Raw: ch(14), chan16Raw: ch(15),
+        chan17Raw: ch(16), chan18Raw: ch(17),
+      });
+      const packet = await sendMavlinkPacket(RC_CHANNELS_OVERRIDE_ID, payload, RC_CHANNELS_OVERRIDE_CRC_EXTRA);
+      await currentTransport.write(packet);
+      connectionState.packetsSent++;
+      armJoystickWatchdog();
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.RC_OVERRIDE_RELEASE, async () => {
+    disarmJoystickWatchdog();
+    return sendOverrideReleaseFrame();
   });
 
   // Releases an override set by SERVO_TEST_PULSE. ArduPilot interprets PWM=0
@@ -11941,6 +12004,8 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
   // ArduPilot SITL RC control - send RC values
   ipcMain.handle(IPC_CHANNELS.ARDUPILOT_SITL_RC_SEND, async (_event, state: Partial<VirtualRCState>): Promise<void> => {
+    // The Trainer reads the gamepad itself; ArduDeck frames would fight it.
+    if (isTrainerSessionActive()) return;
     ardupilotRcSender.setState(state);
     // Flag a live external source so arming does not clobber it with an override.
     ardupilotRcSender.noteExternalSource();

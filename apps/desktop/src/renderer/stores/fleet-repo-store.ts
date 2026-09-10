@@ -19,6 +19,12 @@ import { useConnectionStore } from './connection-store';
 import { useMissionStore } from './mission-store';
 import { isSurveyGroup } from '../../shared/mission-group-types';
 
+/** Non-unique board ids: the no-hardware-UID fallback and SITL's lane. These
+ *  must never claim a real vehicle's identity (they collapse distinct boards). */
+export function isWeakBoardUid(uid: string | null | undefined): boolean {
+  return !uid || uid.startsWith('mavlink-') || uid.startsWith('sitl-');
+}
+
 export interface SnapshotDiffRow {
   id: string;
   snapshotValue: number;
@@ -75,6 +81,9 @@ interface FleetRepoState {
   clearMessages: () => void;
 
   snapshotParams: (note?: string) => Promise<boolean>;
+  /** Mint a fresh identity for the connected vehicle and snapshot under it.
+   *  Used when the board has no unique UID, or the auto-match is wrong. */
+  snapshotAsNewVehicle: (name?: string, note?: string) => Promise<boolean>;
   snapshotMission: (site: string, missionName: string) => Promise<boolean>;
   snapshotArea: (site: string) => Promise<boolean>;
 
@@ -145,13 +154,14 @@ function currentBoard(): { uid: string; name: string; vehicleType?: string; sitl
     };
   }
 
-  if (!profile?.boardUid) return null;
+  // Weak/absent uid = unidentified; the vault offers "new vehicle" not a merge.
+  if (isWeakBoardUid(profile?.boardUid)) return null;
   // The profile name is the user's own model name ("Agri Octo"), the most
   // recognizable label; board name is only a seed fallback.
   return {
-    uid: profile.boardUid,
-    name: profile.name || profile.boardName || 'My Vehicle',
-    vehicleType: profile.type,
+    uid: profile!.boardUid!,
+    name: profile!.name || profile!.boardName || 'My Vehicle',
+    vehicleType: profile!.type,
     sitl: false,
   };
 }
@@ -270,10 +280,10 @@ export function useCurrentVaultUnit(): CurrentVaultUnit | null {
       };
     }
     const profile = vehicles.find((v) => v.id === activeVehicleId);
-    if (!profile?.boardUid) return null;
+    if (isWeakBoardUid(profile?.boardUid)) return null;
     return {
-      uid: profile.boardUid,
-      name: profile.name || profile.boardName || 'My Vehicle',
+      uid: profile!.boardUid!,
+      name: profile!.name || profile!.boardName || 'My Vehicle',
       sitl: false,
     };
   }, [conn.isConnected, conn.isSitl, conn.systemId, conn.vehicleType, vehicles, activeVehicleId, unitOverride, units]);
@@ -346,6 +356,32 @@ export const useFleetRepoStore = create<FleetRepoState>()((set, get) => ({
       return false;
     }
     set({ lastNotice: result.changed ? `Snapshot saved (${params.length} params)` : 'No changes since last snapshot' });
+    await get().refresh();
+    return true;
+  },
+
+  snapshotAsNewVehicle: async (name, note) => {
+    const params = liveParams();
+    if (params.length === 0) {
+      set({ lastError: 'No parameters loaded to snapshot.' });
+      return false;
+    }
+    const conn = useConnectionStore.getState().connectionState;
+    const displayName = name?.trim() || conn.boardId || 'New vehicle';
+    const uid = `vehicle-${crypto.randomUUID()}`;
+    // Bind the active profile (or a fresh one) to this strong identity so the
+    // vault resolves the connected board here on subsequent snapshots.
+    useSettingsStore.getState().associateBoard(uid, conn.boardId, displayName);
+    set({ unitOverride: null, snapshotBusy: true, lastError: null, lastNotice: null });
+    const result = await window.electronAPI?.fleetRepoSnapshotParams(
+      uid, displayName, params, conn.vehicleType, note, false,
+    );
+    set({ snapshotBusy: false });
+    if (!result?.success) {
+      set({ lastError: result?.error ?? 'Snapshot failed' });
+      return false;
+    }
+    set({ lastNotice: `New vehicle "${displayName}" saved (${params.length} params)` });
     await get().refresh();
     return true;
   },

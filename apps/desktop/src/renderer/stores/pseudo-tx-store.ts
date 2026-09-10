@@ -29,9 +29,21 @@ import {
   devicesToChannels,
   looksLikeTransmitter,
 } from '../utils/pseudo-tx';
+import { packOverrideChannels } from '../utils/rc-vehicle-override';
+import {
+  claimRcOverride,
+  releaseRcOverride,
+  isTrainerActive,
+  onTrainerActive,
+  setTrainerActive,
+} from '../utils/rc-source-arbiter';
+import { useConnectionStore } from './connection-store';
 
 /** 50 Hz, matching a real receiver's frame rate. */
 const POLL_MS = 20;
+
+let vehicleFrameCount = 0;
+let vehicleFpsWindowStart = 0;
 
 const EMPTY_DEVICE: RawDevice = { axes: [], buttons: [] };
 
@@ -132,6 +144,12 @@ interface PseudoTxState {
   /** Frames actually handed to the bridge. Zero while 'on' means the chain is broken. */
   sentFrames: number;
 
+  // Session-only by design (commands real aircraft): never persisted, never auto re-engaged.
+  vehicleControl: boolean;
+  vehicleSendError: string | null;
+  /** Override frames the vehicle acknowledged in the last second. */
+  vehicleFps: number;
+
   /** Channel currently being taught by wiggling a control, or null. */
   learning: number | null;
   learnBaseline: RawDevice | null;
@@ -140,6 +158,8 @@ interface PseudoTxState {
 
   enable: () => void;
   disable: () => void;
+  enableVehicleControl: () => { ok: boolean; reason?: string };
+  disableVehicleControl: () => void;
   poll: () => void;
   startLearn: (channel: number) => void;
   cancelLearn: () => void;
@@ -160,6 +180,9 @@ export const usePseudoTxStore = create<PseudoTxState>((set, get) => ({
   raw: EMPTY_DEVICE,
   sendError: null,
   sentFrames: 0,
+  vehicleControl: false,
+  vehicleSendError: null,
+  vehicleFps: 0,
   learning: null,
   learnBaseline: null,
   pollTimer: null,
@@ -180,6 +203,7 @@ export const usePseudoTxStore = create<PseudoTxState>((set, get) => ({
   },
 
   disable: () => {
+    get().disableVehicleControl();
     writeEnabledFlag(false);
     const { pollTimer } = get();
     if (pollTimer) clearInterval(pollTimer);
@@ -195,10 +219,36 @@ export const usePseudoTxStore = create<PseudoTxState>((set, get) => ({
     });
   },
 
+  enableVehicleControl: () => {
+    if (get().vehicleControl) return { ok: true };
+    const { connectionState } = useConnectionStore.getState();
+    if (!get().enabled) return { ok: false, reason: 'Switch the USB transmitter on first' };
+    if (!connectionState.isConnected || connectionState.protocol !== 'mavlink') {
+      return { ok: false, reason: 'Needs a connected MAVLink vehicle' };
+    }
+    const claim = claimRcOverride('joystick');
+    if (!claim.ok) return { ok: false, reason: claim.reason };
+    vehicleFrameCount = 0;
+    vehicleFpsWindowStart = 0;
+    set({ vehicleControl: true, vehicleSendError: null, vehicleFps: 0 });
+    return { ok: true };
+  },
+
+  disableVehicleControl: () => {
+    if (!get().vehicleControl) return;
+    releaseRcOverride('joystick');
+    set({ vehicleControl: false, vehicleFps: 0 });
+    // Explicit release so the vehicle reverts to its own RC instead of holding
+    // the last stick frame until ArduPilot's override timeout.
+    void api()?.rcOverrideRelease?.().catch(() => {});
+  },
+
   poll: () => {
     const { learning, learnBaseline, deviceIndex } = get();
     const read = readGamepad(deviceIndex);
     if (!read) {
+      // No sticks means no valid override frames: release the vehicle immediately.
+      if (get().vehicleControl) get().disableVehicleControl();
       if (get().connected) set({ connected: false, deviceName: '' });
       return;
     }
@@ -237,6 +287,10 @@ export const usePseudoTxStore = create<PseudoTxState>((set, get) => ({
     // was popped out: the main window still held the switch, but no longer the gamepad.
     if (typeof document !== 'undefined' && !document.hasFocus()) return;
 
+    // The Trainer owns the sticks while it runs: keep reading (local screens
+    // stay live) but put nothing on the wire, SITL or vehicle.
+    if (isTrainerActive()) return;
+
     // SITL takes -1..1 per channel, not microseconds.
     const n = (pwm: number) => Math.min(1, Math.max(-1, (pwm - 1500) / 500));
     const bridge = api();
@@ -261,6 +315,34 @@ export const usePseudoTxStore = create<PseudoTxState>((set, get) => ({
     }).catch((e: unknown) => {
       set({ sendError: `SITL rejected RC: ${String(e)}` });
     });
+
+    if (get().vehicleControl) {
+      const { connectionState } = useConnectionStore.getState();
+      if (!connectionState.isConnected || connectionState.protocol !== 'mavlink') {
+        get().disableVehicleControl();
+        set({ vehicleSendError: 'Vehicle link lost - joystick control released' });
+        return;
+      }
+      const packed = packOverrideChannels(ch, get().mapping);
+      const now = Date.now();
+      if (vehicleFpsWindowStart === 0) vehicleFpsWindowStart = now;
+      void bridge.rcOverrideSetChannels?.(packed).then((r) => {
+        if (r && r.success === false) {
+          set({ vehicleSendError: r.error ?? 'Override rejected by the link' });
+          return;
+        }
+        vehicleFrameCount++;
+        if (now - vehicleFpsWindowStart >= 1000) {
+          set({ vehicleFps: vehicleFrameCount, vehicleSendError: null });
+          vehicleFrameCount = 0;
+          vehicleFpsWindowStart = now;
+        } else if (get().vehicleSendError) {
+          set({ vehicleSendError: null });
+        }
+      }).catch((e: unknown) => {
+        set({ vehicleSendError: String(e) });
+      });
+    }
   },
 
   startLearn: (channel) => {
@@ -295,6 +377,12 @@ export const usePseudoTxStore = create<PseudoTxState>((set, get) => ({
   },
 }));
 
+// Trainer preemption: release the vehicle (not just stop sending), and never
+// re-engage on trainer exit; the user must arm the opt-in again themselves.
+onTrainerActive((active) => {
+  if (active) usePseudoTxStore.getState().disableVehicleControl();
+});
+
 /**
  * Join the handset to this window. Call once per renderer, from the entry point.
  *
@@ -305,6 +393,15 @@ export function initPseudoTx(): void {
   if (typeof window === 'undefined') return;
 
   if (readEnabledFlag()) usePseudoTxStore.getState().enable();
+
+  void window.electronAPI?.trainerSessionActive?.().then((active) => setTrainerActive(active));
+  window.electronAPI?.onTrainerSession?.((active) => setTrainerActive(active));
+
+  window.addEventListener('beforeunload', () => {
+    if (usePseudoTxStore.getState().vehicleControl) {
+      void window.electronAPI?.rcOverrideRelease?.().catch(() => {});
+    }
+  });
 
   window.addEventListener('storage', (e) => {
     if (e.key === MAPPING_KEY) {

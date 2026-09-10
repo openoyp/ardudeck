@@ -359,6 +359,16 @@ const api = {
     ipcRenderer.invoke(IPC_CHANNELS.RC_OVERRIDE_SET, { roll, pitch, throttle, yaw, modeChannel, modePwm }),
   rcOverrideRelease: (): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke(IPC_CHANNELS.RC_OVERRIDE_RELEASE),
+  // Full-channel joystick override: pwm per channel, 65535 = leave channel alone.
+  rcOverrideSetChannels: (channels: number[]): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke(IPC_CHANNELS.RC_OVERRIDE_SET_CHANNELS, channels),
+  trainerSessionActive: (): Promise<boolean> =>
+    ipcRenderer.invoke(IPC_CHANNELS.TRAINER_SESSION_ACTIVE),
+  onTrainerSession: (callback: (active: boolean) => void): (() => void) => {
+    const handler = (_: unknown, active: boolean) => callback(active);
+    ipcRenderer.on(IPC_CHANNELS.TRAINER_SESSION, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.TRAINER_SESSION, handler);
+  },
 
   // MAVLink Signing
   signingSetKey: (passphrase: string): Promise<{ success: boolean; error?: string }> =>

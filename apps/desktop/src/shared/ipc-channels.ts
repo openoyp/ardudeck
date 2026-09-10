@@ -639,6 +639,7 @@ export const IPC_CHANNELS = {
   // RC Override (synthetic stick input via RC_CHANNELS_OVERRIDE for bench testing)
   RC_OVERRIDE_SET: 'rc-override:set',
   RC_OVERRIDE_RELEASE: 'rc-override:release',
+  RC_OVERRIDE_SET_CHANNELS: 'rc-override:set-channels',
 
   // Mission Library (offline storage)
   MISSION_LIBRARY_LIST: 'mission-library:list',
@@ -780,6 +781,8 @@ export const IPC_CHANNELS = {
   TRAINER_DELETE_REGION: 'trainer:delete-region',
   TRAINER_LAUNCH: 'trainer:launch',
   TRAINER_LOG: 'trainer:log',
+  TRAINER_SESSION: 'trainer:session',
+  TRAINER_SESSION_ACTIVE: 'trainer:session-active',
 
   // Map overlays
   OVERLAY_GET_RADAR_META: 'overlay:get-radar-meta',

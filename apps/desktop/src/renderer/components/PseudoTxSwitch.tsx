@@ -14,10 +14,16 @@
  * with an emerald toggle, so it reads as part of the page rather than bolted on.
  */
 
-import { useState } from 'react';
-import { Usb, ChevronDown, ChevronRight } from 'lucide-react';
+import { useState, useSyncExternalStore } from 'react';
+import { Usb, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
 import { usePseudoTxStore } from '../stores/pseudo-tx-store';
+import { useConnectionStore } from '../stores/connection-store';
+import { isTrainerActive, onTrainerActive } from '../utils/rc-source-arbiter';
 import type { ChannelSource } from '../utils/pseudo-tx';
+
+function useTrainerActive(): boolean {
+  return useSyncExternalStore((cb) => onTrainerActive(() => cb()), isTrainerActive);
+}
 
 /** Human-readable description of where a channel gets its value. */
 function sourceLabel(src: ChannelSource): string {
@@ -201,8 +207,17 @@ function DeviceMonitor(): JSX.Element {
 
 export function PseudoTxSwitch(): JSX.Element {
   const [showMap, setShowMap] = useState(false);
+  const [vehicleRefusal, setVehicleRefusal] = useState<string | null>(null);
   const enabled = usePseudoTxStore((s) => s.enabled);
   const connected = usePseudoTxStore((s) => s.connected);
+  const vehicleControl = usePseudoTxStore((s) => s.vehicleControl);
+  const vehicleSendError = usePseudoTxStore((s) => s.vehicleSendError);
+  const vehicleFps = usePseudoTxStore((s) => s.vehicleFps);
+  const enableVehicleControl = usePseudoTxStore((s) => s.enableVehicleControl);
+  const disableVehicleControl = usePseudoTxStore((s) => s.disableVehicleControl);
+  const connState = useConnectionStore((s) => s.connectionState);
+  const mavlinkConnected = connState.isConnected && connState.protocol === 'mavlink';
+  const trainerActive = useTrainerActive();
   const deviceName = usePseudoTxStore((s) => s.deviceName);
   const isTransmitter = usePseudoTxStore((s) => s.isTransmitter);
   const enable = usePseudoTxStore((s) => s.enable);
@@ -253,6 +268,68 @@ export function PseudoTxSwitch(): JSX.Element {
           />
         </button>
       </div>
+
+      {trainerActive && (
+        <p className="mt-3 flex items-center gap-2 text-xs text-amber-400">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+          Trainer session active - the Trainer owns the sticks
+        </p>
+      )}
+
+      {enabled && mavlinkConnected && !trainerActive && (
+        <div className="mt-3 pt-3 border-t border-subtle flex items-center justify-between gap-3">
+          <div className="flex items-start gap-2.5 min-w-0">
+            <AlertTriangle
+              className={`w-4 h-4 mt-0.5 shrink-0 ${vehicleControl ? 'text-amber-400' : 'text-content-secondary'}`}
+            />
+            <div className="min-w-0">
+              <h3
+                className="text-sm font-medium text-content"
+                data-tip="Sends RC_CHANNELS_OVERRIDE to the connected vehicle. The joystick WILL command the aircraft."
+              >
+                Joystick controls vehicle
+              </h3>
+              <p className="text-xs mt-0.5 truncate">
+                {vehicleControl ? (
+                  vehicleSendError ? (
+                    <span className="text-red-400">{vehicleSendError}</span>
+                  ) : (
+                    <span className="text-amber-400">{vehicleFps} frames/s to vehicle</span>
+                  )
+                ) : (
+                  <span className="text-content-secondary">
+                    {vehicleRefusal ?? 'Off - sends nothing to the aircraft'}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={vehicleControl}
+            aria-label="Joystick controls vehicle"
+            onClick={() => {
+              if (vehicleControl) {
+                disableVehicleControl();
+                setVehicleRefusal(null);
+              } else {
+                const r = enableVehicleControl();
+                setVehicleRefusal(r.ok ? null : (r.reason ?? 'Unavailable'));
+              }
+            }}
+            className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${
+              vehicleControl ? 'bg-amber-500' : 'bg-surface-inset'
+            }`}
+          >
+            <div
+              className={`absolute top-0.5 w-4 h-4 rounded-full bg-white border border-strong shadow-sm transition-transform ${
+                vehicleControl ? 'translate-x-5' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
+      )}
 
       {enabled && connected && (
         <>

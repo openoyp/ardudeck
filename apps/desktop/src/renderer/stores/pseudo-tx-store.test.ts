@@ -227,3 +227,131 @@ describe('multi-window handover', () => {
     expect(usePseudoTxStore.getState().enabled).toBe(false);
   });
 });
+
+describe('joystick controls vehicle', () => {
+  const setChannels = vi.fn();
+  const release = vi.fn();
+  const sitlSend = vi.fn();
+
+  function stubVehicleWindow() {
+    const store = new Map<string, string>();
+    vi.stubGlobal('window', {
+      electronAPI: {
+        ardupilotSitlRcSend: sitlSend,
+        rcOverrideSetChannels: setChannels,
+        rcOverrideRelease: release,
+      },
+      addEventListener: vi.fn(),
+    });
+    vi.stubGlobal('document', { hasFocus: () => true });
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => void store.set(k, v),
+    });
+  }
+
+  async function connectMavlink() {
+    const { useConnectionStore } = await import('./connection-store');
+    useConnectionStore.setState({
+      connectionState: {
+        ...useConnectionStore.getState().connectionState,
+        isConnected: true,
+        protocol: 'mavlink',
+      },
+    });
+    return useConnectionStore;
+  }
+
+  beforeEach(async () => {
+    const { resetRcArbiterForTest } = await import('../utils/rc-source-arbiter');
+    resetRcArbiterForTest();
+    setChannels.mockReset().mockResolvedValue({ success: true });
+    release.mockReset().mockResolvedValue({ success: true });
+    sitlSend.mockReset().mockResolvedValue(undefined);
+    stubVehicleWindow();
+    await connectMavlink();
+    usePseudoTxStore.setState({ enabled: true, pollTimer: null, connected: false, vehicleControl: false, vehicleSendError: null });
+    usePseudoTxStore.getState().resetMapping();
+    setPads([pad([1, 0, 0, 0])]);
+  });
+
+  afterEach(() => {
+    usePseudoTxStore.setState({ vehicleControl: false });
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('sends nothing to the vehicle while the opt-in is off, even with the stand-in on', () => {
+    usePseudoTxStore.getState().poll();
+    expect(sitlSend).toHaveBeenCalled();
+    expect(setChannels).not.toHaveBeenCalled();
+  });
+
+  it('sends packed overrides when engaged: mapped channels pass, the rest are 65535', () => {
+    const none = usePseudoTxStore.getState().mapping.map((m) => ({ ...m, source: { kind: 'none' } as const }));
+    usePseudoTxStore.setState({ mapping: none });
+    usePseudoTxStore.getState().setSource(0, { kind: 'axis', index: 0 });
+    expect(usePseudoTxStore.getState().enableVehicleControl().ok).toBe(true);
+    usePseudoTxStore.getState().poll();
+    expect(setChannels).toHaveBeenCalledTimes(1);
+    const frame = setChannels.mock.calls[0]![0] as number[];
+    expect(frame[0]).toBe(2000);
+    expect(frame.slice(1).every((v) => v === 65535)).toBe(true);
+  });
+
+  it('refuses to engage without a mavlink connection', async () => {
+    const conn = await connectMavlink();
+    conn.setState({
+      connectionState: { ...conn.getState().connectionState, isConnected: false },
+    });
+    expect(usePseudoTxStore.getState().enableVehicleControl().ok).toBe(false);
+  });
+
+  it('releases the override on toggle off', () => {
+    expect(usePseudoTxStore.getState().enableVehicleControl().ok).toBe(true);
+    usePseudoTxStore.getState().disableVehicleControl();
+    expect(release).toHaveBeenCalledTimes(1);
+    expect(usePseudoTxStore.getState().vehicleControl).toBe(false);
+  });
+
+  it('releases the override when the gamepad disappears', () => {
+    expect(usePseudoTxStore.getState().enableVehicleControl().ok).toBe(true);
+    setPads([]);
+    usePseudoTxStore.getState().poll();
+    expect(release).toHaveBeenCalledTimes(1);
+    expect(usePseudoTxStore.getState().vehicleControl).toBe(false);
+  });
+
+  it('releases the override when the master stand-in switch turns off', () => {
+    expect(usePseudoTxStore.getState().enableVehicleControl().ok).toBe(true);
+    usePseudoTxStore.getState().disable();
+    expect(release).toHaveBeenCalledTimes(1);
+    expect(usePseudoTxStore.getState().vehicleControl).toBe(false);
+  });
+
+  it('trainer start releases the override and suppresses all sending; no auto re-engage on exit', async () => {
+    const { setTrainerActive, claimRcOverride } = await import('../utils/rc-source-arbiter');
+    expect(usePseudoTxStore.getState().enableVehicleControl().ok).toBe(true);
+    setTrainerActive(true);
+    expect(release).toHaveBeenCalledTimes(1);
+    expect(usePseudoTxStore.getState().vehicleControl).toBe(false);
+    sitlSend.mockClear();
+    setChannels.mockClear();
+    usePseudoTxStore.getState().poll();
+    expect(sitlSend).not.toHaveBeenCalled();
+    expect(setChannels).not.toHaveBeenCalled();
+    setTrainerActive(false);
+    expect(usePseudoTxStore.getState().vehicleControl).toBe(false);
+    expect(claimRcOverride('joystick').ok).toBe(true);
+  });
+
+  it('is mutually exclusive with the slider override', async () => {
+    const { claimRcOverride, releaseRcOverride } = await import('../utils/rc-source-arbiter');
+    expect(claimRcOverride('sliders').ok).toBe(true);
+    const refused = usePseudoTxStore.getState().enableVehicleControl();
+    expect(refused.ok).toBe(false);
+    releaseRcOverride('sliders');
+    expect(usePseudoTxStore.getState().enableVehicleControl().ok).toBe(true);
+    expect(claimRcOverride('sliders').ok).toBe(false);
+  });
+});

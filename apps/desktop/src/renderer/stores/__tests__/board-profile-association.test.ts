@@ -61,6 +61,28 @@ describe('associateBoard', () => {
     expect(state.activeVehicleId).toBe('v1');
   });
 
+  it('never binds a profile to a SITL id', () => {
+    const result = useSettingsStore.getState().associateBoard('sitl-1', undefined, 'SITL copter');
+    const vehicle = useSettingsStore.getState().vehicles.find(v => v.id === 'v1');
+    // Returns the active id but leaves the profile unbound.
+    expect(result).toBe('v1');
+    expect(vehicle?.boardUid).toBeUndefined();
+  });
+
+  it('never binds a profile to the no-hardware-UID mavlink fallback', () => {
+    const result = useSettingsStore.getState().associateBoard('mavlink-1', 'MatekH743');
+    const vehicle = useSettingsStore.getState().vehicles.find(v => v.id === 'v1');
+    expect(result).toBe('v1');
+    expect(vehicle?.boardUid).toBeUndefined();
+  });
+
+  it('still binds a strong minted uid (new-vehicle path)', () => {
+    const result = useSettingsStore.getState().associateBoard('vehicle-abc-123', 'MatekH743', 'Big Octo');
+    const vehicle = useSettingsStore.getState().vehicles.find(v => v.id === 'v1');
+    expect(result).toBe('v1');
+    expect(vehicle?.boardUid).toBe('vehicle-abc-123');
+  });
+
   it('sets lastConnected to a valid ISO date string', () => {
     const before = new Date().toISOString();
     useSettingsStore.getState().associateBoard('uid-abc');
