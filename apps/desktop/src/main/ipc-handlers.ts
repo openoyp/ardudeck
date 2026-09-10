@@ -12767,6 +12767,21 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     return logDownloadManager.requestStorageInfo();
   });
 
+  ipcMain.handle(IPC_CHANNELS.LOG_FORMAT_SD, async (): Promise<boolean> => {
+    if (!currentTransport) return false;
+    if (!logDownloadManager) {
+      logDownloadManager = new LogDownloadManager(
+        sendMavlinkPacket,
+        (data) => currentTransport!.write(data),
+        (level, msg) => mainWindow && sendLog(mainWindow, level as ConsoleLogEntry['level'], msg),
+        connectionState.systemId ?? 1,
+        1,
+      );
+    }
+    await logDownloadManager.formatStorage();
+    return true;
+  });
+
   ipcMain.handle(IPC_CHANNELS.LOG_OPEN_DIALOG, async (): Promise<{ path: string } | null> => {
     if (!mainWindow) return null;
     const result = await dialog.showOpenDialog(mainWindow, {

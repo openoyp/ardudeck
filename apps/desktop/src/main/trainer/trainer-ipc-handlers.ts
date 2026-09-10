@@ -67,7 +67,14 @@ export function trainerStatus(deps: TrainerDeps): TrainerStatus {
   const { target, searched } = find();
   const home = deps.home();
   return {
-    available: cargoPath() !== undefined || Boolean(process.env[TRAINER_PATH_ENV]),
+    // Installed as a cargo, OR pointed at explicitly, OR simply FOUND on this machine.
+    //
+    // That last one is the website download: somebody installs the Trainer from the site
+    // without going near the Hangar, and ArduDeck should still show it rather than pretend it
+    // is not there. The locator already checks the platform's normal install locations, so
+    // "we found a Trainer" is the honest test.
+    available:
+      target !== null || cargoPath() !== undefined || Boolean(process.env[TRAINER_PATH_ENV]),
     installed: target !== null,
     kind: target?.kind ?? null,
     path: target?.path ?? null,

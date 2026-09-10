@@ -982,6 +982,9 @@ const api = {
   logStorageInfo: (): Promise<{ totalBytes: number; usedBytes: number; availableBytes: number } | null> =>
     ipcRenderer.invoke(IPC_CHANNELS.LOG_STORAGE_INFO),
 
+  logFormatSd: (): Promise<boolean> =>
+    ipcRenderer.invoke(IPC_CHANNELS.LOG_FORMAT_SD),
+
   logOpenDialog: (): Promise<{ path: string } | null> =>
     ipcRenderer.invoke(IPC_CHANNELS.LOG_OPEN_DIALOG),
 

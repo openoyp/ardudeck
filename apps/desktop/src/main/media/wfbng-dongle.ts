@@ -56,6 +56,50 @@ export function findDongleMac(json: string): DetectedDongle | null {
   }
 }
 
+/**
+ * Parse `ioreg -p IOUSB -l -w 0` output (macOS fallback).
+ *
+ * `system_profiler SPUSBDataType` returns an EMPTY document on some macOS
+ * builds while exiting 0, so detection through it silently finds nothing and
+ * the app tells the pilot to plug in a dongle that is already plugged in.
+ * ioreg reads the same registry without that failure mode.
+ *
+ * Entries look like:
+ *   "USB Product Name" = "802.11n NIC"
+ *   "idProduct" = 34834
+ *   "idVendor" = 3034
+ * with the numbers in DECIMAL, unlike every other source here.
+ */
+export function findDongleIoreg(ioreg: string): DetectedDongle | null {
+  const lines = ioreg.split('\n');
+  let vendorId: number | null = null;
+  let productId: number | null = null;
+  let name = 'RTL8812AU';
+
+  for (const line of lines) {
+    const nameMatch = /"USB Product Name"\s*=\s*"([^"]*)"/.exec(line);
+    if (nameMatch) name = nameMatch[1] ?? name;
+
+    const vendorMatch = /"idVendor"\s*=\s*(\d+)/.exec(line);
+    if (vendorMatch) vendorId = Number(vendorMatch[1]);
+
+    const productMatch = /"idProduct"\s*=\s*(\d+)/.exec(line);
+    if (productMatch) productId = Number(productMatch[1]);
+
+    // ioreg prints one device's properties as a block, but not in a fixed
+    // order, so a pair is only trusted once both halves are known.
+    if (vendorId !== null && productId !== null) {
+      if (idsMatch(vendorId, productId)) {
+        return { vendorId, productId, name };
+      }
+      vendorId = null;
+      productId = null;
+      name = 'RTL8812AU';
+    }
+  }
+  return null;
+}
+
 /** Parse `lsusb` output (Linux): "Bus 001 Device 004: ID 0bda:8812 Realtek ...". */
 export function findDongleLinux(lsusb: string): DetectedDongle | null {
   for (const line of lsusb.split('\n')) {

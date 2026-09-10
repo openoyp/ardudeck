@@ -14,6 +14,7 @@ import { existsSync, mkdirSync, copyFileSync } from 'node:fs';
 import { app } from 'electron';
 import { mediaBinariesDownloader } from './media-binaries-downloader.js';
 import {
+  findDongleIoreg,
   findDongleMac,
   findDongleLinux,
   findDongleWindows,
@@ -25,6 +26,14 @@ import type { WfbngStatus } from '../../shared/camera-types.js';
 
 export const WFB_RX_BINARY = 'ardudeck-wfb-rx';
 
+
+/**
+ * Consecutive libusb failures that mean the adapter is gone rather than busy.
+ *
+ * Low on purpose: the driver produces these faster than the console can be
+ * read, so anything higher is already a flood by the time it trips.
+ */
+const USB_FAILURE_LIMIT = 8;
 
 class WfbngReceiver {
   private proc: ChildProcess | null = null;
@@ -86,7 +95,16 @@ class WfbngReceiver {
       });
     try {
       if (process.platform === 'darwin') {
-        return findDongleMac(await run('system_profiler', ['-json', 'SPUSBDataType']));
+        // system_profiler first: it names the device properly. But on some
+        // macOS builds it returns an empty document and still exits 0, so a
+        // dongle that is plugged in reads as absent. ioreg sees the same
+        // registry without that failure, and is the fallback rather than the
+        // primary only because its names are terser.
+        const viaProfiler = findDongleMac(
+          await run('system_profiler', ['-json', 'SPUSBDataType']),
+        );
+        if (viaProfiler) return viaProfiler;
+        return findDongleIoreg(await run('ioreg', ['-p', 'IOUSB', '-l', '-w', '0']));
       }
       if (process.platform === 'linux') {
         return findDongleLinux(await run('lsusb', []));
@@ -173,12 +191,36 @@ class WfbngReceiver {
       }
     });
     // stderr: human-readable receiver log -> app console.
+    //
+    // Unplugging the adapter turns this into a firehose: the driver keeps
+    // polling a device that is gone and every failed transfer is another
+    // libusb error, thousands a second, burying everything else in the
+    // console. A dongle that has been pulled is not a stream of errors, it is
+    // one event, so the run is ended and said once.
+    let usbFailures = 0;
     this.proc.stderr?.on('data', (buf: Buffer) => {
       for (const raw of buf.toString().split('\n')) {
         const line = raw.trim();
         if (!line) continue;
         const level = line.startsWith('[error]') ? 'error' : line.startsWith('[warn]') ? 'warn' : 'info';
-        this.logSink?.(level, `wfb-rx: ${line.replace(/^\[\w+\]\s*/, '')}`);
+        const message = line.replace(/^\[\w+\]\s*/, '');
+
+        if (/libusb|no device|LIBUSB_ERROR/i.test(message)) {
+          usbFailures += 1;
+          // A few are normal on a busy link; a flood means the device left.
+          if (usbFailures === USB_FAILURE_LIMIT) {
+            this.logSink?.(
+              'warn',
+              'wfb-rx: the adapter stopped responding (unplugged?). Receiver stopped.',
+            );
+            void this.stop();
+          }
+          if (usbFailures >= USB_FAILURE_LIMIT) continue;
+        } else {
+          usbFailures = 0;
+        }
+
+        this.logSink?.(level, `wfb-rx: ${message}`);
       }
     });
     this.proc.on('exit', (code) => {

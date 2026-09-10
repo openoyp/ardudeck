@@ -18,6 +18,7 @@ import {
   File,
   ChevronRight,
   HardDrive,
+  Eraser,
   Home,
   RefreshCw,
   Download,
@@ -66,6 +67,9 @@ export const FilesTab: React.FC = () => {
   const [eraseLogsOpen, setEraseLogsOpen] = useState(false);
   const [erasingLogs, setErasingLogs] = useState(false);
   const [eraseLogsDone, setEraseLogsDone] = useState(false);
+  const [formatOpen, setFormatOpen] = useState(false);
+  const [formatting, setFormatting] = useState(false);
+  const [formatDone, setFormatDone] = useState(false);
 
   const refresh = useCallback(async (target: string) => {
     setLoading(true);
@@ -133,6 +137,24 @@ export const FilesTab: React.FC = () => {
       setErasingLogs(false);
     }
   }, [path, refresh, refreshStorageInfo]);
+
+  const handleFormat = useCallback(async () => {
+    setFormatOpen(false);
+    setFormatting(true);
+    setFormatDone(false);
+    try {
+      const sent = await window.electronAPI.logFormatSd();
+      if (!sent) return;
+      // Format runs on the FC for several seconds; wait before re-reading.
+      await new Promise((r) => setTimeout(r, 6000));
+      refreshStorageInfo();
+      void refresh(DEFAULT_PATH);
+      setPath(DEFAULT_PATH);
+      setFormatDone(true);
+    } finally {
+      setFormatting(false);
+    }
+  }, [refresh, refreshStorageInfo]);
 
   const fcPathFor = useCallback((entry: DirEntry) =>
     path.endsWith('/') ? `${path}${entry.name}` : `${path}/${entry.name}`,
@@ -261,6 +283,9 @@ export const FilesTab: React.FC = () => {
         erasing={erasingLogs}
         eraseDone={eraseLogsDone}
         onEraseLogs={() => setEraseLogsOpen(true)}
+        formatting={formatting}
+        formatDone={formatDone}
+        onFormat={() => setFormatOpen(true)}
       />
 
       <PathBar
@@ -364,6 +389,13 @@ export const FilesTab: React.FC = () => {
         <ConfirmEraseLogsModal
           onCancel={() => setEraseLogsOpen(false)}
           onConfirm={handleEraseLogs}
+        />
+      )}
+
+      {formatOpen && (
+        <ConfirmFormatModal
+          onCancel={() => setFormatOpen(false)}
+          onConfirm={handleFormat}
         />
       )}
     </ChromedShell>
@@ -563,6 +595,9 @@ function SdStorageCard({
   erasing,
   eraseDone,
   onEraseLogs,
+  formatting,
+  formatDone,
+  onFormat,
 }: {
   storageInfo: { totalBytes: number; usedBytes: number; availableBytes: number } | null;
   cardUsage: CardUsage | null;
@@ -571,6 +606,9 @@ function SdStorageCard({
   erasing: boolean;
   eraseDone: boolean;
   onEraseLogs: () => void;
+  formatting: boolean;
+  formatDone: boolean;
+  onFormat: () => void;
 }) {
   const hasInfo = storageInfo !== null && storageInfo.totalBytes > 0;
   const pct = hasInfo ? Math.min(100, (storageInfo.usedBytes / storageInfo.totalBytes) * 100) : 0;
@@ -653,15 +691,64 @@ function SdStorageCard({
         </div>
         <button
           onClick={onEraseLogs}
-          disabled={erasing}
+          disabled={erasing || formatting}
           data-tip="Erase all flight logs on the SD card"
           className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 disabled:opacity-50 transition-colors"
         >
           <Trash2 className="w-3.5 h-3.5" />
           {erasing ? 'Erasing...' : eraseDone ? 'Logs erased' : 'Erase flight logs'}
         </button>
+        <button
+          onClick={onFormat}
+          disabled={formatting || erasing}
+          data-tip="Reformat the entire SD card (erases everything, including non-log files)"
+          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 disabled:opacity-50 transition-colors"
+        >
+          <Eraser className="w-3.5 h-3.5" />
+          {formatting ? 'Formatting...' : formatDone ? 'Formatted' : 'Format card'}
+        </button>
       </div>
     </div>
+  );
+}
+
+function ConfirmFormatModal({
+  onCancel,
+  onConfirm,
+}: {
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <ModalShell onCancel={onCancel}>
+      <div className="text-content font-medium mb-1">Reformat the SD card?</div>
+      <div className="text-xs text-content-secondary mb-4">
+        This erases <span className="text-content font-medium">everything</span> on the card, flight logs
+        and any other files, and lays down a fresh filesystem. Use it to clear a corrupt card or leftover
+        files from another device.
+        <span className="block mt-1 text-content-secondary">
+          Your parameters are safe: they live in the flight controller, not on the card. Lua scripts and
+          terrain data on the card will be lost.
+        </span>
+        <span className="block mt-1 text-amber-400">
+          The vehicle stops logging until this finishes (a few seconds). Do not do this while armed.
+        </span>
+      </div>
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={onCancel}
+          className="px-3 py-1.5 rounded text-xs text-content hover:bg-surface-raised"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onConfirm}
+          className="px-3 py-1.5 rounded text-xs bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30"
+        >
+          Format card
+        </button>
+      </div>
+    </ModalShell>
   );
 }
 

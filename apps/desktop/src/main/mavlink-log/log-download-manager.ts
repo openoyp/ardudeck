@@ -90,6 +90,21 @@ export class LogDownloadManager {
     this.log('warn', 'LOG_ERASE sent: erasing all logs on the vehicle SD card');
   }
 
+  /** MAV_CMD_STORAGE_FORMAT reformats the SD card. param1=1 format, param2=1 reset. */
+  async formatStorage(): Promise<void> {
+    const MAV_CMD_STORAGE_FORMAT = 526;
+    const payload = serializeCommandLong({
+      targetSystem: this.targetSystem,
+      targetComponent: this.targetComponent,
+      command: MAV_CMD_STORAGE_FORMAT,
+      confirmation: 0,
+      param1: 1, param2: 1, param3: 0, param4: 0, param5: 0, param6: 0, param7: 0,
+    });
+    const packet = await this.sendPacket(COMMAND_LONG_ID, payload, COMMAND_LONG_CRC_EXTRA);
+    await this.writeTransport(packet);
+    this.log('warn', 'STORAGE_FORMAT sent: reformatting the vehicle SD card');
+  }
+
   /** null = firmware never answered; message capacities are MiB, returned as bytes. */
   async requestStorageInfo(): Promise<{ totalBytes: number; usedBytes: number; availableBytes: number } | null> {
     const MAV_CMD_REQUEST_MESSAGE = 512;

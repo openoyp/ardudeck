@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { findDongleMac, findDongleLinux, findDongleWindows, buildReceiverArgs } from './wfbng-dongle.js';
+import {
+  findDongleMac,
+  findDongleIoreg,
+  findDongleLinux,
+  findDongleWindows,
+  buildReceiverArgs,
+} from './wfbng-dongle.js';
 
 describe('wfb-ng dongle detection parsers', () => {
   it('finds the RTL8812AU in system_profiler JSON (real capture shape)', () => {
@@ -44,5 +50,40 @@ describe('wfb-ng dongle detection parsers', () => {
   it('builds the receiver contract args', () => {
     const args = buildReceiverArgs({ gsKeyPath: '/keys/gs.key', channel: 161, bandwidth: 20, outputPort: 5600 });
     expect(args).toEqual(['--key', '/keys/gs.key', '--channel', '161', '--bandwidth', '20', '--output', 'udp://127.0.0.1:5600']);
+  });
+});
+
+describe('findDongleIoreg', () => {
+  it('finds the RTL8812AU in ioreg output when system_profiler comes back empty', () => {
+    // Real capture from a Mac where `system_profiler SPUSBDataType` printed
+    // nothing at all and exited 0, so the app told the pilot to plug in a
+    // dongle that was already plugged in. ioreg reports ids in decimal:
+    // 3034 = 0x0bda, 34834 = 0x8812.
+    const ioreg = `
+  | | |   "USB Product Name" = "USB2.0 Hub"
+  | | |   "idVendor" = 8457
+  | | |   "idProduct" = 10263
+  | |       "USB Product Name" = "802.11n NIC"
+  | |       "idProduct" = 34834
+  | |       "idVendor" = 3034
+  |         "USB Product Name" = "USB 10_100_1000 LAN"
+  |         "idVendor" = 3034
+  |         "idProduct" = 33107
+`;
+    expect(findDongleIoreg(ioreg)).toEqual({
+      vendorId: 0x0bda,
+      productId: 0x8812,
+      name: '802.11n NIC',
+    });
+  });
+
+  it('ignores other Realtek devices on the same bus', () => {
+    // The kit's ethernet adapter is also 0x0bda and sits next to it.
+    const ioreg = `
+  |         "USB Product Name" = "USB 10_100_1000 LAN"
+  |         "idVendor" = 3034
+  |         "idProduct" = 33107
+`;
+    expect(findDongleIoreg(ioreg)).toBeNull();
   });
 });
