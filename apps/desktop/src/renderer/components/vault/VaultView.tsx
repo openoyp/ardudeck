@@ -18,7 +18,6 @@ import {
   ChevronRight,
   Check,
   Pencil,
-  Plus,
 } from 'lucide-react';
 import { useFleetRepoStore, useCurrentVaultUnit, isRestoreTargetMatch, isRestoreFirmwareMatch } from '../../stores/fleet-repo-store';
 import { VaultAutoSyncToggle } from './VaultAutoSyncToggle';
@@ -590,7 +589,6 @@ export function VaultView() {
   const setFilterPrefix = useFleetRepoStore((s) => s.setFilterPrefix);
   const refresh = useFleetRepoStore((s) => s.refresh);
   const snapshotParams = useFleetRepoStore((s) => s.snapshotParams);
-  const snapshotAsNewVehicle = useFleetRepoStore((s) => s.snapshotAsNewVehicle);
   const snapshotMission = useFleetRepoStore((s) => s.snapshotMission);
   const snapshotArea = useFleetRepoStore((s) => s.snapshotArea);
   const renameUnit = useFleetRepoStore((s) => s.renameUnit);
@@ -618,13 +616,6 @@ export function VaultView() {
   const [siteName, setSiteName] = useState('');
   const [missionName, setMissionName] = useState('');
   const [preview, setPreview] = useState<{ title: string; content: string } | null>(null);
-  const [newVehicleOpen, setNewVehicleOpen] = useState(false);
-  const [newVehicleName, setNewVehicleName] = useState('');
-
-  const isSitl = useConnectionStore((s) => s.connectionState.isSitl ?? false);
-  // Connected to a real vehicle the vault can't pin to a unit (no hardware UID,
-  // or never snapshotted): the "new vehicle" action is the way forward.
-  const unidentified = isConnected && !isSitl && !currentUnit;
 
   useEffect(() => {
     refresh();
@@ -727,78 +718,15 @@ export function VaultView() {
           <div className="p-3 border-b border-subtle">
             <button
               onClick={() => snapshotParams()}
-              disabled={snapshotBusy || !isConnected || paramCount === 0 || unidentified}
+              disabled={snapshotBusy || !isConnected || paramCount === 0}
               className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors disabled:opacity-40"
-              data-tip={!isConnected ? 'Connect a vehicle first' : paramCount === 0 ? 'Waiting for parameters' : unidentified ? 'This vehicle has no saved identity yet — use New vehicle below' : undefined}
+              data-tip={!isConnected ? 'Connect a vehicle first' : paramCount === 0 ? 'Waiting for parameters' : undefined}
             >
               <Camera className="w-3.5 h-3.5" />
               <span className="truncate">
                 {currentUnit ? `Snapshot ${currentUnit.name}` : 'Snapshot vehicle params'}
               </span>
             </button>
-
-            {/* Start a fresh unit for the connected vehicle. Always available on
-                a real link; the only path when the board has no unique UID. */}
-            {isConnected && !isSitl && (
-              newVehicleOpen ? (
-                <div className="mt-1.5 flex items-center gap-1.5">
-                  <input
-                    autoFocus
-                    value={newVehicleName}
-                    onChange={(e) => setNewVehicleName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        void snapshotAsNewVehicle(newVehicleName);
-                        setNewVehicleOpen(false);
-                        setNewVehicleName('');
-                      } else if (e.key === 'Escape') {
-                        setNewVehicleOpen(false);
-                      }
-                    }}
-                    placeholder="Vehicle name"
-                    className="flex-1 min-w-0 text-[11px] bg-surface-input border border-blue-500/40 rounded px-2 py-1 text-content focus:outline-none"
-                  />
-                  <button
-                    onClick={() => {
-                      void snapshotAsNewVehicle(newVehicleName);
-                      setNewVehicleOpen(false);
-                      setNewVehicleName('');
-                    }}
-                    disabled={snapshotBusy || paramCount === 0}
-                    className="px-2 py-1 rounded text-[11px] bg-blue-600 hover:bg-blue-500 text-white transition-colors disabled:opacity-40"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setNewVehicleOpen(false)}
-                    className="px-2 py-1 rounded text-[11px] text-content-tertiary hover:bg-surface-raised transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setNewVehicleOpen(true)}
-                  disabled={paramCount === 0}
-                  className={`mt-1.5 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors disabled:opacity-40 ${
-                    unidentified
-                      ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                      : 'border border-subtle text-content-secondary hover:bg-surface-raised'
-                  }`}
-                  data-tip="Save these params under a brand-new vehicle instead of the matched one"
-                >
-                  <Plus className="w-3 h-3" />
-                  Snapshot as new vehicle
-                </button>
-              )
-            )}
-
-            {unidentified && !newVehicleOpen && (
-              <p className="mt-1.5 text-[10px] leading-relaxed text-content-tertiary">
-                This board reports no unique ID, so it can't be matched to a saved vehicle. Start one
-                with "Snapshot as new vehicle".
-              </p>
-            )}
             {/* Manual override for when automatic vehicle matching guesses wrong */}
             {isConnected && units.length > 0 && (
               <div className="mt-1.5 flex items-center gap-1.5">

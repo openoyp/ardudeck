@@ -4,6 +4,8 @@ import { useTelemetryStore } from '../stores/telemetry-store';
 import { useConnectionStore } from '../stores/connection-store';
 import { useNavigationStore } from '../stores/navigation-store';
 import { useParameterStore } from '../stores/parameter-store';
+import { useLogStore } from '../stores/log-store';
+import { CLAUDE_LOG_TOOLS, executeLogTool, listMessageTypes } from '../components/logs/log-ai-tools';
 import { useMissionStore } from '../stores/mission-store';
 import { useCommandTargetStore, commandTargetKey } from '../stores/command-target-store';
 import {
@@ -133,6 +135,25 @@ export function createRendererHostApi(
       },
     },
 
+    logs: {
+      getCurrent: () => {
+        const log = useLogStore.getState().currentLog;
+        if (!log) return null;
+        const path = useLogStore.getState().currentLogPath;
+        return {
+          name: path ? (path.split(/[\\/]/).pop() ?? 'log') : 'log',
+          path,
+          messageTypes: listMessageTypes(log).length,
+        };
+      },
+      tools: () => CLAUDE_LOG_TOOLS as unknown as unknown[],
+      callTool: (name, input) => {
+        const log = useLogStore.getState().currentLog;
+        if (!log) return { error: 'No flight log is open in the Log Explorer.' };
+        return executeLogTool(name, input, log);
+      },
+    },
+
     pty: {
       create: (opts) => window.electronAPI.moduleHostPtyCreate(slug, opts),
       write: (id, data) => window.electronAPI.moduleHostPtyWrite(id, data),
@@ -143,6 +164,8 @@ export function createRendererHostApi(
     },
 
     invoke: (channel, data) => window.electronAPI.moduleHostInvoke(slug, channel, data),
+
+    on: (channel, cb) => window.electronAPI.moduleHostOnEvent(slug, channel, cb),
 
     hud: {
       getProjection: () => currentHudProjection(),
@@ -236,6 +259,13 @@ export function createRendererHostApi(
         // Store action, not raw IPC: it applies identity rules (override,
         // SITL quarantine) and refreshes vault state for every consumer.
         const ok = await useFleetRepoStore.getState().snapshotParams(note);
+        return ok
+          ? { success: true }
+          : { success: false, error: useFleetRepoStore.getState().lastError ?? 'Snapshot failed' };
+      },
+      snapshotAsNewVehicle: async (name?: string, note?: string) => {
+        requireVault();
+        const ok = await useFleetRepoStore.getState().snapshotAsNewVehicle(name, note);
         return ok
           ? { success: true }
           : { success: false, error: useFleetRepoStore.getState().lastError ?? 'Snapshot failed' };

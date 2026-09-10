@@ -1,4 +1,4 @@
-import { app, ipcMain, safeStorage } from 'electron';
+import { app, ipcMain, safeStorage, BrowserWindow } from 'electron';
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { MainHostApi, ModuleManifest } from '@ardudeck/module-sdk';
@@ -54,6 +54,10 @@ export function createMainHostApi(manifest: ModuleManifest): MainHostApi {
       if (level === 'error') console.error(tag, ...args);
       else if (level === 'warn') console.warn(tag, ...args);
       else console.log(tag, ...args);
+    },
+    emit(channel, data) {
+      const win = BrowserWindow.getAllWindows()[0];
+      win?.webContents.send(`module:${manifest.slug}:event:${channel}`, data);
     },
     onRendererMessage(channel, handler) {
       const fullChannel = `module:${manifest.slug}:${channel}`;

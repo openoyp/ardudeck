@@ -2380,6 +2380,13 @@ const api = {
   moduleHostInvoke: (slug: string, channel: string, data: unknown): Promise<unknown> =>
     ipcRenderer.invoke(`module:${slug}:${channel}`, data),
 
+  moduleHostOnEvent: (slug: string, channel: string, cb: (data: unknown) => void): (() => void) => {
+    const ch = `module:${slug}:event:${channel}`;
+    const listener = (_e: unknown, data: unknown) => cb(data);
+    ipcRenderer.on(ch, listener);
+    return () => ipcRenderer.removeListener(ch, listener);
+  },
+
   // =============================================================================
   // Companion Computer (Agent WebSocket)
   // =============================================================================

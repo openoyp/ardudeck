@@ -17,6 +17,7 @@ describe('loadModuleMain', () => {
       secureRead: async () => undefined,
       secureWrite: async () => {},
       log: logSpy,
+      emit: () => {},
       onRendererMessage: () => () => {},
     };
     const result = await loadModuleMain(FIXTURE, 'main.js', host);
@@ -33,6 +34,7 @@ describe('loadModuleMain', () => {
       secureRead: async () => undefined,
       secureWrite: async () => {},
       log: () => {},
+      emit: () => {},
       onRendererMessage: () => () => {},
     };
     await expect(loadModuleMain(FIXTURE, 'nope.js', host)).rejects.toThrow();

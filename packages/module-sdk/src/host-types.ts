@@ -272,6 +272,20 @@ export interface RendererHostApi {
     get(name: string): Promise<unknown>;
     set(name: string, value: number): Promise<void>;
   };
+  /**
+   * Read-only access to the flight log open in the Log Explorer, for modules
+   * that reason about a past flight (crash analysis, tuning review). The tool
+   * definitions and executor mirror the host's own AI log analysis, so a module
+   * can run a Claude tool-use loop over the log without shipping a parser.
+   */
+  logs: {
+    /** The log currently open in the Log Explorer, or null if none is loaded. */
+    getCurrent(): { name: string; path: string | null; messageTypes: number } | null;
+    /** Claude tool definitions for querying the loaded log. */
+    tools(): unknown[];
+    /** Run a log query tool by name against the loaded log; throws if none is open. */
+    callTool(name: string, input: Record<string, unknown>): unknown;
+  };
   pty: {
     create(opts: PtyCreateOptions): Promise<string>;
     write(id: string, data: string): Promise<void>;
@@ -281,6 +295,8 @@ export interface RendererHostApi {
     onExit(id: string, cb: (code: number) => void): () => void;
   };
   invoke(channel: string, data: unknown): Promise<unknown>;
+  /** Subscribe to events the module's main process pushes via `MainHostApi.emit`. */
+  on(channel: string, cb: (data: unknown) => void): () => void;
   log(level: 'info' | 'warn' | 'error', ...args: unknown[]): void;
   registerMountPoint(name: MountPointName, component: ComponentType): void;
   /**
@@ -297,6 +313,8 @@ export interface RendererHostApi {
     readFile(path: string, oid?: string): Promise<string | null>;
     /** Snapshot the connected vehicle's parameters (host identity rules apply) */
     snapshotParams(note?: string): Promise<{ success: boolean; changed?: boolean; error?: string }>;
+    /** Snapshot under a fresh minted identity (no unique board UID, or wrong auto-match). `name` seeds the unit label. */
+    snapshotAsNewVehicle(name?: string, note?: string): Promise<{ success: boolean; error?: string }>;
     sync(): Promise<{ success: boolean; error?: string }>;
   };
   /**
@@ -397,6 +415,8 @@ export interface MainHostApi {
   secureRead(key: string): Promise<string | undefined>;
   secureWrite(key: string, value: string): Promise<void>;
   log(level: 'info' | 'warn' | 'error', ...args: unknown[]): void;
+  /** Push an event to the module's renderer (subscribe with `RendererHostApi.on`). For streaming. */
+  emit(channel: string, data: unknown): void;
   onRendererMessage(
     channel: string,
     handler: (data: unknown) => unknown | Promise<unknown>,
