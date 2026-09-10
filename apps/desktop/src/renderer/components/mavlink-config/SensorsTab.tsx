@@ -24,6 +24,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useTelemetryStore } from '../../stores/telemetry-store';
+import { GpsOffsetSection } from './sensors/GpsOffsetSection';
 
 // Sensor status indicator
 function SensorStatus({
@@ -374,6 +375,8 @@ const SensorsTab: React.FC = () => {
           <SensorStatus name="Battery" healthy={sensorHealth.battery} enabled={sensorEnabled.battery} icon={Battery} />
         </div>
       </div>
+
+      <GpsOffsetSection />
 
       {/* No data warning */}
       {!attitude && !gps && !battery && (

@@ -46,13 +46,21 @@ export function TrainerRegionStep({
             {catalogue && ` · ${catalogue.regions.length} available`}
           </p>
         </div>
-        <div className="flex shrink-0 gap-2">
-          <button className="btn btn-secondary gap-2" onClick={onRescan} disabled={rescanning}>
-            <RefreshCw className={`h-4 w-4 ${rescanning ? 'animate-spin' : ''}`} />
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            className="inline-flex items-center gap-1.5 rounded-lg border border-subtle bg-surface-raised px-3 py-1.5 text-sm font-medium text-content transition-colors hover:border-strong hover:bg-surface disabled:opacity-50"
+            onClick={onRescan}
+            disabled={rescanning}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${rescanning ? 'animate-spin' : ''}`} />
             Rescan
           </button>
-          <button className="btn btn-primary gap-2" onClick={onNew} disabled={!catalogue}>
-            <Plus className="h-4 w-4" />
+          <button
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
+            onClick={onNew}
+            disabled={!catalogue}
+          >
+            <Plus className="h-3.5 w-3.5" />
             New region
           </button>
         </div>

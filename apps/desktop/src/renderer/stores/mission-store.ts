@@ -21,6 +21,7 @@ import {
   type MissionMirrorSnapshot,
 } from '../../shared/mission-group-types';
 import { splitMissionForFleet } from '../components/mission/distribute-fleet';
+import { buildArduPilotWireMission, shiftJumpTargets } from '../../shared/mission-wire';
 import { useSettingsStore } from './settings-store';
 import { useConnectionStore } from './connection-store';
 import { useParameterStore } from './parameter-store';
@@ -171,6 +172,13 @@ interface HomePosition {
   lat: number;
   lon: number;
   alt: number;  // Altitude (usually 0 for ground level)
+}
+
+// ArduPilot needs the HOME slot restored at seq 0 (mission-wire.ts); PX4 must not.
+function toWireMission(items: MissionItem[], home: HomePosition | null): MissionItem[] {
+  const isPx4 = useConnectionStore.getState().connectionState.firmware === 'px4';
+  if (isPx4) return items;
+  return buildArduPilotWireMission(items, home);
 }
 
 /**
@@ -687,10 +695,12 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
         }
       }
 
-      // MAVLink path for ArduPilot boards
-      // Home position is a planning reference only — ArduPilot sets its own home on arm via GPS.
-      const result = await window.electronAPI?.uploadMission(itemsToUpload);
+      // MAVLink path
+      const wireItems = toWireMission(itemsToUpload, get().homePosition);
+      const result = await window.electronAPI?.uploadMission(wireItems);
       if (result?.success) {
+        // Raw FC seqs run 1 ahead of UI seqs once HOME occupies slot 0.
+        set({ fcSeqOffset: wireItems.length - itemsToUpload.length });
         // Don't set isLoading: false here - wait for MISSION_ACK via onMissionUploadComplete
         return true;
       } else {
@@ -743,8 +753,10 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
         return false;
       }
 
-      const result = await window.electronAPI?.uploadMission(itemsToUpload);
+      const wireItems = toWireMission(itemsToUpload, get().homePosition);
+      const result = await window.electronAPI?.uploadMission(wireItems);
       if (result?.success) {
+        set({ fcSeqOffset: wireItems.length - itemsToUpload.length });
         // isLoading cleared on MISSION_ACK via onMissionUploadComplete.
         return true;
       }
@@ -765,7 +777,8 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
     // Snapshot this group so the "on vehicle" indicator reflects it on success.
     set({ pendingUploadGroupIds: [groupId] });
     try {
-      const result = await window.electronAPI?.uploadMissionToVehicle?.(vehicleKey, itemsToUpload);
+      // fcSeqOffset untouched: MISSION_CURRENT tracking for fleet vehicles is per-vehicle.
+      const result = await window.electronAPI?.uploadMissionToVehicle?.(vehicleKey, toWireMission(itemsToUpload, get().homePosition));
       if (result?.success) {
         set({
           isDirty: false,
@@ -790,7 +803,8 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
       set({ error: 'No waypoints in this group to save' });
       return false;
     }
-    const result = await window.electronAPI?.saveMissionToFile(items);
+    // .waypoints files also treat seq 0 as HOME, so the wire builder applies.
+    const result = await window.electronAPI?.saveMissionToFile(buildArduPilotWireMission(items, get().homePosition));
     if (result?.success) {
       set({ lastSuccessMessage: `Saved ${items.length} waypoints to file` });
       return true;
@@ -1411,7 +1425,9 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
       .map((g, i) => ({ ...g, order: i }));
 
     const startSeq = keptItems.length;
-    const stampedNewItems = filteredItems.map((it, i) => ({
+    // DO_JUMP targets are raw FC seqs; realign them with the renumbered list.
+    const jumpAligned = homeWasStripped ? shiftJumpTargets(filteredItems, -1) : filteredItems;
+    const stampedNewItems = jumpAligned.map((it, i) => ({
       ...it,
       seq: startSeq + i,
       groupId: importedGroup.id,
@@ -1465,7 +1481,7 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
     });
 
     // Renumber remaining items starting from 0
-    const renumberedItems = filteredItems.map((item, index) => ({
+    const renumberedItems = (homeWasStripped ? shiftJumpTargets(filteredItems, -1) : filteredItems).map((item, index) => ({
       ...item,
       seq: index,
     }));

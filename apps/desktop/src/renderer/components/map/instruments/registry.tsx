@@ -36,7 +36,8 @@ import { InstrumentStrip } from './InstrumentStrip';
 import { FlightControlInstrument } from './FlightControlInstrument';
 import { CompactReadout, type ReadoutSource } from './CompactReadout';
 import { PANEL_WIDTH } from './stripMetrics';
-import { useLinkUp } from './useLinkUp';
+import { useLinkUp, useHeartbeatAgeMs, HEARTBEAT_STALE_MS } from './useLinkUp';
+import { LinkInstrument } from './LinkInstrument';
 import { useTelemetryFresh } from './useTelemetryFresh';
 import { RtkInstrument } from './RtkInstrument';
 
@@ -696,58 +697,6 @@ function FlightModeInstrument(): JSX.Element {
             {armed ? 'ARMED' : 'DISARMED'}
           </span>
         )}
-      </div>
-    </InstrumentStrip>
-  );
-}
-
-// Heartbeat freshness, shared by the link strip and the annunciator LINK cell.
-// Same recipe as HeartbeatDot: a 1 Hz tick so staleness flips on its own when
-// telemetry stops arriving and no new render is triggered by data.
-const HEARTBEAT_STALE_MS = 3000;
-const HEARTBEAT_LOST_MS = 10000;
-
-function useHeartbeatAgeMs(): number {
-  const lastHeartbeat = useTelemetryStore((s) => s.lastHeartbeat);
-  const [, force] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => force((n) => n + 1), 1000);
-    return () => clearInterval(t);
-  }, []);
-  return lastHeartbeat === 0 ? Infinity : Date.now() - lastHeartbeat;
-}
-
-function LinkInstrument(): JSX.Element {
-  const connected = useLinkUp();
-  const rssi = useTelemetryStore((s) => s.rcChannels.rssi);
-  const chancount = useTelemetryStore((s) => s.rcChannels.chancount);
-  const radioStatus = useTelemetryStore((s) => s.radioStatus);
-  const age = useHeartbeatAgeMs();
-
-  const dotColor =
-    !connected || age >= HEARTBEAT_LOST_MS
-      ? GAUGE_COLORS.red
-      : age >= HEARTBEAT_STALE_MS
-        ? GAUGE_COLORS.amber
-        : GAUGE_COLORS.green;
-  // 255 = "unknown" per MAVLink; 0 chancount means no RC data at all.
-  // RC-side RSSI first; fall back to the telemetry modem's RADIO_STATUS
-  // (SiK/RFD900/ELRS) when the FC reports no usable RC RSSI.
-  const rcRssiKnown = connected && chancount > 0 && rssi !== 255;
-  const radioRssiKnown = connected && radioStatus !== null && radioStatus.rssi !== 255;
-  const rssiKnown = rcRssiKnown || radioRssiKnown;
-  const effectiveRssi = rcRssiKnown ? rssi : radioStatus?.rssi ?? 0;
-  const rssiPct = Math.round((Math.min(effectiveRssi, 254) / 254) * 100);
-
-  return (
-    <InstrumentStrip label="Link">
-      <div className="flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: dotColor }} />
-        <span className="text-[15px] font-semibold leading-none text-[var(--gauge-text)]">
-          {rssiKnown ? rssiPct : '--'}
-          <span className="text-[8px] font-normal text-[var(--gauge-text-dim)] ml-0.5">%</span>
-        </span>
-        <span className="ml-auto text-[8px] leading-none text-[var(--gauge-text-dim)]">RSSI</span>
       </div>
     </InstrumentStrip>
   );

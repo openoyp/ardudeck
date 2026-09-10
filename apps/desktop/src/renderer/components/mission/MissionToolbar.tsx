@@ -19,6 +19,7 @@ import { VaultSyncBadge } from '../vault/VaultSyncBadge';
 import { useCargoEnabled, MISSION_LIBRARY_CARGO_SLUG } from '../../modules/capabilities';
 import { useFleetVehicles } from '../../hooks/useFleet';
 import { useVehicleAppearanceStore, resolveVehicleColor } from '../../stores/vehicle-appearance-store';
+import { buildArduPilotWireMission } from '../../../shared/mission-wire';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -494,7 +495,11 @@ export function MissionToolbar({ onResetLayout, showToast }: MissionToolbarProps
     if (!hasItems) return;
 
     if (activeMode === 'mission') {
-      const result = await window.electronAPI?.saveMissionToFile(missionStore.missionItems, format);
+      // .waypoints treats line 0 as HOME; .plan carries home separately and kmz is visual.
+      const exportItems = format === 'waypoints'
+        ? buildArduPilotWireMission(missionStore.missionItems, missionStore.homePosition)
+        : missionStore.missionItems;
+      const result = await window.electronAPI?.saveMissionToFile(exportItems, format);
       if (result?.success) {
         showToast?.(`Exported ${missionStore.missionItems.length} waypoints to ${format === 'plan' ? '.plan' : format === 'kmz' ? '.kmz' : '.waypoints'}`, 'success');
       } else if (result?.error && result.error !== 'Cancelled') {

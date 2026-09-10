@@ -157,7 +157,7 @@ export function TrainerView(): JSX.Element {
             <button
               key={s.id}
               onClick={() => setStep(s.id)}
-              className={`flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors ${
+              className={`flex w-full items-start gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors ${
                 active
                   ? 'border-blue-500/50 bg-blue-500/10'
                   : 'border-transparent hover:bg-surface-raised'
@@ -197,7 +197,7 @@ export function TrainerView(): JSX.Element {
             </span>
           </div>
           <button
-            className="btn btn-primary w-full gap-2"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition-all hover:from-blue-500 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={busy || !ready}
             onClick={() => void fly()}
           >
