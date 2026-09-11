@@ -9,6 +9,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { setupIpcHandlers, cleanupOnShutdown } from './ipc-handlers.js';
 import { setupModuleIpc } from './modules/module-ipc.js';
+import { setupAppIpc } from './apps/app-ipc.js';
 import { registerTileCacheScheme, setupTileCacheProtocol, setupTileCacheHandlers } from './tile-cache.js';
 import { registerModuleSchemePrivileges, setupModuleProtocol } from './modules/module-protocol.js';
 import { setupDeepLinks, handleStartupArgs, flushPendingDeepLink, deliverDeepLinkUrl } from './modules/deep-link.js';
@@ -266,6 +267,7 @@ app.whenReady().then(() => {
   // Setup IPC handlers
   setupIpcHandlers(mainWindow);
   setupModuleIpc(mainWindow);
+  setupAppIpc(mainWindow);
   setupTileCacheHandlers(mainWindow);
 
   splashSetStatus(splash, 'Initializing systems');

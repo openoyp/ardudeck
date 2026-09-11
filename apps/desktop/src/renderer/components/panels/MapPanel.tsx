@@ -2532,6 +2532,7 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
         <button
           onClick={() => setControlsHidden(false)}
           data-tip="Show map controls"
+          data-arrange-chrome
           className="absolute top-2 right-2 z-[1000] p-1.5 rounded bg-surface text-content-secondary hover:text-content hover:bg-surface-raised shadow-lg transition-colors"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -2540,7 +2541,7 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
           </svg>
         </button>
       ) : (
-      <div data-tour="telemetry-map-overlays" className="absolute top-2 right-2 z-[1000] flex flex-col gap-1">
+      <div data-tour="telemetry-map-overlays" data-arrange-chrome className="absolute top-2 right-2 z-[1000] flex flex-col gap-1">
         {/* Clean-screen toggle: hides this whole column, leaving the map and
             the flight instruments. Sits at the top of the stack as its handle. */}
         <button
@@ -2663,7 +2664,7 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
       )}
 
       {/* Instruments menu (top-left counterpart of the Layers menu) */}
-      <div className="absolute top-2 left-2 z-[1000]">
+      <div data-arrange-chrome className="absolute top-2 left-2 z-[1000]">
         <InstrumentsMenu />
       </div>
 

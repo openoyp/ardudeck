@@ -46,16 +46,17 @@ export const MISSION_LIBRARY_CARGO_SLUG = 'com.ardudeck.mission-library';
 export const ADVISOR_CARGO_SLUG = 'ardudeck.advisor';
 
 /**
- * Cargo slug that delivers the ArduDeck Trainer.
+ * Slug of the ArduDeck Trainer, which is an APP rather than a cargo: a separate native program,
+ * one binary per platform, that this app launches instead of loading.
  *
- * Unlike the other entries here this cargo is INSTALLABLE, not activatable: the view ships in
- * this app, but the thing it launches is a downloaded bundle. The gate is the same either way,
- * because it only asks whether the cargo is present and enabled, so a Trainer view with nothing
- * behind it never appears in the rail.
+ * So its rail entry is NOT gated through CAPABILITIES below. Those ask whether a cargo is
+ * installed and enabled, and the Trainer can legitimately be present without the Hangar ever
+ * having installed it - somebody downloads it from the website, or runs a dev checkout. The
+ * honest test is the locator's, and `TrainerStatus.available` is what the rail reads.
  *
- * Must match `TRAINER_CARGO_SLUG` in `main/trainer/trainer-locator.ts`.
+ * Must match `TRAINER_APP_SLUG` in `main/trainer/trainer-locator.ts`.
  */
-export const TRAINER_CARGO_SLUG = 'com.ardudeck.trainer';
+export const TRAINER_APP_SLUG = 'com.ardudeck.trainer';
 
 export const CAPABILITIES: Capability[] = [
   // Example (not active): { slug: 'com.ardudeck.area-editor', viewId: 'mission' },
@@ -68,8 +69,6 @@ export const CAPABILITIES: Capability[] = [
   // Pre-Flight Weather Briefing: nav view plus the "View in detail" button on
   // the Vehicle & Status weather card (gated via isWeatherBriefingAvailable).
   { slug: WEATHER_CARGO_SLUG, viewId: 'weather' },
-  // ArduDeck Trainer: the nav view plus its quick action on the SITL screen.
-  { slug: TRAINER_CARGO_SLUG, viewId: 'trainer' },
 ];
 
 const GATED_VIEWS: ReadonlyMap<ViewId, string> = new Map(

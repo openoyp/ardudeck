@@ -16,6 +16,7 @@ import type { TrafficBatch, TrafficConfig, TrafficSource, ViewportBbox } from '.
 import type { NtripConfig, NtripStatus, NtripSourcetableResult } from '../shared/ntrip-types.js';
 import type { SystemInfo, NetworkInfo, MetricsData, ProcessInfo, LogEntry, FileEntry, ServiceInfo, ServiceAction, ContainerInfo, ContainerAction, ExtensionInfo } from '@ardudeck/companion-types';
 import type { CargoDetail, InstalledModule, ModuleProgress, PublicCargo, UpdateAvailable } from '../shared/module-types.js';
+import type { AppProgress, HangarApp, InstalledApp } from '../shared/app-types.js';
 import type { ParamChange, ParamCheckpoint } from '../shared/param-history-types.js';
 import type { AttitudeData, PositionData, GpsData, BatteryData, VfrHudData, WindData, FlightState, RcChannelsData } from '../shared/telemetry-types.js';
 import type { MotorTestStartRequest, MotorTestResponse } from '../shared/motor-test-types.js';
@@ -2315,6 +2316,25 @@ const api = {
     const handler = (_: unknown, progress: ModuleProgress) => callback(progress);
     ipcRenderer.on(IPC_CHANNELS.MODULE_PROGRESS, handler);
     return () => ipcRenderer.removeListener(IPC_CHANNELS.MODULE_PROGRESS, handler);
+  },
+
+  // Hangar apps: native programs, not cargo. Separate surface because none of the module
+  // vocabulary (licence key, enable/disable, manifest) applies to them.
+  appCatalogList: (): Promise<{ success: boolean; apps?: HangarApp[]; error?: string }> =>
+    ipcRenderer.invoke(IPC_CHANNELS.APP_CATALOG_LIST),
+
+  appList: (): Promise<InstalledApp[]> => ipcRenderer.invoke(IPC_CHANNELS.APP_LIST),
+
+  appInstall: (slug: string): Promise<{ success: boolean; app?: InstalledApp; error?: string }> =>
+    ipcRenderer.invoke(IPC_CHANNELS.APP_INSTALL, slug),
+
+  appUninstall: (slug: string): Promise<{ success: boolean; apps?: InstalledApp[]; error?: string }> =>
+    ipcRenderer.invoke(IPC_CHANNELS.APP_UNINSTALL, slug),
+
+  onAppProgress: (callback: (progress: AppProgress) => void) => {
+    const handler = (_: unknown, progress: AppProgress) => callback(progress);
+    ipcRenderer.on(IPC_CHANNELS.APP_PROGRESS, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.APP_PROGRESS, handler);
   },
 
   onModuleDeepLinkInstall: (

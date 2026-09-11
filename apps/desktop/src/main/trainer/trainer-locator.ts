@@ -3,7 +3,7 @@ import { join } from 'node:path';
 /**
  * Where the ArduDeck Trainer is on this machine, and how to run it.
  *
- * Four legitimate answers, and they are not variants of one another: an installed cargo bundle,
+ * Four legitimate answers, and they are not variants of one another: an app the Hangar installed,
  * an app the user installed themselves, a development checkout, and an explicit override. Each
  * needs a DIFFERENT spawn, because a macOS `.app` is a directory, a Windows build is an
  * executable, and a checkout is a directory that only Electron knows how to run. Returning a
@@ -13,8 +13,14 @@ import { join } from 'node:path';
 /** Points ArduDeck at a Trainer somewhere else. The escape hatch for a dev checkout. */
 export const TRAINER_PATH_ENV = 'ARDUDECK_TRAINER_PATH';
 
-/** The Hangar cargo that delivers the Trainer. */
-export const TRAINER_CARGO_SLUG = 'com.ardudeck.trainer';
+/**
+ * The Hangar APP that delivers the Trainer.
+ *
+ * An app, not a cargo: a cargo is JavaScript loaded into ArduDeck, and the Trainer is a separate
+ * native program with a different binary per platform. The slug is unchanged, so nothing that
+ * already refers to it by name has to move.
+ */
+export const TRAINER_APP_SLUG = 'com.ardudeck.trainer';
 
 export type TrainerTarget =
   /** A macOS application bundle. `exec` is the binary inside it. */
@@ -34,8 +40,8 @@ export interface LocateOptions {
   platform: NodeJS.Platform;
   /** `process.env[TRAINER_PATH_ENV]`. */
   override?: string | undefined;
-  /** `installPath` of the Trainer cargo, when it is installed. */
-  cargoPath?: string | undefined;
+  /** `installPath` of the Trainer app, when the Hangar installed it. */
+  installedPath?: string | undefined;
   /** `app.getPath('home')`. */
   homeDir: string;
 }
@@ -118,7 +124,7 @@ function defaultRoots(opts: LocateOptions): string[] {
 
 export function locateTrainer(opts: LocateOptions): LocateResult {
   const searched: string[] = [];
-  const candidates = [opts.override, opts.cargoPath, ...defaultRoots(opts)];
+  const candidates = [opts.override, opts.installedPath, ...defaultRoots(opts)];
 
   for (const path of candidates) {
     if (!path) continue;

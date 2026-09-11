@@ -376,25 +376,19 @@ let packetBatchTimer: NodeJS.Timeout | null = null;
 let lastReportedArmed: boolean | null = null;
 let mavlinkParser: MAVLinkParser | null = null;
 let heartbeatTimeout: NodeJS.Timeout | null = null;
-let heartbeatWatchdog: NodeJS.Timeout | null = null;
-let heartbeatGraceTimer: NodeJS.Timeout | null = null;
+let linkLivenessTimer: NodeJS.Timeout | null = null;
+let lastVehicleTrafficMs = 0;
+let lastVehicleHeartbeatMs = 0;
 
 // Link Doctor: raw bytes captured while waiting for the first heartbeat,
 // classified on timeout to explain WHAT the port was speaking (capped 4KB).
 let linkDoctorSample: Uint8Array[] = [];
 let linkDoctorSampleBytes = 0;
 
-// Heartbeat watchdog: detect when vehicle stops sending heartbeats.
-// Two-stage model (mimics Mission Planner behavior):
-//   1. After HEARTBEAT_STALE_MS of silence, mark the link "stale" and show a
-//      warning in the UI but keep the transport open. Many real-world drops
-//      (radio link, WireGuard tunnel, mavp2p router hiccups) recover within
-//      seconds; disconnecting aggressively boots the user back to the
-//      connection screen and is disruptive.
-//   2. After HEARTBEAT_GRACE_MS of continued silence, fully disconnect. The
-//      transport is also closed immediately on any underlying socket close.
-const HEARTBEAT_STALE_MS = 5000;
-const HEARTBEAT_GRACE_MS = 60000;
+// Link watchdog: two-stage (stale then disconnect) judged on TOTAL traffic
+// silence, never heartbeat silence alone; see link-liveness.ts.
+const HEARTBEAT_STALE_MS = LINK_STALE_MS;
+const HEARTBEAT_GRACE_MS = LINK_DEAD_MS;
 // Legacy constant retained for logging messages referencing the old window.
 const HEARTBEAT_WATCHDOG_MS = HEARTBEAT_STALE_MS;
 
@@ -416,6 +410,7 @@ const signingStore = new Store<{
 // Parameter history storage (version control per board)
 import type { ParamChange, ParamCheckpoint, BoardParamHistory } from '../shared/param-history-types.js';
 import { areasToKml, type ExportArea } from '../shared/kml-export.js';
+import { evaluateLinkLiveness, LINK_STALE_MS, LINK_DEAD_MS } from './link-liveness.js';
 const paramHistoryStore = new Store<{ boards: Record<string, BoardParamHistory> }>({
   name: 'param-history',
   defaults: { boards: {} },
@@ -834,6 +829,17 @@ function askForLegacyStreamConsent(
 // Current telemetry speed (updated from settings on connect, from renderer on toggle)
 let currentTelemetrySpeed: TelemetrySpeed = 'normal';
 
+// Display flush cap tracks the request-rate selector; 30 Hz ceiling matches
+// the mobile app, which runs its horizon there without a render storm.
+function telemetryBatchIntervalMs(): number {
+  switch (currentTelemetrySpeed) {
+    case 'max':    return 33;  // ~30 Hz
+    case 'fc':     return 33;  // hands-off: paint the FC's own rate, don't cap it
+    case 'normal': return 50;  // ~20 Hz
+    default:       return 100; // eco: 10 Hz
+  }
+}
+
 /**
  * Send REQUEST_DATA_STREAM (msg #66) for legacy stream groups.
  * This is the older, universally-supported method used by Mission Planner.
@@ -1203,7 +1209,7 @@ function queueMavlinkTelemetry(mainWindow: BrowserWindow, fields: Record<string,
       }
       mavlinkTelemetryBatches = {};
       mavlinkBatchTimer = null;
-    }, 100); // 10Hz max
+    }, telemetryBatchIntervalMs());
   }
 }
 
@@ -1935,7 +1941,7 @@ let paramGapFillMode = false;
 let paramGapRoundMs = 3000;
 let paramGapChunk = 30;
 let paramGapCursor = 0; // Rotates so an index the FC never returns can't starve the rest
-let paramGapSendGapMs = 0;
+let paramGapSendGapMs = 25;
 let paramRecoveryInFlight = false;
 /** Indices requested in the current gap-fill round and still outstanding. */
 const paramRoundPending = new Set<number>();
@@ -4797,16 +4803,13 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
    * connection teardown path to avoid leaving orphan timers behind.
    */
   const clearHeartbeatTimers = (): void => {
-    if (heartbeatWatchdog) {
-      clearTimeout(heartbeatWatchdog);
-      heartbeatWatchdog = null;
-    }
-    if (heartbeatGraceTimer) {
-      clearTimeout(heartbeatGraceTimer);
-      heartbeatGraceTimer = null;
+    if (linkLivenessTimer) {
+      clearInterval(linkLivenessTimer);
+      linkLivenessTimer = null;
     }
     connectionState.isStale = false;
     connectionState.staleSince = undefined;
+    connectionState.heartbeatQuiet = false;
   };
 
   /**
@@ -4815,11 +4818,12 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
    */
   const forceDisconnectStaleLink = (): void => {
     if (!connectionState.isConnected) return;
-    sendLog(mainWindow, 'warn', 'Vehicle heartbeat lost', `No heartbeat received for ${HEARTBEAT_GRACE_MS / 1000}s — disconnecting`);
+    sendLog(mainWindow, 'warn', 'Vehicle link lost', `No data received for ${HEARTBEAT_GRACE_MS / 1000}s — disconnecting`);
     if (currentTransport?.isOpen) {
       currentTransport.close().catch(() => {});
     } else {
       cleanupMspConnection();
+      clearHeartbeatTimers();
       if (gcsHeartbeatInterval) {
         clearInterval(gcsHeartbeatInterval);
         gcsHeartbeatInterval = null;
@@ -4836,53 +4840,74 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
       connectionState.isWaitingForHeartbeat = false;
       connectionState.isStale = false;
       connectionState.staleSince = undefined;
+      // Renderer must see the reconnect intent in the SAME event as the
+      // disconnect, or its store-wipe guard runs before the flag arrives.
+      const willAutoReconnect = !suppressAutoReconnect && !!lastConnectOptions;
+      if (willAutoReconnect) {
+        connectionState.isReconnecting = true;
+        connectionState.reconnectReason = 'Link lost';
+      }
       sendLog(mainWindow, 'info', 'Connection closed');
       sendConnectionState(mainWindow);
-      // Heartbeats stopped (likely signal loss); keep trying to bring the link back.
-      if (!suppressAutoReconnect && lastConnectOptions) scheduleAutoReconnect('Heartbeat lost');
+      if (willAutoReconnect) scheduleAutoReconnect('Link lost');
     }
   };
 
-  /**
-   * Reset the heartbeat watchdog timer. Called on every real vehicle heartbeat.
-   *
-   * Two-stage behavior (see HEARTBEAT_STALE_MS / HEARTBEAT_GRACE_MS):
-   *   - HEARTBEAT_STALE_MS of silence → mark link stale, keep transport open
-   *   - HEARTBEAT_GRACE_MS of silence → actually disconnect
-   *   - Any heartbeat while stale → clear stale flag, link resumes
-   */
-  const resetHeartbeatWatchdog = (): void => {
-    if (heartbeatWatchdog) clearTimeout(heartbeatWatchdog);
-    if (heartbeatGraceTimer) {
-      clearTimeout(heartbeatGraceTimer);
-      heartbeatGraceTimer = null;
-    }
-
-    // If link had gone stale, a heartbeat just resumed - announce recovery.
+  /** Every valid decoded frame from the vehicle link counts as liveness. */
+  const noteVehicleTraffic = (): void => {
+    lastVehicleTrafficMs = Date.now();
     if (connectionState.isStale) {
       const downMs = connectionState.staleSince ? Date.now() - connectionState.staleSince : 0;
       connectionState.isStale = false;
       connectionState.staleSince = undefined;
-      sendLog(mainWindow, 'info', 'Vehicle heartbeat recovered', downMs > 0 ? `Link was silent for ${(downMs / 1000).toFixed(1)}s` : undefined);
+      sendLog(mainWindow, 'info', 'Vehicle link recovered', downMs > 0 ? `Link was silent for ${(downMs / 1000).toFixed(1)}s` : undefined);
+      sendConnectionState(mainWindow);
+    }
+  };
+
+  const noteVehicleHeartbeat = (): void => {
+    lastVehicleHeartbeatMs = Date.now();
+    if (connectionState.heartbeatQuiet) {
+      connectionState.heartbeatQuiet = false;
+      sendLog(mainWindow, 'info', 'Vehicle heartbeat resumed');
+      sendConnectionState(mainWindow);
+    }
+  };
+
+  const checkLinkLiveness = (): void => {
+    if (!connectionState.isConnected) return;
+    const verdict = evaluateLinkLiveness({
+      nowMs: Date.now(),
+      lastTrafficMs: lastVehicleTrafficMs,
+      lastHeartbeatMs: lastVehicleHeartbeatMs,
+    });
+
+    if (verdict.dead) {
+      forceDisconnectStaleLink();
+      return;
+    }
+
+    if (verdict.stale && !connectionState.isStale) {
+      connectionState.isStale = true;
+      connectionState.staleSince = Date.now();
+      sendLog(mainWindow, 'warn', 'Vehicle link stale', `No data for ${HEARTBEAT_STALE_MS / 1000}s - link kept open, waiting for recovery`);
       sendConnectionState(mainWindow);
     }
 
-    heartbeatWatchdog = setTimeout(() => {
-      heartbeatWatchdog = null;
-      if (!connectionState.isConnected) return;
-
-      // Stage 1: mark stale but keep the link alive.
-      connectionState.isStale = true;
-      connectionState.staleSince = Date.now();
-      sendLog(mainWindow, 'warn', 'Vehicle heartbeat stale', `No heartbeat for ${HEARTBEAT_STALE_MS / 1000}s - link kept open, waiting for recovery`);
+    if (verdict.heartbeatQuiet !== !!connectionState.heartbeatQuiet) {
+      connectionState.heartbeatQuiet = verdict.heartbeatQuiet;
+      if (verdict.heartbeatQuiet) {
+        sendLog(mainWindow, 'warn', 'Vehicle heartbeat quiet', 'Telemetry is flowing but no heartbeat is arriving - link kept up');
+      }
       sendConnectionState(mainWindow);
+    }
+  };
 
-      // Stage 2: if silence continues past the grace window, disconnect.
-      heartbeatGraceTimer = setTimeout(() => {
-        heartbeatGraceTimer = null;
-        forceDisconnectStaleLink();
-      }, HEARTBEAT_GRACE_MS - HEARTBEAT_STALE_MS);
-    }, HEARTBEAT_STALE_MS);
+  const startLinkLivenessWatchdog = (): void => {
+    lastVehicleTrafficMs = Date.now();
+    lastVehicleHeartbeatMs = Date.now();
+    if (linkLivenessTimer) clearInterval(linkLivenessTimer);
+    linkLivenessTimer = setInterval(checkLinkLiveness, 1000);
   };
 
   /**
@@ -4917,6 +4942,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
           for await (const packet of mavlinkParser.parse(chunk)) {
             connectionState.packetsReceived++;
+            noteVehicleTraffic();
 
             // Detect signed incoming packets from FC
             if (packet.isSigned && !connectionState.fcSigning) {
@@ -5068,10 +5094,8 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
                 continue;
               }
 
-              // Reset heartbeat watchdog on every real vehicle heartbeat
-              // This confirms the vehicle is still alive and communicating
               if (connectionState.isConnected) {
-                resetHeartbeatWatchdog();
+                noteVehicleHeartbeat();
               }
 
               // Multi-vehicle shadow: mirror this vehicle into the registry,
@@ -5175,8 +5199,8 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
                 if (gcsHeartbeatInterval) clearInterval(gcsHeartbeatInterval);
                 gcsHeartbeatInterval = setInterval(sendGcsHeartbeat, 1000);
 
-                // Start heartbeat watchdog to detect vehicle going offline
-                resetHeartbeatWatchdog();
+                // Start the link watchdog to detect the vehicle going offline
+                startLinkLivenessWatchdog();
 
                 // Request individual message streams via MAV_CMD_SET_MESSAGE_INTERVAL + REQUEST_DATA_STREAM
                 // Uses stored speed preference from settings
@@ -5348,12 +5372,19 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
       mavlinkParser = null;
       resetMavlinkDiagCache();
       resetHeartbeat();   // clear ArduDeck script-heartbeat state across FC swaps
+      clearHeartbeatTimers();
       connectionState.isConnected = false;
       connectionState.isWaitingForHeartbeat = false;
+      // Renderer must see the reconnect intent in the SAME event as the
+      // disconnect, or its store-wipe guard runs before the flag arrives.
+      const willAutoReconnect = wasConnected && !suppressAutoReconnect && !!lastConnectOptions;
+      if (willAutoReconnect) {
+        connectionState.isReconnecting = true;
+        connectionState.reconnectReason = 'Link dropped';
+      }
       sendLog(mainWindow, 'info', 'Connection closed');
       sendConnectionState(mainWindow);
-      // The link was up and dropped on its own: recover it automatically.
-      if (wasConnected && !suppressAutoReconnect && lastConnectOptions) scheduleAutoReconnect('Link dropped');
+      if (willAutoReconnect) scheduleAutoReconnect('Link dropped');
     };
     currentTransport!.on('close', transportCloseHandler);
 
@@ -7091,7 +7122,9 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     paramRoundPending.clear();
     const slowSerial = lastConnectOptions?.type === 'serial' && (lastConnectOptions.baudRate ?? 115200) <= 57600;
     paramGapChunk = slowSerial ? 20 : 60;
-    paramGapSendGapMs = slowSerial ? 30 : 0;
+    // Never zero: back-to-back request bursts overflow radio uplink FIFOs
+    // (ELRS TX buffers 1024 B and corrupts frames on overflow).
+    paramGapSendGapMs = slowSerial ? 30 : 25;
     paramDownloadActive = true;
     paramDownloadStartTime = Date.now();
 
@@ -13838,14 +13871,10 @@ export async function cleanupOnShutdown(): Promise<void> {
     heartbeatTimeout = null;
   }
 
-  // Clear heartbeat watchdog and grace timer
-  if (heartbeatWatchdog) {
-    clearTimeout(heartbeatWatchdog);
-    heartbeatWatchdog = null;
-  }
-  if (heartbeatGraceTimer) {
-    clearTimeout(heartbeatGraceTimer);
-    heartbeatGraceTimer = null;
+  // Clear the link liveness watchdog
+  if (linkLivenessTimer) {
+    clearInterval(linkLivenessTimer);
+    linkLivenessTimer = null;
   }
 
   // Reset state

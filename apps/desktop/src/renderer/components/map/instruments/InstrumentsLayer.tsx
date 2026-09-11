@@ -253,6 +253,7 @@ function InstrumentSlot({ instrument }: { instrument: MapInstrumentDef }): JSX.E
   return (
     <div
       ref={setRefs}
+      data-instrument-id={instrument.id}
       // Idle instruments dim to the opacity setting (own override first, then
       // global); hovering restores full opacity. While the config popover is
       // open the raw opacity ALWAYS shows so its slider previews live,

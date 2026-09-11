@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Download, Boxes, Package, KeyRound, X, User, type LucideIcon } from 'lucide-react';
 import { useModuleStore } from '../../stores/module-store';
+import { HangarApps } from './HangarApps';
 import type {
   ModuleProgress,
   InstalledModule,
@@ -1151,6 +1152,8 @@ export function ModuleManagerView() {
                   </div>
                 </div>
               </div>
+              <HangarApps mode="browse" />
+
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="w-1.5 h-5 bg-purple-500 rounded-full shrink-0" />
@@ -1254,6 +1257,8 @@ export function ModuleManagerView() {
 
           {activeTab === 'installed' && (
             <div className="space-y-4">
+              <HangarApps mode="installed" />
+
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="w-1.5 h-5 bg-emerald-500 rounded-full shrink-0" />

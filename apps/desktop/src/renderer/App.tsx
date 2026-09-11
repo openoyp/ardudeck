@@ -1,4 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
+import {
+  shouldResetStoresOnDisconnect,
+  vehicleIdentityOf,
+  isNewVehicleIdentity,
+} from './utils/connection-reset';
 import { AppShell } from './components/layout/AppShell';
 import { ConnectionPanel } from './components/connection/ConnectionPanel';
 import { TelemetryDashboard } from './components/telemetry/TelemetryDashboard';
@@ -673,15 +678,11 @@ function App() {
     };
   }, [connectionState.isConnected, connectionState.protocol, currentView]);
 
+  const lastVehicleIdentityRef = useRef<string | null>(null);
   useEffect(() => {
     const unsubscribe = window.electronAPI?.onConnectionState((state) => {
       setConnectionState(state);
-      // Reset stores when disconnected, but NOT during:
-      // 1. platformChangeInProgress (board is rebooting for platform change)
-      // 2. isReconnecting (auto-reconnect in progress after expected reboot)
-      const { platformChangeInProgress } = useConnectionStore.getState();
-      const shouldSkipReset = platformChangeInProgress || state.isReconnecting;
-      if (!state.isConnected && !state.isWaitingForHeartbeat && !shouldSkipReset) {
+      const resetVehicleStores = (): void => {
         reset();
         resetParameters();
         // Keep mission, fence, and rally data on disconnect - user may be planning offline
@@ -691,7 +692,20 @@ function App() {
         resetFlightControl();
         resetCalibration();
         clearMessages();
+      };
+      const { platformChangeInProgress } = useConnectionStore.getState();
+      // Wipes are for endings (manual disconnect) or replacements (a different
+      // vehicle), never for auto-reconnect gaps on the same aircraft.
+      if (shouldResetStoresOnDisconnect(state, platformChangeInProgress)) {
+        resetVehicleStores();
+        lastVehicleIdentityRef.current = null;
+        return;
       }
+      const identity = vehicleIdentityOf(state);
+      if (isNewVehicleIdentity(lastVehicleIdentityRef.current, identity)) {
+        resetVehicleStores();
+      }
+      if (identity !== null) lastVehicleIdentityRef.current = identity;
     });
     return () => { unsubscribe?.(); };
   }, [setConnectionState, reset, resetParameters, resetMission, resetFence, resetRally, resetLegacyConfig, resetCli, stopOverride, resetFlightControl, resetCalibration, clearMessages]);

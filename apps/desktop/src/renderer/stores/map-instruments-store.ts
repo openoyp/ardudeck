@@ -18,6 +18,7 @@ import {
   readOverlayPosPayload,
   writeOverlayPosPayload,
   clearOverlayPosPayload,
+  USER_MOVED_EVENT,
 } from '../components/map/useDraggableOverlay';
 
 const STORAGE_KEY = 'map-instruments-visible';
@@ -220,6 +221,11 @@ interface MapInstrumentsStore {
   importLayout: (name: string, raw: unknown) => boolean;
   /** Clear every instrument's stored drag position back to registry defaults. */
   resetPositions: () => void;
+  /** Payloads captured before the last auto-arrange; null = nothing to undo. */
+  arrangeSnapshot: Record<string, unknown | null> | null;
+  setArrangeSnapshot: (snapshot: Record<string, unknown | null>) => void;
+  clearArrangeSnapshot: () => void;
+  bumpLayoutRev: () => void;
 }
 
 // One-time migration: the attitude ball persisted its drag position under
@@ -346,5 +352,19 @@ export const useMapInstrumentsStore = create<MapInstrumentsStore>((set, get) => 
       // falls back to its registry default class.
       set({ layoutRev: get().layoutRev + 1 });
     },
+
+    arrangeSnapshot: null,
+    setArrangeSnapshot: (snapshot) => set({ arrangeSnapshot: snapshot }),
+    clearArrangeSnapshot: () => set({ arrangeSnapshot: null }),
+    bumpLayoutRev: () => set({ layoutRev: get().layoutRev + 1 }),
   };
 });
+
+// A hand-moved instrument invalidates the arrange undo.
+if (typeof window !== 'undefined') {
+  window.addEventListener(USER_MOVED_EVENT, () => {
+    if (useMapInstrumentsStore.getState().arrangeSnapshot) {
+      useMapInstrumentsStore.getState().clearArrangeSnapshot();
+    }
+  });
+}

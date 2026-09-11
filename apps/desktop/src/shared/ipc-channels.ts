@@ -670,6 +670,13 @@ export const IPC_CHANNELS = {
   MODULE_CATALOG_DETAIL: 'module:catalog-detail',
   MODULE_INSTALL_FREE: 'module:install-free',
   MODULE_DEEP_LINK_INSTALL: 'module:deep-link-install',
+
+  // Hangar APPS: native programs the Hangar delivers, distinct from cargo modules.
+  APP_CATALOG_LIST: 'app:catalog-list',
+  APP_LIST: 'app:list',
+  APP_INSTALL: 'app:install',
+  APP_UNINSTALL: 'app:uninstall',
+  APP_PROGRESS: 'app:progress',
   // ardudeck://open?view=<id> -> navigate the renderer to a built-in view
   NAV_DEEP_LINK_OPEN: 'nav:deep-link-open',
   NAV_OPEN_VIEW: 'nav:open-view',  // renderer (any window) -> main: focus main window + navigate it to a view
@@ -1192,15 +1199,17 @@ export interface ConnectionState {
   reconnectAttempt?: number; // Current attempt (1-based)
   reconnectMaxAttempts?: number; // Max attempts before giving up
   /**
-   * Link stale - TRUE when no vehicle heartbeat has arrived within the soft
+   * Link stale - TRUE when NO frame of any kind has arrived within the soft
    * watchdog window, but the transport is still open. UI should show a "no
    * data for Ns" warning instead of tearing the connection down, since this
    * is often a transient radio/link drop (especially over TCP/WireGuard).
-   * Cleared automatically when heartbeats resume.
+   * Cleared automatically when any traffic resumes.
    */
   isStale?: boolean;
   /** Timestamp (ms since epoch) when the link went stale. Used to render elapsed time. */
   staleSince?: number;
+  /** Heartbeats silent while other telemetry flows: diagnostic only, never a teardown. */
+  heartbeatQuiet?: boolean;
   /** Detected MAVLink protocol version (1 or 2) */
   mavlinkVersion?: number;
   /** Unique board identifier from AUTOPILOT_VERSION uid/uid2 (hex string) */

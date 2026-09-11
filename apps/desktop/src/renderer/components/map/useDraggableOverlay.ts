@@ -26,6 +26,17 @@ const STORAGE_PREFIX = 'map-overlay-pos:';
 const DRAG_THRESHOLD_PX = 4;
 const GRID_PX = 8;
 
+/** Auto-arrange animates widgets to a new anchor without a remount. */
+export const ARRANGE_EVENT = 'ardudeck:overlay-arrange';
+/** Fired when the user commits a drag, so arrange-undo can invalidate. */
+export const USER_MOVED_EVENT = 'ardudeck:overlay-user-moved';
+const ARRANGE_TRANSITION = 'left 450ms cubic-bezier(0.05, 0.7, 0.1, 1.0), top 450ms cubic-bezier(0.05, 0.7, 0.1, 1.0)';
+
+export interface ArrangeEventDetail {
+  key: string;
+  anchor: OverlayAnchorPos & { v?: number };
+}
+
 interface Pos { x: number; y: number }
 
 export type OverlayAnchorX = 'left' | 'center' | 'right';
@@ -202,6 +213,7 @@ export function useDraggableOverlay(storageKey: string): {
   onPointerDown: (e: ReactPointerEvent) => void;
 } {
   const [pos, setPos] = useState<Pos | null>(null);
+  const [animating, setAnimating] = useState(false);
   const elRef = useRef<HTMLElement | null>(null);
   const anchorRef = useRef<OverlayAnchorPos | null>(null);
   const drag = useRef<{ startX: number; startY: number; origin: Pos; active: boolean } | null>(null);
@@ -239,6 +251,35 @@ export function useDraggableOverlay(storageKey: string): {
       }
     }
     applyPos(fromAnchor(el, anchorRef.current));
+  }, [storageKey, applyPos]);
+
+  useEffect(() => {
+    const onArrange = (e: Event) => {
+      const detail = (e as CustomEvent<ArrangeEventDetail>).detail;
+      if (!detail || detail.key !== storageKey) return;
+      const el = elRef.current;
+      if (!el) return;
+      anchorRef.current = { ax: detail.anchor.ax, ay: detail.anchor.ay, dx: detail.anchor.dx, dy: detail.anchor.dy };
+      writeAnchor(storageKey, anchorRef.current);
+      const next = fromAnchor(el, anchorRef.current);
+      if (!next) return;
+      // Pin class-positioned widgets at current px first, so the glide has a start point.
+      setPos((prev) => {
+        if (prev) return prev;
+        const parent = el.offsetParent as HTMLElement | null;
+        if (!parent) return prev;
+        const r = el.getBoundingClientRect();
+        const pr = parent.getBoundingClientRect();
+        return { x: r.left - pr.left, y: r.top - pr.top };
+      });
+      requestAnimationFrame(() => {
+        setAnimating(true);
+        applyPos(next);
+        window.setTimeout(() => setAnimating(false), 500);
+      });
+    };
+    window.addEventListener(ARRANGE_EVENT, onArrange);
+    return () => window.removeEventListener(ARRANGE_EVENT, onArrange);
   }, [storageKey, applyPos]);
 
   // Keep the anchored placement when the map panel resizes or the widget
@@ -303,6 +344,7 @@ export function useDraggableOverlay(storageKey: string): {
           }
           return p;
         });
+        window.dispatchEvent(new CustomEvent(USER_MOVED_EVENT, { detail: { key: storageKey } }));
         // Swallow the click that follows a real drag so buttons under the
         // pointer don't fire.
         window.addEventListener('click', (ce) => { ce.stopPropagation(); ce.preventDefault(); }, { capture: true, once: true });
@@ -314,7 +356,15 @@ export function useDraggableOverlay(storageKey: string): {
   }, [storageKey]);
 
   const style: CSSProperties | undefined = pos
-    ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto', transform: 'none', cursor: 'grab' }
+    ? {
+        left: pos.x,
+        top: pos.y,
+        right: 'auto',
+        bottom: 'auto',
+        transform: 'none',
+        cursor: 'grab',
+        ...(animating ? { transition: ARRANGE_TRANSITION } : {}),
+      }
     : { cursor: 'grab' };
 
   return { ref, style, onPointerDown };

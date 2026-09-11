@@ -2,10 +2,10 @@ import { app, ipcMain, BrowserWindow } from 'electron';
 import { existsSync } from 'node:fs';
 import { IPC_CHANNELS } from '../../shared/ipc-channels.js';
 import type { TrainerLaunchInput, TrainerStatus } from '../../shared/trainer-types.js';
-import { getInstalledModules } from '../modules/module-manager.js';
+import { getInstalledApp } from '../apps/app-manager.js';
 import {
   locateTrainer,
-  TRAINER_CARGO_SLUG,
+  TRAINER_APP_SLUG,
   TRAINER_PATH_ENV,
   type TrainerTarget,
 } from './trainer-locator.js';
@@ -47,10 +47,8 @@ export interface TrainerDeps {
   log?: (level: 'info' | 'warn', message: string) => void;
 }
 
-function cargoPath(): string | undefined {
-  return getInstalledModules().find(
-    (m) => m.slug === TRAINER_CARGO_SLUG && m.enabled !== false,
-  )?.installPath;
+function installedPath(): string | undefined {
+  return getInstalledApp(TRAINER_APP_SLUG)?.installPath;
 }
 
 function find(): { target: TrainerTarget | null; searched: string[] } {
@@ -58,7 +56,7 @@ function find(): { target: TrainerTarget | null; searched: string[] } {
     exists: existsSync,
     platform: process.platform,
     override: process.env[TRAINER_PATH_ENV],
-    cargoPath: cargoPath(),
+    installedPath: installedPath(),
     homeDir: app.getPath('home'),
   });
 }
@@ -82,14 +80,14 @@ export function trainerStatus(deps: TrainerDeps): TrainerStatus {
   const { target, searched } = find();
   const home = deps.home();
   return {
-    // Installed as a cargo, OR pointed at explicitly, OR simply FOUND on this machine.
+    // Installed from the Hangar, OR pointed at explicitly, OR simply FOUND on this machine.
     //
     // That last one is the website download: somebody installs the Trainer from the site
     // without going near the Hangar, and ArduDeck should still show it rather than pretend it
     // is not there. The locator already checks the platform's normal install locations, so
     // "we found a Trainer" is the honest test.
     available:
-      target !== null || cargoPath() !== undefined || Boolean(process.env[TRAINER_PATH_ENV]),
+      target !== null || installedPath() !== undefined || Boolean(process.env[TRAINER_PATH_ENV]),
     installed: target !== null,
     kind: target?.kind ?? null,
     path: target?.path ?? null,

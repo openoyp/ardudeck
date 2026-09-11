@@ -46,14 +46,14 @@ describe('finding the Trainer', () => {
     expect(target?.path).toBe(mine);
   });
 
-  it('takes the cargo bundle over the default locations', () => {
-    const cargo = '/Users/pilot/Library/Application Support/@ardudeck/desktop/modules/x/extracted';
+  it('takes the Hangar install over the default locations', () => {
+    const installed = '/Users/pilot/Library/Application Support/@ardudeck/desktop/apps/x/current';
     const { target } = locateTrainer(
-      opts([`${cargo}/ArduDeck Trainer.app/Contents/MacOS/ArduDeck Trainer`, APP_EXEC], {
-        cargoPath: cargo,
+      opts([`${installed}/ArduDeck Trainer.app/Contents/MacOS/ArduDeck Trainer`, APP_EXEC], {
+        installedPath: installed,
       }),
     );
-    expect(target?.path).toBe(`${cargo}/ArduDeck Trainer.app`);
+    expect(target?.path).toBe(`${installed}/ArduDeck Trainer.app`);
   });
 
   it('reports every place it looked when it finds nothing', () => {

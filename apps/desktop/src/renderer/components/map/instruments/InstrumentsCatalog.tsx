@@ -33,6 +33,7 @@ import {
 } from '../../../stores/map-instruments-store';
 import { MAP_INSTRUMENTS, type MapInstrumentDef } from './registry';
 import { PRESET_INSTRUMENT_LAYOUTS } from './preset-layouts';
+import { runAutoArrange, restorePreviousLayout } from './arrange-controller';
 
 // ---- Roles -----------------------------------------------------------------
 
@@ -362,8 +363,9 @@ function SearchPane({ query }: { query: string }): JSX.Element {
   );
 }
 
-function LayoutPane(): JSX.Element {
+function LayoutPane({ onClose }: { onClose: () => void }): JSX.Element {
   const opacity = useMapInstrumentsStore((s) => s.opacity);
+  const arrangeSnapshot = useMapInstrumentsStore((s) => s.arrangeSnapshot);
   const setOpacity = useMapInstrumentsStore((s) => s.setOpacity);
   const savedLayouts = useMapInstrumentsStore((s) => s.savedLayouts);
   const saveLayout = useMapInstrumentsStore((s) => s.saveLayout);
@@ -432,6 +434,40 @@ function LayoutPane(): JSX.Element {
 
   return (
     <div className="p-4 space-y-5 max-w-[560px]">
+      <div>
+        <SectionHeading label="Arrange" accent="var(--text-secondary)" />
+        <div className="mt-2 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              // Close first: the glide happens on the map, not behind a modal.
+              onClose();
+              requestAnimationFrame(() => { runAutoArrange(); });
+            }}
+            data-tip="Place every visible instrument by cockpit conventions: basic-T at the bottom, status rail on the left, map center kept clear"
+            className="flex items-center gap-2 rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 py-2.5 text-[13px] text-blue-500 hover:bg-blue-500/20 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h5M4 12h8M4 17h5M15 5l1.2 2.8L19 9l-2.8 1.2L15 13l-1.2-2.8L11 9l2.8-1.2L15 5z" />
+            </svg>
+            Auto arrange
+          </button>
+          {arrangeSnapshot && (
+            <button
+              type="button"
+              onClick={() => { restorePreviousLayout(); }}
+              data-tip="Put every instrument back where it was before the last auto arrange"
+              className="flex items-center gap-2 rounded-lg border border-subtle px-3 py-2.5 text-[13px] text-content-secondary hover:text-content hover:bg-surface-raised transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 14l-4-4 4-4M5 10h9a5 5 0 010 10h-3" />
+              </svg>
+              Restore previous layout
+            </button>
+          )}
+        </div>
+      </div>
+
       <div>
         <SectionHeading label="Presets" accent="var(--text-secondary)" />
         <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]">
@@ -697,7 +733,7 @@ export function InstrumentsCatalog({ onClose }: { onClose: () => void }): JSX.El
             {/* Cards float on the tinted canvas; the rail keeps the solid
                 shell colour so the two surfaces read as distinct planes. */}
             <div className="flex-1 min-w-0 overflow-y-auto bg-surface-base">
-              {query !== '' ? <SearchPane query={query} /> : role === null ? <LayoutPane /> : <GroupPane role={role} />}
+              {query !== '' ? <SearchPane query={query} /> : role === null ? <LayoutPane onClose={onClose} /> : <GroupPane role={role} />}
             </div>
           </div>
         </div>
