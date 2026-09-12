@@ -562,11 +562,25 @@ fn step_copter_core(
             } else {
                 (want_x, want_y)
             }
-        } else {
+        } else if speed > 0.0 {
+            // COULOMB, not viscous. `speed * mass` is a momentum, not a force: turning it into
+            // one needs the `/ dt` that the static branch above already has, and without it the
+            // friction was short by a factor of 1/dt - at 1200 Hz, more than a thousand times
+            // too weak. What that produces is not a subtly low grip but the wrong LAW: the
+            // force ends up proportional to speed, so the vehicle decays exponentially toward
+            // rest and slides a distance proportional to its speed (25 m from 25 m/s) instead
+            // of to its speed SQUARED. Everything slid, and a crash slid furthest.
+            //
+            // Opposed to the direction of travel and bounded in MAGNITUDE, for the same reason
+            // the static branch is: per-axis limiting hands a diagonal slide sqrt(2) times the
+            // grip of a straight one.
+            let mag = (speed * p.mass / dt).min(limit);
             (
-                -sign(state.velocity.x) * (state.velocity.x.abs() * p.mass).min(limit),
-                -sign(state.velocity.y) * (state.velocity.y.abs() * p.mass).min(limit),
+                -state.velocity.x / speed * mag,
+                -state.velocity.y / speed * mag,
             )
+        } else {
+            (0.0, 0.0)
         };
         nf = nf.add(Vec3::new(fx, fy, 0.0));
         nf
@@ -1863,5 +1877,46 @@ mod tests {
         for v in [s.position.z, s.velocity.z, l.position.x, l.position.z, l.velocity.z, l.tension] {
             assert!(v.is_finite(), "non-finite state after long slung hover");
         }
+    }
+
+    /// A slide must obey the RIGHT LAW, not merely be short.
+    ///
+    /// Kinetic friction was `speed * mass`, a momentum rather than a force: it needed the `/dt`
+    /// the static branch already had, and without it the force came out proportional to SPEED.
+    /// That is viscous drag, not friction - the vehicle decays exponentially toward rest and
+    /// travels a distance proportional to v rather than to v squared, so everything slid and a
+    /// crash slid furthest. Landing was the thing it ruined: any lateral drift at touchdown was
+    /// barely resisted.
+    ///
+    /// Asserting the shape rather than a distance, because the numbers move with mass, drag and
+    /// the friction coefficient, and the defect would survive any of those being retuned.
+    #[test]
+    fn a_slide_costs_speed_squared_not_speed() {
+        fn slide_from(v0: f64) -> f64 {
+            let (p, e) = (params(), env());
+            let h = 8.0;
+            let mut s = initial_state();
+            s.position.z = -h;
+            s.velocity = Vec3::new(v0, 0.0, 0.0);
+            let opts = StepOptions { ground_height: h, ..StepOptions::default() };
+            for _ in 0..(30.0 / DT) as usize {
+                s = step_copter(&[1000.0; 4], &s, &p, &e, DT, opts);
+            }
+            s.position.x
+        }
+
+        let slow = slide_from(3.0);
+        let fast = slide_from(6.0);
+        // Under the bug both were v * tau, so this ratio sat at 2.0. Coulomb friction alone puts
+        // it at 4.0; aero drag at the higher speed pulls it back somewhat, so the test only
+        // demands it is clearly past the linear case.
+        let ratio = fast / slow;
+        assert!(
+            ratio > 2.8,
+            "doubling the touchdown speed must cost much more than double the slide:              {slow:.2} m -> {fast:.2} m is a ratio of {ratio:.2}"
+        );
+
+        // And a walking-pace touchdown must not skate.
+        assert!(slide_from(1.0) < 0.2, "a 1 m/s touchdown slid {:.2} m", slide_from(1.0));
     }
 }

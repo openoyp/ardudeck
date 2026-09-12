@@ -28,6 +28,7 @@ import { useArduPilotSitlStore } from '../../../stores/ardupilot-sitl-store';
 import { useSettingsStore } from '../../../stores/settings-store';
 import { getVehicleClass, VEHICLE_CAPABILITIES, encodePx4CustomMode } from '../../../../shared/telemetry-types';
 import { executeTakeoff, presentTakeoff } from '../../panels/takeoff-strategies';
+import { DraftNumberInput } from '../../../hooks/useNumericDraft';
 import {
   altitudeValueFromMeters,
   toMetersFromAltitudeUnit,
@@ -351,16 +352,12 @@ export function FlightControlInstrument(): JSX.Element {
           // Takeoff arming REPLACES Start/RTL in-place: the altitude + Go take
           // over the row so Start can't be misclicked while arming a takeoff.
           <>
-            <input
-              type="number"
+            <DraftNumberInput
               value={takeoffAltDisplay}
               min={Number(altitudeValueFromMeters(1, altitudeUnit).toFixed(takeoffPrecision))}
               max={Number(altitudeValueFromMeters(100, altitudeUnit).toFixed(takeoffPrecision))}
               step={altitudeUnit === 'km' ? 0.001 : 1}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                if (Number.isFinite(v)) setTakeoffAltM(toMetersFromAltitudeUnit(v, altitudeUnit));
-              }}
+              onCommit={(v) => setTakeoffAltM(toMetersFromAltitudeUnit(v, altitudeUnit))}
               aria-label={takeoffPresentation.dialogPrompt}
               data-tip={takeoffPresentation.dialogPrompt}
               className="flex-1 min-w-0 w-14 px-1.5 text-[11px] rounded bg-surface-input border border-default text-content focus:outline-none focus:border-blue-500 tabular-nums"

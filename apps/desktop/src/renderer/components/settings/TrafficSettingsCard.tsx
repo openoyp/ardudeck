@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import {
   ADSB_API_PRESETS,
   DEFAULT_TRAFFIC_CONFIG,
@@ -188,11 +189,13 @@ export function TrafficSettingsCard() {
               </Field>
             </div>
             <Field label="Port">
-              <input
-                type="number"
+              <DraftNumberInput
                 className={`${inputCls} w-full`}
                 value={cfg.ogn.port}
-                onChange={(e) => patch({ ogn: { ...cfg.ogn, port: Number(e.target.value) || 14580 } })}
+                min={1}
+                max={65535}
+                integer
+                onCommit={(v) => patch({ ogn: { ...cfg.ogn, port: v } })}
               />
             </Field>
           </div>
@@ -228,11 +231,12 @@ export function TrafficSettingsCard() {
               </select>
             </Field>
             <Field label="Poll (ms)">
-              <input
-                type="number"
+              <DraftNumberInput
                 className={`${inputCls} w-full`}
                 value={cfg.remoteId.pollMs}
-                onChange={(e) => patch({ remoteId: { ...cfg.remoteId, pollMs: Math.max(250, Number(e.target.value) || 1000) } })}
+                min={250}
+                integer
+                onCommit={(v) => patch({ remoteId: { ...cfg.remoteId, pollMs: v } })}
               />
             </Field>
           </div>
@@ -252,19 +256,19 @@ export function TrafficSettingsCard() {
           </p>
           <div className="grid grid-cols-2 gap-2">
             <Field label="Floor (m)">
-              <input
-                type="number"
+              <DraftNumberInput
                 className={`${inputCls} w-full`}
                 value={cfg.altitudeFilter.floorMeters}
-                onChange={(e) => patch({ altitudeFilter: { ...cfg.altitudeFilter, floorMeters: Number(e.target.value) || 0 } })}
+                integer
+                onCommit={(v) => patch({ altitudeFilter: { ...cfg.altitudeFilter, floorMeters: v } })}
               />
             </Field>
             <Field label="Ceiling (m)">
-              <input
-                type="number"
+              <DraftNumberInput
                 className={`${inputCls} w-full`}
                 value={cfg.altitudeFilter.ceilingMeters}
-                onChange={(e) => patch({ altitudeFilter: { ...cfg.altitudeFilter, ceilingMeters: Number(e.target.value) || 0 } })}
+                integer
+                onCommit={(v) => patch({ altitudeFilter: { ...cfg.altitudeFilter, ceilingMeters: v } })}
               />
             </Field>
           </div>
@@ -294,19 +298,21 @@ export function TrafficSettingsCard() {
           <div className="text-sm text-content font-medium">Proximity warning</div>
           <div className="grid grid-cols-2 gap-2">
             <Field label="Range (m)">
-              <input
-                type="number"
+              <DraftNumberInput
                 className={`${inputCls} w-full`}
                 value={cfg.proximity.rangeMeters}
-                onChange={(e) => patch({ proximity: { ...cfg.proximity, rangeMeters: Math.max(0, Number(e.target.value) || 0) } })}
+                min={0}
+                integer
+                onCommit={(v) => patch({ proximity: { ...cfg.proximity, rangeMeters: v } })}
               />
             </Field>
             <Field label="Vertical separation (m)">
-              <input
-                type="number"
+              <DraftNumberInput
                 className={`${inputCls} w-full`}
                 value={cfg.proximity.verticalMeters}
-                onChange={(e) => patch({ proximity: { ...cfg.proximity, verticalMeters: Math.max(0, Number(e.target.value) || 0) } })}
+                min={0}
+                integer
+                onCommit={(v) => patch({ proximity: { ...cfg.proximity, verticalMeters: v } })}
               />
             </Field>
           </div>

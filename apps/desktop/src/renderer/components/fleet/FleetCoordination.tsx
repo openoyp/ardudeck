@@ -8,6 +8,7 @@
  */
 
 import { useState } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { useFormationControl } from '../../hooks/useFormationControl';
 import { useOrchestrationStore } from '../../stores/orchestration-store';
 import { useMissionStore } from '../../stores/mission-store';
@@ -63,9 +64,9 @@ export function FleetCoordination() {
           </button>
           <label className="flex items-center gap-1 text-[9px] uppercase tracking-wide text-content-tertiary" data-tip="Takeoff altitude (m)">
             alt
-            <input
-              type="number" min={1} max={120} value={alt}
-              onChange={(e) => setAlt(Math.max(1, Math.min(120, Number(e.target.value) || 1)))}
+            <DraftNumberInput
+              min={1} max={120} integer value={alt}
+              onCommit={setAlt}
               className="w-11 px-1 py-1 text-[11px] text-center rounded bg-surface-input border border-subtle text-content"
             />
           </label>

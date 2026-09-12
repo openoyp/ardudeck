@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { useConnectionStore } from '../../stores/connection-store';
 import { useSettingsStore, type DefaultSitlType } from '../../stores/settings-store';
 import { useSitlStore } from '../../stores/sitl-store';
@@ -807,10 +808,12 @@ export function ConnectionPanel() {
             </div>
             <div>
               <label className="label">Port</label>
-              <input
-                type="number"
+              <DraftNumberInput
                 value={tcpPort}
-                onChange={(e) => setTcpPort(Number(e.target.value))}
+                min={1}
+                max={65535}
+                integer
+                onCommit={setTcpPort}
                 className="input"
                 disabled={connectionState.isConnected}
               />
@@ -871,10 +874,12 @@ export function ConnectionPanel() {
                 <div>
                   <label className="label">Local Port</label>
                   <div className="relative">
-                    <input
-                      type="number"
+                    <DraftNumberInput
                       value={udpPort}
-                      onChange={(e) => setUdpPort(Number(e.target.value))}
+                      min={1}
+                      max={65535}
+                      integer
+                      onCommit={setUdpPort}
                       className="input pr-16"
                       disabled={connectionState.isConnected}
                     />
@@ -915,20 +920,24 @@ export function ConnectionPanel() {
                 </div>
                 <div>
                   <label className="label">Remote Port</label>
-                  <input
-                    type="number"
+                  <DraftNumberInput
                     value={udpRemotePort}
-                    onChange={(e) => setUdpRemotePort(Number(e.target.value))}
+                    min={1}
+                    max={65535}
+                    integer
+                    onCommit={setUdpRemotePort}
                     className="input"
                     disabled={connectionState.isConnected}
                   />
                 </div>
                 <div>
                   <label className="label">Local Port</label>
-                  <input
-                    type="number"
+                  <DraftNumberInput
                     value={udpClientLocalPort}
-                    onChange={(e) => setUdpClientLocalPort(Number(e.target.value))}
+                    min={1}
+                    max={65535}
+                    integer
+                    onCommit={setUdpClientLocalPort}
                     className="input"
                     disabled={connectionState.isConnected}
                   />

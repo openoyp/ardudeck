@@ -77,6 +77,8 @@ function OsdFeedVideo({ source }: { source: CameraSourceConfig }) {
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50 text-center">
           {status === 'starting' ? (
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white/90" />
+          ) : status === 'stalled' ? (
+            <div className="max-w-[80%] text-[11px] text-amber-300">Video stalled, reconnecting…</div>
           ) : (
             <div className="max-w-[80%] text-[11px] text-red-300">No video · {error}</div>
           )}

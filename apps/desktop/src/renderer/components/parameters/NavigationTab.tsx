@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { Compass, Home, PlaneLanding, MapPin, Satellite, AlertTriangle } from 'lucide-react';
 
 // Types matching msp-ts
@@ -334,10 +335,9 @@ export default function NavigationTab({ modified, setModified }: Props) {
           <div className="space-y-4">
             <div>
               <label className="text-xs text-content-secondary block mb-1.5">RTH Altitude (m)</label>
-              <input
-                type="number"
-                value={toM(navConfig.rthAltitude ?? 3000)}
-                onChange={(e) => updateNavConfig({ rthAltitude: fromM(Number(e.target.value)) })}
+              <DraftNumberInput
+                value={Number(toM(navConfig.rthAltitude ?? 3000))}
+                onCommit={(v) => updateNavConfig({ rthAltitude: fromM(v) })}
                 className="w-full px-3 py-2 bg-surface-raised border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
                 min={5}
                 max={300}
@@ -347,10 +347,9 @@ export default function NavigationTab({ modified, setModified }: Props) {
 
             <div>
               <label className="text-xs text-content-secondary block mb-1.5">Max Navigation Speed (m/s)</label>
-              <input
-                type="number"
-                value={toMs(navConfig.maxNavigationSpeed ?? 300)}
-                onChange={(e) => updateNavConfig({ maxNavigationSpeed: fromMs(Number(e.target.value)) })}
+              <DraftNumberInput
+                value={Number(toMs(navConfig.maxNavigationSpeed ?? 300))}
+                onCommit={(v) => updateNavConfig({ maxNavigationSpeed: fromMs(v) })}
                 className="w-full px-3 py-2 bg-surface-raised border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
                 min={0.5}
                 max={20}
@@ -360,10 +359,9 @@ export default function NavigationTab({ modified, setModified }: Props) {
 
             <div>
               <label className="text-xs text-content-secondary block mb-1.5">Max Climb Rate (m/s)</label>
-              <input
-                type="number"
-                value={toMs(navConfig.maxClimbRate ?? 500)}
-                onChange={(e) => updateNavConfig({ maxClimbRate: fromMs(Number(e.target.value)) })}
+              <DraftNumberInput
+                value={Number(toMs(navConfig.maxClimbRate ?? 500))}
+                onCommit={(v) => updateNavConfig({ maxClimbRate: fromMs(v) })}
                 className="w-full px-3 py-2 bg-surface-raised border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
                 min={0.5}
                 max={10}
@@ -389,10 +387,9 @@ export default function NavigationTab({ modified, setModified }: Props) {
         <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="text-xs text-content-secondary block mb-1.5">Descent Rate (m/s)</label>
-            <input
-              type="number"
-              value={toMs(navConfig.landDescendRate ?? 200)}
-              onChange={(e) => updateNavConfig({ landDescendRate: fromMs(Number(e.target.value)) })}
+            <DraftNumberInput
+              value={Number(toMs(navConfig.landDescendRate ?? 200))}
+              onCommit={(v) => updateNavConfig({ landDescendRate: fromMs(v) })}
               className="w-full px-3 py-2 bg-surface-raised border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
               min={0.2}
               max={5}
@@ -403,10 +400,9 @@ export default function NavigationTab({ modified, setModified }: Props) {
 
           <div>
             <label className="text-xs text-content-secondary block mb-1.5">Slowdown Min Alt (m)</label>
-            <input
-              type="number"
-              value={toM(navConfig.landSlowdownMinAlt ?? 500)}
-              onChange={(e) => updateNavConfig({ landSlowdownMinAlt: fromM(Number(e.target.value)) })}
+            <DraftNumberInput
+              value={Number(toM(navConfig.landSlowdownMinAlt ?? 500))}
+              onCommit={(v) => updateNavConfig({ landSlowdownMinAlt: fromM(v) })}
               className="w-full px-3 py-2 bg-surface-raised border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
               min={1}
               max={50}
@@ -416,10 +412,9 @@ export default function NavigationTab({ modified, setModified }: Props) {
 
           <div>
             <label className="text-xs text-content-secondary block mb-1.5">Emergency Descent (m/s)</label>
-            <input
-              type="number"
-              value={toMs(navConfig.emergencyDescentRate ?? 500)}
-              onChange={(e) => updateNavConfig({ emergencyDescentRate: fromMs(Number(e.target.value)) })}
+            <DraftNumberInput
+              value={Number(toMs(navConfig.emergencyDescentRate ?? 500))}
+              onCommit={(v) => updateNavConfig({ emergencyDescentRate: fromMs(v) })}
               className="w-full px-3 py-2 bg-surface-raised border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
               min={1}
               max={10}
@@ -445,10 +440,9 @@ export default function NavigationTab({ modified, setModified }: Props) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-xs text-content-secondary block mb-1.5">Waypoint Radius (m)</label>
-            <input
-              type="number"
-              value={toM(navConfig.waypointRadius ?? 100)}
-              onChange={(e) => updateNavConfig({ waypointRadius: fromM(Number(e.target.value)) })}
+            <DraftNumberInput
+              value={Number(toM(navConfig.waypointRadius ?? 100))}
+              onCommit={(v) => updateNavConfig({ waypointRadius: fromM(v) })}
               className="w-full px-3 py-2 bg-surface-raised border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
               min={0.5}
               max={20}
@@ -459,10 +453,9 @@ export default function NavigationTab({ modified, setModified }: Props) {
 
           <div>
             <label className="text-xs text-content-secondary block mb-1.5">Safe Altitude (m)</label>
-            <input
-              type="number"
-              value={toM(navConfig.waypointSafeAlt ?? 2000)}
-              onChange={(e) => updateNavConfig({ waypointSafeAlt: fromM(Number(e.target.value)) })}
+            <DraftNumberInput
+              value={Number(toM(navConfig.waypointSafeAlt ?? 2000))}
+              onCommit={(v) => updateNavConfig({ waypointSafeAlt: fromM(v) })}
               className="w-full px-3 py-2 bg-surface-raised border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
               min={5}
               max={200}
@@ -479,10 +472,9 @@ export default function NavigationTab({ modified, setModified }: Props) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-content-secondary block mb-1.5">Max Safe Distance (m)</label>
-                  <input
-                    type="number"
+                  <DraftNumberInput
                     value={wpSettings.nav_wp_max_safe_distance}
-                    onChange={(e) => updateWpSettings({ nav_wp_max_safe_distance: Number(e.target.value) })}
+                    onCommit={(v) => updateWpSettings({ nav_wp_max_safe_distance: v })}
                     className="w-full px-3 py-2 bg-surface-raised border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
                     min={0}
                     max={1500}

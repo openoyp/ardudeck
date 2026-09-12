@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { TileCacheCard } from './TileCacheCard';
 import { UnitSelectionCard } from './UnitSelectionCard';
 import { TrafficSettingsCard } from './TrafficSettingsCard';
@@ -1797,16 +1798,13 @@ export function SettingsView() {
                   <label className="block text-xs font-medium text-content-secondary mb-1.5">
                     Max editable vertices
                   </label>
-                  <input
-                    type="number"
+                  <DraftNumberInput
                     value={surveyPerformance.maxEditableVertices}
-                    onChange={(e) => {
-                      const n = Math.round(Number(e.target.value));
-                      if (Number.isFinite(n)) updateSurveyPerformance({ maxEditableVertices: Math.max(0, Math.min(5000, n)) });
-                    }}
+                    integer
+                    onCommit={(v) => updateSurveyPerformance({ maxEditableVertices: v })}
                     className="w-full px-2 py-1.5 bg-surface-input border border-border rounded text-content text-sm focus:outline-none focus:border-blue-500"
-                    min="0"
-                    max="5000"
+                    min={0}
+                    max={5000}
                   />
                   <div className="text-[10px] text-content-tertiary mt-1">Above this, drag handles are hidden</div>
                 </div>
@@ -1815,16 +1813,13 @@ export function SettingsView() {
                   <label className="block text-xs font-medium text-content-secondary mb-1.5">
                     Max photo markers
                   </label>
-                  <input
-                    type="number"
+                  <DraftNumberInput
                     value={surveyPerformance.maxPhotoMarkers}
-                    onChange={(e) => {
-                      const n = Math.round(Number(e.target.value));
-                      if (Number.isFinite(n)) updateSurveyPerformance({ maxPhotoMarkers: Math.max(0, Math.min(50000, n)) });
-                    }}
+                    integer
+                    onCommit={(v) => updateSurveyPerformance({ maxPhotoMarkers: v })}
                     className="w-full px-2 py-1.5 bg-surface-input border border-border rounded text-content text-sm focus:outline-none focus:border-blue-500"
-                    min="0"
-                    max="50000"
+                    min={0}
+                    max={50000}
                   />
                   <div className="text-[10px] text-content-tertiary mt-1">Above this, photo dots aren't drawn</div>
                 </div>
@@ -1833,16 +1828,13 @@ export function SettingsView() {
                   <label className="block text-xs font-medium text-content-secondary mb-1.5">
                     Max waypoint markers
                   </label>
-                  <input
-                    type="number"
+                  <DraftNumberInput
                     value={surveyPerformance.maxWaypointMarkers}
-                    onChange={(e) => {
-                      const n = Math.round(Number(e.target.value));
-                      if (Number.isFinite(n)) updateSurveyPerformance({ maxWaypointMarkers: Math.max(0, Math.min(50000, n)) });
-                    }}
+                    integer
+                    onCommit={(v) => updateSurveyPerformance({ maxWaypointMarkers: v })}
                     className="w-full px-2 py-1.5 bg-surface-input border border-border rounded text-content text-sm focus:outline-none focus:border-blue-500"
-                    min="0"
-                    max="50000"
+                    min={0}
+                    max={50000}
                   />
                   <div className="text-[10px] text-content-tertiary mt-1">Markers thinned above this (path still drawn)</div>
                 </div>

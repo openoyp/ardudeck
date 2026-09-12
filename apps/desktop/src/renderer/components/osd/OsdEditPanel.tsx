@@ -6,6 +6,7 @@
  */
 
 import { useOsdStore, DEFAULT_ELEMENT_POSITIONS, type OsdElementId, type OsdElementKey } from '../../stores/osd-store';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { getElementSize } from '../../utils/osd/element-sizes';
 import { getModuleOsdElement } from '../../modules/module-osd-registry';
 import { getOsdRows, getOsdCols } from '../../utils/osd/font-renderer';
@@ -120,13 +121,10 @@ export function OsdEditPanel({ selectedElement, onDone }: Props) {
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="block text-[10px] text-content-secondary mb-1">X Position</label>
-            <input
-              type="number"
+            <DraftNumberInput
               value={pos.x}
-              onChange={(e) => {
-                const v = parseInt(e.target.value);
-                if (!isNaN(v)) setPos(v, pos.y);
-              }}
+              integer
+              onCommit={(v) => setPos(v, pos.y)}
               min={0}
               max={maxX}
               className="w-full bg-surface-raised text-content text-xs rounded px-2 py-1 border border-subtle focus:border-blue-500 focus:outline-none"
@@ -134,13 +132,10 @@ export function OsdEditPanel({ selectedElement, onDone }: Props) {
           </div>
           <div>
             <label className="block text-[10px] text-content-secondary mb-1">Y Position</label>
-            <input
-              type="number"
+            <DraftNumberInput
               value={pos.y}
-              onChange={(e) => {
-                const v = parseInt(e.target.value);
-                if (!isNaN(v)) setPos(pos.x, v);
-              }}
+              integer
+              onCommit={(v) => setPos(pos.x, v)}
               min={0}
               max={maxY}
               className="w-full bg-surface-raised text-content text-xs rounded px-2 py-1 border border-subtle focus:border-blue-500 focus:outline-none"

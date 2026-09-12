@@ -23,6 +23,7 @@ import {
   Shield,
   Cpu,
   Sliders,
+  Wrench,
   Battery,
   Table,
   Save,
@@ -53,6 +54,7 @@ import FlightModesTab from './FlightModesTab';
 import SafetyTab from './SafetyTab';
 import SensorsTab from './SensorsTab';
 import TuningTab from './TuningTab';
+import AutotuneTab from './AutotuneTab';
 import BatteryTab from './BatteryTab';
 import ParameterTable from './ParameterTable';
 import RoverTuningTab from './RoverTuningTab';
@@ -75,7 +77,7 @@ interface Toast {
   type: ToastType;
 }
 
-type TabId = 'pid' | 'rates' | 'modes' | 'receiver' | 'serial-ports' | 'safety' | 'sensors' | 'tuning' | 'battery' | 'parameters' | 'files' | 'rover-tuning' | 'rover-nav' | 'motor-test' | 'servo-output';
+type TabId = 'pid' | 'rates' | 'modes' | 'receiver' | 'serial-ports' | 'safety' | 'sensors' | 'tuning' | 'autotune' | 'battery' | 'parameters' | 'files' | 'rover-tuning' | 'rover-nav' | 'motor-test' | 'servo-output';
 
 interface Tab {
   id: TabId;
@@ -127,6 +129,7 @@ const TUNING_GROUP: TabGroup = {
     { id: 'pid', name: 'PID', Icon: Gauge, color: 'text-blue-400', description: 'Fine-tune PID gains for each axis' },
     { id: 'rates', name: 'Rates', Icon: Activity, color: 'text-purple-400', description: 'Configure rate curves and expo' },
     { id: 'tuning', name: 'Tuning', Icon: Sliders, color: 'text-emerald-400', description: 'Performance presets and basic tuning' },
+    { id: 'autotune', name: 'AutoTune', Icon: Wrench, color: 'text-orange-400', description: 'Set up an autotune without parameter hunting' },
   ],
 };
 
@@ -246,7 +249,7 @@ const ROVER_TABS: TabNode[] = [
 // Rates and Tuning are ArduPilot-parameter presets with no PX4 counterpart
 // (PX4 rate/tuning params live in the PID tab and parameter table). Serial
 // ports and motor test have dedicated PX4 implementations.
-const PX4_UNSUPPORTED_TABS: ReadonlySet<TabId> = new Set(['rates', 'tuning']);
+const PX4_UNSUPPORTED_TABS: ReadonlySet<TabId> = new Set(['rates', 'tuning', 'autotune']);
 
 function filterTabsForFirmware(nodes: TabNode[], isPx4: boolean): TabNode[] {
   if (!isPx4) return nodes;
@@ -467,6 +470,8 @@ export const MavlinkConfigView: React.FC = () => {
         return <RatesTab />;
       case 'tuning':
         return <TuningTab />;
+      case 'autotune':
+        return <AutotuneTab vehicleCategory={vehicleCategory} />;
       // Rover tabs
       case 'rover-tuning':
         return <RoverTuningTab />;

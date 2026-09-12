@@ -14,6 +14,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { DraftNumberInput } from '../../../hooks/useNumericDraft';
 import { AlertTriangle, Play, Square, Zap, Shield } from 'lucide-react';
 import { useParameterStore } from '../../../stores/parameter-store';
 import { useConnectionStore } from '../../../stores/connection-store';
@@ -360,12 +361,12 @@ export const MotorTestTab: React.FC = () => {
                 Throttle
               </label>
               <div className="flex items-baseline gap-1">
-                <input
-                  type="number"
+                <DraftNumberInput
                   min={0}
                   max={100}
+                  integer
                   value={throttle}
-                  onChange={(e) => setThrottle(Number(e.target.value))}
+                  onCommit={setThrottle}
                   className="w-14 px-1 py-0.5 text-sm text-right font-mono bg-surface border rounded text-content focus:outline-none focus:border-yellow-500"
                 />
                 <span className="text-sm text-content-secondary">%</span>
@@ -388,12 +389,12 @@ export const MotorTestTab: React.FC = () => {
                 Duration
               </label>
               <div className="flex items-baseline gap-1">
-                <input
-                  type="number"
+                <DraftNumberInput
                   min={1}
                   max={60}
+                  integer
                   value={duration}
-                  onChange={(e) => setDuration(Number(e.target.value))}
+                  onCommit={setDuration}
                   className="w-14 px-1 py-0.5 text-sm text-right font-mono bg-surface border rounded text-content focus:outline-none focus:border-yellow-500"
                 />
                 <span className="text-sm text-content-secondary">s</span>

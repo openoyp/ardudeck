@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { usePx4SitlStore } from '../../stores/px4-sitl-store';
 import { useConnectionStore } from '../../stores/connection-store';
 import { useSettingsStore } from '../../stores/settings-store';
@@ -354,22 +355,24 @@ export default function Px4SitlTab() {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="block text-xs text-content-secondary mb-1">Latitude</label>
-              <input
-                type="number"
+              <DraftNumberInput
                 step="0.0001"
+                min={-90}
+                max={90}
                 value={homeLocation.lat}
-                onChange={(e) => setHomeLocation({ ...homeLocation, lat: parseFloat(e.target.value) || 0 })}
+                onCommit={(v) => setHomeLocation({ ...homeLocation, lat: v })}
                 disabled={isRunning || isStarting}
                 className="w-full px-2 py-1.5 text-sm bg-surface-raised text-content border border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500/50 disabled:opacity-50"
               />
             </div>
             <div>
               <label className="block text-xs text-content-secondary mb-1">Longitude</label>
-              <input
-                type="number"
+              <DraftNumberInput
                 step="0.0001"
+                min={-180}
+                max={180}
                 value={homeLocation.lng}
-                onChange={(e) => setHomeLocation({ ...homeLocation, lng: parseFloat(e.target.value) || 0 })}
+                onCommit={(v) => setHomeLocation({ ...homeLocation, lng: v })}
                 disabled={isRunning || isStarting}
                 className="w-full px-2 py-1.5 text-sm bg-surface-raised text-content border border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500/50 disabled:opacity-50"
               />
@@ -410,10 +413,9 @@ export default function Px4SitlTab() {
             </div>
             <div>
               <label className="block text-xs text-content-secondary mb-1">Heading</label>
-              <input
-                type="number"
+              <DraftNumberInput
                 value={homeLocation.heading}
-                onChange={(e) => setHomeLocation({ ...homeLocation, heading: parseFloat(e.target.value) || 0 })}
+                onCommit={(v) => setHomeLocation({ ...homeLocation, heading: v })}
                 disabled={isRunning || isStarting}
                 min={0}
                 max={359}
@@ -506,10 +508,10 @@ export default function Px4SitlTab() {
               </svg>
             </label>
             <div className="relative">
-              <input
-                type="number"
+              <DraftNumberInput
                 value={speedup}
-                onChange={(e) => setSpeedup(Math.max(1, parseInt(e.target.value) || 1))}
+                integer
+                onCommit={setSpeedup}
                 disabled={isRunning || isStarting}
                 min={1}
                 max={10}

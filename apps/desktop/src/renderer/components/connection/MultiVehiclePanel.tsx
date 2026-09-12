@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { useOrchestratorEngineStore } from '../../stores/orchestrator-engine-store';
 import { useOrchestrationStore } from '../../stores/orchestration-store';
 import { useFleetVehicles, selectActiveVehicle } from '../../hooks/useFleet';
@@ -131,14 +132,14 @@ function AddVehicle({ onAdd, busy }: { onAdd: (s: OrchestratorSource) => void; b
             {ports.length === 0 && <option value="">No radios found</option>}
             {ports.map((p) => <option key={p.path} value={p.path}>{p.friendlyName || p.path}</option>)}
           </select>
-          <input className={`${field} w-24`} type="number" value={baud} onChange={(e) => setBaud(Number(e.target.value))} />
+          <DraftNumberInput className={`${field} w-24`} value={baud} min={1200} integer onCommit={setBaud} />
         </div>
       )}
       {kind === 'tcp' && (
         <div className="space-y-1.5">
           <div className="flex gap-2">
             <input className={field} placeholder="address (e.g. 10.0.0.5)" value={host} onChange={(e) => setHost(e.target.value)} />
-            <input className={`${field} w-24`} type="number" value={tcpPort} onChange={(e) => setTcpPort(Number(e.target.value))} />
+            <DraftNumberInput className={`${field} w-24`} value={tcpPort} min={1} max={65535} integer onCommit={setTcpPort} />
           </div>
           <p className="text-[10px] text-content-tertiary">ArduDeck dials the drone&apos;s address. Use this when the drone has a reachable IP.</p>
         </div>
@@ -155,7 +156,7 @@ function AddVehicle({ onAdd, busy }: { onAdd: (s: OrchestratorSource) => void; b
                 >{p.toUpperCase()}</button>
               ))}
             </div>
-            <input className={`${field} w-24`} type="number" value={cellPort} onChange={(e) => setCellPort(Number(e.target.value))} />
+            <DraftNumberInput className={`${field} w-24`} value={cellPort} min={1} max={65535} integer onCommit={setCellPort} />
           </div>
           <p className="text-[10px] text-content-tertiary">
             The drone dials in to this machine. Point its telemetry forwarder ({cellProto === 'udp' ? 'mavproxy/mavlink-router udpout' : 'a TCP client'}) at this machine&apos;s reachable address on port {cellPort || '…'}. The link recovers on its own across signal loss and carrier NAT changes.

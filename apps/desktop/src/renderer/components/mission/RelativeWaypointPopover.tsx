@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNumericDraft } from '../../hooks/useNumericDraft';
 import { createPortal } from 'react-dom';
 import { computeOffsetPosition } from '../../utils/geo-offset';
 import { useSettingsStore } from '../../stores/settings-store';
@@ -41,6 +42,7 @@ export function RelativeWaypointPopover({
   onCancel,
 }: RelativeWaypointPopoverProps) {
   const [bearing, setBearing] = useState(0);
+  const bearingDraft = useNumericDraft(bearing, (v) => setBearing(((v % 360) + 360) % 360));
   const [distance, setDistance] = useState(50);
   const [where, setWhere] = useState<InsertWhere>('after');
   const bearingInputRef = useRef<HTMLInputElement>(null);
@@ -221,13 +223,7 @@ export function RelativeWaypointPopover({
                 <input
                   ref={bearingInputRef}
                   type="number"
-                  min={0}
-                  max={359}
-                  value={bearing}
-                  onChange={(e) => {
-                    const v = Number(e.target.value);
-                    if (Number.isFinite(v)) setBearing(((v % 360) + 360) % 360);
-                  }}
+                  {...bearingDraft}
                   className="flex-1 min-w-0 bg-transparent px-2 text-sm text-content outline-none"
                 />
                 <span className="px-2 self-center text-xs text-content-secondary">°</span>

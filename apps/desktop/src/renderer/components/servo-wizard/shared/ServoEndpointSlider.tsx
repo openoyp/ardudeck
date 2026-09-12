@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { DraftNumberInput } from '../../../hooks/useNumericDraft';
 
 interface ServoEndpointSliderProps {
   min: number;
@@ -86,10 +87,9 @@ export default function ServoEndpointSlider({
       <div className="grid grid-cols-3 gap-4">
         <div>
           <label className="text-xs text-content-secondary block mb-1">Min (µs)</label>
-          <input
-            type="number"
+          <DraftNumberInput
             value={min}
-            onChange={(e) => onChange({ min: snap(Number(e.target.value)), center, max })}
+            onCommit={(v) => onChange({ min: snap(v), center, max })}
             className="w-full px-3 py-2 bg-surface-raised border border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
             min={rangeLimits.min}
             max={center - 50}
@@ -98,10 +98,9 @@ export default function ServoEndpointSlider({
         </div>
         <div>
           <label className="text-xs text-content-secondary block mb-1">Center (µs)</label>
-          <input
-            type="number"
+          <DraftNumberInput
             value={center}
-            onChange={(e) => onChange({ min, center: snap(Number(e.target.value)), max })}
+            onCommit={(v) => onChange({ min, center: snap(v), max })}
             className="w-full px-3 py-2 bg-surface-raised border border rounded-lg text-sm text-content focus:outline-none focus:border-green-500"
             min={min + 50}
             max={max - 50}
@@ -110,10 +109,9 @@ export default function ServoEndpointSlider({
         </div>
         <div>
           <label className="text-xs text-content-secondary block mb-1">Max (µs)</label>
-          <input
-            type="number"
+          <DraftNumberInput
             value={max}
-            onChange={(e) => onChange({ min, center, max: snap(Number(e.target.value)) })}
+            onCommit={(v) => onChange({ min, center, max: snap(v) })}
             className="w-full px-3 py-2 bg-surface-raised border border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
             min={center + 50}
             max={rangeLimits.max}

@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { useLegacyConfigStore, type LegacyMotorMix, type LegacyServoMix } from '../../stores/legacy-config-store';
 import { Wrench, Settings, Cog } from 'lucide-react';
 
@@ -205,49 +206,45 @@ export default function LegacyMixerTab() {
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t border-subtle">
                       <div>
                         <label className="block text-xs text-content-secondary mb-1">Throttle</label>
-                        <input
-                          type="number"
+                        <DraftNumberInput
                           step="0.01"
-                          min="-1"
-                          max="1"
+                          min={-1}
+                          max={1}
                           value={mix.throttle}
-                          onChange={(e) => handleMotorMixChange({ ...mix, throttle: parseFloat(e.target.value) || 0 })}
+                          onCommit={(v) => handleMotorMixChange({ ...mix, throttle: v })}
                           className="w-full px-2 py-1 bg-surface-raised border border rounded text-content text-sm"
                         />
                       </div>
                       <div>
                         <label className="block text-xs text-content-secondary mb-1">Roll</label>
-                        <input
-                          type="number"
+                        <DraftNumberInput
                           step="0.01"
-                          min="-1"
-                          max="1"
+                          min={-1}
+                          max={1}
                           value={mix.roll}
-                          onChange={(e) => handleMotorMixChange({ ...mix, roll: parseFloat(e.target.value) || 0 })}
+                          onCommit={(v) => handleMotorMixChange({ ...mix, roll: v })}
                           className="w-full px-2 py-1 bg-surface-raised border border rounded text-content text-sm"
                         />
                       </div>
                       <div>
                         <label className="block text-xs text-content-secondary mb-1">Pitch</label>
-                        <input
-                          type="number"
+                        <DraftNumberInput
                           step="0.01"
-                          min="-1"
-                          max="1"
+                          min={-1}
+                          max={1}
                           value={mix.pitch}
-                          onChange={(e) => handleMotorMixChange({ ...mix, pitch: parseFloat(e.target.value) || 0 })}
+                          onCommit={(v) => handleMotorMixChange({ ...mix, pitch: v })}
                           className="w-full px-2 py-1 bg-surface-raised border border rounded text-content text-sm"
                         />
                       </div>
                       <div>
                         <label className="block text-xs text-content-secondary mb-1">Yaw</label>
-                        <input
-                          type="number"
+                        <DraftNumberInput
                           step="0.01"
-                          min="-1"
-                          max="1"
+                          min={-1}
+                          max={1}
                           value={mix.yaw}
-                          onChange={(e) => handleMotorMixChange({ ...mix, yaw: parseFloat(e.target.value) || 0 })}
+                          onCommit={(v) => handleMotorMixChange({ ...mix, yaw: v })}
                           className="w-full px-2 py-1 bg-surface-raised border border rounded text-content text-sm"
                         />
                       </div>
@@ -345,45 +342,45 @@ export default function LegacyMixerTab() {
                         </div>
                         <div>
                           <label className="block text-xs text-content-secondary mb-1.5">Rate (%)</label>
-                          <input
-                            type="number"
-                            min="-125"
-                            max="125"
+                          <DraftNumberInput
+                            min={-125}
+                            max={125}
                             value={mix.rate}
-                            onChange={(e) => handleServoMixChange({ ...mix, rate: parseInt(e.target.value) || 0 })}
+                            integer
+                            onCommit={(v) => handleServoMixChange({ ...mix, rate: v })}
                             className="w-full px-3 py-2 bg-surface-raised border border rounded-lg text-content text-sm focus:border-blue-500 focus:outline-none"
                           />
                         </div>
                         <div>
                           <label className="block text-xs text-content-secondary mb-1.5">Speed</label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
+                          <DraftNumberInput
+                            min={0}
+                            max={100}
                             value={mix.speed}
-                            onChange={(e) => handleServoMixChange({ ...mix, speed: parseInt(e.target.value) || 0 })}
+                            integer
+                            onCommit={(v) => handleServoMixChange({ ...mix, speed: v })}
                             className="w-full px-3 py-2 bg-surface-raised border border rounded-lg text-content text-sm focus:border-blue-500 focus:outline-none"
                           />
                         </div>
                         <div>
                           <label className="block text-xs text-content-secondary mb-1.5">Min</label>
-                          <input
-                            type="number"
-                            min="-125"
-                            max="125"
+                          <DraftNumberInput
+                            min={-125}
+                            max={125}
                             value={mix.min}
-                            onChange={(e) => handleServoMixChange({ ...mix, min: parseInt(e.target.value) || 0 })}
+                            integer
+                            onCommit={(v) => handleServoMixChange({ ...mix, min: v })}
                             className="w-full px-3 py-2 bg-surface-raised border border rounded-lg text-content text-sm focus:border-blue-500 focus:outline-none"
                           />
                         </div>
                         <div>
                           <label className="block text-xs text-content-secondary mb-1.5">Max</label>
-                          <input
-                            type="number"
-                            min="-125"
-                            max="125"
+                          <DraftNumberInput
+                            min={-125}
+                            max={125}
                             value={mix.max}
-                            onChange={(e) => handleServoMixChange({ ...mix, max: parseInt(e.target.value) || 0 })}
+                            integer
+                            onCommit={(v) => handleServoMixChange({ ...mix, max: v })}
                             className="w-full px-3 py-2 bg-surface-raised border border rounded-lg text-content text-sm focus:border-blue-500 focus:outline-none"
                           />
                         </div>

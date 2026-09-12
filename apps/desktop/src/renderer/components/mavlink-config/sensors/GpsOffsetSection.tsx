@@ -1,6 +1,7 @@
 // Staged edits only: a half-dragged antenna marker must never reach the EKF, so nothing is written until Apply.
 import React, { useMemo, useRef, useState } from 'react';
 import { Crosshair, Zap } from 'lucide-react';
+import { DraftNumberInput } from '../../../hooks/useNumericDraft';
 import { useParameterStore } from '../../../stores/parameter-store';
 import { useConnectionStore } from '../../../stores/connection-store';
 import {
@@ -192,17 +193,14 @@ export const GpsOffsetSection: React.FC = () => {
     <label key={axis} className="flex items-center gap-2">
       <span className={`w-2 h-2 rounded-full shrink-0 ${AXIS[axis].dot}`} />
       <span className="w-16 shrink-0 text-xs font-medium text-content-secondary">{AXIS[axis].label}</span>
-      <input
-        type="number"
+      <DraftNumberInput
         step={0.01}
         min={-OFFSET_LIMIT_M}
         max={OFFSET_LIMIT_M}
         value={staged[axis]}
         disabled={!editable}
-        onChange={(e) => {
-          const v = parseFloat(e.target.value);
-          if (Number.isFinite(v)) stage(axis, v);
-        }}
+        live
+        onCommit={(v) => stage(axis, v)}
         data-tip={axis === 'z' ? 'Antenna above the flight controller = negative Z' : undefined}
         className={`w-24 px-2 py-1.5 text-sm font-mono rounded-md bg-surface-input border text-content focus:outline-none focus:ring-1 ${AXIS[axis].focus} disabled:opacity-50 ${
           pending.has(ids[axis]) ? 'border-amber-500/60' : 'border-subtle'

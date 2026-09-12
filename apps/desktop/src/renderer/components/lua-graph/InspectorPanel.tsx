@@ -3,6 +3,7 @@
  * Shows node info, editable inputs, and configurable properties.
  */
 import { useMemo } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { Settings2, Timer } from 'lucide-react';
 import { useLuaGraphStore } from '../../stores/lua-graph-store';
 import { getNodeDefinition, getEffectivePorts } from './node-library';
@@ -71,13 +72,13 @@ export function InspectorPanel() {
             How often the script executes. Lower values give faster response but use more CPU.
           </p>
           <div className="flex items-center gap-2">
-            <input
-              type="number"
+            <DraftNumberInput
               value={runIntervalMs}
               min={50}
               max={60000}
               step={50}
-              onChange={(e) => setRunIntervalMs(parseInt(e.target.value, 10) || 1000)}
+              integer
+              onCommit={setRunIntervalMs}
               className="w-24 text-xs bg-surface-input border border-subtle rounded px-2 py-1 text-content focus:outline-none focus:border-blue-500/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <span className="text-[10px] text-content-secondary">ms</span>
@@ -196,13 +197,12 @@ export function InspectorPanel() {
                 return (
                   <div key={propDef.id}>
                     <label className="text-[10px] text-content-secondary block mb-0.5">{propDef.label}</label>
-                    <input
-                      type="number"
+                    <DraftNumberInput
                       value={Number(value)}
                       min={propDef.min}
                       max={propDef.max}
                       step={propDef.step ?? 1}
-                      onChange={(e) => updateNodeProperty(selectedNode.id, propDef.id, parseFloat(e.target.value) || 0)}
+                      onCommit={(v) => updateNodeProperty(selectedNode.id, propDef.id, v)}
                       className="w-full text-xs bg-surface-input border border-subtle rounded px-2 py-1 text-content focus:outline-none focus:border-blue-500/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>

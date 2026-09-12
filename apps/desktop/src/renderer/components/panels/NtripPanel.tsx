@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import {
   DEFAULT_NTRIP_CONFIG,
   INITIAL_NTRIP_STATUS,
@@ -315,10 +316,12 @@ export function NtripPanel() {
                 />
               </Field>
               <Field label="Port" className="w-16">
-                <input
-                  type="number"
+                <DraftNumberInput
                   value={config.port}
-                  onChange={(e) => persist({ port: Math.max(1, Math.min(65535, Number(e.target.value) || 2101)) })}
+                  min={1}
+                  max={65535}
+                  integer
+                  onCommit={(v) => persist({ port: v })}
                   className={INPUT_CLASS}
                 />
               </Field>
@@ -426,12 +429,12 @@ export function NtripPanel() {
             {config.sendPosition && (
               <label className="flex items-center gap-1.5 text-xs text-content-secondary">
                 Interval (s)
-                <input
-                  type="number"
+                <DraftNumberInput
                   min={1}
                   max={30}
+                  integer
                   value={config.ggaIntervalSec}
-                  onChange={(e) => persist({ ggaIntervalSec: Math.max(1, Math.min(30, Number(e.target.value) || 1)) })}
+                  onCommit={(v) => persist({ ggaIntervalSec: v })}
                   className={`${INPUT_CLASS} w-14`}
                 />
               </label>

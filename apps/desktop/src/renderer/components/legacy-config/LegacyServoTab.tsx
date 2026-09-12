@@ -6,6 +6,7 @@
  */
 
 import { useLegacyConfigStore, type LegacyServoConfig } from '../../stores/legacy-config-store';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { CompactSlider } from '../ui/DraggableSlider';
 import { Settings } from 'lucide-react';
 
@@ -150,12 +151,12 @@ export default function LegacyServoTab() {
                         >
                           Reverse
                         </button>
-                        <input
-                          type="number"
+                        <DraftNumberInput
                           min={-125}
                           max={125}
+                          integer
                           value={servo.rate}
-                          onChange={(e) => handleChange({ ...servo, rate: parseInt(e.target.value) || 100 })}
+                          onCommit={(v) => handleChange({ ...servo, rate: v })}
                           className="w-16 px-2 py-0.5 text-center text-sm bg-surface-input border border rounded text-content"
                         />
                       </div>

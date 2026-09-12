@@ -6,6 +6,7 @@
  */
 
 import { useLegacyConfigStore, type LegacyAuxMode } from '../../stores/legacy-config-store';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import {
   Zap, Ruler, Sunrise, Compass, Target, RefreshCw, Home, MapPin,
   Hand, Volume2, Monitor, Radio, Package, ShieldAlert, Map, Plane,
@@ -254,23 +255,23 @@ export default function LegacyModesTab() {
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs text-content-secondary">Activation Range</label>
               <div className="flex items-center gap-2 text-xs">
-                <input
-                  type="number"
-                  min="900"
-                  max="2100"
+                <DraftNumberInput
+                  min={900}
+                  max={2100}
                   step="25"
+                  integer
                   value={mode.rangeStart}
-                  onChange={(e) => handleChange({ ...mode, rangeStart: parseInt(e.target.value) || 900 })}
+                  onCommit={(v) => handleChange({ ...mode, rangeStart: v })}
                   className="w-16 px-2 py-1 bg-surface-raised border border rounded text-content text-center"
                 />
                 <span className="text-content-secondary">-</span>
-                <input
-                  type="number"
-                  min="900"
-                  max="2100"
+                <DraftNumberInput
+                  min={900}
+                  max={2100}
                   step="25"
+                  integer
                   value={mode.rangeEnd}
-                  onChange={(e) => handleChange({ ...mode, rangeEnd: parseInt(e.target.value) || 900 })}
+                  onCommit={(v) => handleChange({ ...mode, rangeEnd: v })}
                   className="w-16 px-2 py-1 bg-surface-raised border border rounded text-content text-center"
                 />
               </div>

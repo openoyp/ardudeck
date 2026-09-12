@@ -13,8 +13,9 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import type { CameraSourceConfig } from '../../../shared/camera-types';
 import { useCameraStore } from '../../stores/camera-store';
 import { playWhep } from './whep';
+import { createStallTracker, nextRetryDelayMs } from './stream-stall';
 
-export type CameraStreamStatus = 'starting' | 'live' | 'error';
+export type CameraStreamStatus = 'starting' | 'live' | 'stalled' | 'error';
 
 /** The stream URL to hand the engine: mavlink resolves to the advertised URI. */
 export function resolveStreamUrl(
@@ -27,7 +28,9 @@ export function resolveStreamUrl(
 /**
  * Starts/stops the feed for `source` against `videoRef` and reports status.
  * Restarts only when a stream-relevant field changes — editing the label, HFOV
- * or low-latency flag must NOT tear down a live feed.
+ * or low-latency flag must NOT tear down a live feed. Stalled feeds (frames
+ * stopped) reacquire themselves on a backoff; 'stalled' status means the view
+ * must stop presenting the frozen last frame as live.
  */
 export function useCameraStream(
   source: CameraSourceConfig,
@@ -36,6 +39,8 @@ export function useCameraStream(
 ): { status: CameraStreamStatus; error: string | null } {
   const [status, setStatus] = useState<CameraStreamStatus>('starting');
   const [error, setError] = useState<string | null>(null);
+  const [restartNonce, setRestartNonce] = useState(0);
+  const retryAttemptRef = useRef(0);
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
   const advertisedUri = useCameraStore((s) => s.videoStreams[source.vehicleKey]?.uri);
@@ -44,11 +49,57 @@ export function useCameraStream(
     let pc: RTCPeerConnection | null = null;
     let uvcStream: MediaStream | null = null;
     let cancelled = false;
+    let stalled = false;
+    let rvfcHandle: number | null = null;
+    let stallInterval: ReturnType<typeof setInterval> | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    const tracker = createStallTracker();
 
     const fail = (msg: string) => {
       setStatus('error');
       setError(msg);
       onErrorRef.current?.(msg);
+    };
+
+    const scheduleRestart = (immediate = false) => {
+      if (cancelled || retryTimer) return;
+      const delay = immediate ? 0 : nextRetryDelayMs(retryAttemptRef.current++);
+      retryTimer = setTimeout(() => {
+        if (!cancelled) setRestartNonce((n) => n + 1);
+      }, delay);
+    };
+
+    const onDeviceChange = () => {
+      // Dongle re-enumerated: skip the backoff, try right now.
+      if (stalled) {
+        if (retryTimer) clearTimeout(retryTimer);
+        retryTimer = null;
+        scheduleRestart(true);
+      }
+    };
+
+    const enterStalled = () => {
+      if (cancelled || stalled) return;
+      stalled = true;
+      setStatus('stalled');
+      setError(null);
+      scheduleRestart();
+    };
+
+    const watchFrames = (video: HTMLVideoElement) => {
+      const loop = (): void => {
+        rvfcHandle = video.requestVideoFrameCallback(() => {
+          tracker.onFrame(Date.now());
+          if (!cancelled && !stalled) {
+            retryAttemptRef.current = 0;
+            loop();
+          }
+        });
+      };
+      loop();
+      stallInterval = setInterval(() => {
+        if (tracker.isStalled(Date.now())) enterStalled();
+      }, 1000);
     };
 
     async function go() {
@@ -63,9 +114,16 @@ export function useCameraStream(
             audio: false,
           });
           if (cancelled) { uvcStream.getTracks().forEach((t) => t.stop()); return; }
+          const track = uvcStream.getVideoTracks()[0];
+          if (track) {
+            track.addEventListener('ended', enterStalled);
+            track.addEventListener('mute', enterStalled);
+          }
           video.srcObject = uvcStream;
           await video.play().catch(() => {});
+          if (cancelled) return;
           setStatus('live');
+          watchFrames(video);
           return;
         }
 
@@ -81,24 +139,38 @@ export function useCameraStream(
           pc = await playWhep(video, playback.whepUrl);
           if (cancelled) { pc.close(); return; }
           setStatus('live');
+          watchFrames(video);
         } else if (playback.kind === 'uvc') {
           fail('Unexpected playback descriptor');
         }
       } catch (e) {
         if (cancelled) return;
+        // Acquisition failed while recovering from a stall (device still gone):
+        // stay in 'stalled' and keep retrying rather than parking on an error.
+        if (retryAttemptRef.current > 0 && source.kind === 'uvc') {
+          setStatus('stalled');
+          scheduleRestart();
+          return;
+        }
         fail(e instanceof Error ? e.message : 'Playback error');
       }
     }
+    navigator.mediaDevices?.addEventListener?.('devicechange', onDeviceChange);
     void go();
 
     return () => {
       cancelled = true;
+      navigator.mediaDevices?.removeEventListener?.('devicechange', onDeviceChange);
+      if (retryTimer) clearTimeout(retryTimer);
+      if (stallInterval) clearInterval(stallInterval);
+      const video = videoRef.current;
+      if (rvfcHandle !== null && video) video.cancelVideoFrameCallback(rvfcHandle);
       if (pc) pc.close();
       if (uvcStream) uvcStream.getTracks().forEach((t) => t.stop());
       if (source.kind !== 'uvc') void window.electronAPI.cameraStop(source.id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source.id, source.kind, source.url, source.deviceId, source.rtspTransport, advertisedUri]);
+  }, [source.id, source.kind, source.url, source.deviceId, source.rtspTransport, advertisedUri, restartNonce]);
 
   return { status, error };
 }

@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { CompactSlider } from '../ui/DraggableSlider';
 import { useServoWizardStore } from '../../stores/servo-wizard-store';
 import {
@@ -656,11 +657,11 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
                             </option>
                           ))}
                         </select>
-                        <input
-                          type="number"
+                        <DraftNumberInput
                           value={rule.rate}
-                          onChange={(e) =>
-                            updateMixerRule(rule.originalIndex, { rate: Number(e.target.value) })
+                          integer
+                          onCommit={(v) =>
+                            updateMixerRule(rule.originalIndex, { rate: v })
                           }
                           className="w-16 px-2 py-1.5 bg-purple-900/30 border-purple-500/30 rounded text-xs text-purple-200 text-center"
                           min={-125}

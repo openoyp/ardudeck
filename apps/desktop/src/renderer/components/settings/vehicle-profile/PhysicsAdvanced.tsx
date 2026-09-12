@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Cpu } from 'lucide-react';
 import {
   dimensionInputValueFromMillimeters,
@@ -116,6 +117,7 @@ function dimensionInputStep(unit: DimensionUnit): string {
 }
 
 function NumField({ label, value, step, unit, placeholder, hint, onChange }: NumFieldProps) {
+  const [text, setText] = useState<string | null>(null);
   return (
     <div>
       <label className="block text-[11px] text-content-secondary mb-1">{label}</label>
@@ -123,12 +125,16 @@ function NumField({ label, value, step, unit, placeholder, hint, onChange }: Num
         <input
           type="number"
           step={step}
-          value={value ?? ''}
+          value={text ?? (value ?? '')}
           placeholder={placeholder}
-          onChange={e => {
-            const v = parseFloat(e.target.value);
-            if (!Number.isNaN(v)) onChange(v);
+          onFocus={() => setText(value === undefined ? '' : String(value))}
+          onChange={e => setText(e.target.value)}
+          onBlur={() => {
+            const v = text === null ? NaN : parseFloat(text);
+            setText(null);
+            if (Number.isFinite(v)) onChange(v);
           }}
+          onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
           className="w-full px-2 py-1.5 bg-surface-input border border-border rounded text-xs text-content focus:outline-none focus:border-blue-500"
         />
         {unit && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-content-tertiary">{unit}</span>}

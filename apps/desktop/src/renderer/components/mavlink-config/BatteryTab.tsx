@@ -7,6 +7,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import {
   BarChart3,
   Zap,
@@ -487,19 +488,19 @@ const BatteryTab: React.FC = () => {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-content-secondary mb-1">Voltage Pin (BATT_VOLT_PIN)</label>
-              <input
-                type="number"
+              <DraftNumberInput
+                integer
                 value={batteryValues.battVoltPin}
-                onChange={(e) => setParameter('BATT_VOLT_PIN', Number(e.target.value))}
+                onCommit={(v) => setParameter('BATT_VOLT_PIN', v)}
                 className="w-full px-2 py-1.5 bg-surface-input border border-subtle rounded text-sm font-mono text-content focus:outline-none focus:border-blue-500"
               />
             </div>
             <div>
               <label className="block text-xs text-content-secondary mb-1">Current Pin (BATT_CURR_PIN)</label>
-              <input
-                type="number"
+              <DraftNumberInput
+                integer
                 value={batteryValues.battCurrPin}
-                onChange={(e) => setParameter('BATT_CURR_PIN', Number(e.target.value))}
+                onCommit={(v) => setParameter('BATT_CURR_PIN', v)}
                 className="w-full px-2 py-1.5 bg-surface-input border border-subtle rounded text-sm font-mono text-content focus:outline-none focus:border-blue-500"
               />
             </div>

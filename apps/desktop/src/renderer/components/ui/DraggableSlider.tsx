@@ -13,6 +13,7 @@
  */
 
 import { useRef, useCallback, useMemo } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 
 export interface DraggableSliderProps {
   /** Current value */
@@ -309,12 +310,12 @@ export function CompactSlider({
             >
               -
             </button>
-            <input
-              type="number"
+            <DraftNumberInput
               min={min}
               max={max}
+              integer
               value={value}
-              onChange={(e) => onChange(Math.max(min, Math.min(max, parseInt(e.target.value) || min)))}
+              onCommit={onChange}
               className="min-w-[5rem] w-auto px-2 py-0.5 text-center text-sm bg-surface-input border border-border rounded text-content tabular-nums"
               style={{ width: `${Math.max(5, String(value).length + 2)}ch` }}
             />

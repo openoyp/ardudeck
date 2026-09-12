@@ -8,6 +8,7 @@
  */
 
 import { useState } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { useSurveyStore } from '../../stores/survey-store';
 import { useFleetSurveyStore } from '../../stores/fleet-survey-store';
 import { useFleetVehicles } from '../../hooks/useFleet';
@@ -105,10 +106,10 @@ export function FleetSurveyPanel({ onClose }: { onClose: () => void }) {
 
             <label className="flex items-center justify-between gap-3 mb-4 text-xs text-content">
               <span>Altitude layer step (m/vehicle)</span>
-              <input
-                type="number"
+              <DraftNumberInput
                 value={altStep}
-                onChange={(e) => setAltStep(Number(e.target.value) || 0)}
+                min={0}
+                onCommit={setAltStep}
                 className="w-20 bg-surface-input border border-subtle rounded px-2 py-1 font-mono text-right"
               />
             </label>

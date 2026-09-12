@@ -104,11 +104,23 @@ export function CameraView({ source, vehicle, isPrimary, osd, onActivate, onErro
       />
 
       {status !== 'live' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 text-center">
+        <div
+          className={`absolute inset-0 flex flex-col items-center justify-center gap-2 text-center ${
+            status === 'stalled' ? 'bg-black/75 backdrop-blur-sm' : 'bg-black/60'
+          }`}
+        >
           {status === 'starting' ? (
             <>
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-white/90" />
               <div className="text-xs text-white/70">Connecting to {source.label}…</div>
+            </>
+          ) : status === 'stalled' ? (
+            <>
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-500/30 border-t-amber-400" />
+              <div className="text-sm font-semibold text-amber-300">Video stalled, reconnecting…</div>
+              <div className="max-w-[80%] text-[11px] text-white/60">
+                The feed stopped delivering frames. Retrying automatically; replugging the device also recovers it.
+              </div>
             </>
           ) : (
             <>

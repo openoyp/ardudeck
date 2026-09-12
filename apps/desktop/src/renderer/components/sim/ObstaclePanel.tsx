@@ -8,6 +8,7 @@
  * them — visible in this 3D world and on the map at once.
  */
 import { useCallback, useState } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { useSimObstaclesStore } from '../../stores/sim-obstacles-store';
 import { useConnectionStore } from '../../stores/connection-store';
 import { localToLatLng } from '../survey/geo-math';
@@ -130,12 +131,12 @@ export default function ObstaclePanel() {
             <option value="box">Box</option>
           </select>
           <label className="flex items-center gap-1 text-content-tertiary" data-tip="Radius / half-width (m)">
-            r<input type="number" min={1} max={500} value={draft.radius}
-              onChange={(e) => setDraft({ radius: Math.max(1, Number(e.target.value) || 1) })} className={num} />
+            r<DraftNumberInput min={1} max={500} value={draft.radius}
+              onCommit={(v) => setDraft({ radius: v })} className={num} />
           </label>
           <label className="flex items-center gap-1 text-content-tertiary" data-tip="Height (m)">
-            h<input type="number" min={1} max={500} value={draft.height}
-              onChange={(e) => setDraft({ height: Math.max(1, Number(e.target.value) || 1) })} className={num} />
+            h<DraftNumberInput min={1} max={500} value={draft.height}
+              onCommit={(v) => setDraft({ height: v })} className={num} />
           </label>
         </div>
 

@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { DraggableSlider } from '../ui/DraggableSlider';
 import {
   Target,
@@ -444,10 +445,9 @@ export default function AutoLaunchTab({ modified, setModified }: Props) {
 
             <div>
               <label className="text-xs text-content-secondary block mb-1.5">Maximum Altitude (m)</label>
-              <input
-                type="number"
+              <DraftNumberInput
                 value={cmToM(config.nav_fw_launch_max_altitude)}
-                onChange={(e) => updateConfig({ nav_fw_launch_max_altitude: mToCm(Number(e.target.value)) })}
+                onCommit={(v) => updateConfig({ nav_fw_launch_max_altitude: mToCm(v) })}
                 className="w-full px-3 py-2 bg-surface-raised border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
                 min={0}
                 max={600}

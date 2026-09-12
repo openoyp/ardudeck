@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { createPortal } from 'react-dom';
 import { useFormationStore } from '../../stores/formation-store';
 import { formationOf } from '../../stores/active-vehicle-store';
@@ -21,9 +22,9 @@ function NumChip({ label, value, min, max, onChange }: { label: string; value: n
   return (
     <label className="flex items-center gap-1 text-[9px] uppercase tracking-wide text-content-tertiary" data-tip={`${label} (m)`}>
       {label}
-      <input
-        type="number" min={min} max={max} value={value}
-        onChange={(e) => onChange(Math.max(min, Math.min(max, Number(e.target.value))))}
+      <DraftNumberInput
+        min={min} max={max} value={value}
+        onCommit={onChange}
         className="w-9 px-1 py-0.5 text-[10px] text-center rounded bg-surface-input border border-subtle text-content"
       />
     </label>

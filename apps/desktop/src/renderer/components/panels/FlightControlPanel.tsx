@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { useTelemetryStore } from '../../stores/telemetry-store';
 import { useFlightControlStore } from '../../stores/flight-control-store';
 import { useConnectionStore } from '../../stores/connection-store';
@@ -893,12 +894,12 @@ function MavlinkFlightControl({ mavTypeOverride }: { mavTypeOverride?: number })
               title="Back a waypoint (repeat a section)"
               aria-label="Previous waypoint"
             >◀</button>
-            <input
-              type="number"
+            <DraftNumberInput
               min={1}
               max={missionItems.length}
+              integer
               value={target + 1}
-              onChange={(e) => { const v = Number(e.target.value); if (Number.isFinite(v) && e.target.value !== '') stepTo(v - 1); }}
+              onCommit={(v) => stepTo(v - 1)}
               className="w-9 px-1 py-1 text-[11px] font-mono text-center bg-transparent text-content border-x border-subtle outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
               aria-label="Waypoint to fly to"
             />
@@ -1168,13 +1169,12 @@ function MavlinkFlightControl({ mavTypeOverride }: { mavTypeOverride?: number })
               {showTakeoffDialog ? (
                 <div className="h-full flex items-center gap-1.5 px-2.5 rounded-lg bg-surface border border-default">
                   <span className="text-[11px] text-content-secondary shrink-0">{takeoffPresentation.dialogPrompt}</span>
-                  <input
-                    type="number"
+                  <DraftNumberInput
                     min={takeoffAltitudeMin}
                     max={takeoffAltitudeMax}
                     step={takeoffAltitudeStep}
                     value={takeoffAltitudeDisplay}
-                    onChange={(e) => { if (e.target.value.trim() !== '') setTakeoffAltitudeFromDisplay(Number(e.target.value)); }}
+                    onCommit={setTakeoffAltitudeFromDisplay}
                     className="w-14 px-1.5 py-1 text-sm font-mono bg-surface-input border border-subtle rounded text-content"
                   />
                   <span className="text-[11px] text-content-secondary shrink-0">{altitudeLabel}</span>
@@ -1372,16 +1372,12 @@ function MavlinkFlightControl({ mavTypeOverride }: { mavTypeOverride?: number })
                   <span className="text-[11px] text-content-secondary shrink-0">
                     {takeoffPresentation.dialogPrompt}
                   </span>
-                  <input
-                    type="number"
+                  <DraftNumberInput
                     min={takeoffAltitudeMin}
                     max={takeoffAltitudeMax}
                     step={takeoffAltitudeStep}
                     value={takeoffAltitudeDisplay}
-                    onChange={(e) => {
-                      if (e.target.value.trim() === '') return;
-                      setTakeoffAltitudeFromDisplay(Number(e.target.value));
-                    }}
+                    onCommit={setTakeoffAltitudeFromDisplay}
                     className="w-14 px-1.5 py-1 text-sm font-mono bg-surface-input border border-subtle rounded text-content"
                   />
                   <span className="text-[11px] text-content-secondary shrink-0">{altitudeLabel}</span>

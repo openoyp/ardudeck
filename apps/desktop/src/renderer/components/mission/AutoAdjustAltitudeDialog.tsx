@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { Mountain, AlertTriangle, Check, ChevronDown, ChevronRight } from 'lucide-react';
 import { getElevations } from '../../utils/elevation-api';
 import { useSettingsStore } from '../../stores/settings-store';
@@ -221,12 +222,12 @@ export function AutoAdjustAltitudeDialog({
                 <label className="block text-[11px] uppercase tracking-wide text-content-tertiary mb-1">
                   Min spacing (m)
                 </label>
-                <input
-                  type="number"
+                <DraftNumberInput
                   min={10}
                   max={1000}
+                  integer
                   value={minSpacing}
-                  onChange={e => setMinSpacing(Math.max(10, Number(e.target.value) || 50))}
+                  onCommit={setMinSpacing}
                   disabled={!insertIntermediates}
                   className="w-full px-2.5 py-1.5 bg-surface-input border border-subtle rounded-md text-content text-sm focus:outline-none focus:border-amber-500/50 disabled:opacity-50"
                 />

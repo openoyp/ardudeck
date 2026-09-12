@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useNumericDraft } from '../../../hooks/useNumericDraft';
 import { useCompanionStore } from '../../../stores/companion-store';
 import { PanelContainer, SectionTitle } from '../../panels/panel-utils';
 import { ESP32_MODE_LABELS, PROTOCOL_LABELS } from '../../../../shared/dronebridge-types';
@@ -55,14 +56,14 @@ function NumberInput({ value, onChange, min, max, className = '' }: {
   max?: number;
   className?: string;
 }) {
+  const draft = useNumericDraft(value, onChange, { min, max, integer: true });
   return (
     <input
       type="number"
-      value={value}
-      onChange={(e) => onChange(Number(e.target.value))}
       min={min}
       max={max}
       className={`bg-surface-raised border border rounded px-2 py-1 text-sm text-content font-mono placeholder-content-tertiary focus:outline-none focus:border-blue-500 w-24 ${className}`}
+      {...draft}
     />
   );
 }
