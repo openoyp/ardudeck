@@ -60,7 +60,8 @@ export interface ReadoutSource {
   groundspeed: number;
   airspeed: number;
   heading: number;
-  distance: number;
+  /** Null = home unknown: the readout shows a dash. */
+  distance: number | null;
   gpsSats?: number;
   hdop?: number;
   lat?: number;
@@ -154,7 +155,7 @@ export function formatReadout(id: HudReadoutId, v: ReadoutSource, u: UnitProfile
     case 'heading':
       return { label, value: `${pad3(v.heading)}°` };
     case 'distHome':
-      return { label, value: `${Math.round(u.dist(v.distance))} ${u.distUnit}` };
+      return v.distance == null ? dash : { label, value: `${Math.round(u.dist(v.distance))} ${u.distUnit}` };
     case 'gpsSats': {
       const s = num(v.gpsSats);
       return s == null ? dash : { label, value: `${Math.round(s)}` };

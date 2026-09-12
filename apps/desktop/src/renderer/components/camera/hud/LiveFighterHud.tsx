@@ -13,13 +13,16 @@ import { useActiveVehicleStore } from '../../../stores/active-vehicle-store';
 import { useFleetTelemetryStore } from '../../../stores/fleet-telemetry-store';
 import { bearingDeg, haversineMeters } from '../../../utils/osd/live-telemetry';
 import { wrap180 } from './hud-geometry';
+import { useMapHomeStore } from '../../map/instruments/registry';
+import { computeHomeReadout, resolveHudHome } from './home-readout';
 import { resolveHudProfile } from './hud-config';
 import { useLinkHistory } from './useLinkHistory';
 import { FighterHud, type FighterHudValues, type HudContact } from './FighterHud';
 
 export const LiveFighterHud = memo(function LiveFighterHud() {
   const t = useTelemetryStore();
-  const home = useMissionStore((s) => s.homePosition);
+  const missionHome = useMissionStore((s) => s.homePosition);
+  const mapHome = useMapHomeStore((s) => s.home);
   const config = useHudStore((s) => s.config);
   const mavType = useConnectionStore((s) => s.connectionState.mavType);
   const profile = resolveHudProfile(config.profile, mavType);
@@ -30,12 +33,7 @@ export const LiveFighterHud = memo(function LiveFighterHud() {
   const lon = t.gps.lon || t.position.lon;
   const heading = t.vfrHud.heading || t.attitude.yaw;
 
-  let distance = 0;
-  let homeDirection = 0;
-  if (home && (lat || lon)) {
-    distance = haversineMeters(lat, lon, home.lat, home.lon);
-    homeDirection = wrap180(bearingDeg(lat, lon, home.lat, home.lon) - heading);
-  }
+  const homeReadout = computeHomeReadout(lat, lon, heading, resolveHudHome(mapHome, missionHome));
 
   // Swarm contacts: every OTHER fleet vehicle with a position, as azimuth /
   // elevation relative to own nose. Uses relative altitudes (a swarm shares a
@@ -92,8 +90,8 @@ export const LiveFighterHud = memo(function LiveFighterHud() {
     current: t.battery.current,
     mode: t.flight.mode,
     armed: t.flight.armed,
-    distance,
-    homeDirection,
+    distance: homeReadout?.distance ?? null,
+    homeDirection: homeReadout?.direction ?? null,
     gpsSats: t.gps.satellites,
     hdop: t.gps.hdop,
     lat,

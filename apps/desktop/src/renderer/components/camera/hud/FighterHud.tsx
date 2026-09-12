@@ -60,8 +60,9 @@ export interface FighterHudValues {
   current?: number;
   mode: string;
   armed: boolean;
-  distance: number;
-  homeDirection: number;
+  /** Null = home or fix unknown: render dashes, never a fake 0 m. */
+  distance: number | null;
+  homeDirection: number | null;
   gForce?: number;
   gpsSats?: number;
   hdop?: number;
@@ -117,8 +118,8 @@ export const FighterHud = memo(function FighterHud({ v: raw, config, profile = '
     throttle: raw.throttle ?? 0,
     batteryVoltage: raw.batteryVoltage ?? 0,
     batteryPercent: raw.batteryPercent ?? 0,
-    distance: raw.distance ?? 0,
-    homeDirection: raw.homeDirection ?? 0,
+    distance: raw.distance ?? null,
+    homeDirection: raw.homeDirection ?? null,
     mode: raw.mode ?? 'Unknown',
   };
   const svgRef = useRef<SVGSVGElement>(null);
@@ -340,11 +341,13 @@ export const FighterHud = memo(function FighterHud({ v: raw, config, profile = '
         {w.home && (
           <Movable id="home" width={200} height={80}>
             <g stroke="none">
-              <g transform={`rotate(${v.homeDirection})`}>
-                <polygon points="0,-24 10,9 0,1 -10,9" fill={C} />
-              </g>
+              {v.homeDirection !== null && (
+                <g transform={`rotate(${v.homeDirection})`}>
+                  <polygon points="0,-24 10,9 0,1 -10,9" fill={C} />
+                </g>
+              )}
               <text x={0} y={44} textAnchor="middle" fontSize={22} fill={C}>
-                HOME {v.distance >= 1000 ? `${(v.distance / 1000).toFixed(2)}km` : `${v.distance.toFixed(0)}m`}
+                HOME {v.distance === null ? '--' : v.distance >= 1000 ? `${(v.distance / 1000).toFixed(2)}km` : `${v.distance.toFixed(0)}m`}
               </text>
             </g>
           </Movable>
@@ -396,9 +399,9 @@ function BankArc({ roll, c, lw }: { roll: number; c: string; lw: number }) {
   );
 }
 
-function HeadingTape({ ticks, heading, homeRel, c, lw }: { ticks: ReturnType<typeof headingTicks>; heading: number; homeRel: number; c: string; lw: number }) {
+function HeadingTape({ ticks, heading, homeRel, c, lw }: { ticks: ReturnType<typeof headingTicks>; heading: number; homeRel: number | null; c: string; lw: number }) {
   const y = 70;
-  const homeX = CX + (Math.max(-HDG_HALF, Math.min(HDG_HALF, homeRel)) / HDG_HALF) * HDG_BAND;
+  const homeX = homeRel === null ? 0 : CX + (Math.max(-HDG_HALF, Math.min(HDG_HALF, homeRel)) / HDG_HALF) * HDG_BAND;
   return (
     <g>
       <line x1={CX - HDG_BAND} y1={y + 28} x2={CX + HDG_BAND} y2={y + 28} strokeWidth={1.5 * lw} opacity={0.55} />
@@ -411,7 +414,7 @@ function HeadingTape({ ticks, heading, homeRel, c, lw }: { ticks: ReturnType<typ
           </g>
         );
       })}
-      {Math.abs(homeRel) <= HDG_HALF && <polygon points={`${homeX},${y + 30} ${homeX - 9},${y + 44} ${homeX + 9},${y + 44}`} fill="#ffd23f" stroke="none" />}
+      {homeRel !== null && Math.abs(homeRel) <= HDG_HALF && <polygon points={`${homeX},${y + 30} ${homeX - 9},${y + 44} ${homeX + 9},${y + 44}`} fill="#ffd23f" stroke="none" />}
       <rect x={CX - 46} y={y - 26} width={92} height={30} fill="rgba(0,0,0,0.45)" stroke={c} strokeWidth={1.5 * lw} />
       <text x={CX} y={y - 4} textAnchor="middle" fontSize={24} stroke="none" fill={c}>{Math.round(heading) % 360}</text>
       <polygon points={`${CX},${y + 30} ${CX - 8},${y + 42} ${CX + 8},${y + 42}`} fill={c} stroke="none" />
