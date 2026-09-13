@@ -40,6 +40,11 @@ const WEBRTC_PORT = 8889;
 const WEBRTC_UDP_PORT = 8189;
 const SRT_PORT = 8890;
 const HOST = '127.0.0.1';
+/** Bridged-ingest reconnect: base backoff, ceiling, and the wfb-rx rtp-stall window. */
+const RECONNECT_BASE_MS = 1000;
+const RECONNECT_MAX_MS = 5000;
+const RTP_STALL_MS = 4000;
+const WATCHDOG_TICK_MS = 2000;
 
 interface ActiveSession {
   session: CameraStreamSession;
@@ -52,6 +57,15 @@ interface ActiveSession {
   configuredPath?: string;
   /** True when this session started the wfb-ng dongle receiver sidecar. */
   usesWfbReceiver?: boolean;
+  /** Config kept so a dropped ingest can be rebuilt without the renderer. */
+  source?: CameraSourceConfig;
+  resolvedUrl?: string;
+  /** Auto-reconnect bookkeeping for a bridged ingest that exits or stalls. */
+  restartAttempts?: number;
+  restartTimer?: ReturnType<typeof setTimeout>;
+  /** Last wfb-rx rtp packet count + when it last advanced, for stall detection. */
+  lastRtp?: number;
+  lastRtpAt?: number;
 }
 
 export class MediaEngine {
@@ -67,6 +81,9 @@ export class MediaEngine {
   private lastHubError: string | null = null;
   /** Rolling tail of mediamtx stdout+stderr, for surfacing source-pull errors. */
   private hubLog = '';
+  /** Periodic stall check for bridged (wfb-ng) sessions. */
+  private watchdog: ReturnType<typeof setInterval> | null = null;
+  logSink?: (level: 'info' | 'warn' | 'error', msg: string) => void;
 
   /** Resolve binaries; idempotent. Called lazily on first use. */
   private resolveBinaries(): void {
@@ -382,10 +399,7 @@ export class MediaEngine {
         ];
       }
       ingest = spawn(this.ffmpegPath, args, { stdio: ['ignore', 'ignore', 'pipe'], shell: process.platform === 'win32' });
-      ingest.on('exit', () => {
-        const a = this.sessions.get(source.id);
-        if (a && a.session.status !== 'stopped') a.session.status = 'error';
-      });
+      this.superviseIngest(source, resolvedUrl, ingest);
     } else {
       // rtsp / srt / mavlink-rtsp — hub pulls directly.
       const added = await this.addHubPath(name, url, source.rtspTransport ?? 'automatic');
@@ -430,10 +444,7 @@ export class MediaEngine {
           stdio: ['ignore', 'ignore', 'pipe'],
           shell: process.platform === 'win32',
         });
-        ingest.on('exit', () => {
-          const a = this.sessions.get(source.id);
-          if (a && a.session.status !== 'stopped') a.session.status = 'error';
-        });
+        this.superviseIngest(source, resolvedUrl, ingest);
         const relayReady = await this.waitPathReady(relayName, 12000);
         if (!relayReady) {
           killProc(ingest);
@@ -451,18 +462,75 @@ export class MediaEngine {
       status: 'live',
       path: playPath,
     };
-    const active: ActiveSession = { session };
+    const prev = this.sessions.get(source.id);
+    if (prev?.restartTimer) clearTimeout(prev.restartTimer);
+    const active: ActiveSession = { session, source, resolvedUrl };
     if (ingest) active.ingest = ingest;
     if (!needsBridge) active.configuredPath = name;
     if (source.kind === 'wfbng' && (source.wfbMode ?? 'dongle') === 'dongle') active.usesWfbReceiver = true;
     this.sessions.set(source.id, active);
+    if (needsBridge) this.ensureWatchdog();
     return { ok: true, session };
+  }
+
+  /**
+   * Wire a bridged ingest ffmpeg for auto-reconnect. A camera power-cycle or RF
+   * dropout kills or stalls the stream; without this the feed stays dead until
+   * the user toggles it. On an unexpected exit we re-run start() (idempotent:
+   * it rebuilds the receiver, SDP, ffmpeg and hub path) after a capped backoff.
+   */
+  private superviseIngest(source: CameraSourceConfig, resolvedUrl: string | undefined, ingest: ChildProcess): void {
+    ingest.on('exit', () => {
+      const a = this.sessions.get(source.id);
+      if (!a || a.session.status === 'stopped') return; // intentional stop / gone
+      if (a.ingest === ingest) a.ingest = undefined;
+      a.session.status = 'error';
+      const attempt = (a.restartAttempts ?? 0) + 1;
+      a.restartAttempts = attempt;
+      const delay = Math.min(RECONNECT_BASE_MS * attempt, RECONNECT_MAX_MS);
+      if (a.restartTimer) clearTimeout(a.restartTimer);
+      a.restartTimer = setTimeout(() => {
+        const cur = this.sessions.get(source.id);
+        if (!cur || cur.session.status === 'stopped') return;
+        void this.start(source, resolvedUrl);
+      }, delay);
+    });
+  }
+
+  /** Bounce a live-but-silent bridged session so superviseIngest reconnects it. */
+  private ensureWatchdog(): void {
+    if (this.watchdog) return;
+    this.watchdog = setInterval(() => {
+      const stats = wfbngReceiver.getLastStats();
+      const now = Date.now();
+      let anyBridged = false;
+      for (const a of this.sessions.values()) {
+        if (!a.usesWfbReceiver || a.session.status === 'stopped') continue;
+        anyBridged = true;
+        if (a.session.status !== 'live' || !a.ingest) continue;
+        // rtp advancing => data flowing. Frozen for RTP_STALL_MS => camera gone.
+        const rtp = stats?.rtp ?? a.lastRtp ?? 0;
+        if (a.lastRtp === undefined || rtp !== a.lastRtp) {
+          a.lastRtp = rtp;
+          a.lastRtpAt = now;
+        } else if (a.lastRtpAt && now - a.lastRtpAt > RTP_STALL_MS) {
+          this.logSink?.('warn', 'Camera stream stalled (no RTP) — reconnecting.');
+          a.lastRtpAt = now; // give the restart room before re-tripping
+          if (a.ingest) killProc(a.ingest); // exit handler drives the reconnect
+        }
+      }
+      if (!anyBridged && this.watchdog) {
+        clearInterval(this.watchdog);
+        this.watchdog = null;
+      }
+    }, WATCHDOG_TICK_MS);
   }
 
   async stop(sourceId: string): Promise<void> {
     const active = this.sessions.get(sourceId);
     if (!active) return;
     active.session.status = 'stopped';
+    if (active.restartTimer) clearTimeout(active.restartTimer);
     if (active.record) killProc(active.record);
     if (active.ingest) killProc(active.ingest);
     if (active.configuredPath) await this.removeHubPath(active.configuredPath);
@@ -520,6 +588,7 @@ export class MediaEngine {
 
   /** Tear everything down — called on app quit. */
   shutdown(): void {
+    if (this.watchdog) { clearInterval(this.watchdog); this.watchdog = null; }
     for (const [id] of this.sessions) void this.stop(id);
     if (this.hub) killProc(this.hub);
     this.hub = null;

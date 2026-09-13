@@ -6494,6 +6494,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
   // ── wfb-ng dongle receiver (WiFiLink / OpenIPC direct reception) ────────
   wfbngReceiver.setLogSink((level, line) => sendLog(mainWindow, level, line));
+  mediaEngine.logSink = (level, line) => sendLog(mainWindow, level, line);
 
   ipcMain.handle(IPC_CHANNELS.WFBNG_STATUS, async () => wfbngReceiver.getStatus());
 

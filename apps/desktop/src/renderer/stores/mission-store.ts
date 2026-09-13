@@ -21,6 +21,7 @@ import {
   type MissionMirrorSnapshot,
 } from '../../shared/mission-group-types';
 import { splitMissionForFleet } from '../components/mission/distribute-fleet';
+import { bulkSetAltitude, bulkSetSpeed } from '../components/mission/bulk-edit';
 import { buildArduPilotWireMission, shiftJumpTargets } from '../../shared/mission-wire';
 import { useSettingsStore } from './settings-store';
 import { useConnectionStore } from './connection-store';
@@ -402,6 +403,10 @@ interface MissionStore {
   updateWaypoint: (seq: number, updates: Partial<MissionItem>) => void;
   removeWaypoint: (seq: number) => void;
   removeWaypoints: (seqs: number[]) => void;
+  /** Set altitude on the selected location commands; returns how many changed. */
+  bulkSetAltitude: (seqs: number[], altMeters: number) => number;
+  /** DO_CHANGE_SPEED for the selection (<= 0 clears); returns how many changed. */
+  bulkSetSpeed: (seqs: number[], speedMs: number) => number;
   reorderWaypoints: (fromSeq: number, toSeq: number) => void;
   insertMissionItems: (items: MissionItem[]) => void;
   applyTerrainPlan: (plan: {
@@ -979,6 +984,24 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
       isDirty: true,
       selectedSeq: newSelectedSeq,
     });
+  },
+
+  bulkSetAltitude: (seqs, altMeters) => {
+    const { missionItems } = get();
+    const result = bulkSetAltitude(missionItems, new Set(seqs), altMeters);
+    if (result.changed > 0) set({ missionItems: result.items, isDirty: true });
+    return result.changed;
+  },
+
+  bulkSetSpeed: (seqs, speedMs) => {
+    const { missionItems, selectedSeq } = get();
+    const result = bulkSetSpeed(missionItems, new Set(seqs), speedMs);
+    if (result.changed === 0) return 0;
+    // Inserts/removals renumber seqs; a kept selectedSeq would point at the wrong row.
+    const nextSelected =
+      result.items.length === missionItems.length ? selectedSeq : null;
+    set({ missionItems: result.items, isDirty: true, selectedSeq: nextSelected });
+    return result.changed;
   },
 
   reorderWaypoints: (fromSeq: number, toSeq: number) => {

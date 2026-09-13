@@ -12,6 +12,7 @@ import { type Group, isSurveyGroup, type SurveyGroup, GROUP_COLOR_PALETTE, isAss
 import { isSurveyGroupStale } from '../survey/survey-group-signature';
 import { regenerateSurveyGroup } from '../survey/survey-regen';
 import { hasReplayData } from './plan-replay';
+import { selectionTouchesGroups } from './bulk-edit';
 import { useReplayStore } from '../../stores/replay-store';
 import { distanceLatLng } from '../survey/geo-math';
 import { calculateGSD } from '../survey/survey-stats';
@@ -1393,6 +1394,7 @@ function GroupHeaderRow({
   assignedVehicleKey,
   onAssignVehicle,
   onDistribute,
+  onSelectWaypoints,
   bulkSelected,
   onToggleBulkSelected,
 }: {
@@ -1441,6 +1443,8 @@ function GroupHeaderRow({
   onAssignVehicle?: (vehicleKey: string | null) => void;
   /** Split this group into one mission per fleet vehicle (swarm survey). */
   onDistribute?: () => void;
+  /** Add all of this group's waypoints to the multi-selection. */
+  onSelectWaypoints?: () => void;
   /** Ticked for bulk actions. Undefined hides the checkbox entirely. */
   bulkSelected?: boolean;
   onToggleBulkSelected?: (additive: boolean) => void;
@@ -1788,6 +1792,17 @@ function GroupHeaderRow({
                   >
                     Rename
                   </button>
+                  {onSelectWaypoints && (
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onSelectWaypoints();
+                      }}
+                      className="w-full text-left px-3 py-1.5 text-xs text-content hover:bg-surface-raised transition-colors"
+                    >
+                      Select waypoints
+                    </button>
+                  )}
                   {onDistribute && (
                     <button
                       onClick={() => {
@@ -1842,6 +1857,8 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
     updateWaypoint,
     removeWaypoint,
     removeWaypoints,
+    bulkSetAltitude,
+    bulkSetSpeed,
     addWaypoint,
     reorderWaypoints,
     renameGroup,
@@ -2127,6 +2144,65 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
     setLastCheckedSeq(null);
   };
 
+  const selectGroupWaypoints = (groupId: string) => {
+    setMultiSelected((prev) => {
+      const next = new Set(prev);
+      for (const it of missionItems) if (it.groupId === groupId) next.add(it.seq);
+      return next;
+    });
+  };
+
+  const [bulkPopover, setBulkPopover] = useState<'altitude' | 'speed' | null>(null);
+  const [bulkAltMeters, setBulkAltMeters] = useState(50);
+  const [bulkSpeedMs, setBulkSpeedMs] = useState(5);
+  const [bulkNotice, setBulkNotice] = useState<string | null>(null);
+  const bulkNoticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showBulkNotice = (text: string) => {
+    setBulkNotice(text);
+    if (bulkNoticeTimer.current) clearTimeout(bulkNoticeTimer.current);
+    bulkNoticeTimer.current = setTimeout(() => setBulkNotice(null), 3000);
+  };
+  useEffect(() => () => {
+    if (bulkNoticeTimer.current) clearTimeout(bulkNoticeTimer.current);
+  }, []);
+
+  // Survey regeneration rebuilds items from config, overwriting manual bulk edits.
+  const selectionInSurvey = useMemo(() => {
+    if (multiSelected.size === 0 || bulkPopover === null) return false;
+    const surveyIds = new Set<string>();
+    for (const g of groups) {
+      if (!isSurveyGroup(g)) continue;
+      surveyIds.add(g.id);
+      for (const c of g.distribution?.chunks ?? []) surveyIds.add(c.groupId);
+    }
+    return selectionTouchesGroups(missionItems, multiSelected, surveyIds);
+  }, [multiSelected, bulkPopover, groups, missionItems]);
+
+  const openBulkPopover = (kind: 'altitude' | 'speed') => {
+    const first = missionItems.find((it) => multiSelected.has(it.seq));
+    if (kind === 'altitude' && first) setBulkAltMeters(first.altitude || 50);
+    setBulkPopover(kind);
+  };
+
+  const handleBulkAltitude = () => {
+    const changed = bulkSetAltitude([...multiSelected], bulkAltMeters);
+    setBulkPopover(null);
+    handleClearSelection();
+    showBulkNotice(`${changed} waypoint${changed === 1 ? '' : 's'} set to ${bulkAltMeters} m`);
+  };
+
+  const handleBulkSpeed = () => {
+    const changed = bulkSetSpeed([...multiSelected], bulkSpeedMs);
+    setBulkPopover(null);
+    handleClearSelection();
+    showBulkNotice(
+      bulkSpeedMs <= 0
+        ? `${changed} speed command${changed === 1 ? '' : 's'} removed`
+        : `Speed set to ${bulkSpeedMs} m/s (${changed} change${changed === 1 ? '' : 's'})`,
+    );
+  };
+
   const [coordsCopied, setCoordsCopied] = useState(false);
   const [wpCoordCopied, setWpCoordCopied] = useState(false);
   const toggleBulkGroup = useCallback((groupId: string) => {
@@ -2276,7 +2352,7 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
     <div className="h-full flex flex-col bg-surface">
       {/* Header: collapse/expand or, when multi-selected, bulk actions */}
       {missionItems.length > 0 && (
-        <div className="shrink-0 px-3 py-1.5 border-b border-subtle flex items-center justify-between">
+        <div className="relative shrink-0 px-3 py-1.5 border-b border-subtle flex items-center justify-between">
           {!readOnly && bulkGroups.size > 0 ? (
             <>
               <span className="text-[10px] text-content-secondary">
@@ -2339,6 +2415,26 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
                 </button>
                 <span className="text-content-tertiary text-[10px]">|</span>
                 <button
+                  onClick={() => openBulkPopover('altitude')}
+                  className={`text-[10px] font-medium transition-colors ${
+                    bulkPopover === 'altitude' ? 'text-blue-400' : 'text-blue-400/80 hover:text-blue-300'
+                  }`}
+                  data-tip={`Set altitude on ${multiSelected.size} selected waypoint${multiSelected.size === 1 ? '' : 's'}`}
+                >
+                  Altitude
+                </button>
+                <span className="text-content-tertiary text-[10px]">|</span>
+                <button
+                  onClick={() => openBulkPopover('speed')}
+                  className={`text-[10px] font-medium transition-colors ${
+                    bulkPopover === 'speed' ? 'text-blue-400' : 'text-blue-400/80 hover:text-blue-300'
+                  }`}
+                  data-tip="Set flight speed for the selection (0 removes its speed commands)"
+                >
+                  Speed
+                </button>
+                <span className="text-content-tertiary text-[10px]">|</span>
+                <button
                   onClick={handleDeleteSelected}
                   className="text-[10px] text-red-400 hover:text-red-300 transition-colors font-medium"
                   title={`Delete ${multiSelected.size} selected waypoint${multiSelected.size === 1 ? '' : 's'}`}
@@ -2349,7 +2445,9 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
             </>
           ) : (
             <>
-              <span className="text-[10px] text-content-secondary">{missionItems.length} items</span>
+              <span className={`text-[10px] ${bulkNotice ? 'text-emerald-400' : 'text-content-secondary'}`}>
+                {bulkNotice ?? `${missionItems.length} items`}
+              </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCopyCoords}
@@ -2397,6 +2495,55 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
                         : 'Delete all'}
                     </button>
                   </>
+                )}
+              </div>
+            </>
+          )}
+          {!readOnly && bulkPopover && multiSelected.size > 0 && (
+            <>
+              <div className="fixed inset-0 z-[9998]" onClick={() => setBulkPopover(null)} />
+              <div className="absolute right-2 top-full mt-1 z-[9999] w-60 bg-surface-solid border border-subtle rounded-lg shadow-2xl p-3">
+                <div className="text-xs font-medium text-content mb-2">
+                  {bulkPopover === 'altitude'
+                    ? `Altitude for ${multiSelected.size} waypoint${multiSelected.size === 1 ? '' : 's'}`
+                    : `Speed for ${multiSelected.size} waypoint${multiSelected.size === 1 ? '' : 's'}`}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="flex-1 min-w-0"
+                    data-tip={
+                      bulkPopover === 'speed'
+                        ? "0 removes the selection's DO_CHANGE_SPEED commands"
+                        : undefined
+                    }
+                  >
+                    {bulkPopover === 'altitude' ? (
+                      <DraftNumberInput value={bulkAltMeters} onCommit={setBulkAltMeters} min={-500} max={10000} step={1} />
+                    ) : (
+                      <DraftNumberInput value={bulkSpeedMs} onCommit={setBulkSpeedMs} min={0} max={200} step={0.5} />
+                    )}
+                  </div>
+                  <span className="text-[10px] text-content-secondary shrink-0">
+                    {bulkPopover === 'altitude' ? 'm' : 'm/s'}
+                  </span>
+                  <button
+                    onClick={bulkPopover === 'altitude' ? handleBulkAltitude : handleBulkSpeed}
+                    className="shrink-0 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/15 text-blue-400 border border-blue-500/30 hover:bg-blue-500/25 transition-colors"
+                  >
+                    Apply
+                  </button>
+                </div>
+                {bulkPopover === 'altitude' && (
+                  <p className="mt-1.5 text-[10px] text-content-tertiary">
+                    Altitude frames are left as they are.
+                  </p>
+                )}
+                {selectionInSurvey && (
+                  <p className="mt-1.5 text-[10px] text-amber-400">
+                    Selection includes survey waypoints. Regenerating the survey rebuilds
+                    them from its config and overwrites this edit; prefer the survey's own
+                    altitude setting for lasting changes.
+                  </p>
                 )}
               </div>
             </>
@@ -2508,6 +2655,11 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
                       fleetVehicleOptions &&
                       (itemCountByGroup.get(group.id) ?? 0) >= fleetVehicleOptions.length * 2
                         ? () => distributeGroupAcrossFleet(group.id, fleetVehicleOptions)
+                        : undefined
+                    }
+                    onSelectWaypoints={
+                      (itemCountByGroup.get(group.id) ?? 0) > 0
+                        ? () => selectGroupWaypoints(group.id)
                         : undefined
                     }
                     onAssignVehicle={(vehicleKey) => {
