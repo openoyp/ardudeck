@@ -49,6 +49,9 @@ local V = {
   sensorPct = nil, tSensorPct = 0,
   armedAtT = nil, armedAccum = 0,
   msgs = {}, msgHead = 0, msgBuf = '', lastToneT = 0,
+  -- EdgeTX sensor source (ELRS MAVLink2 links have no passthrough frames)
+  src = 'pass', lastSensorT = 0, modeText = nil, armedKnown = false,
+  homeLat = nil, homeLon = nil,
 }
 
 local function now() return getTime() end
@@ -261,12 +264,115 @@ local function pump()
   end
 end
 
--- ELRS MAVLink mode: position + remaining-% ride the native CRSF sensors,
--- not passthrough (same finding as the color widget)
-local lastGpsPollT = 0
+-- ===================== EdgeTX sensor source ============================
+-- On an ELRS MAVLink2 link no ArduPilot passthrough frame ever arrives:
+-- EdgeTX decodes the telemetry itself and publishes plain sensors, so the
+-- HUD reads those instead. The names and units below are the ones a radio
+-- actually created on such a link (read back from MODELS/*.yml on the
+-- card), never guessed: FM Ptch Roll Yaw VSpd GPS GSpd Hdg GAlt Sats RxBt
+-- Curr Capa Bat%, plus the link statistics.
+local UNIT_KMH, UNIT_MPH, UNIT_FEET, UNIT_RAD = 7, 8, 10, 21
+local atan2 = math.atan2 or math.atan
+local sensorUnit = {}
+local scanIdx, scanDone, lastScanT = 0, false, 0
+local starSeen = false
+
+-- 60 slot reads is too much for one callback, so spread them over frames -
+-- and never stop for good: sensors appear as the vehicle boots, so the
+-- list is re-read every few seconds.
+local function scanSensors()
+  if model == nil or model.getSensor == nil then return end
+  if scanDone then
+    if now() - lastScanT < 500 then return end
+    scanIdx, scanDone = 0, false
+  end
+  for _ = 1, 6 do
+    if scanIdx >= 60 then
+      scanDone = true
+      lastScanT = now()
+      return
+    end
+    local ok, sensor = pcall(model.getSensor, scanIdx)
+    if ok and type(sensor) == 'table' and sensor.name ~= nil and sensor.name ~= '' then
+      sensorUnit[sensor.name] = sensor.unit or 0
+    end
+    scanIdx = scanIdx + 1
+  end
+end
+
+-- A sensor that returns a number exists; the unit table is only needed
+-- where the reading has to be converted.
+local function sNum(name)
+  local v = getValue(name)
+  if type(v) == 'number' then return v end
+  return nil
+end
+
+-- Conversions wait for the scan rather than guessing a unit: a wrong guess
+-- would put a plausible-looking lie on the screen.
+local function sAngle(name)
+  local u = sensorUnit[name]
+  if u == nil then return nil end
+  local v = sNum(name)
+  if v == nil then return nil end
+  if u == UNIT_RAD then return math.deg(v) end
+  return v
+end
+
+local function sMetres(name)
+  local u = sensorUnit[name]
+  if u == nil then return nil end
+  local v = sNum(name)
+  if v == nil then return nil end
+  if u == UNIT_FEET then return v * 0.3048 end
+  return v
+end
+
+local function sSpeedMs(name)
+  local u = sensorUnit[name]
+  if u == nil then return nil end
+  local v = sNum(name)
+  if v == nil then return nil end
+  if u == UNIT_KMH then return v / 3.6 end
+  if u == UNIT_MPH then return v * 0.44704 end
+  return v
+end
+
+-- equirectangular is accurate well past any RC range and costs one cos
+local function distanceM(lat1, lon1, lat2, lon2)
+  local dLat = math.rad(lat2 - lat1)
+  local dLon = math.rad(lon2 - lon1) * math.cos(math.rad((lat1 + lat2) / 2))
+  return math.sqrt(dLat * dLat + dLon * dLon) * 6371000
+end
+
+local function bearingDeg(lat1, lon1, lat2, lon2)
+  local dLat = lat2 - lat1
+  local dLon = (lon2 - lon1) * math.cos(math.rad((lat1 + lat2) / 2))
+  return math.deg(atan2(dLon, dLat)) % 360
+end
+
+-- ArduPilot appends '*' to the mode name while disarmed, but only when
+-- that option is enabled: armed stays UNKNOWN until a star has been seen,
+-- rather than claiming DISARMED on a vehicle that may be armed.
+local function readMode()
+  local v = getValue('FM')
+  if type(v) ~= 'string' or v == '' then return false end
+  local star = string.sub(v, -1) == '*'
+  if star then starSeen = true end
+  V.modeText = star and string.sub(v, 1, -2) or v
+  if starSeen then
+    V.armed = not star
+    V.armedKnown = true
+  end
+  return true
+end
+
+local lastPollT = 0
 local function pollSensors()
-  if now() - lastGpsPollT < 50 then return end
-  lastGpsPollT = now()
+  scanSensors()
+  if now() - lastPollT < 50 then return end
+  lastPollT = now()
+
   local g = getValue('GPS')
   if type(g) == 'table' and g.lat and g.lon and (g.lat ~= 0 or g.lon ~= 0) then
     V.lat = g.lat
@@ -278,6 +384,59 @@ local function pollSensors()
       V.sensorPct = p
       V.tSensorPct = now()
     end
+  end
+
+  -- passthrough carries more (statustext, EKF, fence, waypoints): when it
+  -- is flowing it owns every field and the sensors stay out of the way
+  if V.everFrame and now() - V.lastFrameT <= 300 then
+    V.src = 'pass'
+    V.armedKnown = true
+    return
+  end
+
+  local got = readMode()
+  local v = sNum('RxBt')
+  if v then V.voltV = v got = true end
+  v = sNum('Curr')
+  if v then V.currA = v got = true end
+  v = sNum('Capa')
+  if v then V.mah = v got = true end
+  v = sAngle('Roll')
+  if v then V.rollDeg = v got = true end
+  v = sAngle('Ptch')
+  if v then V.pitchDeg = v got = true end
+  v = sAngle('Yaw')
+  if v then V.yawDeg = v % 360 got = true end
+  v = sSpeedMs('GSpd')
+  if v then V.hspdMs = v got = true end
+  v = sNum('VSpd')
+  if v then V.vspdMs = v got = true end
+  v = sMetres('GAlt')
+  if v then V.gpsAltM = v got = true end
+  v = sNum('Sats')
+  if v then
+    V.sats = v
+    -- no fix-type sensor exists; satellite count is the honest stand-in
+    V.fix = v >= 5 and 3 or (v >= 4 and 2 or 0)
+    got = true
+  end
+
+  -- home is not published either: latch the first fixed position and do
+  -- the range and bearing here
+  if V.lat and V.lon then
+    if V.homeLat == nil and V.fix >= 3 then
+      V.homeLat, V.homeLon = V.lat, V.lon
+    end
+    if V.homeLat then
+      V.homeDistM = distanceM(V.homeLat, V.homeLon, V.lat, V.lon)
+      V.homeBearingDeg = bearingDeg(V.lat, V.lon, V.homeLat, V.homeLon)
+      got = true
+    end
+  end
+
+  if got then
+    V.lastSensorT = now()
+    V.src = 'snsr'
   end
 end
 
@@ -319,7 +478,7 @@ local function battBand()
 end
 
 local function announceTransitions(live)
-  if prevArmed ~= nil and V.armed ~= prevArmed then
+  if V.armedKnown and prevArmed ~= nil and V.armed ~= prevArmed then
     playAlert(V.armed and 'armed' or 'disarmed')
     if V.armed then
       V.armedAtT = now()
@@ -328,8 +487,10 @@ local function announceTransitions(live)
       V.armedAtT = nil
     end
   end
-  prevArmed = V.armed
-  if prevLive ~= nil and live ~= prevLive then
+  if V.armedKnown then prevArmed = V.armed end
+  -- announce the first LIVE too, not just later transitions; staying mute
+  -- at power-up is indistinguishable from a broken voice pack
+  if live ~= prevLive and (live or prevLive ~= nil) then
     playAlert(live and 'telemetry_ok' or 'telemetry_lost')
   end
   prevLive = live
@@ -352,13 +513,17 @@ local function ladderState()
     return 'NO LINK', 'check RX power / binding'
   end
   local t = now()
-  if not V.everFrame or t - V.lastFrameT > 300 then
-    return 'NO MAVLINK', 'ELRS MAVLink mode off?'
+  if V.everFrame and t - V.lastFrameT <= 300 then
+    if t - V.lastStreamT > 300 then
+      return 'STREAMS OFF', 'connect ArduDeck once'
+    end
+    return 'LIVE', nil
   end
-  if t - V.lastStreamT > 300 then
-    return 'STREAMS OFF', 'connect ArduDeck once'
+  -- no passthrough: EdgeTX's own sensors are a first-class source
+  if V.lastSensorT > 0 and t - V.lastSensorT <= 500 then
+    return 'LIVE', nil
   end
-  return 'LIVE', nil
+  return 'NO DATA', 'no telemetry sensors yet'
 end
 
 -- =========================== config ====================================
@@ -455,11 +620,24 @@ local FIELDS = {
   none = function () return '' end,
 }
 
+-- Slots the EdgeTX sensor source can actually fill. Anything else would be
+-- a stale passthrough value, so it reads '--' while that source is live.
+local SENSOR_FIELDS = {
+  volt = 1, cellv = 1, pct = 1, cellpct = 1, curr = 1, mah = 1, alt = 1,
+  spd = 1, vspd = 1, sat = 1, home = 1, yaw = 1, none = 1,
+}
+
+local function fieldText(id)
+  local f = FIELDS[id]
+  if f == nil then return nil end
+  if V.src == 'snsr' and SENSOR_FIELDS[id] == nil then return '--' end
+  return f()
+end
+
 local function drawSlots(list, x, y0, count)
   for i = 1, count or #list do
-    local f = FIELDS[list[i]]
-    if f then
-      local text, blink = f()
+    local text, blink = fieldText(list[i])
+    if text then
       lcd.drawText(x, y0 + (i - 1) * 8, text, SMLSIZE + (blink and BLINK or 0))
     end
   end
@@ -482,13 +660,15 @@ local BIG = {
 -- from CFG.slots/wslots.
 local function drawTopBar()
   lcd.drawFilledRectangle(0, 0, LCD_W, 8, FORCE)
-  local mode = MODES[V.modeNum] or (V.modeNum >= 0 and ('M' .. V.modeNum) or '---')
-  lcd.drawText(1, 1, mode, SMLSIZE + INVERS + (V.armed and BLINK or 0))
+  local mode = V.modeText or MODES[V.modeNum] or (V.modeNum >= 0 and ('M' .. V.modeNum) or '---')
+  lcd.drawText(1, 1, mode, SMLSIZE + INVERS + ((V.armed and V.armedKnown) and BLINK or 0))
   lcd.drawText(LCD_W / 2 - 12, 1, fmtTimer(), SMLSIZE + INVERS)
   if V.anyFs or V.battFs then
     lcd.drawText(LCD_W - 46, 1, 'FS!', SMLSIZE + INVERS + BLINK)
   end
-  lcd.drawText(LCD_W - 1, 1, 'RS' .. (getRSSI() or 0), SMLSIZE + INVERS + RIGHT)
+  -- 'S' marks data coming from EdgeTX's sensors rather than passthrough
+  lcd.drawText(LCD_W - 1, 1, (V.src == 'snsr' and 'S' or '') .. 'RS' .. (getRSSI() or 0),
+    SMLSIZE + INVERS + RIGHT)
 end
 
 local function drawBottomBar()
@@ -497,8 +677,9 @@ local function drawBottomBar()
   if m then
     lcd.drawText(1, 57, string.sub(m.text, 1, math.floor(LCD_W / 5)), SMLSIZE + INVERS + (m.sev <= 4 and BLINK or 0))
   else
-    lcd.drawText(1, 57, (CFG.name ~= '' and CFG.name or 'ArduDeck')
-      .. (V.armed and '  ARMED' or '  DISARMED'), SMLSIZE + INVERS)
+    local arm = '  ARM?'
+    if V.armedKnown then arm = V.armed and '  ARMED' or '  DISARMED' end
+    lcd.drawText(1, 57, (CFG.name ~= '' and CFG.name or 'ArduDeck') .. arm, SMLSIZE + INVERS)
   end
 end
 
@@ -542,8 +723,8 @@ local function drawFly()
   lcd.drawText(44, 10, unit, SMLSIZE)
   -- left rows
   drawSlots(CFG.left, 0, 27, 3)
-  local f4 = FIELDS[CFG.left[4]]
-  if f4 then lcd.drawText(0, 49, (f4()), SMLSIZE) end -- last row hugs the strip
+  local t4 = fieldText(CFG.left[4])
+  if t4 then lcd.drawText(0, 49, t4, SMLSIZE) end -- last row hugs the strip
   -- center panel: horizon or two more data columns
   local hx = wide and 62 or 50
   local hw = wide and 64 or 42
@@ -590,9 +771,14 @@ local function drawNav()
 end
 
 -- ========================== script API =================================
+-- EdgeTX calls background() whether or not the telemetry screen is on
+-- display, and run() only while it is: the callouts belong here, otherwise
+-- the HUD is mute exactly when you are looking at the aircraft instead of
+-- the radio.
 local function background()
   pump()
   pollSensors()
+  announceTransitions(ladderState() == 'LIVE')
 end
 
 local function init()
@@ -615,10 +801,8 @@ local function run(event)
   end
   local state, hint = ladderState()
   if state == 'LIVE' then
-    announceTransitions(true)
     if page == 1 then drawFly() else drawNav() end
   else
-    announceTransitions(false)
     drawLadder(state, hint)
   end
   return 0

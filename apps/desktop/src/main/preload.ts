@@ -574,6 +574,10 @@ const api = {
   setTelemetryStreamRate: (speed: TelemetrySpeed): Promise<{ success: boolean }> =>
     ipcRenderer.invoke(IPC_CHANNELS.TELEMETRY_SET_STREAM_RATE, speed),
 
+  /** Try rates for this session only: SET_MESSAGE_INTERVAL, no parameters touched. */
+  telemetrySetMessageRates: (rates: Array<{ msgId: number; hz: number }>): Promise<{ success: boolean; sent: number }> =>
+    ipcRenderer.invoke(IPC_CHANNELS.TELEMETRY_SET_MESSAGE_RATES, rates),
+
   /**
    * A vehicle is not streaming and cannot be asked to without writing its
    * SR*_ parameters (ArduPlane saves them). The pilot decides.
@@ -1117,7 +1121,7 @@ const api = {
   edgetxScan: (): Promise<import('../shared/edgetx-types.js').EdgeTxScanResult> =>
     ipcRenderer.invoke(IPC_CHANNELS.EDGETX_SCAN),
 
-  edgetxInstall: (volumePath: string, packageId: string, variantId: string): Promise<{ success: boolean; record?: import('../shared/edgetx-types.js').InstalledPackageRecord; error?: string }> =>
+  edgetxInstall: (volumePath: string, packageId: string, variantId: string): Promise<{ success: boolean; record?: import('../shared/edgetx-types.js').InstalledPackageRecord; screens?: import('../shared/edgetx-types.js').TelemetryScreenSummary; error?: string }> =>
     ipcRenderer.invoke(IPC_CHANNELS.EDGETX_INSTALL, volumePath, packageId, variantId),
 
   edgetxRemove: (volumePath: string, packageId: string): Promise<{ success: boolean; error?: string }> =>

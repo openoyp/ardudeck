@@ -14,7 +14,14 @@ local stubTime = 0
 function getTime() return stubTime end
 function getRSSI() return 80 end
 function getUsage() return 0 end
-function playFile() end
+local spoken = {}
+function playFile(f) spoken[#spoken + 1] = f end
+local function spoke(name)
+  for _, f in ipairs(spoken) do
+    if string.find(f, name, 1, true) then return true end
+  end
+  return false
+end
 function playTone() end
 function getValue() return nil end
 function io.open() return nil end
@@ -166,6 +173,111 @@ end
 stubTime = 10000
 local okLadder = pcall(function () S.run(0) end)
 check('run ladder path', okLadder and 1 or 0, 1)
+
+-- ============ EdgeTX sensor source (ELRS MAVLink2 link) ================
+-- No passthrough frame ever arrives on such a link: EdgeTX decodes the
+-- telemetry and publishes plain sensors. Names, units and precisions here
+-- are the ones a RadioMaster Pocket really created (read back from its
+-- MODELS/*.yml), so this fixture is a capture, not an invention.
+local SENSORS = {
+  RxBt = { unit = 1, value = 23.1 },
+  Curr = { unit = 2, value = 11.5 },
+  Capa = { unit = 14, value = 1830 },
+  ['Bat%'] = { unit = 13, value = 62 },
+  Ptch = { unit = 21, value = math.rad(-7) },
+  Roll = { unit = 21, value = math.rad(12) },
+  Yaw = { unit = 21, value = math.rad(200) },
+  VSpd = { unit = 5, value = -1.5 },
+  GSpd = { unit = 7, value = 36 },          -- km/h
+  GAlt = { unit = 9, value = 123 },
+  Sats = { unit = 0, value = 11 },
+  GPS = { unit = 40, value = { lat = 42.4411, lon = 19.2632 } },
+  FM = { unit = 42, value = 'LOITER*' },
+}
+local ORDER = { 'RxBt', 'Curr', 'Capa', 'Bat%', 'Ptch', 'Roll', 'Yaw', 'VSpd',
+  'GSpd', 'GAlt', 'Sats', 'GPS', 'FM' }
+
+model = {
+  getSensor = function (i)
+    local n = ORDER[i + 1]
+    if n == nil then return { name = '' } end
+    return { name = n, unit = SENSORS[n].unit }
+  end,
+}
+function getValue(name)
+  local s = SENSORS[name]
+  if s == nil then return nil end
+  return s.value
+end
+function getFieldInfo(name) return SENSORS[name] and { id = 1 } or nil end
+
+local drawn = {}
+lcd = setmetatable({
+  clear = function () end,
+  drawText = function (_, _, t) drawn[#drawn + 1] = tostring(t) end,
+}, { __index = function () return function () end end })
+local function drewText(needle)
+  for _, t in ipairs(drawn) do
+    if string.find(t, needle, 1, true) then return true end
+  end
+  return false
+end
+
+LCD_W, LCD_H = 128, 64
+-- voice comes from background(), which EdgeTX runs whether or not the
+-- telemetry screen is open: the checks below never call run()
+-- sensor discovery is spread over frames; run enough of them
+for i = 1, 20 do
+  stubTime = 20000 + i * 100
+  S.background()
+end
+
+check('sensor volts', V.voltV, 23.1, 0.01)
+check('sensor amps', V.currA, 11.5, 0.01)
+check('sensor mah', V.mah, 1830)
+check('radians -> deg roll', V.rollDeg, 12, 0.01)
+check('radians -> deg pitch', V.pitchDeg, -7, 0.01)
+check('radians -> deg yaw', V.yawDeg, 200, 0.01)
+check('km/h -> m/s', V.hspdMs, 10, 0.01)
+check('sensor vspd', V.vspdMs, -1.5, 0.01)
+check('sensor alt', V.gpsAltM, 123, 0.01)
+check('sensor sats', V.sats, 11)
+check('fix from sats', V.fix, 3)
+check('source is sensors', V.src == 'snsr' and 1 or 0, 1)
+check('mode text', V.modeText == 'LOITER' and 1 or 0, 1)
+check('disarmed star', V.armed and 1 or 0, 0)
+check('armed is known', V.armedKnown and 1 or 0, 1)
+check('home latched here', V.homeDistM, 0, 1)
+
+-- fly 100m north of the latched home: range and bearing are computed on
+-- the radio because no home sensor exists
+SENSORS.GPS.value = { lat = 42.4411 + 100 / 111320, lon = 19.2632 }
+SENSORS.FM.value = 'LOITER'
+for i = 1, 4 do
+  stubTime = 25000 + i * 100
+  S.background()
+end
+check('computed home dist', V.homeDistM, 100, 2)
+check('computed home bearing', V.homeBearingDeg, 180, 2)
+check('no star -> armed', V.armed and 1 or 0, 1)
+
+check('speaks on first LIVE', spoke('telemetry_ok') and 1 or 0, 1)
+
+-- battery falling into the critical band must call out from background()
+spoken = {}
+SENSORS['Bat%'].value = 8
+for i = 1, 4 do
+  stubTime = 30000 + i * 100
+  S.background()
+end
+check('battery callout w/o screen', spoke('batt_crit') and 1 or 0, 1)
+
+drawn = {}
+local okSensorRun = pcall(function () S.run(0) end)
+check('run on sensor source', okSensorRun and 1 or 0, 1)
+check('ladder does not say NO DATA', drewText('NO DATA') and 1 or 0, 0)
+check('mode banner drawn', drewText('LOITER') and 1 or 0, 1)
+check('unfillable slot reads --', drewText('--') and 1 or 0, 1)
 
 print(failures == 0 and 'ALL PASS' or (failures .. ' FAILURES'))
 os.exit(failures == 0 and 0 or 1)

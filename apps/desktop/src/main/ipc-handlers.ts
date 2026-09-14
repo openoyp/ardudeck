@@ -149,9 +149,10 @@ import type { MotorTestStartRequest, MotorTestResponse, EscTelemetryData, EscMot
 import { getBoardInfoFromVersion } from '../shared/board-ids.js';
 import { detectBoards, fetchFirmwareVersions, downloadFirmware, copyCustomFirmware, flashWithDfu, flashWithAvrdude, flashWithSerialBootloader, flashWithArduPilotBootloader, getArduPilotBoards, getArduPilotVersions, getBetaflightBoards, getBetaflightVersions, resolveBetaflightDownloadUrl, getInavBoards, getInavVersions, type BoardInfo, type VersionGroup } from './firmware/index.js';
 import { scanForEdgeTxCards, probeVolume as probeEdgeTxVolume } from './edgetx/sd-detector.js';
-import { getPackage as getEdgeTxPackage, catalogInfo as edgeTxCatalogInfo } from './edgetx/package-registry.js';
+import { getPackage as getEdgeTxPackage, catalogInfo as edgeTxCatalogInfo, ARDUDECK_BW_SCRIPT } from './edgetx/package-registry.js';
+import { addTelemetryScreen, removeTelemetryScreen } from './edgetx/model-telemetry.js';
 import { installPackage as installEdgeTxPackage, removePackage as removeEdgeTxPackage, readManifest as readEdgeTxManifest } from './edgetx/package-installer.js';
-import type { EdgeTxScanResult, InstalledPackageRecord } from '../shared/edgetx-types.js';
+import type { EdgeTxScanResult, InstalledPackageRecord, TelemetryScreenSummary } from '../shared/edgetx-types.js';
 import { registerMspHandlers, tryMspDetection, startMspTelemetry, stopMspTelemetry, cleanupMspConnection, exitCliModeIfActive, autoConfigureSitlPlatform, getMspVehicleType, resetSitlAutoConfig } from './msp/index.js';
 import { initCalibrationHandlers, cleanupCalibrationHandlers, handleCalibrationStatusText, handleCalibrationCommandAck, handleIncomingCommandLong, handleMagCalProgress, handleMagCalReport, isMavlinkCalibrationActive, cancelCalibration, type MavlinkCalibrationDeps } from './calibration/index.js';
 import { initMissionLibraryHandlers, cleanupMissionLibraryHandlers } from './mission-library/index.js';
@@ -940,6 +941,35 @@ const TELEM_STREAM_MESSAGES: { msgId: number; cat: 'attitude' | 'position' | 'ot
 ];
 
 /**
+ * One MAV_CMD_SET_MESSAGE_INTERVAL. Interval 0 restores the FC's own rate.
+ *
+ * Session-only by design: the command never touches the stream-rate
+ * parameters, so it is the safe way to try a rate before keeping it.
+ */
+async function sendMessageInterval(msgId: number, intervalUs: number): Promise<boolean> {
+  if (!currentTransport?.isOpen) return false;
+  try {
+    const cmdPayload = serializeCommandLong({
+      targetSystem: connectionState.systemId ?? 1,
+      targetComponent: connectionState.componentId ?? 1,
+      command: 511, // MAV_CMD_SET_MESSAGE_INTERVAL
+      confirmation: 0,
+      param1: msgId,
+      param2: intervalUs,
+      param3: 0, param4: 0, param5: 0, param6: 0, param7: 0,
+    });
+    const pkt = await sendMavlinkPacket(COMMAND_LONG_ID, cmdPayload, COMMAND_LONG_CRC_EXTRA);
+    await currentTransport!.write(pkt);
+    // Small delay between commands so FC can process each one
+    await new Promise(resolve => setTimeout(resolve, 30));
+    return true;
+  } catch (err) {
+    console.error(`[StreamRate] Failed to send interval for msg #${msgId}:`, err);
+    return false;
+  }
+}
+
+/**
  * Send MAV_CMD_SET_MESSAGE_INTERVAL for all telemetry streams.
  *
  * SET_MESSAGE_INTERVAL is transient (RAM only). The legacy REQUEST_DATA_STREAM
@@ -961,31 +991,7 @@ async function sendStreamRateRequests(mainWindow: BrowserWindow, speed: Telemetr
     legacyStreamFallbackTimeout = null;
   }
 
-  const targetSys = connectionState.systemId ?? 1;
-  const targetComp = connectionState.componentId ?? 1;
-
-  const sendInterval = async (msgId: number, intervalUs: number): Promise<boolean> => {
-    if (!currentTransport?.isOpen) return false;
-    try {
-      const cmdPayload = serializeCommandLong({
-        targetSystem: targetSys,
-        targetComponent: targetComp,
-        command: 511, // MAV_CMD_SET_MESSAGE_INTERVAL
-        confirmation: 0,
-        param1: msgId,
-        param2: intervalUs,
-        param3: 0, param4: 0, param5: 0, param6: 0, param7: 0,
-      });
-      const pkt = await sendMavlinkPacket(COMMAND_LONG_ID, cmdPayload, COMMAND_LONG_CRC_EXTRA);
-      await currentTransport!.write(pkt);
-      // Small delay between commands so FC can process each one
-      await new Promise(resolve => setTimeout(resolve, 30));
-      return true;
-    } catch (err) {
-      console.error(`[StreamRate] Failed to send interval for msg #${msgId}:`, err);
-      return false;
-    }
-  };
+  const sendInterval = sendMessageInterval;
 
   if (speed === 'fc') {
     currentTelemetrySpeed = 'fc';
@@ -6796,6 +6802,24 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     },
   );
 
+  /**
+   * Per-message rates for this session only. Used by the Telemetry panel's
+   * "Try now", which must never write the pilot's stream-rate parameters.
+   */
+  ipcMain.handle(IPC_CHANNELS.TELEMETRY_SET_MESSAGE_RATES, async (
+    _,
+    rates: Array<{ msgId: number; hz: number }>,
+  ): Promise<{ success: boolean; sent: number }> => {
+    if (!connectionState.isConnected) return { success: false, sent: 0 };
+    let sent = 0;
+    for (const { msgId, hz } of rates) {
+      // 0 Hz means "hand this message back to the FC's own rate"
+      const intervalUs = hz > 0 ? Math.round(1_000_000 / hz) : 0;
+      if (await sendMessageInterval(msgId, intervalUs)) sent++;
+    }
+    return { success: sent > 0, sent };
+  });
+
   ipcMain.handle(IPC_CHANNELS.TELEMETRY_SET_STREAM_RATE, async (_, speed: TelemetrySpeed): Promise<{ success: boolean }> => {
     if (connectionState.protocol !== 'mavlink' || !connectionState.isConnected) {
       return { success: false };
@@ -10943,7 +10967,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     volumePath: string,
     packageId: string,
     variantId: string,
-  ): Promise<{ success: boolean; record?: InstalledPackageRecord; error?: string }> => {
+  ): Promise<{ success: boolean; record?: InstalledPackageRecord; screens?: TelemetryScreenSummary; error?: string }> => {
     const pkg = getEdgeTxPackage(packageId);
     if (!pkg) return { success: false, error: `Unknown package: ${packageId}` };
     const card = await probeEdgeTxVolume(volumePath);
@@ -10955,11 +10979,26 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
       });
       // ArduDeck HUD: generate widget config from the connected vehicle so the
       // radio side needs zero setup.
+      let screens: TelemetryScreenSummary | undefined;
       if (packageId === 'ardudeck-hud') {
         await generateHudConfig(mainWindow, volumePath);
+        // Monochrome radios have no widgets: point every model's telemetry
+        // screen at the script here so nothing has to be set up on the radio.
+        if (variantId.startsWith('bw')) {
+          const results = await addTelemetryScreen(volumePath, ARDUDECK_BW_SCRIPT);
+          screens = {
+            added: results.filter((r) => r.status === 'added').length,
+            already: results.filter((r) => r.status === 'already').length,
+            full: results.filter((r) => r.status === 'full').map((r) => r.name || r.file),
+          };
+          sendLog(mainWindow, 'info',
+            `Telemetry screen set on ${screens.added} model(s)` +
+            (screens.already ? `, ${screens.already} already had it` : '') +
+            (screens.full.length ? `, no free screen on ${screens.full.join(', ')}` : ''));
+        }
       }
       sendLog(mainWindow, 'info', `${pkg.name} ${record.version} installed (${record.files.length} files)`);
-      return { success: true, record };
+      return { success: true, record, screens };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       sendLog(mainWindow, 'error', `EdgeTX package install failed`, message);
@@ -10975,6 +11014,8 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     try {
       await removeEdgeTxPackage(volumePath, packageId);
       if (packageId === 'ardudeck-hud') {
+        // take the telemetry screens back out of the models we wrote them to
+        await removeTelemetryScreen(volumePath, ARDUDECK_BW_SCRIPT);
         // hud.cfg is generated after install, so it is not in the package
         // manifest; clean it (and the now-empty dir) explicitly.
         const { rm, rmdir } = await import('node:fs/promises');

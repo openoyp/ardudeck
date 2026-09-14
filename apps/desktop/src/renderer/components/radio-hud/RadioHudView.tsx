@@ -1534,6 +1534,12 @@ export function RadioHudView() {
     }));
   };
 
+  // The plugged-in card names its radio; a colour layout applied to a mono
+  // radio installs a widget the firmware cannot load, which reads as "nothing
+  // happened" on the radio.
+  const detectedCard = scan?.cards[0] ?? null;
+  const detectedModel = SCREEN_MODELS.find((m) => m.variant === detectedCard?.suggestedVariantId) ?? null;
+
   const handleApply = async () => {
     setApplyError(null);
     setApplyState('Looking for radio…');
@@ -1603,7 +1609,9 @@ export function RadioHudView() {
         return;
       }
     }
-    setApplyState('Applied. Eject before unplugging the radio.');
+    setApplyState(isBw
+      ? `Applied. Telemetry screen set on ${(install.screens?.added ?? 0) + (install.screens?.already ?? 0)} model(s) - eject, unplug, press PAGE on the radio.`
+      : 'Applied. Eject before unplugging the radio.');
     await rescan();
   };
 
@@ -1700,6 +1708,15 @@ export function RadioHudView() {
                   <option key={m.variant} value={`${m.w}x${m.h}`}>{m.label}</option>
                 ))}
               </select>
+              {detectedModel && `${detectedModel.w}x${detectedModel.h}` !== `${screen.w}x${screen.h}` && (
+                <button
+                  onClick={() => changeScreen(detectedModel)}
+                  data-tip="The plugged-in radio identifies itself in RADIO/radio.yml - apply to the wrong screen class and it installs files the radio cannot use"
+                  className="px-2 py-1 text-xs rounded border bg-amber-500/10 text-amber-400 border-amber-500/40 hover:bg-amber-500/20 transition-colors"
+                >
+                  {detectedCard?.radioLabel ?? 'Radio'} detected · switch
+                </button>
+              )}
               {isBw && (
                 <span
                   data-tip="B&W support has not been flown on real hardware yet - fonts and spacing may need a nudge after the first field test. Please report what you see."

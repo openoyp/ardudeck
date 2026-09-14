@@ -153,6 +153,7 @@ export const IPC_CHANNELS = {
   TELEMETRY_UPDATE: 'telemetry:update',
   TELEMETRY_BATCH: 'telemetry:batch', // Batched telemetry update for performance
   TELEMETRY_SET_STREAM_RATE: 'telemetry:set-stream-rate', // Change MAVLink stream rate preset
+  TELEMETRY_SET_MESSAGE_RATES: 'telemetry:set-message-rates', // Session-only per-message rates (no param writes)
   MSP_PACKET_COUNTS: 'msp:packet-counts', // MSP RX/TX packet counters for toolbar
 
   // MAVLink Status Messages (STATUSTEXT)

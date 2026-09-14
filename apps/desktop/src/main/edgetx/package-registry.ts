@@ -56,6 +56,12 @@ export const RADIO_VARIANTS: RadioVariant[] = [
   { id: 'bw212x64', label: '212x64 B&W', radios: 'Taranis X9D/X9D+/X9E' },
 ];
 
+/**
+ * Telemetry script name the monochrome payload installs (6 characters is
+ * the EdgeTX limit) - install points every model's telemetry screen at it.
+ */
+export const ARDUDECK_BW_SCRIPT = 'ArduDk';
+
 export const EDGETX_PACKAGES: EdgeTxPackage[] = [
   {
     id: 'yaapu-telemetry',
@@ -85,7 +91,7 @@ export const EDGETX_PACKAGES: EdgeTxPackage[] = [
       'Glanceable ArduDeck-styled flight screen: big honest numbers, armed/mode bar, live STATUSTEXT ticker, and a diagnostic ladder that tells you exactly why telemetry is missing instead of "no telemetry". Config is generated from your connected vehicle. All color radios; layouts rescale to the screen. B&W radios get a dense telemetry script - experimental, not yet verified on real monochrome hardware.',
     homepage: 'https://ardudeck.com',
     license: 'GPL-3.0',
-    source: { kind: 'bundled', dir: 'ardudeck-hud', version: '0.3.0' },
+    source: { kind: 'bundled', dir: 'ardudeck-hud', version: '0.4.0' },
     // One payload for every color class: the widget rescales layouts to
     // LCD_W/LCD_H at load (hud.cfg carries the authored screen=WxH).
     // B&W radios have no widget API: they get a telemetry SCRIPT (SDBW)

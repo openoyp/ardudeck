@@ -6,6 +6,14 @@ export interface EdgeTxSdCard {
   sdCardVersion: string | null;
   freeBytes: number;
   hasWidgets: boolean;
+  /** EdgeTX target name from RADIO/radio.yml (e.g. "pocket"), null if absent. */
+  board: string | null;
+  /** Firmware semver from RADIO/radio.yml, null if absent. */
+  firmwareVersion: string | null;
+  /** Screen variant implied by the board; null when the board is unknown. */
+  suggestedVariantId: string | null;
+  /** Human label for the detected radio, e.g. "RadioMaster Pocket". */
+  radioLabel: string | null;
 }
 
 export interface RadioVariant {
@@ -29,6 +37,16 @@ export interface InstalledPackageRecord {
   variantId: string;
   installedAt: string;
   files: string[];
+}
+
+/** What install did to the card's models (monochrome radios only). */
+export interface TelemetryScreenSummary {
+  /** Models that now point a telemetry screen at the script. */
+  added: number;
+  /** Models that already had it. */
+  already: number;
+  /** Models whose four telemetry screens were all taken. */
+  full: string[];
 }
 
 export interface InstallProgress {

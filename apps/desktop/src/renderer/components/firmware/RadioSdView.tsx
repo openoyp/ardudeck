@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigationStore } from '../../stores/navigation-store';
-import type { EdgeTxScanResult, EdgeTxSdCard, EdgeTxPackageInfo, InstallProgress, InstalledPackageRecord } from '../../../shared/edgetx-types';
+import type { EdgeTxScanResult, EdgeTxSdCard, EdgeTxPackageInfo, InstallProgress, InstalledPackageRecord, TelemetryScreenSummary } from '../../../shared/edgetx-types';
 
 /**
  * Radio (EdgeTX) tab: installs curated SD-card packages (Yaapu telemetry,
@@ -12,9 +12,11 @@ export function RadioSdView() {
   const [isScanning, setIsScanning] = useState(false);
   const [selectedVolume, setSelectedVolume] = useState<string | null>(null);
   const [variantId, setVariantId] = useState('c480x320');
+  const [variantTouched, setVariantTouched] = useState(false);
   const [busyPackageId, setBusyPackageId] = useState<string | null>(null);
   const [progress, setProgress] = useState<(InstallProgress & { packageId: string }) | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [screens, setScreens] = useState<TelemetryScreenSummary | null>(null);
 
   const rescan = useCallback(async () => {
     setIsScanning(true);
@@ -41,6 +43,15 @@ export function RadioSdView() {
 
   const card: EdgeTxSdCard | null = scan?.cards.find((c) => c.volumePath === selectedVolume) ?? null;
   const installed: Record<string, InstalledPackageRecord> = (card && scan?.installed[card.volumePath]) || {};
+  const isBw = variantId.startsWith('bw');
+
+  // The card's RADIO/radio.yml names the radio, so the screen variant is a
+  // detection, not a question - until the user overrides it by hand.
+  const suggestedVariantId = card?.suggestedVariantId ?? null;
+  useEffect(() => {
+    if (variantTouched || !suggestedVariantId) return;
+    setVariantId(suggestedVariantId);
+  }, [suggestedVariantId, variantTouched]);
 
   const handleInstall = async (pkg: EdgeTxPackageInfo) => {
     if (!card) return;
@@ -49,6 +60,7 @@ export function RadioSdView() {
     setError(null);
     const result = await window.electronAPI.edgetxInstall(card.volumePath, pkg.id, variantId);
     if (!result.success) setError(result.error ?? 'Install failed');
+    setScreens(result.screens ?? null);
     setBusyPackageId(null);
     setProgress(null);
     await rescan();
@@ -105,18 +117,31 @@ export function RadioSdView() {
                 </select>
               )}
               <div className="flex items-center justify-between text-sm">
-                <span className="text-content font-medium">{card.volumeName}</span>
+                <span className="text-content font-medium">
+                  {card.radioLabel ?? card.volumeName}
+                  {card.radioLabel && <span className="ml-2 text-xs text-content-secondary">{card.volumeName}</span>}
+                </span>
                 <span className="text-content-secondary text-xs">
-                  {card.sdCardVersion ? `EdgeTX SD ${card.sdCardVersion}` : 'version unknown'}
+                  {card.firmwareVersion ? `EdgeTX ${card.firmwareVersion}` : card.sdCardVersion ? `EdgeTX SD ${card.sdCardVersion}` : 'version unknown'}
                   {' · '}
                   {(card.freeBytes / 1e6).toFixed(0)} MB free
                 </span>
               </div>
+              {card.firmwareVersion && card.sdCardVersion
+                && card.firmwareVersion.slice(0, 4) !== card.sdCardVersion.slice(0, 4) && (
+                <p className="text-[11px] text-amber-400">
+                  SD card contents are from EdgeTX {card.sdCardVersion} but the radio runs {card.firmwareVersion}.
+                  Update the card from the EdgeTX sdcard release before relying on sounds or themes.
+                </p>
+              )}
               <label className="block">
-                <span className="text-xs text-content-secondary">Radio screen</span>
+                <span className="text-xs text-content-secondary">
+                  Radio screen
+                  {suggestedVariantId && !variantTouched && ' · detected from the card'}
+                </span>
                 <select
                   value={variantId}
-                  onChange={(e) => setVariantId(e.target.value)}
+                  onChange={(e) => { setVariantTouched(true); setVariantId(e.target.value); }}
                   className="mt-1 w-full px-2 py-1.5 text-sm bg-surface-input border border-subtle rounded text-content"
                 >
                   {(scan?.catalog[0]?.variants ?? []).map((v) => (
@@ -221,11 +246,37 @@ export function RadioSdView() {
         </div>
 
         {card && (
-          <p className="text-[11px] text-content-secondary">
-            After installing: eject the SD volume, unplug USB, then on the radio add the widget to a
-            model screen (long-press TELE, full-screen widget). Packages are downloaded from their
-            official repositories at install time.
-          </p>
+          isBw ? (
+            <div className="text-[11px] text-content-secondary space-y-1">
+              {screens ? (
+                <>
+                  <p className="text-content">
+                    Set up on the radio: telemetry screen pointed at the HUD on{' '}
+                    {screens.added + screens.already} model{screens.added + screens.already === 1 ? '' : 's'}.
+                  </p>
+                  <p>Eject, unplug, then press <span className="text-content">PAGE</span> from the main view.</p>
+                  {screens.full.length > 0 && (
+                    <p className="text-amber-400">
+                      No free telemetry screen on {screens.full.join(', ')}: free one of the four screens there
+                      and install again.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p>
+                  Monochrome radios have no widgets, so install also points every model's telemetry
+                  screen at the script. Nothing to set up on the radio: eject, unplug, press{' '}
+                  <span className="text-content">PAGE</span> from the main view.
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-[11px] text-content-secondary">
+              After installing: eject the SD volume, unplug USB, then on the radio add the widget to a
+              model screen (long-press TELE, full-screen widget). Packages are downloaded from their
+              official repositories at install time.
+            </p>
+          )
         )}
       </div>
     </div>

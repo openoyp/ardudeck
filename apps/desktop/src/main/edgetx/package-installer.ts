@@ -10,7 +10,7 @@
 
 import AdmZip from 'adm-zip';
 import { app } from 'electron';
-import { mkdir, readFile, writeFile, readdir, copyFile, rm, rmdir, stat } from 'fs/promises';
+import { mkdir, readFile, writeFile, readdir, rm, rmdir, stat } from 'fs/promises';
 import path from 'path';
 import { EdgeTxPackage, resolveMappings } from './package-registry.js';
 import type { InstalledPackageRecord, InstallProgress } from '../../shared/edgetx-types.js';
@@ -118,6 +118,9 @@ async function copyTree(
   onFile: () => void,
 ): Promise<void> {
   const entries = await readdir(srcDir, { withFileTypes: true });
+  // One listing of the destination beats two speculative unlinks per file:
+  // every syscall here is a USB round trip to a slow FAT card.
+  const present = new Set<string>(await readdir(destDir).catch(() => []));
   for (const entry of entries) {
     const src = path.join(srcDir, entry.name);
     const dest = path.join(destDir, entry.name);
@@ -126,7 +129,18 @@ async function copyTree(
       await mkdir(dest, { recursive: true });
       await copyTree(src, dest, rel, written, onFile);
     } else if (entry.isFile()) {
-      await copyFile(src, dest);
+      // Copy CONTENTS only: copyFile() carries macOS extended attributes
+      // across, and on the card's FAT volume every xattr spawns a "._name"
+      // AppleDouble sidecar that clutters the radio's file pickers.
+      await writeFile(dest, await readFile(src));
+      if (present.has(`._${entry.name}`)) {
+        await rm(path.join(destDir, `._${entry.name}`), { force: true });
+      }
+      // EdgeTX compiles scripts to .luac on the card and runs the bytecode
+      // in preference to the source: a stale twin would shadow this update.
+      if (entry.name.endsWith('.lua') && present.has(`${entry.name}c`)) {
+        await rm(path.join(destDir, `${entry.name}c`), { force: true });
+      }
       written.push(rel);
       onFile();
     }
@@ -188,13 +202,8 @@ export async function installPackage(
 
   try {
 
-    // If this package was installed before (any variant), remove the old
-    // files first so a variant switch doesn't strand orphans.
     const manifest = await readManifest(volumePath);
     const previous = manifest.packages[pkg.id];
-    if (previous) {
-      await deleteManifestFiles(volumePath, previous.files);
-    }
 
     const written: string[] = [];
     let total = 0;
@@ -216,6 +225,15 @@ export async function installPackage(
         copied++;
         onProgress({ phase: 'copy', percent: Math.round((copied / total) * 100) });
       });
+    }
+
+    // Overwriting in place means only what the previous install left behind
+    // and this one does not write (a variant switch, a dropped file) still
+    // needs deleting - that is a handful of unlinks instead of every file.
+    if (previous) {
+      const fresh = new Set(written);
+      const stale = previous.files.filter((f) => !fresh.has(f));
+      if (stale.length > 0) await deleteManifestFiles(volumePath, stale);
     }
 
     const record: InstalledPackageRecord = {

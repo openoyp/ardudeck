@@ -60,6 +60,7 @@ import ParameterTable from './ParameterTable';
 import RoverTuningTab from './RoverTuningTab';
 import ReceiverTab from './ReceiverTab';
 import SerialPortsTab from './SerialPortsTab';
+import TelemetryRatesTab from './TelemetryRatesTab';
 import ParamHistoryModal from './ParamHistoryModal';
 import { MotorTestTab } from './motor-test/MotorTestTab';
 import ServoOutputTab from './servo-output/ServoOutputTab';
@@ -77,7 +78,7 @@ interface Toast {
   type: ToastType;
 }
 
-type TabId = 'pid' | 'rates' | 'modes' | 'receiver' | 'serial-ports' | 'safety' | 'sensors' | 'tuning' | 'autotune' | 'battery' | 'parameters' | 'files' | 'rover-tuning' | 'rover-nav' | 'motor-test' | 'servo-output';
+type TabId = 'pid' | 'rates' | 'modes' | 'receiver' | 'serial-ports' | 'telemetry-rates' | 'safety' | 'sensors' | 'tuning' | 'autotune' | 'battery' | 'parameters' | 'files' | 'rover-tuning' | 'rover-nav' | 'motor-test' | 'servo-output';
 
 interface Tab {
   id: TabId;
@@ -209,6 +210,7 @@ const COPTER_TABS: TabNode[] = [
   { kind: 'item', id: 'battery', name: 'Battery', Icon: Battery, color: 'text-orange-400', description: 'Battery monitor configuration' },
   { kind: 'item', id: 'sensors', name: 'Sensors', Icon: Cpu, color: 'text-cyan-400', description: 'Live telemetry and sensor health' },
   { kind: 'item', id: 'serial-ports', name: 'Serial Ports', Icon: Cable, color: 'text-sky-400', description: 'Configure serial port protocols and baud rates' },
+  { kind: 'item', id: 'telemetry-rates', name: 'Telemetry Rates', Icon: Gauge, color: 'text-teal-400', description: 'How often each kind of data is sent, and what it costs on the link' },
   STORAGE_GROUP,
 ];
 
@@ -223,6 +225,7 @@ const PLANE_TABS: TabNode[] = [
   { kind: 'item', id: 'battery', name: 'Battery', Icon: Battery, color: 'text-orange-400', description: 'Battery monitor configuration' },
   { kind: 'item', id: 'sensors', name: 'Sensors', Icon: Cpu, color: 'text-cyan-400', description: 'Live telemetry and sensor health' },
   { kind: 'item', id: 'serial-ports', name: 'Serial Ports', Icon: Cable, color: 'text-sky-400', description: 'Configure serial port protocols and baud rates' },
+  { kind: 'item', id: 'telemetry-rates', name: 'Telemetry Rates', Icon: Gauge, color: 'text-teal-400', description: 'How often each kind of data is sent, and what it costs on the link' },
   STORAGE_GROUP,
 ];
 
@@ -238,6 +241,7 @@ const ROVER_TABS: TabNode[] = [
   { kind: 'item', id: 'battery', name: 'Battery', Icon: Battery, color: 'text-orange-400', description: 'Battery monitor configuration' },
   { kind: 'item', id: 'sensors', name: 'Sensors', Icon: Cpu, color: 'text-cyan-400', description: 'Live telemetry and sensor health' },
   { kind: 'item', id: 'serial-ports', name: 'Serial Ports', Icon: Cable, color: 'text-sky-400', description: 'Configure serial port protocols and baud rates' },
+  { kind: 'item', id: 'telemetry-rates', name: 'Telemetry Rates', Icon: Gauge, color: 'text-teal-400', description: 'How often each kind of data is sent, and what it costs on the link' },
   STORAGE_GROUP,
 ];
 
@@ -484,6 +488,8 @@ export const MavlinkConfigView: React.FC = () => {
         return <ReceiverTab />;
       case 'serial-ports':
         return <SerialPortsTab />;
+      case 'telemetry-rates':
+        return <TelemetryRatesTab />;
       case 'safety':
         return <SafetyTab />;
       case 'sensors':
