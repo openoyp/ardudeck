@@ -350,9 +350,6 @@ let primaryTransportId: TransportId | null = null;
 // services - so parameters and telemetry silently stall.
 let connectGeneration = 0;
 // TEMP perf probe: raw MAVLink packet broadcast rate to the renderer(s). REMOVE after diagnosis.
-let perfPktCount = 0;
-const perfMsgHist = new Map<number, number>();
-let perfLogTimer: ReturnType<typeof setInterval> | null = null;
 // Raw-packet broadcast batching. One webContents.send per packet saturates
 // both processes during log downloads (structured clone + IPC per 90-byte
 // LOG_DATA chunk capped the whole transfer at ~110KB/s); batching to 50ms
@@ -364,7 +361,7 @@ interface RawPacketIpc {
   sysid: number;
   compid: number;
   seq: number;
-  payload: number[];
+  payload: Uint8Array;
   rxtime: number;
   isMavlink2: boolean;
   isSigned: boolean;
@@ -373,6 +370,10 @@ const PACKET_BATCH_FLUSH_MS = 50;
 const PACKET_BATCH_MAX = 2000;
 let packetBatch: RawPacketIpc[] = [];
 let packetBatchTimer: NodeJS.Timeout | null = null;
+// webContents ids holding at least one live onPacket subscription (the
+// preload refcounts and reports); raw frames are batched and sent only while
+// this is non-empty, and only to these windows.
+const packetStreamWindows = new Set<number>();
 // Tracks last armed state reported to renderer so we only log on transitions
 let lastReportedArmed: boolean | null = null;
 let mavlinkParser: MAVLinkParser | null = null;
@@ -2501,7 +2502,7 @@ function isVehicleHeartbeat(vehicleType: number, autopilot: number, compid: numb
 // 60+ existing call sites but is no longer the sole target — every detached
 // window subscribed to the same channel receives the broadcast too. This is
 // how telemetry / status / param events reach pop-out HUDs and graphs.
-function flushPacketBatch(mainWindow: BrowserWindow): void {
+function flushPacketBatch(_mainWindow: BrowserWindow): void {
   if (packetBatchTimer) {
     clearTimeout(packetBatchTimer);
     packetBatchTimer = null;
@@ -2509,7 +2510,16 @@ function flushPacketBatch(mainWindow: BrowserWindow): void {
   if (packetBatch.length === 0) return;
   const batch = packetBatch;
   packetBatch = [];
-  safeSend(mainWindow, IPC_CHANNELS.MAVLINK_PACKET, batch);
+  for (const win of getAllWindows()) {
+    try {
+      if (!win.isDestroyed() && win.webContents && !win.webContents.isDestroyed()
+        && packetStreamWindows.has(win.webContents.id)) {
+        win.webContents.send(IPC_CHANNELS.MAVLINK_PACKET, batch);
+      }
+    } catch {
+      // window torn down mid-send
+    }
+  }
 }
 
 function safeSend(mainWindow: BrowserWindow, channel: string, ...args: unknown[]): void {
@@ -5232,40 +5242,28 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
             // Parse telemetry data from known message types
             parseTelemetry(mainWindow, packet);
 
-            // Broadcast raw frame to renderer(s) for the MAVLink Inspector and
-            // any FieldGraph pop-outs, batched into 50ms buckets (see
+            // Broadcast raw frame to the renderer windows holding a live
+            // onPacket subscription, batched into 50ms buckets (see
             // flushPacketBatch). PACKET_BATCH_MAX bounds memory if the flush
-            // timer is starved by a busy event loop.
-            packetBatch.push({
-              msgid: packet.msgid,
-              sysid: packet.sysid,
-              compid: packet.compid,
-              seq: packet.seq,
-              payload: Array.from(packet.payload),
-              rxtime: packet.rxtime.getTime(),
-              isMavlink2: packet.isMavlink2,
-              isSigned: packet.isSigned,
-            });
-            if (packetBatch.length >= PACKET_BATCH_MAX) {
-              flushPacketBatch(mainWindow);
-            } else if (!packetBatchTimer) {
-              packetBatchTimer = setTimeout(() => flushPacketBatch(mainWindow), PACKET_BATCH_FLUSH_MS);
-            }
-
-            // TEMP perf probe (diagnosing in-flight telemetry freeze): measure the
-            // raw packet broadcast rate + top message ids. This is the "flood" the
-            // renderer's per-packet decoders chew on. REMOVE after diagnosis.
-            perfPktCount++;
-            perfMsgHist.set(packet.msgid, (perfMsgHist.get(packet.msgid) ?? 0) + 1);
-            if (!perfLogTimer) {
-              perfLogTimer = setInterval(() => {
-                const top = [...perfMsgHist.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6)
-                  .map(([id, c]) => `#${id}:${Math.round(c / 2)}`).join(' ');
-                const mem = process.memoryUsage();
-                sendLog(mainWindow, 'info', `[PERF main] mavlink-pkt/s=${Math.round(perfPktCount / 2)} rss=${Math.round(mem.rss / 1e6)}MB heap=${Math.round(mem.heapUsed / 1e6)}MB top6/s=[${top}]`);
-                perfPktCount = 0;
-                perfMsgHist.clear();
-              }, 2000);
+            // timer is starved by a busy event loop. The payload is COPIED
+            // (typed array, one memcpy): the parser may reuse its buffer
+            // before the batch flushes.
+            if (packetStreamWindows.size > 0) {
+              packetBatch.push({
+                msgid: packet.msgid,
+                sysid: packet.sysid,
+                compid: packet.compid,
+                seq: packet.seq,
+                payload: new Uint8Array(packet.payload),
+                rxtime: packet.rxtime.getTime(),
+                isMavlink2: packet.isMavlink2,
+                isSigned: packet.isSigned,
+              });
+              if (packetBatch.length >= PACKET_BATCH_MAX) {
+                flushPacketBatch(mainWindow);
+              } else if (!packetBatchTimer) {
+                packetBatchTimer = setTimeout(() => flushPacketBatch(mainWindow), PACKET_BATCH_FLUSH_MS);
+              }
             }
 
             // Log packets (limit to not spam)
@@ -13160,6 +13158,20 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   // Area Editor window
   ipcMain.handle(IPC_CHANNELS.AREA_EDITOR_OPEN, () => {
     openAreaEditorWindow();
+  });
+
+  // Windows report whether they hold any live onPacket subscription; raw
+  // frames are only batched/sent while at least one window does.
+  ipcMain.on(IPC_CHANNELS.MAVLINK_PACKET_STREAM_SET, (event, active: boolean) => {
+    const id = event.sender.id;
+    if (active) {
+      if (!packetStreamWindows.has(id)) {
+        packetStreamWindows.add(id);
+        event.sender.once('destroyed', () => packetStreamWindows.delete(id));
+      }
+    } else {
+      packetStreamWindows.delete(id);
+    }
   });
 
   // Main window reports its current map viewport so the Area Editor can open on

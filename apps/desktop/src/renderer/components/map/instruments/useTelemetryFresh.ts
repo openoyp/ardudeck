@@ -72,8 +72,12 @@ export function isTelemetryFresh(linkUp: boolean, stamp: number, now: number): b
 /** True when the link is up AND this field has arrived recently. */
 export function useTelemetryFresh(field: TelemetryField): boolean {
   const linkUp = useLinkUp();
-  const stamp = useTelemetryStore(STAMP_SELECTOR[field] as (s: unknown) => number);
+  const sel = STAMP_SELECTOR[field] as (s: unknown) => number;
   useSecondsTick();
 
-  return isTelemetryFresh(linkUp, stamp, Date.now());
+  // Select the BOOLEAN, not the raw stamp: the stamp advances on every
+  // telemetry batch and would wake the instrument at full telemetry rate even
+  // when its displayed values are static. The 1s tick above re-evaluates the
+  // window so a stopped stream still ages out.
+  return useTelemetryStore((s) => isTelemetryFresh(linkUp, sel(s), Date.now()));
 }

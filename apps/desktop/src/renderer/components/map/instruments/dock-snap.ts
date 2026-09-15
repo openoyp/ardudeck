@@ -81,14 +81,17 @@ export function clusterCandidate(
 
 export function findDockCandidate(
   dragged: DockRect,
-  targets: Array<{ key: string; rect: DockRect; cluster?: boolean }>,
+  targets: Array<{ key: string; rect: DockRect; cluster?: boolean; proximity?: boolean }>,
   threshold = DOCK_SNAP_PX,
 ): DockCandidate | null {
   let best: DockCandidate | null = null;
   for (const t of targets) {
-    const c = t.cluster
+    // proximity: cluster-style snapping (overlap allowed) for a non-cluster
+    // result, e.g. dropping the big ball ONTO a card group.
+    let c = t.cluster || t.proximity
       ? clusterCandidate(dragged, t.rect, t.key, threshold)
       : candidateFor(dragged, t.rect, t.key, threshold);
+    if (c && !t.cluster) c = { ...c, cluster: false };
     if (c && (!best || c.gap < best.gap)) best = c;
   }
   return best;

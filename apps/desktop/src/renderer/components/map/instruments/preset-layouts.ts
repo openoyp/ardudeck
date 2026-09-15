@@ -8,13 +8,21 @@
  */
 import type { InstrumentLayoutSnapshot } from '../../../stores/map-instruments-store';
 
+export type PresetAccent = 'green' | 'blue' | 'amber' | 'violet';
+
 export interface PresetInstrumentLayout {
   name: string;
+  /** One line under the card name; keep it short so cards stay equal height. */
+  description: string;
+  accent: PresetAccent;
   layout: InstrumentLayoutSnapshot;
 }
 
-/** Classic cockpit: gauge row flanking the attitude ball along the bottom,
- * status strips across the top, flight data and annunciator on the left. */
+/** The default cockpit (baked from the field-tested "Groupped Default main
+ * cockpit" layout): docked bottom rows flanking the attitude ball (flight
+ * control + HOME/ALT/GPS left, SPD/VSI/BAT right; the ball's rose already
+ * shows heading), the status strips docked as
+ * one top row, flight data + annunciator stacked on the left rail. */
 const PILOT_COCKPIT: InstrumentLayoutSnapshot = {
   visible: {
     attitude: true,
@@ -23,29 +31,46 @@ const PILOT_COCKPIT: InstrumentLayoutSnapshot = {
     gps: true,
     altitude: true,
     speed: true,
-    heading: true,
+    heading: false,
     vsi: true,
-    home: false,
+    home: true,
     'flight-mode': true,
     link: true,
     mission: true,
     annunciator: true,
+    rtk: false,
+    controls: true,
   },
   scale: {},
   opacity: 1,
+  instrumentOpacity: {},
+  displayMode: {},
+  groups: {
+    d1: { members: ['controls', 'home', 'altitude', 'gps'], orientation: 'row' },
+    d2: { members: ['flight-data', 'annunciator'], orientation: 'col' },
+    d3: { members: ['flight-mode', 'mission', 'link'], orientation: 'row' },
+    d4: { members: ['speed', 'vsi', 'battery'], orientation: 'row' },
+  },
   positions: {
     'instrument:attitude': { ax: 'center', ay: 'bottom', dx: 0, dy: 4, v: 4 },
-    'instrument:heading': { ax: 'center', ay: 'bottom', dx: -366, dy: 18, v: 4 },
+    // Solo anchors kept so an undocked member lands in a sensible spot.
+    'instrument:home': { ax: 'center', ay: 'bottom', dx: -356, dy: 19, v: 4 },
+    'instrument:heading': { ax: 'center', ay: 'bottom', dx: -356, dy: 19, v: 4 },
     'instrument:altitude': { ax: 'center', ay: 'bottom', dx: -252, dy: 18, v: 4 },
-    'instrument:gps': { ax: 'center', ay: 'bottom', dx: -138, dy: 18, v: 4 },
-    'instrument:speed': { ax: 'center', ay: 'bottom', dx: 138, dy: 18, v: 4 },
+    'instrument:gps': { ax: 'center', ay: 'bottom', dx: -156, dy: 19, v: 4 },
+    'instrument:speed': { ax: 'center', ay: 'bottom', dx: 148, dy: 19, v: 4 },
     'instrument:vsi': { ax: 'center', ay: 'bottom', dx: 252, dy: 18, v: 4 },
-    'instrument:battery': { ax: 'center', ay: 'bottom', dx: 366, dy: 18, v: 4 },
-    'instrument:flight-mode': { ax: 'center', ay: 'top', dx: -230, dy: 10, v: 4 },
+    'instrument:battery': { ax: 'center', ay: 'bottom', dx: 364, dy: 19, v: 4 },
+    'instrument:flight-mode': { ax: 'center', ay: 'top', dx: -200, dy: 8, v: 4 },
     'instrument:mission': { ax: 'center', ay: 'top', dx: 0, dy: 10, v: 4 },
-    'instrument:link': { ax: 'center', ay: 'top', dx: 210, dy: 10, v: 4 },
+    'instrument:link': { ax: 'center', ay: 'top', dx: 216, dy: 8, v: 4 },
     'instrument:flight-data': { ax: 'left', ay: 'middle', dx: 10, dy: -110, v: 4 },
-    'instrument:annunciator': { ax: 'left', ay: 'middle', dx: 10, dy: 60, v: 4 },
+    'instrument:annunciator': { ax: 'left', ay: 'middle', dx: 8, dy: 45.5, v: 4 },
+    'instrument:controls': { ax: 'left', ay: 'bottom', dx: 16, dy: 4, v: 4 },
+    'instrument:group:d1': { ax: 'left', ay: 'bottom', dx: 16, dy: 7, v: 4 },
+    'instrument:group:d2': { ax: 'left', ay: 'top', dx: 0, dy: 64, v: 4 },
+    'instrument:group:d3': { ax: 'center', ay: 'top', dx: -13.5, dy: 0, v: 4 },
+    'instrument:group:d4': { ax: 'center', ay: 'bottom', dx: 256, dy: 7, v: 4 },
   },
 };
 
@@ -127,8 +152,186 @@ const STRIPS_ONLY: InstrumentLayoutSnapshot = {
   },
 };
 
+/** Split-screen cockpit (baked from the field-made "Split" layout): strips
+ * rail on the left, the status strip row on top, and a ball constellation
+ * with HOME and BAT bottom-right, sized for a half-width map. Auto-applied
+ * when the in-map split opens (a user-saved layout named "Split" wins). */
+export const SPLIT_COCKPIT: InstrumentLayoutSnapshot = {
+  visible: {
+    attitude: true,
+    'flight-data': true,
+    battery: true,
+    gps: true,
+    altitude: true,
+    speed: true,
+    heading: false,
+    vsi: false,
+    home: true,
+    'flight-mode': true,
+    link: true,
+    mission: true,
+    annunciator: true,
+    rtk: false,
+    controls: true,
+  },
+  scale: {},
+  opacity: 1,
+  instrumentOpacity: {},
+  displayMode: {
+    gps: 'strip',
+    altitude: 'strip',
+    speed: 'strip',
+  },
+  groups: {
+    d2: {
+      members: ['flight-data', 'annunciator', 'gps', 'altitude', 'speed'],
+      orientation: 'col',
+    },
+    d3: {
+      members: ['flight-mode', 'mission', 'link'],
+      orientation: 'row',
+    },
+    d5: {
+      members: ['attitude', 'home', 'battery'],
+      orientation: 'row',
+      offsets: {
+        home: {
+          x: 143.3,
+          y: 31.3,
+        },
+        battery: {
+          x: -106.6,
+          y: 36.6,
+        },
+      },
+    },
+  },
+  positions: {
+    'instrument:attitude': {
+      ax: 'center',
+      ay: 'bottom',
+      dx: 46,
+      dy: 7,
+      v: 4,
+    },
+    'instrument:flight-data': {
+      ax: 'left',
+      ay: 'middle',
+      dx: 10,
+      dy: -110,
+      v: 4,
+    },
+    'instrument:battery': {
+      ax: 'center',
+      ay: 'bottom',
+      dx: -108,
+      dy: 3,
+      v: 4,
+    },
+    'instrument:gps': {
+      ax: 'center',
+      ay: 'middle',
+      dx: -249,
+      dy: 7,
+      v: 4,
+    },
+    'instrument:altitude': {
+      ax: 'center',
+      ay: 'middle',
+      dx: -254,
+      dy: 37.5,
+      v: 4,
+    },
+    'instrument:speed': {
+      ax: 'center',
+      ay: 'middle',
+      dx: -259.5,
+      dy: 77.5,
+      v: 4,
+    },
+    'instrument:heading': {
+      ax: 'center',
+      ay: 'bottom',
+      dx: -356,
+      dy: 19,
+      v: 4,
+    },
+    'instrument:vsi': {
+      ax: 'right',
+      ay: 'bottom',
+      dx: 103,
+      dy: 19,
+      v: 4,
+    },
+    'instrument:home': {
+      ax: 'center',
+      ay: 'bottom',
+      dx: 148,
+      dy: 99,
+      v: 4,
+    },
+    'instrument:flight-mode': {
+      ax: 'center',
+      ay: 'top',
+      dx: -200,
+      dy: 8,
+      v: 4,
+    },
+    'instrument:link': {
+      ax: 'center',
+      ay: 'top',
+      dx: 216,
+      dy: 8,
+      v: 4,
+    },
+    'instrument:mission': {
+      ax: 'center',
+      ay: 'top',
+      dx: 0,
+      dy: 10,
+      v: 4,
+    },
+    'instrument:annunciator': {
+      ax: 'left',
+      ay: 'middle',
+      dx: 8,
+      dy: 45.5,
+      v: 4,
+    },
+    'instrument:controls': {
+      ax: 'left',
+      ay: 'bottom',
+      dx: 0,
+      dy: 4,
+      v: 4,
+    },
+    'instrument:group:d2': {
+      ax: 'left',
+      ay: 'middle',
+      dx: 0,
+      dy: 29.5,
+      v: 4,
+    },
+    'instrument:group:d3': {
+      ax: 'center',
+      ay: 'top',
+      dx: -13.5,
+      dy: 0,
+      v: 4,
+    },
+    'instrument:group:d5': {
+      ax: 'right',
+      ay: 'bottom',
+      dx: 77,
+      dy: 14,
+      v: 4,
+    },
+  },
+};
+
 export const PRESET_INSTRUMENT_LAYOUTS: PresetInstrumentLayout[] = [
-  { name: 'Pilot cockpit', layout: PILOT_COCKPIT },
-  { name: 'Minimal', layout: MINIMAL },
-  { name: 'Strips only', layout: STRIPS_ONLY },
+  { name: 'Pilot cockpit', description: 'Full cockpit: docked gauge rows around the ball.', accent: 'green', layout: PILOT_COCKPIT },
+  { name: 'Minimal', description: 'Just the ball, flight data and the status strips.', accent: 'blue', layout: MINIMAL },
+  { name: 'Strips only', description: 'Compact readout bands, maximum map.', accent: 'amber', layout: STRIPS_ONLY },
+  { name: 'Split cockpit', description: 'Slim set for the in-map split; applied automatically.', accent: 'violet', layout: SPLIT_COCKPIT },
 ];

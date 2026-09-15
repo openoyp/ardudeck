@@ -16,7 +16,6 @@
  */
 import { useCallback, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { create } from 'zustand';
 import { useDraggableOverlay } from '../useDraggableOverlay';
 import {
   useMapInstrumentsStore,
@@ -27,21 +26,10 @@ import {
   INSTRUMENT_OPACITY_MIN,
   type InstrumentDisplayMode,
 } from '../../../stores/map-instruments-store';
-import { MAP_INSTRUMENTS, isRoundInMode, type MapInstrumentDef } from './registry';
+import { MAP_INSTRUMENTS, type MapInstrumentDef } from './registry';
 import { DockedGroup } from './DockedGroup';
 import { variantGlyph } from './variant-glyphs';
-import { GROUP_KEY_PREFIX, groupOf, isCluster, CLUSTER_ANCHOR } from './dock-groups';
-import {
-  findDockCandidate,
-  orientationFor,
-  draggedGoesFirst,
-  groupOrigin,
-  memberInsertionIndex,
-  snapToBallEdge,
-  type DockCandidate,
-  type DockRect,
-  type DockSide,
-} from './dock-snap';
+import { useDockPreviewStore, measureDockCandidate, commitDock, type MeasuredCandidate } from './dock-tracking';
 
 // Pixels of diagonal grip travel that span one whole scale unit.
 const RESIZE_PX_PER_SCALE_UNIT = 100;
@@ -171,102 +159,6 @@ function EyeOffIcon(): JSX.Element {
     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
     </svg>
-  );
-}
-
-// Snap affordance while a dragged instrument is near a dock target.
-const useDockPreviewStore = create<{
-  preview: { rect: DockRect; side: DockSide; cluster: boolean } | null;
-  setPreview: (p: { rect: DockRect; side: DockSide; cluster: boolean } | null) => void;
-}>((set) => ({ preview: null, setPreview: (preview) => set({ preview }) }));
-
-interface MeasuredCandidate {
-  candidate: DockCandidate;
-  targetRect: DockRect;
-  selfRect: DockRect;
-}
-
-function measureDockCandidate(selfEl: HTMLElement, selfId: string): MeasuredCandidate | null {
-  const container = selfEl.offsetParent as HTMLElement | null;
-  if (!container) return null;
-  const c = container.getBoundingClientRect();
-  const rel = (el: Element): DockRect => {
-    const r = el.getBoundingClientRect();
-    return { x: r.left - c.left, y: r.top - c.top, w: r.width, h: r.height };
-  };
-  // The attitude ball never joins a boxed card: near the ball (or dragging
-  // the ball near others) everything snaps by cluster proximity instead.
-  const draggingBall = selfId === CLUSTER_ANCHOR;
-  const groups = useMapInstrumentsStore.getState().groups;
-  const targets: Array<{ key: string; rect: DockRect; cluster?: boolean }> = [];
-  for (const el of container.querySelectorAll<HTMLElement>('[data-instrument-id]')) {
-    const id = el.dataset.instrumentId!;
-    if (id !== selfId) targets.push({ key: id, rect: rel(el), cluster: draggingBall || id === CLUSTER_ANCHOR });
-  }
-  if (!draggingBall) {
-    for (const el of container.querySelectorAll<HTMLElement>('[data-dock-group-id]')) {
-      const gid = el.dataset.dockGroupId!;
-      targets.push({ key: GROUP_KEY_PREFIX + gid, rect: rel(el), cluster: !!groups[gid] && isCluster(groups[gid]!) });
-    }
-  }
-  const selfRect = rel(selfEl);
-  const candidate = findDockCandidate(selfRect, targets);
-  if (!candidate) return null;
-  const targetRect = targets.find((t) => t.key === candidate.targetKey)!.rect;
-  return { candidate, targetRect, selfRect };
-}
-
-function instrumentIsRound(id: string): boolean {
-  const def = MAP_INSTRUMENTS.find((d) => d.id === id);
-  if (!def) return false;
-  return isRoundInMode(def, useMapInstrumentsStore.getState().displayMode[id] ?? 'analog');
-}
-
-function commitDock(selfId: string, m: MeasuredCandidate, dropPoint: { x: number; y: number }, container: HTMLElement): void {
-  const store = useMapInstrumentsStore.getState();
-  const key = m.candidate.targetKey;
-  if (key.startsWith(GROUP_KEY_PREFIX)) {
-    const gid = key.slice(GROUP_KEY_PREFIX.length);
-    const g = store.groups[gid];
-    if (!g) return;
-    if (m.candidate.cluster) {
-      const ballEl = container.querySelector<HTMLElement>(`[data-dock-group-id="${gid}"] [data-dock-member="${CLUSTER_ANCHOR}"]`);
-      if (!ballEl) return;
-      const c = container.getBoundingClientRect();
-      const b = ballEl.getBoundingClientRect();
-      const ball: DockRect = { x: b.left - c.left, y: b.top - c.top, w: b.width, h: b.height };
-      const snapped = snapToBallEdge(ball, m.selfRect, instrumentIsRound(selfId));
-      store.dockAddCluster(
-        gid,
-        selfId,
-        { x: snapped.x - ball.x, y: snapped.y - ball.y },
-        { x: Math.min(m.targetRect.x, snapped.x), y: Math.min(m.targetRect.y, snapped.y) },
-      );
-    } else {
-      store.dockAdd(gid, selfId, memberInsertionIndex(m.targetRect, g.orientation, g.members.length, dropPoint));
-    }
-    return;
-  }
-  if (groupOf(store.groups, key)) return;
-  if (m.candidate.cluster) {
-    // One of the two is the ball; the offset is always relative to it.
-    const ball = selfId === CLUSTER_ANCHOR ? m.selfRect : m.targetRect;
-    const other = selfId === CLUSTER_ANCHOR ? m.targetRect : m.selfRect;
-    const otherId = selfId === CLUSTER_ANCHOR ? key : selfId;
-    const snapped = snapToBallEdge(ball, other, instrumentIsRound(otherId));
-    store.dockCreateCluster(
-      otherId,
-      { x: snapped.x - ball.x, y: snapped.y - ball.y },
-      { x: Math.min(ball.x, snapped.x), y: Math.min(ball.y, snapped.y) },
-    );
-    return;
-  }
-  store.dockCreate(
-    key,
-    selfId,
-    orientationFor(m.candidate.side),
-    draggedGoesFirst(m.candidate.side),
-    groupOrigin(m.targetRect, m.selfRect, m.candidate.side),
   );
 }
 

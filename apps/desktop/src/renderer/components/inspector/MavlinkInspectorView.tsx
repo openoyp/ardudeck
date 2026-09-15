@@ -22,6 +22,7 @@ import {
 } from 'dockview-react';
 import 'dockview-react/dist/styles/dockview.css';
 import {
+  acquireInspectorFields,
   getInspectorSnapshot,
   getSamples,
   useInspectorStore,
@@ -134,6 +135,8 @@ function GraphsWatermark(): JSX.Element {
 }
 
 export function MavlinkInspectorView(): JSX.Element {
+  // Field decode runs only while a fields-consuming view is mounted.
+  useEffect(() => acquireInspectorFields(), []);
   const tick = useInspectorStore((s) => s.tick);
   const paused = useInspectorStore((s) => s.paused);
   const setPaused = useInspectorStore((s) => s.setPaused);

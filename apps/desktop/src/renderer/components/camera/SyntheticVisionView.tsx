@@ -65,6 +65,9 @@ export function SyntheticVisionView({ vehicle, isPrimary, osd, onActivate }: Syn
   // where active-vehicle churn cancels loads for parked vehicles that then never
   // move enough to re-trigger).
   const loadTokenRef = useRef(0);
+  // The scene is static between inputs: the loop repaints only when the pose,
+  // viewport or terrain changed, instead of burning GPU at display rate.
+  const dirtyRef = useRef(true);
   const [terrainStatus, setTerrainStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   // The SVT camera's vertical FOV, captured on mount so the world-locked HUD
   // overlay can drive its own camera with the exact same fov (zero calibration).
@@ -78,7 +81,7 @@ export function SyntheticVisionView({ vehicle, isPrimary, osd, onActivate }: Syn
   const att = isPrimary ? flatAttitude : fleetAttitude;
 
   // Latest pose for the render loop — assigned during render (cheap, idempotent).
-  poseRef.current = position
+  const nextPose = position
     ? {
         lat: position[0],
         lon: position[1],
@@ -88,6 +91,17 @@ export function SyntheticVisionView({ vehicle, isPrimary, osd, onActivate }: Syn
         headingDeg: vehicle?.heading ?? 0,
       }
     : null;
+  const prev = poseRef.current;
+  if (
+    (nextPose === null) !== (prev === null) ||
+    (nextPose && prev && (
+      nextPose.lat !== prev.lat || nextPose.lon !== prev.lon || nextPose.agl !== prev.agl ||
+      nextPose.rollDeg !== prev.rollDeg || nextPose.pitchDeg !== prev.pitchDeg || nextPose.headingDeg !== prev.headingDeg
+    ))
+  ) {
+    dirtyRef.current = true;
+  }
+  poseRef.current = nextPose;
 
   // ─── Scene lifecycle (mount once) ─────────────────────────────────────────
   useEffect(() => {
@@ -102,6 +116,7 @@ export function SyntheticVisionView({ vehicle, isPrimary, osd, onActivate }: Syn
     const sizeToContainer = () => {
       const r = container.getBoundingClientRect();
       scene.resize(r.width, r.height);
+      dirtyRef.current = true;
     };
     sizeToContainer();
     const ro = new ResizeObserver(sizeToContainer);
@@ -109,8 +124,11 @@ export function SyntheticVisionView({ vehicle, isPrimary, osd, onActivate }: Syn
 
     let raf = 0;
     const loop = () => {
-      if (poseRef.current) scene.setPose(poseRef.current);
-      scene.render();
+      if (dirtyRef.current) {
+        dirtyRef.current = false;
+        if (poseRef.current) scene.setPose(poseRef.current);
+        scene.render();
+      }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -143,6 +161,7 @@ export function SyntheticVisionView({ vehicle, isPrimary, osd, onActivate }: Syn
       const cached = gridCache.get(vehicleKey);
       if (cached && approxDistanceM(cached.centerLat, cached.centerLon, lat, lon) <= SVT_REBUILD_DISTANCE_M) {
         scene.setTerrain(buildTerrainGeometry(cached), cached);
+        dirtyRef.current = true;
         gridCenterRef.current = { lat: cached.centerLat, lon: cached.centerLon };
         setTerrainStatus('ready');
       }
@@ -159,6 +178,7 @@ export function SyntheticVisionView({ vehicle, isPrimary, osd, onActivate }: Syn
         const grid = await loadElevationGrid(lat, lon);
         if (token !== loadTokenRef.current) return; // superseded by a newer load
         sceneRef.current?.setTerrain(buildTerrainGeometry(grid), grid);
+        dirtyRef.current = true;
         gridCenterRef.current = { lat, lon };
         cacheGrid(vehicleKey, grid);
         setTerrainStatus('ready');

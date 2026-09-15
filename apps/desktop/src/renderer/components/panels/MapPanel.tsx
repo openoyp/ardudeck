@@ -63,6 +63,7 @@ import { AirspaceOverlay } from '../map/overlays/AirspaceOverlay';
 import { AirspaceLegend } from '../map/overlays/AirspaceLegend';
 import { MapLayersControl } from '../map/overlays/MapLayersControl';
 import { InstrumentsLayer, SingleMapInstrument } from '../map/instruments/InstrumentsLayer';
+import { PRESET_INSTRUMENT_LAYOUTS } from '../map/instruments/preset-layouts';
 import { InstrumentsMenu } from '../map/instruments/InstrumentsMenu';
 import { useMapHomeStore } from '../map/instruments/registry';
 import { useMapInstrumentsStore, resolveInstrumentVisible } from '../../stores/map-instruments-store';
@@ -1973,17 +1974,184 @@ const MissionOverlays = React.memo(function MissionOverlays() {
   );
 });
 
+// ─── Live (tick-rate) leaves of the 2D map ──────────────────────────────────
+// Each subscribes to high-rate telemetry itself, so TelemetryMap2D, which
+// renders the whole Leaflet tree, no longer re-renders per telemetry batch.
+// Every displayed value still updates on every batch, in these leaves.
+
+function useLiveVehiclePosition(homePosition: [number, number] | null, fallback: [number, number]): [number, number] {
+  const lat = useTelemetryStore((s) => s.gps.lat);
+  const lon = useTelemetryStore((s) => s.gps.lon);
+  const ok = useTelemetryStore((s) => s.gps.fixType >= 2 && s.gps.lat !== 0 && s.gps.lon !== 0);
+  return useMemo(() => (ok ? [lat, lon] : homePosition ?? fallback), [ok, lat, lon, homePosition, fallback]);
+}
+
+function LiveMapController({ followVehicle, homePosition, defaultPosition, onUserInteraction, onMapClick, onContextMenu, containerRef }: {
+  followVehicle: boolean;
+  homePosition: [number, number] | null;
+  defaultPosition: [number, number];
+  onUserInteraction: () => void;
+  onMapClick?: () => void;
+  onContextMenu?: (lat: number, lon: number) => void;
+  containerRef: React.RefObject<HTMLDivElement>;
+}): JSX.Element {
+  const position = useLiveVehiclePosition(homePosition, defaultPosition);
+  return (
+    <MapController
+      position={position}
+      followVehicle={followVehicle}
+      onUserInteraction={onUserInteraction}
+      onMapClick={onMapClick}
+      onContextMenu={onContextMenu}
+      containerRef={containerRef}
+    />
+  );
+}
+
+// Renderless: appends throttled trail points and seeds home on first fix.
+function TrailAndHomeUpdater({ setTrail, setHomePosition }: {
+  setTrail: React.Dispatch<React.SetStateAction<[number, number][]>>;
+  setHomePosition: React.Dispatch<React.SetStateAction<[number, number] | null>>;
+}): null {
+  const lat = useTelemetryStore((s) => s.gps.lat);
+  const lon = useTelemetryStore((s) => s.gps.lon);
+  const hasValidGps = useTelemetryStore((s) => s.gps.fixType >= 2 && s.gps.lat !== 0 && s.gps.lon !== 0);
+  const lastUpdateRef = useRef<number>(0);
+  useEffect(() => {
+    if (!hasValidGps) return;
+    const now = Date.now();
+    if (now - lastUpdateRef.current > 500) {
+      lastUpdateRef.current = now;
+      const gpsPosition: [number, number] = [lat, lon];
+      setTrail(prev => {
+        const newTrail = [...prev, gpsPosition];
+        return newTrail.length > 100 ? newTrail.slice(-100) : newTrail;
+      });
+      setHomePosition(prev => prev ?? gpsPosition);
+    }
+  }, [lat, lon, hasValidGps, setTrail, setHomePosition]);
+  return null;
+}
+
+function LiveHomeLine({ homePosition, defaultPosition }: {
+  homePosition: [number, number] | null;
+  defaultPosition: [number, number];
+}): JSX.Element | null {
+  const vehiclePosition = useLiveVehiclePosition(homePosition, defaultPosition);
+  if (!homePosition) return null;
+  const distance = calculateDistance(vehiclePosition[0], vehiclePosition[1], homePosition[0], homePosition[1]);
+  if (distance <= 5) return null;
+  return <HomeLine vehiclePosition={vehiclePosition} homePosition={homePosition} />;
+}
+
+function LiveHeadingLine({ homePosition, defaultPosition }: {
+  homePosition: [number, number] | null;
+  defaultPosition: [number, number];
+}): JSX.Element {
+  const position = useLiveVehiclePosition(homePosition, defaultPosition);
+  const heading = useTelemetryStore((s) => s.vfrHud.heading);
+  const groundspeed = useTelemetryStore((s) => s.vfrHud.groundspeed);
+  const armed = useTelemetryStore((s) => s.flight.armed);
+  return <HeadingLine position={position} heading={heading} groundspeed={groundspeed} armed={armed} />;
+}
+
+function LiveVehicleMarker({ tacticalClass, isSelected, activeIsLeader, activeDesignation, activeBodyColor, homePosition, defaultPosition, altitudeUnit, speedUnit, onSelectToggle }: {
+  tacticalClass: ReturnType<typeof mavTypeToTacticalClass>;
+  isSelected: boolean;
+  activeIsLeader: boolean;
+  activeDesignation: string | undefined;
+  activeBodyColor: string | undefined;
+  homePosition: [number, number] | null;
+  defaultPosition: [number, number];
+  altitudeUnit: ReturnType<typeof useSettingsStore.getState>['unitPreferences']['altitude'];
+  speedUnit: ReturnType<typeof useSettingsStore.getState>['unitPreferences']['speed'];
+  onSelectToggle: () => void;
+}): JSX.Element {
+  const vehiclePosition = useLiveVehiclePosition(homePosition, defaultPosition);
+  const heading = useTelemetryStore((s) => s.vfrHud.heading);
+  const groundspeed = useTelemetryStore((s) => s.vfrHud.groundspeed);
+  const relativeAlt = useTelemetryStore((s) => s.position.relativeAlt);
+  const windDirection = useTelemetryStore((s) => s.wind.direction);
+  const windSpeed = useTelemetryStore((s) => s.wind.speed);
+  const mode = useTelemetryStore((s) => s.flight.mode);
+  const vehicleState = useTelemetryStore((s): VehicleState => {
+    if (s.flight.armed && s.battery.remaining > 0 && s.battery.remaining < 20) return 'critical';
+    if (s.flight.armed && s.gps.fixType < 2) return 'critical';
+    if (s.flight.armed) return 'armed';
+    return 'disarmed';
+  });
+
+  // Icon is only rebuilt when stable props change (state, mode, selection,
+  // vehicle class). Heading/speed/alt are updated via cheap DOM mutations.
+  const tacticalIcon = useMemo(
+    () => createTacticalVehicleIcon({
+      vehicleClass: tacticalClass,
+      state: vehicleState,
+      selected: isSelected,
+      mode,
+      isLeader: activeIsLeader,
+      topmost: true,
+      designation: activeDesignation,
+      bodyColor: activeBodyColor,
+    }),
+    [tacticalClass, vehicleState, isSelected, mode, activeIsLeader, activeDesignation, activeBodyColor],
+  );
+
+  const vehicleMarkerRef = useRef<L.Marker | null>(null);
+
+  useEffect(() => {
+    const marker = vehicleMarkerRef.current;
+    if (!marker) return;
+    const el = marker.getElement();
+    if (!el) return;
+    updateTacticalIconDOM(el, {
+      heading,
+      groundspeed,
+      speedText: formatSpeedFromMetersPerSecond(groundspeed, speedUnit),
+      altitudeAgl: relativeAlt,
+      altitudeText: formatAltitudeFromMeters(relativeAlt, altitudeUnit),
+      windDirection,
+      windSpeed,
+    }, tacticalClass === 'antenna');
+    // tacticalIcon is in deps so a regenerated icon DOM (e.g. selection
+    // change) gets the current heading reapplied immediately.
+  }, [heading, groundspeed, relativeAlt, altitudeUnit, speedUnit, windDirection, windSpeed, tacticalClass, tacticalIcon]);
+
+  return (
+    <Marker
+      ref={vehicleMarkerRef}
+      position={vehiclePosition}
+      zIndexOffset={5000}
+      icon={tacticalIcon}
+      eventHandlers={{
+        click: (e) => {
+          L.DomEvent.stopPropagation(e.originalEvent);
+          onSelectToggle();
+        },
+      }}
+    />
+  );
+}
+
+function LiveCommandLayer(props: Omit<React.ComponentProps<typeof CommandLayer>, 'vehiclePosition'> & {
+  homePosition: [number, number] | null;
+  defaultPosition: [number, number];
+}): JSX.Element {
+  const { homePosition, defaultPosition, ...rest } = props;
+  const vehiclePosition = useLiveVehiclePosition(homePosition, defaultPosition);
+  return <CommandLayer {...rest} vehiclePosition={vehiclePosition} />;
+}
+
 // ─── 2D Telemetry Map ────────────────────────────────────────────────────────
 
 const TelemetryMap2D = React.memo(function TelemetryMap2D() {
-  // Use selective subscriptions to prevent re-renders on unrelated telemetry updates
-  const gps = useTelemetryStore((s) => s.gps);
-  const position = useTelemetryStore((s) => s.position);
-  const vfrHud = useTelemetryStore((s) => s.vfrHud);
-  const flight = useTelemetryStore((s) => s.flight);
-  const attitude = useTelemetryStore((s) => s.attitude);
-  const battery = useTelemetryStore((s) => s.battery);
-  const wind = useTelemetryStore((s) => s.wind);
+  // Low-rate primitive selections only. This component renders the entire
+  // Leaflet tree, so it must never re-render at telemetry rate; every
+  // tick-rate consumer lives in the Live* leaf components above.
+  const armed = useTelemetryStore((s) => s.flight.armed);
+  const flightMode = useTelemetryStore((s) => s.flight.mode);
+  const vfrAltNonZero = useTelemetryStore((s) => s.vfrHud.alt !== 0);
+
   const altitudeUnit = useSettingsStore((s) => s.unitPreferences.altitude);
   const speedUnit = useSettingsStore((s) => s.unitPreferences.speed);
   const connectionState = useConnectionStore((s) => s.connectionState);
@@ -2013,11 +2181,13 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
   const [terrainAutoRange, setTerrainAutoRange] = useState(true);
   const [terrainFixedRange, setTerrainFixedRange] = useState<ElevationRange>({ min: 0, max: 1500 });
   const [terrainRelativeMode, setTerrainRelativeMode] = useState(false);
+  // 1 m resolution is plenty for the 25 m-bucketed terrain heatmap and keeps
+  // this from re-rendering the tree at telemetry rate.
+  const terrainRefAlt = useTelemetryStore((s) => (terrainRelativeMode ? Math.round(s.vfrHud.alt) : null));
   const [headingLineLength, setHeadingLineLength] = useState(100); // meters
   const handleBoundsChange = useCallback((b: { north: number; south: number; east: number; west: number }) => {
     useTelemMapBoundsStore.getState().setBounds(b);
   }, []);
-  const lastUpdateRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Mission store - only what the large-mission badge below needs. The actual
@@ -2049,18 +2219,14 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
     [ipLocation]
   );
 
-  // Get current position from GPS data
-  const hasValidGps = gps.fixType >= 2 && gps.lat !== 0 && gps.lon !== 0;
-  const gpsPosition = useMemo<[number, number] | null>(
-    () => hasValidGps ? [gps.lat, gps.lon] : null,
-    [hasValidGps, gps.lat, gps.lon]
-  );
-
-  // Vehicle display position - use GPS if available, otherwise use home, then IP location
-  const vehiclePosition = useMemo<[number, number]>(
-    () => gpsPosition || homePosition || defaultPosition,
-    [gpsPosition, homePosition, defaultPosition]
-  );
+  const hasValidGps = useTelemetryStore((s) => s.gps.fixType >= 2 && s.gps.lat !== 0 && s.gps.lon !== 0);
+  // Initial map center only; MapContainer ignores later center changes and
+  // LiveMapController takes over from there.
+  const [initialCenter] = useState<[number, number]>(() => {
+    const t = useTelemetryStore.getState();
+    const ok = t.gps.fixType >= 2 && t.gps.lat !== 0 && t.gps.lon !== 0;
+    return ok ? [t.gps.lat, t.gps.lon] : defaultPosition;
+  });
 
   // Selection state
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
@@ -2087,88 +2253,12 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
 
   // Tactical icon properties
   const tacticalClass = mavTypeToTacticalClass(connectionState.mavType);
-  const vehicleState: VehicleState = useMemo(() => {
-    if (flight.armed && battery.remaining > 0 && battery.remaining < 20) return 'critical';
-    if (flight.armed && gps.fixType < 2) return 'critical';
-    if (flight.armed) return 'armed';
-    return 'disarmed';
-  }, [flight.armed, battery.remaining, gps.fixType]);
 
   const isSelected = selectedVehicleId === VEHICLE_ID || fleetActive;
 
-  // Icon is only rebuilt when stable props change (state, mode, selection, vehicle class).
-  // Heading/speed/alt are updated via cheap DOM mutations to avoid flicker.
-  const tacticalIcon = useMemo(
-    () => createTacticalVehicleIcon({
-      vehicleClass: tacticalClass,
-      state: vehicleState,
-      selected: isSelected,
-      mode: flight.mode,
-      isLeader: activeIsLeader,
-      topmost: true,
-      designation: activeDesignation,
-      bodyColor: activeBodyColor,
-    }),
-    [tacticalClass, vehicleState, isSelected, flight.mode, activeIsLeader, activeDesignation, activeBodyColor],
-  );
+  // Marker icon, per-tick DOM pose updates and home distance/bearing all live
+  // in LiveVehicleMarker / LiveHomeLine now.
 
-  // Ref to the Leaflet marker for DOM-based updates
-  const vehicleMarkerRef = useRef<L.Marker | null>(null);
-
-  // Update heading/speed/alt via DOM manipulation - no icon rebuild, no flicker
-  useEffect(() => {
-    const marker = vehicleMarkerRef.current;
-    if (!marker) return;
-    const el = marker.getElement();
-    if (!el) return;
-    updateTacticalIconDOM(el, {
-      heading: vfrHud.heading,
-      groundspeed: vfrHud.groundspeed,
-      speedText: formatSpeedFromMetersPerSecond(vfrHud.groundspeed, speedUnit),
-      altitudeAgl: position.relativeAlt,
-      altitudeText: formatAltitudeFromMeters(position.relativeAlt, altitudeUnit),
-      windDirection: wind.direction,
-      windSpeed: wind.speed,
-    }, tacticalClass === 'antenna');
-    // tacticalIcon is in deps so that whenever the icon DOM is regenerated
-    // (e.g. selection change rebuilds it with reset rotation), we reapply
-    // the current heading immediately - prevents a brief flip-to-north flicker.
-  }, [vfrHud.heading, vfrHud.groundspeed, position.relativeAlt, altitudeUnit, speedUnit, wind.direction, wind.speed, tacticalClass, tacticalIcon]);
-
-  // Calculate distance and bearing to home
-  const homeStats = useMemo(() => {
-    if (!homePosition) return null;
-    const distance = calculateDistance(
-      vehiclePosition[0], vehiclePosition[1],
-      homePosition[0], homePosition[1]
-    );
-    const bearing = calculateBearing(
-      vehiclePosition[0], vehiclePosition[1],
-      homePosition[0], homePosition[1]
-    );
-    return { distance, bearing };
-  }, [vehiclePosition, homePosition]);
-
-  // Update trail with position history (only when GPS is valid)
-  // Reduced trail limit from 500 to 100 points (~50 seconds at 2Hz) for better performance
-  useEffect(() => {
-    if (gpsPosition && hasValidGps) {
-      const now = Date.now();
-      if (now - lastUpdateRef.current > 500) {
-        lastUpdateRef.current = now;
-        setTrail(prev => {
-          const newTrail = [...prev, gpsPosition];
-          if (newTrail.length > 100) {
-            return newTrail.slice(-100);
-          }
-          return newTrail;
-        });
-
-        // Set home on first valid GPS fix
-        setHomePosition(prev => prev ?? gpsPosition);
-      }
-    }
-  }, [gpsPosition, hasValidGps]); // Removed homePosition from deps - it's only read, not a condition
 
   // Mirror home into the instruments' store: the flight-data instrument is a
   // registry component with no access to this panel's local state.
@@ -2392,7 +2482,7 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
   //  - land:  mode != GUIDED && mode != LAND (LAND is the expected next mode)
   useEffect(() => {
     if (!localTarget) return;
-    const modeUpper = flight.mode.toUpperCase();
+    const modeUpper = flightMode.toUpperCase();
     // The mode a command "lives in" is firmware-specific. ArduPilot flies
     // gotos/orbits in GUIDED; PX4 has no GUIDED — DO_REPOSITION holds at the
     // target in Hold, DO_ORBIT flies as Orbit, land is its own mode. The old
@@ -2419,23 +2509,29 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
       return;
     }
     if (localTarget.type === 'goto') {
-      const dist = calculateDistance(
-        vehiclePosition[0], vehiclePosition[1],
-        localTarget.lat, localTarget.lon,
-      );
-      if (dist < 5) setActiveTarget(null);
+      // 1s proximity poll instead of a per-tick position dependency; arrival
+      // clearing does not need telemetry-rate resolution.
+      const check = () => {
+        const t = useTelemetryStore.getState();
+        const dist = calculateDistance(t.gps.lat, t.gps.lon, localTarget.lat, localTarget.lon);
+        if (dist < 5) setActiveTarget(null);
+      };
+      check();
+      const id = setInterval(check, 1000);
+      return () => clearInterval(id);
     }
-  }, [localTarget, flight.mode, vehiclePosition, connectionState.firmware]);
+  }, [localTarget, flightMode, connectionState.firmware]);
 
   const clearTrail = useCallback(() => {
     setTrail([]);
   }, []);
 
   const setHome = useCallback(() => {
-    if (gpsPosition) {
-      setHomePosition(gpsPosition);
+    const t = useTelemetryStore.getState();
+    if (t.gps.fixType >= 2 && t.gps.lat !== 0 && t.gps.lon !== 0) {
+      setHomePosition([t.gps.lat, t.gps.lon]);
     }
-  }, [gpsPosition]);
+  }, []);
 
   // Center on vehicle + re-enable follow
   const handleCenterOnVehicle = useCallback(() => {
@@ -2449,6 +2545,27 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
   // panel, spanning both halves. The Leaflet map must be told its width changed
   // (invalidateSize) or it paints grey tiles.
   const splitTarget = useMapSplitStore((s) => s.target);
+
+  // Opening the split swaps the cockpit to a compact profile sized for a
+  // half-width map (a user-saved layout named "Split" wins over the built-in
+  // preset); closing it restores the exact pre-split arrangement.
+  const prevSplitRef = useRef<string | null>(null);
+  useEffect(() => {
+    const wasSplit = prevSplitRef.current !== null;
+    const isSplit = splitTarget !== null;
+    prevSplitRef.current = splitTarget;
+    if (isSplit === wasSplit) return;
+    const store = useMapInstrumentsStore.getState();
+    if (isSplit) {
+      const savedName = Object.keys(store.savedLayouts).find((n) => n.trim().toLowerCase() === 'split');
+      const profile = savedName
+        ? store.savedLayouts[savedName]!
+        : PRESET_INSTRUMENT_LAYOUTS.find((p) => p.name === 'Split cockpit')?.layout;
+      if (profile) store.enterSplitProfile(profile);
+    } else {
+      store.exitSplitProfile();
+    }
+  }, [splitTarget]);
   const splitRatio = useMapSplitStore((s) => s.ratio);
   const setSplitRatio = useMapSplitStore((s) => s.setRatio);
   const clearSplit = useMapSplitStore((s) => s.clear);
@@ -2527,7 +2644,238 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
           {mapNotice}
         </div>
       )}
-      {/* Top toolbar */}
+
+      {/* Instruments menu (top-left counterpart of the Layers menu) */}
+      <div data-arrange-chrome className="absolute top-2 left-2 z-[1000]">
+        <InstrumentsMenu />
+      </div>
+
+      {/* Airspace legend */}
+      <AirspaceLegendWrapper />
+
+      {/* Wind timeline bar */}
+      <WindControlsWrapper raised={attitudeVisible} />
+
+      {/* API key dialog */}
+      <ApiKeyDialog />
+
+      {/* GPS status overlay (below the Instruments menu button) */}
+      {!hasValidGps && (
+        <div className="absolute top-10 left-2 z-[1000] px-2 py-1 bg-yellow-600/90 text-white text-xs rounded shadow-lg">
+          No GPS fix
+        </div>
+      )}
+
+      {/* Live survey progress readout (renders nothing until a survey group
+          has actual progress). Drops below the "No GPS fix" badge slot. */}
+      {showMission && <SurveyProgressCard className={hasValidGps ? 'top-10 left-2' : 'top-[4.5rem] left-2'} />}
+
+      {/* Elevation legend (above stats overlay) */}
+      {showTerrain && elevationRange.max > 0 && (
+        <div className="absolute bottom-[120px] left-2 z-[1000]">
+          <ElevationLegend
+            minElevation={elevationRange.min}
+            maxElevation={elevationRange.max}
+            autoRange={terrainAutoRange}
+            onAutoRangeChange={setTerrainAutoRange}
+            fixedRange={terrainFixedRange}
+            onFixedRangeChange={setTerrainFixedRange}
+            relativeMode={terrainRelativeMode}
+            onRelativeModeChange={setTerrainRelativeMode}
+            hasCraftPosition={vfrAltNonZero}
+          />
+        </div>
+      )}
+
+      {/* The flight-data card that lived here is now the 'flight-data' entry in
+          the instruments registry (same bottom-left default, draggable). */}
+
+      {/* Center on vehicle FAB — Google Maps style */}
+      <button
+        onClick={handleCenterOnVehicle}
+        className={`absolute bottom-14 right-3 z-[1000] w-9 h-9 rounded-full shadow-lg flex items-center justify-center transition-all ${
+          followVehicle
+            ? 'bg-blue-600 text-white'
+            : 'bg-surface text-content-secondary hover:text-content hover:bg-surface-raised'
+        }`}
+        title={followVehicle ? 'Following vehicle' : 'Center on vehicle'}
+      >
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="4" />
+          <line x1="12" y1="2" x2="12" y2="6" />
+          <line x1="12" y1="18" x2="12" y2="22" />
+          <line x1="2" y1="12" x2="6" y2="12" />
+          <line x1="18" y1="12" x2="22" y2="12" />
+        </svg>
+      </button>
+
+      {/* Armed status indicator */}
+      <div className={`absolute bottom-2 right-3 z-[1000] px-2 py-1 rounded shadow-lg text-xs font-bold ${
+        armed ? 'bg-red-600 text-white' : 'bg-surface text-content-secondary'
+      }`}>
+        {armed ? 'ARMED' : 'DISARMED'}
+      </div>
+
+      {/* Content area: the Leaflet map, plus an optional in-map split second
+          surface to its right with a draggable divider. The floating overlays
+          above (toolbars, instruments) are siblings of this row, so they stay on
+          top of the WHOLE panel and span BOTH halves. */}
+      <div ref={splitRowRef} className="flex-1 min-h-0 flex">
+        <div
+          className="relative h-full min-w-0"
+          style={{ flexGrow: splitTarget ? effectiveRatio : 1, flexBasis: 0 }}
+        >
+      <MapContainer
+        center={initialCenter}
+        zoom={17}
+        zoomSnap={0}
+        className="h-full w-full"
+        zoomControl={false}
+        attributionControl={false}
+      >
+        <MapRefBridge mapRef={leafletMapRef} />
+        <SmoothWheelZoom />
+        <TelemetryViewportSync />
+        <MapBoundsTracker onBoundsChange={handleBoundsChange} />
+        <TileLayer
+          key={currentLayer}
+          url={`tile-cache://${currentLayer}/{z}/{x}/{y}.png`}
+          maxZoom={layer.maxZoom}
+          maxNativeZoom={(layer as MapLayer).maxNativeZoom ?? layer.maxZoom}
+        />
+
+        {/* Terrain elevation heatmap overlay */}
+        {showTerrain && (
+          <TerrainOverlayLayer
+            opacity={0.6}
+            fixedRange={
+              terrainAutoRange
+                ? elevationRange.max > elevationRange.min
+                  ? {
+                      min: Math.floor(elevationRange.min / 25) * 25,
+                      max: Math.ceil(elevationRange.max / 25) * 25,
+                    }
+                  : null
+                : terrainFixedRange
+            }
+            referenceAlt={terrainRefAlt}
+            onElevationRangeChange={setElevationRange}
+          />
+        )}
+
+        {/* Cached area overlay */}
+        <CachedAreaOverlay />
+
+        {/* Map controller for resize handling and following */}
+        <LiveMapController
+          followVehicle={followVehicle}
+          homePosition={homePosition}
+          defaultPosition={defaultPosition}
+          onUserInteraction={handleUserMapInteraction}
+          onMapClick={() => { setSelectedVehicleId(null); setCommandPopup(null); }}
+          onContextMenu={handleMapContextMenu}
+          containerRef={containerRef}
+        />
+        <TrailAndHomeUpdater setTrail={setTrail} setHomePosition={setHomePosition} />
+
+        {/* Flight trail */}
+        {trail.length > 1 && (
+          <>
+            {/* Dark outline for contrast */}
+            <Polyline
+              positions={trail}
+              pathOptions={{
+                color: '#000',
+                weight: 5,
+                opacity: 0.4,
+              }}
+            />
+            {/* Main trail */}
+            <Polyline
+              positions={trail}
+              pathOptions={{
+                color: '#a855f7', // Purple for trail
+                weight: 3,
+                opacity: 0.9,
+              }}
+            />
+          </>
+        )}
+
+        {/* Home to vehicle line */}
+        <LiveHomeLine homePosition={homePosition} defaultPosition={defaultPosition} />
+
+        {/* Heading line - speed proportional */}
+        {showHeadingLine && (
+          <LiveHeadingLine homePosition={homePosition} defaultPosition={defaultPosition} />
+        )}
+
+        {/* Home marker */}
+        {homePosition && (
+          <Marker position={homePosition} icon={homeIcon} />
+        )}
+
+        {/* ======= MISSION OVERLAYS (read-only) ======= */}
+        {/* Self-subscribed + memoized so live telemetry re-renders don't rebuild
+            every waypoint marker/DivIcon. See MissionOverlays above. */}
+        {showMission && <MissionOverlays />}
+        {/* Live survey progress tint over the group paths (self-subscribed,
+            recomputes on MISSION_CURRENT changes + 1 Hz position samples). */}
+        {showMission && <SurveyProgressOverlay />}
+        {/* ======= END MISSION OVERLAYS ======= */}
+
+        {/* Map overlays (self-subscribed to avoid re-rendering terrain) */}
+        <MapOverlayLayers baseLayer={currentLayer} />
+
+        {/* Vehicle marker - tactical icon. Hidden when nothing is selected in fleet mode
+            (the deselected vehicle reverts to an ordinary fleet marker via FleetMarkers). */}
+        {(connectionState.isConnected || activeVehicleKey !== null) && (
+          <LiveVehicleMarker
+            tacticalClass={tacticalClass}
+            isSelected={isSelected}
+            activeIsLeader={activeIsLeader}
+            activeDesignation={activeDesignation}
+            activeBodyColor={activeBodyColor}
+            homePosition={homePosition}
+            defaultPosition={defaultPosition}
+            altitudeUnit={altitudeUnit}
+            speedUnit={speedUnit}
+            onSelectToggle={() => {
+              // In fleet mode, clicking the active vehicle deselects it; single-vehicle
+              // mode keeps the local select toggle for the command popup.
+              if (fleetActive) deselectActiveVehicle();
+              else setSelectedVehicleId(prev => prev === VEHICLE_ID ? null : VEHICLE_ID);
+            }}
+          />
+        )}
+
+        {/* Other connected vehicles (multi-vehicle). Renders nothing for a single vehicle. */}
+        <FleetMarkers />
+
+        {/* Adjustable rectangle for selecting an area to cache offline. */}
+        <OfflineCacheBox />
+
+        {/* Imperative command layer - popup/target/line managed via refs, immune to re-renders */}
+        <LiveCommandLayer
+          commandPopup={commandPopup}
+          activeTarget={activeTarget}
+          homePosition={homePosition}
+          defaultPosition={defaultPosition}
+          roiTarget={roiTarget}
+          onConfirm={handleCommandConfirm}
+          onCancel={handleCommandCancel}
+          onSetRoi={handleSetRoi}
+          onClearRoi={handleClearRoi}
+        />
+      </MapContainer>
+
+          {/* Floating instrument widgets, attitude ball included (drag-to-place,
+              toggled from the Instruments menu). Inside the map half, NOT the
+              panel root: on split their anchors re-derive against the map's own
+              box, so they stay off the second surface. */}
+          <InstrumentsLayer />
+      {/* Top toolbar: inside the map half, so on split it hugs the MAP's
+          right edge instead of floating over the second surface. */}
       {controlsHidden ? (
         <button
           onClick={() => setControlsHidden(false)}
@@ -2662,238 +3010,6 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
         </button>
       </div>
       )}
-
-      {/* Instruments menu (top-left counterpart of the Layers menu) */}
-      <div data-arrange-chrome className="absolute top-2 left-2 z-[1000]">
-        <InstrumentsMenu />
-      </div>
-
-      {/* Airspace legend */}
-      <AirspaceLegendWrapper />
-
-      {/* Wind timeline bar */}
-      <WindControlsWrapper raised={attitudeVisible} />
-
-      {/* API key dialog */}
-      <ApiKeyDialog />
-
-      {/* GPS status overlay (below the Instruments menu button) */}
-      {!hasValidGps && (
-        <div className="absolute top-10 left-2 z-[1000] px-2 py-1 bg-yellow-600/90 text-white text-xs rounded shadow-lg">
-          No GPS fix
-        </div>
-      )}
-
-      {/* Live survey progress readout (renders nothing until a survey group
-          has actual progress). Drops below the "No GPS fix" badge slot. */}
-      {showMission && <SurveyProgressCard className={hasValidGps ? 'top-10 left-2' : 'top-[4.5rem] left-2'} />}
-
-      {/* Elevation legend (above stats overlay) */}
-      {showTerrain && elevationRange.max > 0 && (
-        <div className="absolute bottom-[120px] left-2 z-[1000]">
-          <ElevationLegend
-            minElevation={elevationRange.min}
-            maxElevation={elevationRange.max}
-            autoRange={terrainAutoRange}
-            onAutoRangeChange={setTerrainAutoRange}
-            fixedRange={terrainFixedRange}
-            onFixedRangeChange={setTerrainFixedRange}
-            relativeMode={terrainRelativeMode}
-            onRelativeModeChange={setTerrainRelativeMode}
-            hasCraftPosition={vfrHud.alt !== 0}
-          />
-        </div>
-      )}
-
-      {/* The flight-data card that lived here is now the 'flight-data' entry in
-          the instruments registry (same bottom-left default, draggable). */}
-
-      {/* Center on vehicle FAB — Google Maps style */}
-      <button
-        onClick={handleCenterOnVehicle}
-        className={`absolute bottom-14 right-3 z-[1000] w-9 h-9 rounded-full shadow-lg flex items-center justify-center transition-all ${
-          followVehicle
-            ? 'bg-blue-600 text-white'
-            : 'bg-surface text-content-secondary hover:text-content hover:bg-surface-raised'
-        }`}
-        title={followVehicle ? 'Following vehicle' : 'Center on vehicle'}
-      >
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="4" />
-          <line x1="12" y1="2" x2="12" y2="6" />
-          <line x1="12" y1="18" x2="12" y2="22" />
-          <line x1="2" y1="12" x2="6" y2="12" />
-          <line x1="18" y1="12" x2="22" y2="12" />
-        </svg>
-      </button>
-
-      {/* Armed status indicator */}
-      <div className={`absolute bottom-2 right-3 z-[1000] px-2 py-1 rounded shadow-lg text-xs font-bold ${
-        flight.armed ? 'bg-red-600 text-white' : 'bg-surface text-content-secondary'
-      }`}>
-        {flight.armed ? 'ARMED' : 'DISARMED'}
-      </div>
-
-      {/* Content area: the Leaflet map, plus an optional in-map split second
-          surface to its right with a draggable divider. The floating overlays
-          above (toolbars, instruments) are siblings of this row, so they stay on
-          top of the WHOLE panel and span BOTH halves. */}
-      <div ref={splitRowRef} className="flex-1 min-h-0 flex">
-        <div
-          className="relative h-full min-w-0"
-          style={{ flexGrow: splitTarget ? effectiveRatio : 1, flexBasis: 0 }}
-        >
-      <MapContainer
-        center={vehiclePosition}
-        zoom={17}
-        zoomSnap={0}
-        className="h-full w-full"
-        zoomControl={false}
-        attributionControl={false}
-      >
-        <MapRefBridge mapRef={leafletMapRef} />
-        <SmoothWheelZoom />
-        <TelemetryViewportSync />
-        <MapBoundsTracker onBoundsChange={handleBoundsChange} />
-        <TileLayer
-          key={currentLayer}
-          url={`tile-cache://${currentLayer}/{z}/{x}/{y}.png`}
-          maxZoom={layer.maxZoom}
-          maxNativeZoom={(layer as MapLayer).maxNativeZoom ?? layer.maxZoom}
-        />
-
-        {/* Terrain elevation heatmap overlay */}
-        {showTerrain && (
-          <TerrainOverlayLayer
-            opacity={0.6}
-            fixedRange={
-              terrainAutoRange
-                ? elevationRange.max > elevationRange.min
-                  ? {
-                      min: Math.floor(elevationRange.min / 25) * 25,
-                      max: Math.ceil(elevationRange.max / 25) * 25,
-                    }
-                  : null
-                : terrainFixedRange
-            }
-            referenceAlt={terrainRelativeMode ? vfrHud.alt : null}
-            onElevationRangeChange={setElevationRange}
-          />
-        )}
-
-        {/* Cached area overlay */}
-        <CachedAreaOverlay />
-
-        {/* Map controller for resize handling and following */}
-        <MapController
-          position={vehiclePosition}
-          followVehicle={followVehicle}
-          onUserInteraction={handleUserMapInteraction}
-          onMapClick={() => { setSelectedVehicleId(null); setCommandPopup(null); }}
-          onContextMenu={handleMapContextMenu}
-          containerRef={containerRef}
-        />
-
-        {/* Flight trail */}
-        {trail.length > 1 && (
-          <>
-            {/* Dark outline for contrast */}
-            <Polyline
-              positions={trail}
-              pathOptions={{
-                color: '#000',
-                weight: 5,
-                opacity: 0.4,
-              }}
-            />
-            {/* Main trail */}
-            <Polyline
-              positions={trail}
-              pathOptions={{
-                color: '#a855f7', // Purple for trail
-                weight: 3,
-                opacity: 0.9,
-              }}
-            />
-          </>
-        )}
-
-        {/* Home to vehicle line */}
-        {homePosition && homeStats && homeStats.distance > 5 && (
-          <HomeLine vehiclePosition={vehiclePosition} homePosition={homePosition} />
-        )}
-
-        {/* Heading line - speed proportional */}
-        {showHeadingLine && (
-          <HeadingLine
-            position={vehiclePosition}
-            heading={vfrHud.heading}
-            groundspeed={vfrHud.groundspeed}
-            armed={flight.armed}
-          />
-        )}
-
-        {/* Home marker */}
-        {homePosition && (
-          <Marker position={homePosition} icon={homeIcon} />
-        )}
-
-        {/* ======= MISSION OVERLAYS (read-only) ======= */}
-        {/* Self-subscribed + memoized so live telemetry re-renders don't rebuild
-            every waypoint marker/DivIcon. See MissionOverlays above. */}
-        {showMission && <MissionOverlays />}
-        {/* Live survey progress tint over the group paths (self-subscribed,
-            recomputes on MISSION_CURRENT changes + 1 Hz position samples). */}
-        {showMission && <SurveyProgressOverlay />}
-        {/* ======= END MISSION OVERLAYS ======= */}
-
-        {/* Map overlays (self-subscribed to avoid re-rendering terrain) */}
-        <MapOverlayLayers baseLayer={currentLayer} />
-
-        {/* Vehicle marker - tactical icon. Hidden when nothing is selected in fleet mode
-            (the deselected vehicle reverts to an ordinary fleet marker via FleetMarkers). */}
-        {(connectionState.isConnected || activeVehicleKey !== null) && (
-          <Marker
-            ref={vehicleMarkerRef}
-            position={vehiclePosition}
-            zIndexOffset={5000}
-            icon={tacticalIcon}
-            eventHandlers={{
-              click: (e) => {
-                L.DomEvent.stopPropagation(e.originalEvent);
-                // In fleet mode, clicking the active vehicle deselects it; single-vehicle
-                // mode keeps the local select toggle for the command popup.
-                if (fleetActive) deselectActiveVehicle();
-                else setSelectedVehicleId(prev => prev === VEHICLE_ID ? null : VEHICLE_ID);
-              },
-            }}
-          />
-        )}
-
-        {/* Other connected vehicles (multi-vehicle). Renders nothing for a single vehicle. */}
-        <FleetMarkers />
-
-        {/* Adjustable rectangle for selecting an area to cache offline. */}
-        <OfflineCacheBox />
-
-        {/* Imperative command layer - popup/target/line managed via refs, immune to re-renders */}
-        <CommandLayer
-          commandPopup={commandPopup}
-          activeTarget={activeTarget}
-          vehiclePosition={vehiclePosition}
-          roiTarget={roiTarget}
-          onConfirm={handleCommandConfirm}
-          onCancel={handleCommandCancel}
-          onSetRoi={handleSetRoi}
-          onClearRoi={handleClearRoi}
-        />
-      </MapContainer>
-
-          {/* Floating instrument widgets, attitude ball included (drag-to-place,
-              toggled from the Instruments menu). Inside the map half, NOT the
-              panel root: on split their anchors re-derive against the map's own
-              box, so they stay off the second surface. */}
-          <InstrumentsLayer />
         </div>
 
         {/* In-map split: divider + second surface (Vision first). */}

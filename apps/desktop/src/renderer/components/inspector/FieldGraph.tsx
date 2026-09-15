@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from 'react';
 import {
+  acquireInspectorFields,
   appendSample,
   getFieldValue,
   getMessageStats,
@@ -45,6 +46,8 @@ export function FieldGraph(propsIn: Record<string, unknown>): JSX.Element {
   });
   const [, setVersion] = useState(0);
 
+  // Graphs read decoded fields, so hold the decode lease while mounted.
+  useEffect(() => acquireInspectorFields(), []);
   const tick = useInspectorStore((s) => s.tick);
   useEffect(() => {
     const stats = getMessageStats(sysid, compid, msgid);

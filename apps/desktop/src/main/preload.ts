@@ -25,6 +25,10 @@ import type { ParameterMetadataStore } from '../shared/parameter-metadata.js';
 import type { CalibrationRecordIpc } from '../shared/calibration-quality.js';
 import type { MissionItem, MissionProgress } from '../shared/mission-types.js';
 import type { MissionMirrorSnapshot } from '../shared/mission-group-types.js';
+
+// Live onPacket subscriptions in this window; main streams raw frames only
+// while at least one exists.
+let packetStreamRefs = 0;
 import type { FenceItem, FenceStatus } from '../shared/fence-types.js';
 import type { RallyItem } from '../shared/rally-types.js';
 import type { DetectedBoard, FirmwareVersion, FlashProgress, FlashResult, FirmwareSource, FirmwareVehicleType, FirmwareManifest, FlashOptions } from '../shared/firmware-types.js';
@@ -402,15 +406,17 @@ const api = {
     return () => ipcRenderer.removeListener(IPC_CHANNELS.MAVLINK_SIGNING_STATUS, handler);
   },
 
-  // Raw MAVLink frame stream — feeds the MAVLink Inspector and FieldGraph
-  // pop-outs. Every successfully-parsed packet from the FC is emitted here.
+  // Raw MAVLink frame stream — feeds the MAVLink Inspector, FieldGraph
+  // pop-outs, safety monitor and CompassMot. Main only streams to windows
+  // that hold at least one live subscription (refcounted below), so pop-outs
+  // with no packet consumer cost nothing.
   onPacket: (
     callback: (packet: {
       msgid: number;
       sysid: number;
       compid: number;
       seq: number;
-      payload: number[];
+      payload: number[] | Uint8Array;
       rxtime: number;
       isMavlink2: boolean;
       isSigned: boolean;
@@ -421,7 +427,7 @@ const api = {
       sysid: number;
       compid: number;
       seq: number;
-      payload: number[];
+      payload: number[] | Uint8Array;
       rxtime: number;
       isMavlink2: boolean;
       isSigned: boolean;
@@ -437,7 +443,16 @@ const api = {
       }
     };
     ipcRenderer.on(IPC_CHANNELS.MAVLINK_PACKET, handler);
-    return () => ipcRenderer.removeListener(IPC_CHANNELS.MAVLINK_PACKET, handler);
+    packetStreamRefs += 1;
+    if (packetStreamRefs === 1) ipcRenderer.send(IPC_CHANNELS.MAVLINK_PACKET_STREAM_SET, true);
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      ipcRenderer.removeListener(IPC_CHANNELS.MAVLINK_PACKET, handler);
+      packetStreamRefs -= 1;
+      if (packetStreamRefs === 0) ipcRenderer.send(IPC_CHANNELS.MAVLINK_PACKET_STREAM_SET, false);
+    };
   },
 
   onConnectionState: (callback: (state: ConnectionState) => void) => {

@@ -4,6 +4,9 @@ import type { DockOrientation } from './dock-snap';
 export interface DockGroup {
   members: string[];
   orientation: DockOrientation;
+  /** 'cluster' = free-form constellation around the ball. Absent = card
+   * group; a card group MAY also contain the ball (contoured chrome). */
+  kind?: 'cluster';
   /** Cluster only: member top-left px relative to the anchor's top-left.
    * The anchor itself has no entry (it IS the origin). */
   offsets?: Record<string, { x: number; y: number }>;
@@ -17,7 +20,9 @@ export const GROUP_KEY_PREFIX = 'group:';
 export const CLUSTER_ANCHOR = 'attitude';
 
 export function isCluster(g: DockGroup): boolean {
-  return g.members.includes(CLUSTER_ANCHOR);
+  // Legacy persisted clusters predate the kind flag; they always carried
+  // offsets, which a card group never does.
+  return g.kind === 'cluster' || (g.offsets !== undefined && g.members.includes(CLUSTER_ANCHOR));
 }
 
 export function groupOverlayKey(gid: string): string {
@@ -61,11 +66,17 @@ export function sanitizeGroups(parsed: unknown, knownIds: readonly string[]): Do
     );
     if (members.length < 2) continue;
     // A cluster whose ball entry was pruned (unknown/duplicate) is malformed.
-    const wasCluster = g.members.includes(CLUSTER_ANCHOR);
+    const wasCluster = (g as { kind?: unknown }).kind === 'cluster'
+      || ((g as { offsets?: unknown }).offsets !== undefined && g.members.includes(CLUSTER_ANCHOR));
     if (wasCluster && !members.includes(CLUSTER_ANCHOR)) continue;
     members.forEach((m) => seen.add(m));
     const offsets = wasCluster ? sanitizeOffsets(g.offsets, members) : undefined;
-    out[gid] = { members, orientation: g.orientation === 'col' ? 'col' : 'row', ...(offsets ? { offsets } : {}) };
+    out[gid] = {
+      members,
+      orientation: g.orientation === 'col' ? 'col' : 'row',
+      ...(wasCluster ? { kind: 'cluster' as const } : {}),
+      ...(offsets ? { offsets } : {}),
+    };
   }
   return out;
 }
@@ -91,7 +102,7 @@ export function createCluster(
   return {
     groups: {
       ...groups,
-      [gid]: { members: [CLUSTER_ANCHOR, otherId], orientation: 'row', offsets: { [otherId]: offset } },
+      [gid]: { members: [CLUSTER_ANCHOR, otherId], orientation: 'row', kind: 'cluster', offsets: { [otherId]: offset } },
     },
     gid,
   };
@@ -135,6 +146,25 @@ export function addMember(groups: DockGroups, gid: string, id: string, index: nu
   const members = [...g.members];
   members.splice(Math.max(0, Math.min(members.length, index)), 0, id);
   return { ...groups, [gid]: { ...g, members } };
+}
+
+/**
+ * One card group absorbs another: the target keeps its identity, orientation
+ * and position; the dragged group's members join at the near end and the
+ * dragged group dissolves. Clusters never merge (the ball anchors its own
+ * formation).
+ */
+export function mergeGroups(groups: DockGroups, targetGid: string, draggedGid: string, atStart: boolean): DockGroups {
+  const target = groups[targetGid];
+  const dragged = groups[draggedGid];
+  if (!target || !dragged || targetGid === draggedGid) return groups;
+  if (isCluster(target) || isCluster(dragged)) return groups;
+  const members = atStart
+    ? [...dragged.members, ...target.members]
+    : [...target.members, ...dragged.members];
+  const next = { ...groups, [targetGid]: { ...target, members } };
+  delete next[draggedGid];
+  return next;
 }
 
 export interface RemoveResult {

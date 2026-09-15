@@ -25,6 +25,7 @@ import { GAUGE_COLORS } from './RoundGauge';
 import { DockedContext } from './dock-context';
 import { groupOverlayKey, isCluster, groupDisplayOptions, CLUSTER_ANCHOR, type DockGroup } from './dock-groups';
 import { memberInsertionIndex, isOutsideUndockZone, snapToBallEdge, type DockRect } from './dock-snap';
+import { useDockPreviewStore, measureGroupDockCandidate, commitGroupDock, type MeasuredCandidate } from './dock-tracking';
 
 const RESIZE_PX_PER_SCALE_UNIT = 100;
 const DOCK_EASE = 'cubic-bezier(0.05, 0.7, 0.1, 1.0)';
@@ -133,7 +134,7 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
   const [reorderTo, setReorderTo] = useState<number | null>(null);
   const [displayOpen, setDisplayOpen] = useState(false);
   const [displayAnchor, setDisplayAnchor] = useState<DOMRect | null>(null);
-  const [cellSizes, setCellSizes] = useState<Record<string, { w: number; h: number }> | null>(null);
+  const [cellSizes, setCellSizes] = useState<Record<string, { x: number; y: number; w: number; h: number }> | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const cellRefs = useRef(new Map<string, HTMLElement>());
   const dragMain = useRef(0);
@@ -156,7 +157,8 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
   const members = group.members
     .map((id) => MAP_INSTRUMENTS.find((d) => d.id === id))
     .filter((d): d is NonNullable<typeof d> => !!d);
-  const tray = !cluster && members.some((d) => isRoundInMode(d, displayMode[d.id] ?? 'analog'));
+  const ballInCard = !cluster && group.members.includes(CLUSTER_ANCHOR);
+  const tray = !cluster && !ballInCard && members.some((d) => isRoundInMode(d, displayMode[d.id] ?? 'analog'));
   const row = group.orientation === 'row';
   const displayChoices = groupDisplayOptions(members);
 
@@ -172,17 +174,20 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
   // The cluster body sizes itself to the union of its absolute cells so the
   // wrapper stays draggable/clampable and measurable by the arranger.
   useLayoutEffect(() => {
-    if (!cluster) return;
+    if (!cluster && !ballInCard) return;
     const measure = () => {
-      const sizes: Record<string, { w: number; h: number }> = {};
+      const sizes: Record<string, { x: number; y: number; w: number; h: number }> = {};
       for (const id of group.members) {
         const el = cellRefs.current.get(id);
-        if (el && el.offsetWidth > 0) sizes[id] = { w: el.offsetWidth, h: el.offsetHeight };
+        if (el && el.offsetWidth > 0) sizes[id] = { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
       }
       if (Object.keys(sizes).length === 0) return;
       setCellSizes((prev) => {
         if (prev && Object.keys(prev).length === Object.keys(sizes).length
-          && Object.entries(sizes).every(([id, s]) => prev[id]?.w === s.w && prev[id]?.h === s.h)) return prev;
+          && Object.entries(sizes).every(([id, s]) => {
+            const q = prev[id];
+            return q && q.x === s.x && q.y === s.y && q.w === s.w && q.h === s.h;
+          })) return prev;
         return sizes;
       });
     };
@@ -191,7 +196,7 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
     for (const el of cellRefs.current.values()) ro.observe(el);
     return () => ro.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cluster, group, memberScales, displayMode]);
+  }, [cluster, ballInCard, group, memberScales, displayMode]);
 
   const clusterSize = cluster && cellSizes
     ? group.members.reduce(
@@ -363,9 +368,100 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
     window.addEventListener('pointerup', onUp);
   };
 
-  const chromeStyle: CSSProperties = tray || cluster
+  // Whole-group drags dock too: near another card group the two merge, near
+  // a standalone instrument the group absorbs it. Runs beside the overlay
+  // drag exactly like the per-instrument tracker.
+  const onWrapperPointerDown = (e: ReactPointerEvent) => {
+    drag.onPointerDown(e);
+    if (cluster) return;
+    const el = wrapperRef.current;
+    if (!el || e.button !== 0) return;
+    if ((e.target as HTMLElement).closest('button, input, select, textarea, a, [role="slider"]')) return;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let active = false;
+    let raf = 0;
+    let last: MeasuredCandidate | null = null;
+    const onMove = (ev: globalThis.PointerEvent) => {
+      if (!active && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 4) return;
+      active = true;
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const node = wrapperRef.current;
+        last = node ? measureGroupDockCandidate(node, gid) : null;
+        useDockPreviewStore.getState().setPreview(
+          last ? { rect: last.targetRect, side: last.candidate.side, cluster: false } : null,
+        );
+      });
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      if (raf) { cancelAnimationFrame(raf); raf = 0; }
+      useDockPreviewStore.getState().setPreview(null);
+      if (active && last) commitGroupDock(gid, last);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
+  const chromeStyle: CSSProperties = tray || cluster || ballInCard
     ? {}
     : { background: GAUGE_COLORS.face, border: `1.5px solid ${GAUGE_COLORS.bezelEdge}` };
+
+  // Card group holding the ball: ONE continuous card rectangle spans every
+  // non-ball member, passing BEHIND the ball, and the ball's circle is
+  // unioned on top so the card edge arcs around it (top and bottom bulge).
+  const trayish = ballInCard && members.some((d) => d.id !== CLUSTER_ANCHOR && isRoundInMode(d, displayMode[d.id] ?? 'analog'));
+  const contour = (() => {
+    if (!ballInCard || !cellSizes) return null;
+    const PAD = 18;
+    const INFLATE = 5;
+    const shapes: Array<{ kind: 'circle'; cx: number; cy: number; r: number } | { kind: 'rect'; x: number; y: number; w: number; h: number }> = [];
+    const rest = members.filter((d) => d.id !== CLUSTER_ANCHOR).map((d) => cellSizes[d.id]).filter((c): c is NonNullable<typeof c> => !!c);
+    const ball = cellSizes[CLUSTER_ANCHOR];
+    if (rest.length > 0) {
+      let x = Math.min(...rest.map((r) => r.x)) - INFLATE;
+      let y = Math.min(...rest.map((r) => r.y)) - INFLATE;
+      let x2 = Math.max(...rest.map((r) => r.x + r.w)) + INFLATE;
+      let y2 = Math.max(...rest.map((r) => r.y + r.h)) + INFLATE;
+      if (ball) {
+        // Run the card's straight edges all the way to the ball's center so
+        // they meet the arc cleanly; stopping at the last member leaves
+        // concave wedge notches where circle and rectangle barely touch.
+        const cx = ball.x + ball.w / 2;
+        const cy = ball.y + ball.h / 2;
+        x = Math.min(x, cx);
+        x2 = Math.max(x2, cx);
+        y = Math.min(y, cy);
+        y2 = Math.max(y2, cy);
+      }
+      shapes.push({ kind: 'rect', x, y, w: x2 - x, h: y2 - y });
+    }
+    if (ball) {
+      // Proud bulge: the arc must read even beside a card nearly as tall as
+      // the ball, so it clears the ball's own backdrop circle by a margin.
+      shapes.push({ kind: 'circle', cx: ball.x + ball.w / 2, cy: ball.y + ball.h / 2, r: Math.min(ball.w, ball.h) / 2 + 12 });
+    }
+    if (shapes.length === 0) return null;
+    const minX = Math.min(...shapes.map((sh) => (sh.kind === 'circle' ? sh.cx - sh.r : sh.x)));
+    const minY = Math.min(...shapes.map((sh) => (sh.kind === 'circle' ? sh.cy - sh.r : sh.y)));
+    const maxX = Math.max(...shapes.map((sh) => (sh.kind === 'circle' ? sh.cx + sh.r : sh.x + sh.w)));
+    const maxY = Math.max(...shapes.map((sh) => (sh.kind === 'circle' ? sh.cy + sh.r : sh.y + sh.h)));
+    return { shapes, PAD, minX, minY, maxX, maxY };
+  })();
+
+  const contourShapes = (fill: string, stroke?: string): JSX.Element[] | null =>
+    contour
+      ? contour.shapes.map((sh, i) =>
+          sh.kind === 'circle' ? (
+            <circle key={i} cx={sh.cx - contour.minX + contour.PAD} cy={sh.cy - contour.minY + contour.PAD} r={sh.r} fill={fill} stroke={stroke} strokeWidth={stroke ? 3 : undefined} />
+          ) : (
+            <rect key={i} x={sh.x - contour.minX + contour.PAD} y={sh.y - contour.minY + contour.PAD} width={sh.w} height={sh.h} rx={10} fill={fill} stroke={stroke} strokeWidth={stroke ? 3 : undefined} />
+          ),
+        )
+      : null;
 
   const memberCell = (def: (typeof members)[number], i: number): JSX.Element => {
     const dragging = ghost?.id === def.id;
@@ -385,7 +481,13 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
         key={def.id}
         memberId={def.id}
         cellRefs={cellRefs.current}
-        divider={!tray && !cluster && i > 0 ? (row ? { borderLeft: `1px solid ${GAUGE_COLORS.bezelEdge}` } : { borderTop: `1px solid ${GAUGE_COLORS.bezelEdge}` }) : undefined}
+        divider={
+          !tray && !cluster && i > 0
+            && !isRoundInMode(def, displayMode[def.id] ?? 'analog')
+            && !isRoundInMode(members[i - 1]!, displayMode[members[i - 1]!.id] ?? 'analog')
+            ? (row ? { borderLeft: `1px solid ${GAUGE_COLORS.bezelEdge}` } : { borderTop: `1px solid ${GAUGE_COLORS.bezelEdge}` })
+            : undefined
+        }
         position={cluster ? { left: off.x + shift.x, top: off.y + shift.y } : undefined}
         slide={slide}
         ghost={dragging ? ghost : null}
@@ -417,7 +519,7 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
         opacity: hovered || liveScale !== null || ghost !== null || displayOpen ? 1 : globalOpacity,
         ...(cluster ? { pointerEvents: 'none' } : {}),
       }}
-      onPointerDown={drag.onPointerDown}
+      onPointerDown={onWrapperPointerDown}
       onPointerEnter={() => setHovered(true)}
       onPointerLeave={() => { setHovered(false); setHoveredMember(null); }}
       className="absolute left-3 top-16 z-[1000] group transition-opacity duration-150 dock-pop"
@@ -462,10 +564,35 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
             className={
               tray
                 ? `flex ${row ? 'flex-row items-center' : 'flex-col items-start'} gap-1.5 p-1.5 rounded-xl bg-surface-overlay-light shadow-xl select-none`
-                : `flex ${row ? 'flex-row items-stretch' : 'flex-col items-stretch'} rounded-lg shadow-xl select-none overflow-hidden`
+                : ballInCard
+                  ? `relative flex ${row ? 'flex-row items-center' : 'flex-col items-center'} ${trayish ? 'gap-1.5' : ''} select-none`
+                  : `flex ${row ? 'flex-row items-stretch' : 'flex-col items-stretch'} rounded-lg shadow-xl select-none overflow-hidden`
             }
             style={chromeStyle}
           >
+            {contour && (
+              <svg
+                className="absolute pointer-events-none"
+                style={{
+                  left: contour.minX - contour.PAD,
+                  top: contour.minY - contour.PAD,
+                  width: contour.maxX - contour.minX + 2 * contour.PAD,
+                  height: contour.maxY - contour.minY + 2 * contour.PAD,
+                  filter: 'drop-shadow(0 4px 10px rgba(0, 0, 0, 0.25))',
+                  zIndex: -1,
+                }}
+              >
+                <mask id={`dock-contour-ring-${gid}`}>
+                  <g>{contourShapes('#000', '#fff')}</g>
+                  <g>{contourShapes('#000')}</g>
+                </mask>
+                <mask id={`dock-contour-fill-${gid}`}>{contourShapes('#fff')}</mask>
+                {!trayish && (
+                  <rect width="100%" height="100%" fill={GAUGE_COLORS.bezelEdge} mask={`url(#dock-contour-ring-${gid})`} />
+                )}
+                <rect width="100%" height="100%" fill={trayish ? 'var(--bg-overlay-light)' : GAUGE_COLORS.face} mask={`url(#dock-contour-fill-${gid})`} />
+              </svg>
+            )}
             {members.map((def, i) => memberCell(def, i))}
           </div>
         </div>

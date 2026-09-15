@@ -81,6 +81,7 @@ export const IPC_CHANNELS = {
 
   // MAVLink messages
   MAVLINK_PACKET: 'mavlink:packet',
+  MAVLINK_PACKET_STREAM_SET: 'mavlink:packet-stream-set',
   MAVLINK_SEND: 'mavlink:send',
 
   // MAVLink Commands

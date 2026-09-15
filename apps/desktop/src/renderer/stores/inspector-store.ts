@@ -24,7 +24,7 @@ export interface PacketEvent {
   sysid: number;
   compid: number;
   seq: number;
-  payload: number[];
+  payload: number[] | Uint8Array;
   rxtime: number;
   isMavlink2: boolean;
   isSigned: boolean;
@@ -271,6 +271,21 @@ function keyFor(sysid: number, compid: number, msgid: number): string {
  * (no Zustand set() to avoid per-packet re-renders). The 4Hz tick is what
  * triggers UI updates.
  */
+// Full field decode is the expensive part of ingestion and only the Inspector
+// tree and FieldGraph pop-outs read the result; Hz/bytes stats do not need
+// it. Views that render fields hold a lease while mounted.
+let fieldDecodeUsers = 0;
+
+export function acquireInspectorFields(): () => void {
+  fieldDecodeUsers += 1;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    fieldDecodeUsers -= 1;
+  };
+}
+
 export function ingestPacket(p: PacketEvent): void {
   if (useInspectorStore.getState().paused) return;
   const k = keyFor(p.sysid, p.compid, p.msgid);
@@ -301,7 +316,7 @@ export function ingestPacket(p: PacketEvent): void {
   entry.count += 1;
   entry.isSigned = p.isSigned;
 
-  if (info) {
+  if (info && fieldDecodeUsers > 0) {
     try {
       // MAVLink v2 truncates trailing zero bytes from the payload, so a
       // received payload is often shorter than the message's full length

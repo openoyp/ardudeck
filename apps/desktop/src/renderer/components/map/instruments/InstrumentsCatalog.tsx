@@ -32,7 +32,16 @@ import {
   type InstrumentDisplayMode,
 } from '../../../stores/map-instruments-store';
 import { MAP_INSTRUMENTS, type MapInstrumentDef } from './registry';
-import { PRESET_INSTRUMENT_LAYOUTS } from './preset-layouts';
+import { PRESET_INSTRUMENT_LAYOUTS, type PresetAccent } from './preset-layouts';
+
+// One accent per preset so the cards read as distinct choices, not identical
+// grey tiles (mirrors the mobile catalog). Palette colors work on both themes.
+const PRESET_ACCENTS: Record<PresetAccent, { edge: string }> = {
+  green: { edge: '#34d399' },
+  blue: { edge: '#60a5fa' },
+  amber: { edge: '#fbbf24' },
+  violet: { edge: '#a78bfa' },
+};
 import { runAutoArrange, restorePreviousLayout } from './arrange-controller';
 
 // ---- Roles -----------------------------------------------------------------
@@ -471,18 +480,25 @@ function LayoutPane({ onClose }: { onClose: () => void }): JSX.Element {
       <div>
         <SectionHeading label="Presets" accent="var(--text-secondary)" />
         <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]">
-          {PRESET_INSTRUMENT_LAYOUTS.map(({ name, layout }) => (
-            <button
-              key={name}
-              type="button"
-              onClick={() => applyLayout(layout)}
-              className="flex items-center gap-2 rounded-lg border border-subtle bg-surface-solid shadow-sm px-3 py-2.5 text-left hover:border-default hover:shadow-md transition-all"
-            >
-              {layoutIcon}
-              <span className="flex-1 min-w-0 truncate text-[13px] text-content">{name}</span>
-              <span className="text-[10px] uppercase tracking-wide text-content-tertiary">preset</span>
-            </button>
-          ))}
+          {PRESET_INSTRUMENT_LAYOUTS.map(({ name, description, accent, layout }) => {
+            const a = PRESET_ACCENTS[accent];
+            return (
+              <button
+                key={name}
+                type="button"
+                onClick={() => applyLayout(layout)}
+                className="rounded-lg border border-subtle bg-surface-solid shadow-sm px-3 py-2.5 text-left hover:border-default hover:shadow-md transition-all border-l-2"
+                style={{ borderLeftColor: a.edge }}
+              >
+                <span className="flex items-center gap-2">
+                  <span style={{ color: a.edge }}>{layoutIcon}</span>
+                  <span className="flex-1 min-w-0 truncate text-[13px] text-content">{name}</span>
+                  <span className="text-[10px] uppercase tracking-wide text-content-tertiary">preset</span>
+                </span>
+                <span className="mt-1 block text-[11px] leading-snug text-content-tertiary">{description}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -650,8 +666,9 @@ function RailTile({
 
 export function InstrumentsCatalog({ onClose }: { onClose: () => void }): JSX.Element {
   const visibleMap = useMapInstrumentsStore((s) => s.visible);
-  // null selects the Layout and presets pane.
-  const [role, setRole] = useState<InstrumentRole | null>('primaryFlight');
+  // null selects the Layout and presets pane. It opens first: picking a
+  // preset is what most visits to this dialog are for (mirrors mobile).
+  const [role, setRole] = useState<InstrumentRole | null>(null);
   const [query, setQuery] = useState('');
 
   useEffect(() => {

@@ -29,6 +29,7 @@ import {
   setClusterOffset,
   removeMember,
   reorderMember,
+  mergeGroups,
   dissolveGroup,
   isCluster,
   groupOf,
@@ -40,6 +41,9 @@ import type { DockOrientation } from '../components/map/instruments/dock-snap';
 
 const STORAGE_KEY = 'map-instruments-visible';
 const LAYOUTS_STORAGE_KEY = 'map-instrument-layouts';
+// Pre-split cockpit snapshot. Persisted because the split itself survives a
+// relaunch; without this, restarting while split loses the state to restore.
+const SPLIT_RESTORE_KEY = 'map-instruments-split-restore';
 
 export const INSTRUMENT_SCALE_MIN = 0.5;
 export const INSTRUMENT_SCALE_MAX = 1.6;
@@ -247,7 +251,11 @@ interface MapInstrumentsStore {
   /** Form a new group from two standalone instruments; pos is the group's
    * px top-left inside the map container. */
   dockCreate: (targetId: string, draggedId: string, orientation: DockOrientation, draggedFirst: boolean, pos: { x: number; y: number }) => void;
-  dockAdd: (gid: string, id: string, index: number) => void;
+  /** pos, when given, re-anchors the group (a group absorbing a standalone
+   * target repositions so the target stays put). */
+  dockAdd: (gid: string, id: string, index: number, pos?: { x: number; y: number }) => void;
+  /** Dragged card group merges into the target card group and dissolves. */
+  dockMergeGroups: (targetGid: string, draggedGid: string, atStart: boolean) => void;
   /** Attitude-ball constellation: offset is the member's top-left relative to
    * the ball; pos the new union top-left. */
   dockCreateCluster: (otherId: string, offset: { x: number; y: number }, pos: { x: number; y: number }) => void;
@@ -259,6 +267,12 @@ interface MapInstrumentsStore {
    * survivorPos pins the last remaining member when a pair dissolves. */
   dockRemove: (id: string, dropPos: { x: number; y: number } | null, survivorPos?: { x: number; y: number } | null) => void;
   dockReorder: (gid: string, from: number, to: number) => void;
+  /** Current full instrument state as a layout snapshot (positions included). */
+  captureLayoutSnapshot: () => InstrumentLayoutSnapshot;
+  /** In-map split: swap to a compact profile, restore exactly on unsplit. */
+  splitSnapshot: InstrumentLayoutSnapshot | null;
+  enterSplitProfile: (profile: InstrumentLayoutSnapshot) => void;
+  exitSplitProfile: () => void;
   saveLayout: (name: string) => void;
   applyLayout: (layout: InstrumentLayoutSnapshot) => void;
   deleteLayout: (name: string) => void;
@@ -375,10 +389,21 @@ export const useMapInstrumentsStore = create<MapInstrumentsStore>((set, get) => 
       persistMain();
     },
 
-    dockAdd: (gid, id, index) => {
+    dockAdd: (gid, id, index, pos) => {
       const groups = addMember(get().groups, gid, id, index);
       if (groups === get().groups) return;
+      if (pos) writeOverlayPosPayload(groupOverlayKey(gid), { x: pos.x, y: pos.y });
       set({ groups, layoutRev: get().layoutRev + 1 });
+      persistMain();
+    },
+
+    dockMergeGroups: (targetGid, draggedGid, atStart) => {
+      const groups = mergeGroups(get().groups, targetGid, draggedGid, atStart);
+      if (groups === get().groups) return;
+      clearOverlayPosPayload(groupOverlayKey(draggedGid));
+      const scale = { ...get().scale };
+      delete scale['group:' + draggedGid];
+      set({ groups, scale, layoutRev: get().layoutRev + 1 });
       persistMain();
     },
 
@@ -441,9 +466,7 @@ export const useMapInstrumentsStore = create<MapInstrumentsStore>((set, get) => 
       persistMain();
     },
 
-    saveLayout: (name) => {
-      const trimmed = name.trim();
-      if (!trimmed) return;
+    captureLayoutSnapshot: () => {
       const { visible, scale, opacity, instrumentOpacity, displayMode, groups } = get();
       const positions: Record<string, unknown> = {};
       for (const key of layoutPosKeys(groups)) {
@@ -455,20 +478,50 @@ export const useMapInstrumentsStore = create<MapInstrumentsStore>((set, get) => 
       const resolvedVisible: Record<string, boolean> = Object.fromEntries(
         MAP_INSTRUMENTS.map((i) => [i.id, resolveInstrumentVisible(visible, i.id)]),
       );
-      const next = {
-        ...get().savedLayouts,
-        [trimmed]: {
-          visible: resolvedVisible,
-          scale: { ...scale },
-          opacity,
-          instrumentOpacity: { ...instrumentOpacity },
-          displayMode: { ...displayMode },
-          groups: { ...groups },
-          positions,
-        },
+      return {
+        visible: resolvedVisible,
+        scale: { ...scale },
+        opacity,
+        instrumentOpacity: { ...instrumentOpacity },
+        displayMode: { ...displayMode },
+        groups: { ...groups },
+        positions,
       };
+    },
+
+    saveLayout: (name) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      const next = { ...get().savedLayouts, [trimmed]: get().captureLayoutSnapshot() };
       persistLayouts(next);
       set({ savedLayouts: next });
+    },
+
+    // What the cockpit looked like before the split profile took over;
+    // unsplitting restores it exactly, across app restarts too.
+    splitSnapshot: (() => {
+      try {
+        const raw = localStorage.getItem(SPLIT_RESTORE_KEY);
+        return raw ? sanitizeLayout(JSON.parse(raw)) : null;
+      } catch {
+        return null;
+      }
+    })(),
+    enterSplitProfile: (profile) => {
+      // A surviving snapshot means the split state is already on screen
+      // (e.g. relaunch while split): keep the original restore point.
+      if (get().splitSnapshot) return;
+      const snapshot = get().captureLayoutSnapshot();
+      get().applyLayout(profile);
+      try { localStorage.setItem(SPLIT_RESTORE_KEY, JSON.stringify(snapshot)); } catch { /* full/blocked */ }
+      set({ splitSnapshot: snapshot });
+    },
+    exitSplitProfile: () => {
+      const snapshot = get().splitSnapshot;
+      if (!snapshot) return;
+      try { localStorage.removeItem(SPLIT_RESTORE_KEY); } catch { /* blocked */ }
+      set({ splitSnapshot: null });
+      get().applyLayout(snapshot);
     },
 
     applyLayout: (layout) => {

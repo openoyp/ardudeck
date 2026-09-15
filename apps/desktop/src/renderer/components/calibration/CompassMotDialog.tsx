@@ -56,7 +56,7 @@ const TONE_TEXT: Record<'good' | 'marginal' | 'bad', string> = {
 };
 
 /** Decode a COMPASSMOT_STATUS payload (little-endian, wire order). */
-export function decodeCompassMot(payload: number[]): CompassMotSample | null {
+export function decodeCompassMot(payload: number[] | Uint8Array): CompassMotSample | null {
   const bytes = new Uint8Array(20);
   bytes.set(payload.slice(0, 20));
   const view = new DataView(bytes.buffer);

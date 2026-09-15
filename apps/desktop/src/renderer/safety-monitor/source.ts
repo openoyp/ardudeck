@@ -51,7 +51,7 @@ interface RawPacket {
   msgid: number;
   sysid: number;
   compid: number;
-  payload: number[];
+  payload: number[] | Uint8Array;
 }
 
 interface Stamped<T> {

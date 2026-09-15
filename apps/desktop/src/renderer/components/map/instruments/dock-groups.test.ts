@@ -11,6 +11,7 @@ import {
   addMember,
   removeMember,
   reorderMember,
+  mergeGroups,
   nextGroupId,
   groupOf,
   groupOverlayKey,
@@ -114,6 +115,7 @@ describe('clusters', () => {
     expect(r.groups[r.gid]).toEqual({
       members: ['attitude', 'battery'],
       orientation: 'row',
+      kind: 'cluster',
       offsets: { battery: { x: -80, y: 20 } },
     });
     expect(isCluster(r.groups[r.gid]!)).toBe(true);
@@ -165,11 +167,20 @@ describe('clusters', () => {
 
   it('sanitizeGroups drops a cluster whose ball got pruned', () => {
     const raw = {
-      d1: { members: ['attitude', 'battery'], orientation: 'row' },
-      d2: { members: ['attitude', 'gps'], orientation: 'row' },
+      d1: { members: ['attitude', 'battery'], orientation: 'row', kind: 'cluster' },
+      d2: { members: ['attitude', 'gps'], orientation: 'row', kind: 'cluster' },
     };
     const out = sanitizeGroups(raw, ['attitude', 'battery', 'gps']);
     expect(Object.keys(out)).toEqual(['d1']);
+  });
+
+  it('the ball may live in a plain card group', () => {
+    const raw = { d1: { members: ['attitude', 'battery'], orientation: 'row' } };
+    const out = sanitizeGroups(raw, ['attitude', 'battery']);
+    expect(out.d1).toEqual({ members: ['attitude', 'battery'], orientation: 'row' });
+    expect(isCluster(out.d1!)).toBe(false);
+    const legacy = { d2: { members: ['attitude', 'home'], orientation: 'row', offsets: { home: { x: 5, y: 5 } } } };
+    expect(isCluster(sanitizeGroups(legacy, ['attitude', 'home']).d2!)).toBe(true);
   });
 });
 
@@ -207,5 +218,31 @@ describe('groupDisplayOptions', () => {
   it('returns null when nothing can switch', () => {
     expect(groupDisplayOptions([fixed('mission'), fixed('flight-mode')])).toBeNull();
     expect(groupDisplayOptions([])).toBeNull();
+  });
+});
+
+describe('mergeGroups', () => {
+  const base: DockGroups = {
+    d1: { members: ['battery', 'gps'], orientation: 'row' },
+    d2: { members: ['link', 'mission'], orientation: 'col' },
+    d3: { members: ['attitude', 'home'], orientation: 'row', offsets: { home: { x: 120, y: 0 } } },
+  };
+  it('target absorbs dragged members at the far end', () => {
+    const out = mergeGroups(base, 'd1', 'd2', false);
+    expect(out.d1).toEqual({ members: ['battery', 'gps', 'link', 'mission'], orientation: 'row' });
+    expect(out.d2).toBeUndefined();
+  });
+  it('atStart prepends the dragged members in order', () => {
+    const out = mergeGroups(base, 'd1', 'd2', true);
+    expect(out.d1!.members).toEqual(['link', 'mission', 'battery', 'gps']);
+  });
+  it('keeps the target orientation', () => {
+    expect(mergeGroups(base, 'd2', 'd1', false).d2!.orientation).toBe('col');
+  });
+  it('refuses clusters on either side and bad ids', () => {
+    expect(mergeGroups(base, 'd3', 'd1', false)).toBe(base);
+    expect(mergeGroups(base, 'd1', 'd3', false)).toBe(base);
+    expect(mergeGroups(base, 'd1', 'd1', false)).toBe(base);
+    expect(mergeGroups(base, 'd1', 'nope', false)).toBe(base);
   });
 });
