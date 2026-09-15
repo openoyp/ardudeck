@@ -33,6 +33,7 @@ import {
 } from '../../../stores/map-instruments-store';
 import { MAP_INSTRUMENTS, type MapInstrumentDef } from './registry';
 import { PRESET_INSTRUMENT_LAYOUTS, type PresetAccent } from './preset-layouts';
+import { useTelemetryStore } from '../../../stores/telemetry-store';
 
 // One accent per preset so the cards read as distinct choices, not identical
 // grey tiles (mirrors the mobile catalog). Palette colors work on both themes.
@@ -43,6 +44,7 @@ const PRESET_ACCENTS: Record<PresetAccent, { edge: string }> = {
   violet: { edge: '#a78bfa' },
 };
 import { runAutoArrange, restorePreviousLayout } from './arrange-controller';
+import { semanticsOf } from './auto-arrange';
 
 // ---- Roles -----------------------------------------------------------------
 
@@ -83,7 +85,12 @@ const INSTRUMENT_ROLE: Record<string, InstrumentRole> = {
 };
 
 function roleOf(id: string): InstrumentRole {
-  return INSTRUMENT_ROLE[id] ?? 'status';
+  // The table holds deliberate DISPLAY grouping overrides (rtk/mission read
+  // as navigation here); anything else, generated battery instances
+  // included, follows its placement semantics instead of dumping to status.
+  if (INSTRUMENT_ROLE[id]) return INSTRUMENT_ROLE[id];
+  const sem = semanticsOf(id).role;
+  return sem === 'video' ? 'status' : sem;
 }
 
 const ROLE_TITLE: Record<InstrumentRole, string> = {
@@ -234,7 +241,16 @@ function componentFor(def: MapInstrumentDef, mode: InstrumentDisplayMode): () =>
 
 // ---- Instrument card -------------------------------------------------------
 
-function InstrumentCard({ def, accent }: { def: MapInstrumentDef; accent: string }): JSX.Element {
+function InstrumentCard({ def, accent }: { def: MapInstrumentDef; accent: string }): JSX.Element | null {
+  // Fixed-monitor instruments exist only while the vehicle streams that
+  // monitor; one already placed stays listed so it can be toggled off.
+  const monitorStreams = useTelemetryStore((s) => def.monitorId === undefined || s.batteries[def.monitorId] !== undefined);
+  const placed = useMapInstrumentsStore((s) => resolveInstrumentVisible(s.visible, def.id));
+  if (!monitorStreams && !placed) return null;
+  return <InstrumentCardBody def={def} accent={accent} />;
+}
+
+function InstrumentCardBody({ def, accent }: { def: MapInstrumentDef; accent: string }): JSX.Element {
   const visibleMap = useMapInstrumentsStore((s) => s.visible);
   const mode = useMapInstrumentsStore((s) => s.displayMode[def.id] ?? 'analog') as InstrumentDisplayMode;
   const scale = useMapInstrumentsStore((s) => s.scale[def.id] ?? 1);

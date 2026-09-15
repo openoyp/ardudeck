@@ -133,6 +133,35 @@ export function RoundGauge({ label, scale, needleValue, mode = 'needle', fillCol
           return <line key={`M${v}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={GAUGE_COLORS.tickMajor} strokeWidth="1.5" />;
         })}
 
+      </svg>
+
+      {children && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          {children}
+        </div>
+      )}
+      {/* Face-colored pill behind the label so it stays legible over the
+          static scale markings (worst on the HDG gauge, and at small
+          scales). Needles and rotating content still sweep OVER it below. */}
+      <div className="absolute inset-x-0 bottom-[12px] flex justify-center pointer-events-none">
+        <span
+          className="text-[9px] font-semibold tracking-widest uppercase leading-none px-1 py-[1px] rounded"
+          style={{ color: GAUGE_COLORS.textDim, background: GAUGE_COLORS.face }}
+        >
+          {label}
+        </span>
+      </div>
+
+      {/* Moving layer ABOVE the printed text, like a real instrument: the
+          needle, rotating content and sheen sweep over face text, never
+          underneath it. Ids (sheen gradient) resolve document-globally from
+          the base svg's defs. */}
+      <svg
+        width={GAUGE_DIAMETER}
+        height={GAUGE_DIAMETER}
+        viewBox={`0 0 ${GAUGE_DIAMETER} ${GAUGE_DIAMETER}`}
+        className="absolute inset-0 pointer-events-none"
+      >
         {svgContent}
 
         {scale && angle !== null && mode === 'fill' && angle > scale.startAngle && (
@@ -154,26 +183,8 @@ export function RoundGauge({ label, scale, needleValue, mode = 'needle', fillCol
             />
           </g>
         )}
-        {/* Glass sheen, above markings for depth; center text is HTML above the SVG */}
-        <circle cx={C} cy={C} r={FACE_R} fill="url(#adgi-sheen)" pointerEvents="none" />
+        <circle cx={C} cy={C} r={FACE_R} fill="url(#adgi-sheen)" />
       </svg>
-
-      {children && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          {children}
-        </div>
-      )}
-      {/* Face-colored pill behind the label so it stays legible where a rose
-          or scale markings pass underneath (worst on the HDG gauge, and at
-          small scales). */}
-      <div className="absolute inset-x-0 bottom-[12px] flex justify-center pointer-events-none">
-        <span
-          className="text-[9px] font-semibold tracking-widest uppercase leading-none px-1 py-[1px] rounded"
-          style={{ color: GAUGE_COLORS.textDim, background: GAUGE_COLORS.face }}
-        >
-          {label}
-        </span>
-      </div>
     </div>
   );
 }

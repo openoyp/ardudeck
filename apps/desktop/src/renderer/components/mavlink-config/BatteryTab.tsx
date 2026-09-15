@@ -6,7 +6,7 @@
  * Uses Lucide icons (no emojis) and DraggableSliders.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import {
   BarChart3,
@@ -32,24 +32,48 @@ const BatteryTab: React.FC = () => {
   const { parameters, setParameter, modifiedCount } = useParameterStore();
   const firmware = useConnectionStore((s) => s.connectionState.firmware);
 
+  // ArduPilot battery instances: BATT_* is battery 1, BATT2_*..BATT9_* the
+  // rest (#126). Every card below reads and writes the selected instance.
+  const [instance, setInstance] = useState(1);
+  const bp = useCallback(
+    (name: string) => (instance === 1 ? `BATT_${name}` : `BATT${instance}_${name}`),
+    [instance],
+  );
+  // Fixed instance names on purpose: these describe EVERY chip, never the
+  // currently selected instance.
+  const instanceMonitorParam = (i: number): string => (i === 1 ? 'BATT_MONITOR' : `BATT${i}_MONITOR`);
+  const availableInstances = useMemo(() => {
+    const out: number[] = [];
+    for (let i = 1; i <= 9; i++) {
+      if (parameters.has(instanceMonitorParam(i))) out.push(i);
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parameters]);
+  const monitorOf = (i: number): number => parameters.get(instanceMonitorParam(i))?.value ?? 0;
+  // ArduPilot creates the rest of a BATTn_ family on BOOT after the monitor
+  // is enabled; until then only BATTn_MONITOR exists and writing the others
+  // fails. CAPACITY is the canary for the whole family.
+  const instanceReady = parameters.has(bp('CAPACITY'));
+
   // Get current battery values
   const batteryValues = useMemo(() => ({
     // Monitor type
-    battMonitor: parameters.get('BATT_MONITOR')?.value ?? 4,
+    battMonitor: parameters.get(bp('MONITOR'))?.value ?? 4,
     // Capacity
-    battCapacity: parameters.get('BATT_CAPACITY')?.value ?? 0,
+    battCapacity: parameters.get(bp('CAPACITY'))?.value ?? 0,
     // Voltage settings
-    battArmVolt: parameters.get('BATT_ARM_VOLT')?.value ?? 0,
-    battCrtVolt: parameters.get('BATT_CRT_VOLT')?.value ?? 0,
-    battLowVolt: parameters.get('BATT_LOW_VOLT')?.value ?? 0,
+    battArmVolt: parameters.get(bp('ARM_VOLT'))?.value ?? 0,
+    battCrtVolt: parameters.get(bp('CRT_VOLT'))?.value ?? 0,
+    battLowVolt: parameters.get(bp('LOW_VOLT'))?.value ?? 0,
     // Calibration
-    battVoltMult: parameters.get('BATT_VOLT_MULT')?.value ?? 10.1,
-    battAmpPervlt: parameters.get('BATT_AMP_PERVLT')?.value ?? 17,
-    battAmpOffset: parameters.get('BATT_AMP_OFFSET')?.value ?? 0,
+    battVoltMult: parameters.get(bp('VOLT_MULT'))?.value ?? 10.1,
+    battAmpPervlt: parameters.get(bp('AMP_PERVLT'))?.value ?? 17,
+    battAmpOffset: parameters.get(bp('AMP_OFFSET'))?.value ?? 0,
     // Pin assignments
-    battVoltPin: parameters.get('BATT_VOLT_PIN')?.value ?? -1,
-    battCurrPin: parameters.get('BATT_CURR_PIN')?.value ?? -1,
-  }), [parameters]);
+    battVoltPin: parameters.get(bp('VOLT_PIN'))?.value ?? -1,
+    battCurrPin: parameters.get(bp('CURR_PIN'))?.value ?? -1,
+  }), [parameters, bp]);
 
   // Battery chemistry state
   const [chemistry, setChemistry] = useState<BatteryChemistry>('lipo');
@@ -73,9 +97,9 @@ const BatteryTab: React.FC = () => {
   // Apply cell count preset
   const applyCellPreset = (cells: number) => {
     const recommended = getRecommendedVoltages(cells);
-    setParameter('BATT_ARM_VOLT', recommended.arm);
-    setParameter('BATT_LOW_VOLT', recommended.low);
-    setParameter('BATT_CRT_VOLT', recommended.critical);
+    setParameter(bp('ARM_VOLT'), recommended.arm);
+    setParameter(bp('LOW_VOLT'), recommended.low);
+    setParameter(bp('CRT_VOLT'), recommended.critical);
   };
 
   // Estimate cell count from whichever threshold the FC actually has set.
@@ -107,6 +131,33 @@ const BatteryTab: React.FC = () => {
         Accurate monitoring is essential for safe flying.
       </InfoCard>
 
+      {availableInstances.length > 1 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-content-secondary">Battery instance</span>
+          {availableInstances.map((i) => {
+            const active = instance === i;
+            const enabled = monitorOf(i) > 0;
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setInstance(i)}
+                data-tip={enabled ? `Configure battery ${i}` : `Battery ${i} monitor is disabled; select it and set a monitor type to enable`}
+                className={
+                  'px-2.5 py-1 rounded-md border text-xs transition-colors ' +
+                  (active
+                    ? 'border-blue-500/60 bg-blue-500/10 text-blue-400'
+                    : 'border-subtle text-content-secondary hover:border-default hover:text-content hover:bg-surface-raised')
+                }
+              >
+                Battery {i}
+                {!enabled && <span className="ml-1 text-[10px] uppercase tracking-wide text-content-tertiary">off</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         {/* Monitor Type Card */}
         <div className="bg-surface rounded-xl border border-subtle p-4 space-y-4">
@@ -122,7 +173,7 @@ const BatteryTab: React.FC = () => {
 
           <select
             value={batteryValues.battMonitor}
-            onChange={(e) => setParameter('BATT_MONITOR', Number(e.target.value))}
+            onChange={(e) => setParameter(bp('MONITOR'), Number(e.target.value))}
             className="w-full px-3 py-2.5 bg-surface-raised border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
           >
             {Object.entries(BATTERY_MONITORS).map(([num, monitor]) => (
@@ -149,6 +200,7 @@ const BatteryTab: React.FC = () => {
         </div>
 
         {/* Capacity Card */}
+        {instanceReady && (
         <div className="bg-surface rounded-xl border border-subtle p-4 space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
@@ -163,7 +215,7 @@ const BatteryTab: React.FC = () => {
           <DraggableSlider
             label="Capacity (mAh)"
             value={batteryValues.battCapacity}
-            onChange={(v) => setParameter('BATT_CAPACITY', v)}
+            onChange={(v) => setParameter(bp('CAPACITY'), v)}
             min={0}
             max={200000}
             step={100}
@@ -178,7 +230,7 @@ const BatteryTab: React.FC = () => {
               {[1300, 2200, 3000, 5000, 8000, 10000, 16000].map((cap) => (
                 <button
                   key={cap}
-                  onClick={() => setParameter('BATT_CAPACITY', cap)}
+                  onClick={() => setParameter(bp('CAPACITY'), cap)}
                   className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                     batteryValues.battCapacity === cap
                       ? 'bg-blue-500 text-white'
@@ -198,7 +250,7 @@ const BatteryTab: React.FC = () => {
               {[22000, 30000, 44000, 56000, 80000, 100000].map((cap) => (
                 <button
                   key={cap}
-                  onClick={() => setParameter('BATT_CAPACITY', cap)}
+                  onClick={() => setParameter(bp('CAPACITY'), cap)}
                   className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                     batteryValues.battCapacity === cap
                       ? 'bg-blue-500 text-white'
@@ -211,8 +263,18 @@ const BatteryTab: React.FC = () => {
             </div>
           </div>
         </div>
+        )}
       </div>
 
+      {!instanceReady && (
+        <InfoCard title={`Battery ${instance} settings not created yet`} variant="warning">
+          ArduPilot creates the BATT{instance === 1 ? '' : instance}_ parameters on boot once a
+          monitor type is set. Choose the monitor type above, Save All Changes, reboot the flight
+          controller, then Refresh: capacity, thresholds and calibration will unlock here.
+        </InfoCard>
+      )}
+
+      {instanceReady && (<>
       {/* Battery Chemistry & Cell Configuration */}
       <div className="bg-surface rounded-xl border border-subtle p-4 space-y-4">
         <div className="flex items-center justify-between">
@@ -374,7 +436,7 @@ const BatteryTab: React.FC = () => {
           <DraggableSlider
             label="Minimum Arm Voltage (V)"
             value={batteryValues.battArmVolt}
-            onChange={(v) => setParameter('BATT_ARM_VOLT', v)}
+            onChange={(v) => setParameter(bp('ARM_VOLT'), v)}
             min={0}
             max={maxVoltageSlider}
             step={0.1}
@@ -385,7 +447,7 @@ const BatteryTab: React.FC = () => {
           <DraggableSlider
             label="Low Warning Voltage (V)"
             value={batteryValues.battLowVolt}
-            onChange={(v) => setParameter('BATT_LOW_VOLT', v)}
+            onChange={(v) => setParameter(bp('LOW_VOLT'), v)}
             min={0}
             max={maxVoltageSlider}
             step={0.1}
@@ -396,7 +458,7 @@ const BatteryTab: React.FC = () => {
           <DraggableSlider
             label="Critical Voltage (V)"
             value={batteryValues.battCrtVolt}
-            onChange={(v) => setParameter('BATT_CRT_VOLT', v)}
+            onChange={(v) => setParameter(bp('CRT_VOLT'), v)}
             min={0}
             max={maxVoltageSlider}
             step={0.1}
@@ -446,7 +508,7 @@ const BatteryTab: React.FC = () => {
           <DraggableSlider
             label="Voltage Multiplier"
             value={batteryValues.battVoltMult}
-            onChange={(v) => setParameter('BATT_VOLT_MULT', v)}
+            onChange={(v) => setParameter(bp('VOLT_MULT'), v)}
             min={0}
             max={200}
             step={0.01}
@@ -457,7 +519,7 @@ const BatteryTab: React.FC = () => {
           <DraggableSlider
             label="Amps Per Volt"
             value={batteryValues.battAmpPervlt}
-            onChange={(v) => setParameter('BATT_AMP_PERVLT', v)}
+            onChange={(v) => setParameter(bp('AMP_PERVLT'), v)}
             min={0}
             max={500}
             step={0.1}
@@ -468,7 +530,7 @@ const BatteryTab: React.FC = () => {
           <DraggableSlider
             label="Current Offset"
             value={batteryValues.battAmpOffset}
-            onChange={(v) => setParameter('BATT_AMP_OFFSET', v)}
+            onChange={(v) => setParameter(bp('AMP_OFFSET'), v)}
             min={-1}
             max={1}
             step={0.01}
@@ -487,20 +549,20 @@ const BatteryTab: React.FC = () => {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-content-secondary mb-1">Voltage Pin (BATT_VOLT_PIN)</label>
+              <label className="block text-xs text-content-secondary mb-1">Voltage Pin ({bp('VOLT_PIN')})</label>
               <DraftNumberInput
                 integer
                 value={batteryValues.battVoltPin}
-                onCommit={(v) => setParameter('BATT_VOLT_PIN', v)}
+                onCommit={(v) => setParameter(bp('VOLT_PIN'), v)}
                 className="w-full px-2 py-1.5 bg-surface-input border border-subtle rounded text-sm font-mono text-content focus:outline-none focus:border-blue-500"
               />
             </div>
             <div>
-              <label className="block text-xs text-content-secondary mb-1">Current Pin (BATT_CURR_PIN)</label>
+              <label className="block text-xs text-content-secondary mb-1">Current Pin ({bp('CURR_PIN')})</label>
               <DraftNumberInput
                 integer
                 value={batteryValues.battCurrPin}
-                onCommit={(v) => setParameter('BATT_CURR_PIN', v)}
+                onCommit={(v) => setParameter(bp('CURR_PIN'), v)}
                 className="w-full px-2 py-1.5 bg-surface-input border border-subtle rounded text-sm font-mono text-content focus:outline-none focus:border-blue-500"
               />
             </div>
@@ -525,6 +587,8 @@ const BatteryTab: React.FC = () => {
           </p>
         </div>
       </div>
+
+      </>)}
 
       {/* Save Reminder */}
       {modified > 0 && (

@@ -449,11 +449,14 @@ export const MavlinkConfigView: React.FC = () => {
   useEffect(() => {
     if (!pendingParamRefresh.current) return;
     if (connectionState.isConnected && !connectionState.isReconnecting) {
-      // Reconnection complete - store already has correct values from markAllAsSaved()
       pendingParamRefresh.current = false;
       setRebooting(false);
       setRebootRequiredParams([]);
-      showToast('Reboot complete', 'success');
+      // Re-download the full list: a reboot can CREATE parameters (enabling
+      // BATT2_MONITOR/COMPASS/GPS backends allocates their families on boot),
+      // so the pre-reboot set is not just stale values but the wrong set.
+      fetchParameters();
+      showToast('Reboot complete, refreshing parameters...', 'success');
     } else if (!connectionState.isConnected && !connectionState.isReconnecting) {
       // Auto-reconnect gave up (timed out or was cancelled): stop the spinner
       // so the operator can act; the banner reverts to its Reboot Now state.
@@ -461,7 +464,7 @@ export const MavlinkConfigView: React.FC = () => {
       setRebooting(false);
       showToast('Reconnect after reboot failed. Check the link and reconnect manually.', 'error');
     }
-  }, [connectionState.isConnected, connectionState.isReconnecting, showToast]);
+  }, [connectionState.isConnected, connectionState.isReconnecting, showToast, fetchParameters]);
 
   const modified = modifiedCount();
 

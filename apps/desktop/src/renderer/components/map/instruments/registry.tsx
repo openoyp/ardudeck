@@ -13,7 +13,7 @@
  * small CompassOverlay, so it ships visible and defaults to the old compass
  * spot beside the attitude ball. Users drag them anywhere from there.
  */
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { create } from 'zustand';
 import { useTelemetryStore } from '../../../stores/telemetry-store';
 import { useMissionStore } from '../../../stores/mission-store';
@@ -65,6 +65,9 @@ export interface MapInstrumentDef {
   /** Renders as a round gauge in analog mode; a docked group holding one
    * becomes a tray instead of a merged card. */
   round?: boolean;
+  /** Fixed battery monitor this instrument watches (0-based MAVLink id).
+   * The catalog offers it only while the vehicle streams that monitor. */
+  monitorId?: number;
 }
 
 /** Component for the persisted display mode; mirrors InstrumentSlot's pick. */
@@ -120,6 +123,90 @@ const BATTERY_SCALE: GaugeScale = {
   minorTicks: [25, 75],
 };
 
+/** "B{n}" chip on the BAT instrument, shown only when the vehicle streams
+ * more than one monitor. One click cycles to the next monitor (every display
+ * follows); the tooltip lists all packs live. Detailed rows live in the
+ * Battery panel. Needs pointer-events-auto: the gauge center slot disables
+ * pointer events so clicks fall through to the map drag. */
+function BatteryMonitorBadge({ className }: { className?: string }): JSX.Element | null {
+  const batteries = useTelemetryStore((s) => s.batteries);
+  const primaryBatteryId = useTelemetryStore((s) => s.primaryBatteryId);
+  const setPrimaryBattery = useTelemetryStore((s) => s.setPrimaryBattery);
+  const ids = Object.values(batteries).map((b) => b.id).sort((a, b) => a - b);
+  if (ids.length <= 1) return null;
+  const effective = primaryBatteryId ?? 0;
+  const next = ids[(ids.indexOf(effective) + 1) % ids.length] ?? 0;
+  const tip = Object.values(batteries)
+    .sort((a, b) => a.id - b.id)
+    .map((b) => `B${b.id + 1}: ${b.voltage.toFixed(1)}V ${b.remaining >= 0 ? Math.round(b.remaining) + '%' : '-'}`)
+    .join('   ');
+  return (
+    <button
+      type="button"
+      onClick={() => setPrimaryBattery(next)}
+      data-tip={`Switch to B${next + 1}. ${tip}`}
+      className={
+        'pointer-events-auto text-[9px] font-semibold leading-none px-1.5 py-[3px] rounded border border-[var(--gauge-bezel-edge)] ' +
+        'text-[var(--gauge-text-dim)] hover:text-[var(--gauge-text)] hover:border-[var(--gauge-text-dim)] transition-colors ' + (className ?? '')
+      }
+    >
+      B{effective + 1} {'\u21C4'}
+    </button>
+  );
+}
+
+/** Live data for one FIXED battery monitor (0-based MAVLink id), with its
+ * own freshness (the shared slot stamps only track the primary). */
+function useBatteryInstance(monitorId: number): { voltage: number; remaining: number; fresh: boolean } {
+  const inst = useTelemetryStore((s) => s.batteries[monitorId]);
+  const [, force] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => force((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return {
+    voltage: inst?.voltage ?? 0,
+    remaining: inst?.remaining ?? -1,
+    fresh: !!inst && Date.now() - inst.updatedAt < 5000,
+  };
+}
+
+function makeBatteryInstanceGauge(monitorId: number): () => JSX.Element {
+  return function BatteryInstanceGauge(): JSX.Element {
+    const { voltage, remaining, fresh } = useBatteryInstance(monitorId);
+    const known = fresh && remaining >= 0;
+    const valueColor = !known ? 'text-[var(--gauge-text)]' : remaining > 30 ? 'text-[var(--gauge-green)]' : remaining > 15 ? 'text-[var(--gauge-amber)]' : 'text-[var(--gauge-red)]';
+    return (
+      <RoundGauge label={`BAT${monitorId + 1}`} scale={BATTERY_SCALE} needleValue={known ? remaining : null}>
+        <span className={`text-[15px] font-semibold leading-none ${valueColor}`}>
+          {fresh ? voltage.toFixed(1) : '--'}
+          {fresh && <span className="text-[8px] font-normal text-[var(--gauge-text-dim)] ml-0.5">V</span>}
+        </span>
+        <span className="mt-1 text-[9px] leading-none text-[var(--gauge-text-dim)]">
+          {known ? `${Math.round(remaining)}%` : '--%'}
+        </span>
+      </RoundGauge>
+    );
+  };
+}
+
+function makeBatteryInstanceNumeric(monitorId: number): () => JSX.Element {
+  return function BatteryInstanceNumeric(): JSX.Element {
+    const { voltage, remaining, fresh } = useBatteryInstance(monitorId);
+    const known = fresh && remaining >= 0;
+    const valueClassName = !known ? undefined : remaining > 30 ? 'text-[var(--gauge-green)]' : remaining > 15 ? 'text-[var(--gauge-amber)]' : 'text-[var(--gauge-red)]';
+    return (
+      <NumericReadout
+        label={`BAT${monitorId + 1}`}
+        value={fresh ? voltage.toFixed(1) : '--'}
+        unit={fresh ? 'V' : undefined}
+        sub={known ? `${Math.round(remaining)}%` : '--%'}
+        valueClassName={valueClassName}
+      />
+    );
+  };
+}
+
 function BatteryInstrument(): JSX.Element {
   const connected = useTelemetryFresh('battery');
   const voltage = useTelemetryStore((s) => s.battery.voltage);
@@ -137,6 +224,7 @@ function BatteryInstrument(): JSX.Element {
       <span className="mt-1 text-[9px] leading-none text-[var(--gauge-text-dim)]">
         {known ? `${Math.round(remaining)}%` : '--%'}
       </span>
+      <BatteryMonitorBadge className="mt-1" />
     </RoundGauge>
   );
 }
@@ -249,9 +337,27 @@ function SpeedInstrument(): JSX.Element {
   const air = speedValueFromMetersPerSecond(airspeed, speedUnit);
   const fmt = (v: number) => trimmed(v, UNIT_PRECISION.speed[speedUnit]);
 
-  // Airspeed-indicator style scale: rounds up to the next 5-unit step so the
-  // needle always has headroom; the labels re-paint on rescale.
-  const max = Math.max(10, Math.ceil(gs / 5) * 5);
+  // Sticky auto-scale with guaranteed headroom: the arc grows the moment the
+  // needle would pass 80% of it, but shrinks only after the speed has stayed
+  // low for a while. Rescaling mid-sweep makes the needle visibly leap, so
+  // it must be rare and never flap on jitter around a step boundary.
+  const needed = Math.max(10, Math.ceil((gs * 1.25) / 5) * 5);
+  const [max, setMax] = useState(10);
+  const shrinkSinceRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (needed > max) {
+      setMax(needed);
+      shrinkSinceRef.current = null;
+    } else if (needed < max) {
+      if (shrinkSinceRef.current === null) shrinkSinceRef.current = Date.now();
+      else if (Date.now() - shrinkSinceRef.current > 5000) {
+        setMax(needed);
+        shrinkSinceRef.current = null;
+      }
+    } else {
+      shrinkSinceRef.current = null;
+    }
+  }, [needed, max, gs]);
   const step = max / 5;
   const majorTicks = Array.from({ length: 6 }, (_, i) => i * step);
   const scale: GaugeScale = {
@@ -544,12 +650,14 @@ function NumericReadout({
   unit,
   sub,
   valueClassName,
+  footer,
 }: {
   label: string;
   value: string;
   unit?: string;
   sub?: string;
   valueClassName?: string;
+  footer?: React.ReactNode;
 }): JSX.Element {
   const inDock = useInDock();
   return (
@@ -568,6 +676,7 @@ function NumericReadout({
         {unit && <span className="text-[10px] font-medium text-[var(--gauge-text-dim)]">{unit}</span>}
       </div>
       <div className="mt-1 text-[9px] leading-none text-[var(--gauge-text-dim)] whitespace-nowrap min-h-[9px]">{sub ?? ''}</div>
+      {footer}
     </div>
   );
 }
@@ -585,6 +694,7 @@ function BatteryNumeric(): JSX.Element {
       unit={connected ? 'V' : undefined}
       sub={known ? `${Math.round(remaining)}%` : '--%'}
       valueClassName={valueClassName}
+      footer={<BatteryMonitorBadge className="mt-1" />}
     />
   );
 }
@@ -929,10 +1039,36 @@ function AttitudeBallInstrument(): JSX.Element {
   );
 }
 
+// Static class strings (Tailwind only compiles literals): default drop spots
+// for battery 2..9 stagger down the left gauge column.
+const BATTERY_INSTANCE_DEFAULT_POS = [
+  'absolute left-3 top-[288px] z-[1000]',
+  'absolute left-3 top-[400px] z-[1000]',
+  'absolute left-3 top-[512px] z-[1000]',
+  'absolute left-3 top-[624px] z-[1000]',
+  'absolute left-[124px] top-[288px] z-[1000]',
+  'absolute left-[124px] top-[400px] z-[1000]',
+  'absolute left-[124px] top-[512px] z-[1000]',
+  'absolute left-[124px] top-[624px] z-[1000]',
+];
+
 export const MAP_INSTRUMENTS: MapInstrumentDef[] = [
   { id: 'attitude', round: true, label: 'Attitude ball', defaultClassName: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000]', defaultVisible: true, Component: AttitudeBallInstrument },
   { id: 'flight-data', label: 'Flight data', defaultClassName: 'absolute bottom-2 left-2 z-[1000]', defaultVisible: true, Component: FlightDataInstrument },
   { id: 'battery', round: true, label: 'Battery', defaultClassName: 'absolute left-3 top-16 z-[1000]', defaultVisible: false, Component: BatteryInstrument, NumericComponent: BatteryNumeric, variants: compactVariants('battery') },
+  // Fixed-monitor gauges (#126), one per possible ArduPilot instance: show a
+  // specific pack regardless of the primary selection. The catalog surfaces
+  // only the ones this vehicle actually streams.
+  ...BATTERY_INSTANCE_DEFAULT_POS.map((cls, k): MapInstrumentDef => ({
+    id: `battery${k + 2}`,
+    monitorId: k + 1,
+    round: true,
+    label: `Battery ${k + 2}`,
+    defaultClassName: cls,
+    defaultVisible: false,
+    Component: makeBatteryInstanceGauge(k + 1),
+    NumericComponent: makeBatteryInstanceNumeric(k + 1),
+  })),
   { id: 'gps', round: true, label: 'GPS', defaultClassName: 'absolute left-3 top-[176px] z-[1000]', defaultVisible: false, Component: GpsInstrument, NumericComponent: GpsNumeric, variants: compactVariants('gps') },
   { id: 'altitude', round: true, label: 'Altitude', defaultClassName: 'absolute left-3 top-[288px] z-[1000]', defaultVisible: false, Component: AltitudeInstrument, NumericComponent: AltitudeNumeric, variants: compactVariants('altitude') },
   { id: 'speed', round: true, label: 'Speed', defaultClassName: 'absolute left-3 top-[400px] z-[1000]', defaultVisible: false, Component: SpeedInstrument, NumericComponent: SpeedNumeric, variants: compactVariants('speed') },

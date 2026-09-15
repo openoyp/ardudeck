@@ -244,6 +244,18 @@ export const INSTRUMENT_SEMANTICS: Record<string, InstrumentSemantics> = {
   },
 };
 
+// Fixed-monitor battery gauges (battery2..battery9) stack up the right power
+// column beside the primary battery gauge; generated, same dataset spirit.
+for (let i = 2; i <= 9; i++) {
+  INSTRUMENT_SEMANTICS[`battery${i}`] = {
+    role: 'power',
+    priority: 86 - i,
+    idealSectors: ['F3', 'F4'],
+    group: 'nav',
+    idealAlign: { x: 0.95, y: Math.max(-0.6, 0.85 - (i - 1) * 0.23) },
+  };
+}
+
 const FALLBACK_SEMANTICS: InstrumentSemantics = {
   role: 'status',
   priority: 30,
