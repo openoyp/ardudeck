@@ -425,6 +425,21 @@ export interface ArrangeItem {
   id: string;
   size: Size;
   variant: string;
+  /** Overrides the id lookup; used for docked groups, whose synthetic ids
+   * have no registry entry. */
+  sem?: InstrumentSemantics;
+}
+
+/** A docked group inherits its strongest member's placement semantics, minus
+ * the formation slot (the group's size no longer fits the slot geometry). */
+export function groupSemantics(memberIds: string[]): InstrumentSemantics {
+  let best = FALLBACK_SEMANTICS;
+  for (const id of memberIds) {
+    const sem = semanticsOf(id);
+    if (sem.priority > best.priority) best = sem;
+  }
+  const { formationSide: _formationSide, ...rest } = best;
+  return rest;
 }
 
 export interface ArrangeResult {
@@ -446,6 +461,8 @@ export function computeArrangement(items: ArrangeItem[], panel: Size, chrome: Re
 
   const sizes = new Map(items.map((i) => [i.id, i.size]));
   const variants = new Map(items.map((i) => [i.id, i.variant]));
+  const sems = new Map(items.map((i) => [i.id, i.sem ?? semanticsOf(i.id)]));
+  const semOf = (id: string): InstrumentSemantics => sems.get(id) ?? FALLBACK_SEMANTICS;
   const bottomLimit = panel.h - 16;
 
   const eyeCorner: Rect = { x: panel.w - EYE_CORNER, y: 0, w: EYE_CORNER, h: EYE_CORNER };
@@ -465,7 +482,7 @@ export function computeArrangement(items: ArrangeItem[], panel: Size, chrome: Re
     .filter((i) => i.id !== 'controls')
     .map((i, idx) => ({ i, idx }))
     .sort((a, b) => {
-      const p = semanticsOf(b.i.id).priority - semanticsOf(a.i.id).priority;
+      const p = semOf(b.i.id).priority - semOf(a.i.id).priority;
       if (p !== 0) return p;
       const areaA = a.i.size.w * a.i.size.h;
       const areaB = b.i.size.w * b.i.size.h;
@@ -478,7 +495,7 @@ export function computeArrangement(items: ArrangeItem[], panel: Size, chrome: Re
   let tAnchor: Rect | null = null;
 
   for (const item of order) {
-    const sem = semanticsOf(item.id);
+    const sem = semOf(item.id);
     const variant = variants.get(item.id) ?? 'analog';
     const size = sizes.get(item.id)!;
     const target = sem.formationSide && tAnchor ? formationTarget(sem.formationSide, tAnchor, size) : null;
@@ -518,7 +535,7 @@ export function computeArrangement(items: ArrangeItem[], panel: Size, chrome: Re
   // beats a cascade pile).
   const unplaceable: string[] = [];
   for (const id of leftovers) {
-    const sem = semanticsOf(id);
+    const sem = semOf(id);
     const variant = variants.get(id) ?? 'analog';
     const size = sizes.get(id)!;
     const align = alignFor(sem, variant);

@@ -29,7 +29,7 @@ lcd = setmetatable({
   clear = function () end,
 }, { __index = function () return function () end end })
 LCD_W, LCD_H = 128, 64
-SMLSIZE, MIDSIZE, DBLSIZE, INVERS, BLINK, PLAY_NOW = 0, 0, 0, 0, 0, 0
+SMLSIZE, MIDSIZE, DBLSIZE, INVERS, BLINK, PLAY_NOW = 1, 2, 4, 8, 16, 0
 SOLID, FORCE, RIGHT = 0, 0, 0
 EVT_VIRTUAL_NEXT = 97 -- real value so the page-flip smoke actually flips
 
@@ -212,15 +212,25 @@ end
 function getFieldInfo(name) return SENSORS[name] and { id = 1 } or nil end
 
 local drawn = {}
+local lines = {}
 lcd = setmetatable({
   clear = function () end,
-  drawText = function (_, _, t) drawn[#drawn + 1] = tostring(t) end,
+  drawText = function (_, _, t, flags) drawn[#drawn + 1] = { text = tostring(t), flags = flags or 0 } end,
+  drawLine = function (x1, y1, x2, y2) lines[#lines + 1] = { x1 = x1, y1 = y1, x2 = x2, y2 = y2 } end,
 }, { __index = function () return function () end end })
 local function drewText(needle)
-  for _, t in ipairs(drawn) do
-    if string.find(t, needle, 1, true) then return true end
+  for _, d in ipairs(drawn) do
+    if string.find(d.text, needle, 1, true) then return true end
   end
   return false
+end
+
+-- size a given row was drawn at, or nil
+local function drawnFlags(needle)
+  for _, d in ipairs(drawn) do
+    if string.find(d.text, needle, 1, true) then return d.flags end
+  end
+  return nil
 end
 
 LCD_W, LCD_H = 128, 64
@@ -278,6 +288,78 @@ check('run on sensor source', okSensorRun and 1 or 0, 1)
 check('ladder does not say NO DATA', drewText('NO DATA') and 1 or 0, 0)
 check('mode banner drawn', drewText('LOITER') and 1 or 0, 1)
 check('unfillable slot reads --', drewText('--') and 1 or 0, 1)
+
+-- ============ empty neighbour grows the surviving row ==================
+-- CFG lives behind loadCfg, same upvalue walk the V lookup uses
+local CFG
+for i = 1, 200 do
+  local n, v = debug.getupvalue(S.init, i)
+  if not n then break end
+  if n == 'loadCfg' then
+    for j = 1, 200 do
+      local n2, v2 = debug.getupvalue(v, j)
+      if not n2 then break end
+      if n2 == 'CFG' then CFG = v2 end
+    end
+  end
+end
+assert(CFG, 'could not locate CFG')
+
+CFG.left = { 'curr', 'mah', 'thr', 'yaw' }
+drawn = {}
+S.run(0)
+check('packed column stays small', drawnFlags('11.5A'), SMLSIZE)
+
+-- 11.5A is 5 chars: too wide for DBLSIZE in a 48px column, fits MIDSIZE
+CFG.left = { 'curr', 'none', 'mah', 'thr' }
+drawn = {}
+S.run(0)
+check('grows into the empty row', drawnFlags('11.5A'), MIDSIZE)
+
+-- the gap is consumed, not drawn twice
+local occurrences = 0
+for _, d in ipairs(drawn) do
+  if d.text == '11.5A' then occurrences = occurrences + 1 end
+end
+check('grown row drawn once', occurrences, 1)
+
+-- a filled row below a gap moves up into it
+CFG.left = { 'none', 'curr', 'mah', 'thr' }
+drawn = {}
+S.run(0)
+check('row below a gap grows up', drawnFlags('11.5A'), MIDSIZE)
+
+-- the right column is only 32px wide, so growth drops the tag and unit
+-- rather than refusing: 'H100m' small becomes '100' at MIDSIZE
+CFG.slots = { 'home', 'none', 'alt', 'spd', 'sat' }
+drawn = {}
+S.run(0)
+check('narrow column grows via compact form', drawnFlags('100'), MIDSIZE)
+check('long form dropped when grown', drewText('H100m') and 1 or 0, 0)
+
+-- the home arrow takes the height the column did not use
+local function arrowSpan()
+  local lo, hi = 999, -999
+  for _, l in ipairs(lines) do
+    -- right-hand column only: the horizon draws lines too
+    if l.x1 >= 90 and l.x2 >= 90 then
+      lo = math.min(lo, l.y1, l.y2)
+      hi = math.max(hi, l.y1, l.y2)
+    end
+  end
+  return hi - lo
+end
+
+CFG.slots = { 'alt', 'spd', 'vspd', 'sat', 'home' }
+lines = {}
+S.run(0)
+local packedArrow = arrowSpan()
+
+CFG.slots = { 'alt', 'none', 'none', 'none', 'none' }
+lines = {}
+S.run(0)
+local roomyArrow = arrowSpan()
+check('arrow grows into free rows', roomyArrow > packedArrow and 1 or 0, 1)
 
 print(failures == 0 and 'ALL PASS' or (failures .. ' FAILURES'))
 os.exit(failures == 0 and 0 or 1)

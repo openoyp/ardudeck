@@ -16,6 +16,7 @@
  */
 import { useCallback, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { create } from 'zustand';
 import { useDraggableOverlay } from '../useDraggableOverlay';
 import {
   useMapInstrumentsStore,
@@ -26,7 +27,21 @@ import {
   INSTRUMENT_OPACITY_MIN,
   type InstrumentDisplayMode,
 } from '../../../stores/map-instruments-store';
-import { MAP_INSTRUMENTS, type MapInstrumentDef } from './registry';
+import { MAP_INSTRUMENTS, isRoundInMode, type MapInstrumentDef } from './registry';
+import { DockedGroup } from './DockedGroup';
+import { variantGlyph } from './variant-glyphs';
+import { GROUP_KEY_PREFIX, groupOf, isCluster, CLUSTER_ANCHOR } from './dock-groups';
+import {
+  findDockCandidate,
+  orientationFor,
+  draggedGoesFirst,
+  groupOrigin,
+  memberInsertionIndex,
+  snapToBallEdge,
+  type DockCandidate,
+  type DockRect,
+  type DockSide,
+} from './dock-snap';
 
 // Pixels of diagonal grip travel that span one whole scale unit.
 const RESIZE_PX_PER_SCALE_UNIT = 100;
@@ -38,26 +53,6 @@ function clampScale(v: number): number {
   const stepped = Math.round(v / INSTRUMENT_SCALE_STEP) * INSTRUMENT_SCALE_STEP;
   const rounded = Math.round(stepped * 100) / 100;
   return Math.max(INSTRUMENT_SCALE_MIN, Math.min(INSTRUMENT_SCALE_MAX, rounded));
-}
-
-// A tiny glyph previewing each display variant, so the picker shows what each
-// mode looks like rather than just naming it.
-function variantGlyph(id: string): JSX.Element {
-  const p = { width: 20, height: 20, viewBox: '0 0 20 20', fill: 'none' } as const;
-  switch (id) {
-    case 'analog':
-      return (<svg {...p}><circle cx="10" cy="10" r="6.5" stroke="currentColor" strokeWidth="1.4" /><path d="M10 10L13 6.2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /><circle cx="10" cy="10" r="1.1" fill="currentColor" /></svg>);
-    case 'numeric':
-      return (<svg {...p}><rect x="3" y="5.5" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.3" /><text x="10" y="12.6" fontSize="7.5" fontWeight="700" textAnchor="middle" fill="currentColor" fontFamily="monospace">12</text></svg>);
-    case 'strip':
-      return (<svg {...p}><g fill="currentColor"><rect x="2.5" y="8.4" width="2.3" height="3.2" rx=".6" /><rect x="5.6" y="8.4" width="2.3" height="3.2" rx=".6" /><rect x="8.7" y="8.4" width="2.3" height="3.2" rx=".6" /><rect x="11.8" y="8.4" width="2.3" height="3.2" rx=".6" opacity=".38" /><rect x="14.9" y="8.4" width="2.3" height="3.2" rx=".6" opacity=".38" /></g></svg>);
-    case 'cell':
-      return (<svg {...p}><rect x="5.5" y="3.5" width="9" height="13" rx="2" stroke="currentColor" strokeWidth="1.3" /><path d="M7.8 13.5H12.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>);
-    case 'inline':
-      return (<svg {...p}><rect x="3" y="8" width="14" height="4" rx="2" stroke="currentColor" strokeWidth="1.2" /><rect x="3.9" y="8.9" width="7" height="2.2" rx="1.1" fill="currentColor" /></svg>);
-    default:
-      return (<svg {...p}><circle cx="10" cy="10" r="2.6" fill="currentColor" /></svg>);
-  }
 }
 
 function InstrumentConfigPopover({
@@ -179,6 +174,130 @@ function EyeOffIcon(): JSX.Element {
   );
 }
 
+// Snap affordance while a dragged instrument is near a dock target.
+const useDockPreviewStore = create<{
+  preview: { rect: DockRect; side: DockSide; cluster: boolean } | null;
+  setPreview: (p: { rect: DockRect; side: DockSide; cluster: boolean } | null) => void;
+}>((set) => ({ preview: null, setPreview: (preview) => set({ preview }) }));
+
+interface MeasuredCandidate {
+  candidate: DockCandidate;
+  targetRect: DockRect;
+  selfRect: DockRect;
+}
+
+function measureDockCandidate(selfEl: HTMLElement, selfId: string): MeasuredCandidate | null {
+  const container = selfEl.offsetParent as HTMLElement | null;
+  if (!container) return null;
+  const c = container.getBoundingClientRect();
+  const rel = (el: Element): DockRect => {
+    const r = el.getBoundingClientRect();
+    return { x: r.left - c.left, y: r.top - c.top, w: r.width, h: r.height };
+  };
+  // The attitude ball never joins a boxed card: near the ball (or dragging
+  // the ball near others) everything snaps by cluster proximity instead.
+  const draggingBall = selfId === CLUSTER_ANCHOR;
+  const groups = useMapInstrumentsStore.getState().groups;
+  const targets: Array<{ key: string; rect: DockRect; cluster?: boolean }> = [];
+  for (const el of container.querySelectorAll<HTMLElement>('[data-instrument-id]')) {
+    const id = el.dataset.instrumentId!;
+    if (id !== selfId) targets.push({ key: id, rect: rel(el), cluster: draggingBall || id === CLUSTER_ANCHOR });
+  }
+  if (!draggingBall) {
+    for (const el of container.querySelectorAll<HTMLElement>('[data-dock-group-id]')) {
+      const gid = el.dataset.dockGroupId!;
+      targets.push({ key: GROUP_KEY_PREFIX + gid, rect: rel(el), cluster: !!groups[gid] && isCluster(groups[gid]!) });
+    }
+  }
+  const selfRect = rel(selfEl);
+  const candidate = findDockCandidate(selfRect, targets);
+  if (!candidate) return null;
+  const targetRect = targets.find((t) => t.key === candidate.targetKey)!.rect;
+  return { candidate, targetRect, selfRect };
+}
+
+function instrumentIsRound(id: string): boolean {
+  const def = MAP_INSTRUMENTS.find((d) => d.id === id);
+  if (!def) return false;
+  return isRoundInMode(def, useMapInstrumentsStore.getState().displayMode[id] ?? 'analog');
+}
+
+function commitDock(selfId: string, m: MeasuredCandidate, dropPoint: { x: number; y: number }, container: HTMLElement): void {
+  const store = useMapInstrumentsStore.getState();
+  const key = m.candidate.targetKey;
+  if (key.startsWith(GROUP_KEY_PREFIX)) {
+    const gid = key.slice(GROUP_KEY_PREFIX.length);
+    const g = store.groups[gid];
+    if (!g) return;
+    if (m.candidate.cluster) {
+      const ballEl = container.querySelector<HTMLElement>(`[data-dock-group-id="${gid}"] [data-dock-member="${CLUSTER_ANCHOR}"]`);
+      if (!ballEl) return;
+      const c = container.getBoundingClientRect();
+      const b = ballEl.getBoundingClientRect();
+      const ball: DockRect = { x: b.left - c.left, y: b.top - c.top, w: b.width, h: b.height };
+      const snapped = snapToBallEdge(ball, m.selfRect, instrumentIsRound(selfId));
+      store.dockAddCluster(
+        gid,
+        selfId,
+        { x: snapped.x - ball.x, y: snapped.y - ball.y },
+        { x: Math.min(m.targetRect.x, snapped.x), y: Math.min(m.targetRect.y, snapped.y) },
+      );
+    } else {
+      store.dockAdd(gid, selfId, memberInsertionIndex(m.targetRect, g.orientation, g.members.length, dropPoint));
+    }
+    return;
+  }
+  if (groupOf(store.groups, key)) return;
+  if (m.candidate.cluster) {
+    // One of the two is the ball; the offset is always relative to it.
+    const ball = selfId === CLUSTER_ANCHOR ? m.selfRect : m.targetRect;
+    const other = selfId === CLUSTER_ANCHOR ? m.targetRect : m.selfRect;
+    const otherId = selfId === CLUSTER_ANCHOR ? key : selfId;
+    const snapped = snapToBallEdge(ball, other, instrumentIsRound(otherId));
+    store.dockCreateCluster(
+      otherId,
+      { x: snapped.x - ball.x, y: snapped.y - ball.y },
+      { x: Math.min(ball.x, snapped.x), y: Math.min(ball.y, snapped.y) },
+    );
+    return;
+  }
+  store.dockCreate(
+    key,
+    selfId,
+    orientationFor(m.candidate.side),
+    draggedGoesFirst(m.candidate.side),
+    groupOrigin(m.targetRect, m.selfRect, m.candidate.side),
+  );
+}
+
+function DockPreview(): JSX.Element | null {
+  const preview = useDockPreviewStore((s) => s.preview);
+  if (!preview) return null;
+  const { rect, side, cluster } = preview;
+  if (cluster) {
+    const round = Math.abs(rect.w - rect.h) < 4;
+    return (
+      <div
+        className={`absolute z-[1001] pointer-events-none border-2 border-dashed border-blue-400/70 ${round ? 'rounded-full' : 'rounded-xl'}`}
+        style={{ left: rect.x - 4, top: rect.y - 4, width: rect.w + 8, height: rect.h + 8 }}
+      />
+    );
+  }
+  const bar: CSSProperties =
+    side === 'left' ? { left: -2, top: 0, bottom: 0, width: 3 }
+    : side === 'right' ? { right: -2, top: 0, bottom: 0, width: 3 }
+    : side === 'top' ? { top: -2, left: 0, right: 0, height: 3 }
+    : { bottom: -2, left: 0, right: 0, height: 3 };
+  return (
+    <div
+      className="absolute z-[1001] pointer-events-none rounded-lg border-2 border-blue-400/70"
+      style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }}
+    >
+      <div className="absolute rounded-full bg-blue-400" style={bar} />
+    </div>
+  );
+}
+
 function InstrumentSlot({ instrument }: { instrument: MapInstrumentDef }): JSX.Element {
   const drag = useDraggableOverlay('instrument:' + instrument.id);
   const storedScale = useMapInstrumentsStore((s) => s.scale[instrument.id] ?? 1);
@@ -217,6 +336,47 @@ function InstrumentSlot({ instrument }: { instrument: MapInstrumentDef }): JSX.E
     const r = wrapperRef.current?.getBoundingClientRect();
     if (r) setAnchorRect(r);
   }, [configOpen]);
+
+  // Runs beside the overlay drag: watches for a dock target while moving and
+  // merges on release. The hook still writes this instrument's solo anchor on
+  // drop; harmless, it is ignored while the instrument lives in a group.
+  const onPointerDownWithDock = (e: ReactPointerEvent) => {
+    drag.onPointerDown(e);
+    const el = wrapperRef.current;
+    if (!el || e.button !== 0) return;
+    if ((e.target as HTMLElement).closest('button, input, select, textarea, a, [role="slider"]')) return;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let active = false;
+    let raf = 0;
+    let last: MeasuredCandidate | null = null;
+    const onMove = (ev: globalThis.PointerEvent) => {
+      if (!active && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 4) return;
+      active = true;
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const node = wrapperRef.current;
+        last = node ? measureDockCandidate(node, instrument.id) : null;
+        useDockPreviewStore.getState().setPreview(
+          last ? { rect: last.targetRect, side: last.candidate.side, cluster: !!last.candidate.cluster } : null,
+        );
+      });
+    };
+    const onUp = (ev: globalThis.PointerEvent) => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      if (raf) { cancelAnimationFrame(raf); raf = 0; }
+      useDockPreviewStore.getState().setPreview(null);
+      if (!active || !last) return;
+      const container = wrapperRef.current?.offsetParent as HTMLElement | null;
+      if (!container) return;
+      const c = container.getBoundingClientRect();
+      commitDock(instrument.id, last, { x: ev.clientX - c.left, y: ev.clientY - c.top }, container);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
 
   const onGripPointerDown = (e: ReactPointerEvent) => {
     if (e.button !== 0) return;
@@ -259,7 +419,7 @@ function InstrumentSlot({ instrument }: { instrument: MapInstrumentDef }): JSX.E
       // open the raw opacity ALWAYS shows so its slider previews live,
       // regardless of hover state.
       style={{ ...drag.style, opacity: configOpen ? opacity : hovered || liveScale !== null ? 1 : opacity }}
-      onPointerDown={drag.onPointerDown}
+      onPointerDown={onPointerDownWithDock}
       onPointerEnter={() => setHovered(true)}
       onPointerLeave={() => setHovered(false)}
       className={instrument.defaultClassName + ' group transition-opacity duration-150'}
@@ -344,16 +504,22 @@ export function SingleMapInstrument({ id }: { id: string }): JSX.Element | null 
 
 export function InstrumentsLayer(): JSX.Element {
   const visible = useMapInstrumentsStore((s) => s.visible);
+  const groups = useMapInstrumentsStore((s) => s.groups);
   // layoutRev in the key remounts every slot when a saved layout is applied,
   // so useDraggableOverlay re-reads the freshly written position payloads.
   const layoutRev = useMapInstrumentsStore((s) => s.layoutRev);
+  const grouped = new Set(Object.values(groups).flatMap((g) => g.members));
   return (
     <>
       {MAP_INSTRUMENTS.map((instrument) =>
-        resolveInstrumentVisible(visible, instrument.id)
+        resolveInstrumentVisible(visible, instrument.id) && !grouped.has(instrument.id)
           ? <InstrumentSlot key={instrument.id + ':' + layoutRev} instrument={instrument} />
           : null,
       )}
+      {Object.entries(groups).map(([gid, group]) => (
+        <DockedGroup key={gid + ':' + layoutRev} gid={gid} group={group} />
+      ))}
+      <DockPreview />
     </>
   );
 }

@@ -12,6 +12,7 @@
 import type { ReactNode } from 'react';
 import { GAUGE_COLORS } from './RoundGauge';
 import { PANEL_WIDTH } from './stripMetrics';
+import { useInDock } from './dock-context';
 
 interface InstrumentStripProps {
   label: string;
@@ -21,14 +22,15 @@ interface InstrumentStripProps {
 }
 
 export function InstrumentStrip({ label, children, bar, tall = false }: InstrumentStripProps): JSX.Element {
+  const inDock = useInDock();
   return (
     <div
       // Fixed PANEL_WIDTH (not a min) so every card panel is the exact same
       // width and a stacked column lines up; content clips rather than widen.
-      className="relative overflow-hidden rounded-lg shadow-xl select-none font-mono px-3 pt-2 pb-2.5"
+      // Docked members lose the card chrome; the group card carries it.
+      className={`relative overflow-hidden select-none font-mono px-3 pt-2 pb-2.5 ${inDock ? '' : 'rounded-lg shadow-xl'}`}
       style={{
-        background: GAUGE_COLORS.face,
-        border: `1.5px solid ${GAUGE_COLORS.bezelEdge}`,
+        ...(inDock ? {} : { background: GAUGE_COLORS.face, border: `1.5px solid ${GAUGE_COLORS.bezelEdge}` }),
         width: PANEL_WIDTH,
       }}
     >

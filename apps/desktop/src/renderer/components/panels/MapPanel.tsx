@@ -2674,10 +2674,6 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
       {/* Wind timeline bar */}
       <WindControlsWrapper raised={attitudeVisible} />
 
-      {/* Floating instrument widgets, attitude ball included
-          (drag-to-place, toggled from the Instruments menu) */}
-      <InstrumentsLayer />
-
       {/* API key dialog */}
       <ApiKeyDialog />
 
@@ -2892,6 +2888,12 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
           onClearRoi={handleClearRoi}
         />
       </MapContainer>
+
+          {/* Floating instrument widgets, attitude ball included (drag-to-place,
+              toggled from the Instruments menu). Inside the map half, NOT the
+              panel root: on split their anchors re-derive against the map's own
+              box, so they stay off the second surface. */}
+          <InstrumentsLayer />
         </div>
 
         {/* In-map split: divider + second surface (Vision first). */}

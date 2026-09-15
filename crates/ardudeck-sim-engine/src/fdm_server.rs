@@ -491,6 +491,7 @@ impl CopterVehicle {
                 winch_rate: self.winch_rate,
                 release_load: self.release_pending,
                 external_force_world: self.contact_force,
+                ..StepOptions::default()
             },
             &self.faults,
             &self.rotor_phase,

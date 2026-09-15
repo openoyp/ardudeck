@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigationStore } from '../../stores/navigation-store';
+import { BwGuide } from '../radio-hud/BwGuide';
 import type { EdgeTxScanResult, EdgeTxSdCard, EdgeTxPackageInfo, InstallProgress, InstalledPackageRecord, TelemetryScreenSummary } from '../../../shared/edgetx-types';
 
 /**
@@ -17,6 +18,7 @@ export function RadioSdView() {
   const [progress, setProgress] = useState<(InstallProgress & { packageId: string }) | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [screens, setScreens] = useState<TelemetryScreenSummary | null>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const rescan = useCallback(async () => {
     setIsScanning(true);
@@ -269,6 +271,12 @@ export function RadioSdView() {
                   <span className="text-content">PAGE</span> from the main view.
                 </p>
               )}
+              <button
+                onClick={() => setGuideOpen(true)}
+                className="mt-1 text-teal-400 hover:text-teal-300 underline"
+              >
+                Read the guide for monochrome radios
+              </button>
             </div>
           ) : (
             <p className="text-[11px] text-content-secondary">
@@ -279,6 +287,7 @@ export function RadioSdView() {
           )
         )}
       </div>
+      {guideOpen && <BwGuide onClose={() => setGuideOpen(false)} />}
     </div>
   );
 }

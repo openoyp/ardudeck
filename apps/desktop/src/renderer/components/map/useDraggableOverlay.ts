@@ -214,6 +214,10 @@ export function useDraggableOverlay(storageKey: string): {
 } {
   const [pos, setPos] = useState<Pos | null>(null);
   const [animating, setAnimating] = useState(false);
+  // Bumped when the ref attaches, so effects re-run for consumers that hand
+  // the element over late (e.g. a cluster group waiting for its first
+  // measurement); a mount-time-only effect would never see their element.
+  const [attachRev, setAttachRev] = useState(0);
   const elRef = useRef<HTMLElement | null>(null);
   const anchorRef = useRef<OverlayAnchorPos | null>(null);
   const drag = useRef<{ startX: number; startY: number; origin: Pos; active: boolean } | null>(null);
@@ -229,8 +233,10 @@ export function useDraggableOverlay(storageKey: string): {
   // happens in the ref callback (post-attach, pre-paint) rather than in state
   // initialisation. v1 px and v2 ratio payloads migrate to anchors here.
   const ref = useCallback((el: HTMLElement | null) => {
+    const changed = elRef.current !== el;
     elRef.current = el;
     if (!el) return;
+    if (changed) setAttachRev((v) => v + 1);
     if (!anchorRef.current) {
       const stored = readStored(storageKey);
       if (!stored) return;
@@ -296,7 +302,7 @@ export function useDraggableOverlay(storageKey: string): {
     ro.observe(parent);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [storageKey, applyPos]);
+  }, [storageKey, applyPos, attachRev]);
 
   const onPointerDown = useCallback((e: ReactPointerEvent) => {
     const el = elRef.current;

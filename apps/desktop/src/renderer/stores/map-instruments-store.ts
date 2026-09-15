@@ -20,6 +20,23 @@ import {
   clearOverlayPosPayload,
   USER_MOVED_EVENT,
 } from '../components/map/useDraggableOverlay';
+import {
+  sanitizeGroups,
+  createGroup,
+  createCluster,
+  addMember,
+  addClusterMember,
+  setClusterOffset,
+  removeMember,
+  reorderMember,
+  dissolveGroup,
+  isCluster,
+  groupOf,
+  groupOverlayKey,
+  CLUSTER_ANCHOR,
+  type DockGroups,
+} from '../components/map/instruments/dock-groups';
+import type { DockOrientation } from '../components/map/instruments/dock-snap';
 
 const STORAGE_KEY = 'map-instruments-visible';
 const LAYOUTS_STORAGE_KEY = 'map-instrument-layouts';
@@ -31,10 +48,15 @@ export const INSTRUMENT_SCALE_MAX = 1.6;
 export const INSTRUMENT_SCALE_STEP = 0.1;
 export const INSTRUMENT_OPACITY_MIN = 0.25;
 
-/** Overlay-position keys a layout snapshot covers. */
-function layoutPosKeys(): string[] {
-  return MAP_INSTRUMENTS.map((i) => 'instrument:' + i.id);
+/** Overlay-position keys a layout snapshot covers (instruments + docked groups). */
+function layoutPosKeys(groups: DockGroups): string[] {
+  return [
+    ...MAP_INSTRUMENTS.map((i) => 'instrument:' + i.id),
+    ...Object.keys(groups).map(groupOverlayKey),
+  ];
 }
+
+const INSTRUMENT_IDS = MAP_INSTRUMENTS.map((i) => i.id);
 
 /** The analog gauge, the numeric card, or one of the registry's extra
  * variants (the compact strip/cell/inline readouts). Missing = analog. */
@@ -50,6 +72,8 @@ export interface InstrumentLayoutSnapshot {
   instrumentOpacity?: Record<string, number>;
   /** Per-instrument analog/numeric choice (missing = analog). */
   displayMode?: Record<string, InstrumentDisplayMode>;
+  /** Docked instrument groups (missing = none). */
+  groups?: DockGroups;
   /** Overlay key -> stored position payload (anchor v3, or legacy). */
   positions: Record<string, unknown>;
 }
@@ -116,12 +140,13 @@ interface PersistedMain {
   opacity: number;
   instrumentOpacity: Record<string, number>;
   displayMode: Record<string, InstrumentDisplayMode>;
+  groups: DockGroups;
 }
 
-// Payload v3 adds { opacity, instrumentOpacity, displayMode }; v2 was
-// { visible, scale }; v1 the flat visible map itself.
+// Payload v4 adds { groups }; v3 { opacity, instrumentOpacity, displayMode };
+// v2 was { visible, scale }; v1 the flat visible map itself.
 function readStored(): PersistedMain {
-  const fallback: PersistedMain = { visible: {}, scale: {}, opacity: 1, instrumentOpacity: {}, displayMode: {} };
+  const fallback: PersistedMain = { visible: {}, scale: {}, opacity: 1, instrumentOpacity: {}, displayMode: {}, groups: {} };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return fallback;
@@ -133,6 +158,7 @@ function readStored(): PersistedMain {
         opacity: typeof parsed.opacity === 'number' && Number.isFinite(parsed.opacity) ? clampOpacity(parsed.opacity) : 1,
         instrumentOpacity: sanitizeInstrumentOpacity(parsed.instrumentOpacity),
         displayMode: sanitizeDisplayMode(parsed.displayMode),
+        groups: sanitizeGroups(parsed.groups, INSTRUMENT_IDS),
       };
     }
     return { ...fallback, visible: sanitizeVisible(parsed) };
@@ -158,6 +184,7 @@ function sanitizeLayout(parsed: unknown): InstrumentLayoutSnapshot | null {
     opacity: typeof p.opacity === 'number' && Number.isFinite(p.opacity) ? clampOpacity(p.opacity) : 1,
     instrumentOpacity: sanitizeInstrumentOpacity(p.instrumentOpacity),
     displayMode: sanitizeDisplayMode(p.displayMode),
+    groups: sanitizeGroups(p.groups, INSTRUMENT_IDS),
     positions: p.positions && typeof p.positions === 'object' ? (p.positions as Record<string, unknown>) : {},
   };
 }
@@ -204,6 +231,8 @@ interface MapInstrumentsStore {
   instrumentOpacity: Record<string, number>;
   /** Per-instrument analog/numeric choice; missing entry = analog. */
   displayMode: Record<string, InstrumentDisplayMode>;
+  /** Docked instrument groups; members render inside one shared card. */
+  groups: DockGroups;
   /** Bumped when a layout is applied; remounts widgets to re-read positions. */
   layoutRev: number;
   savedLayouts: Record<string, InstrumentLayoutSnapshot>;
@@ -213,6 +242,23 @@ interface MapInstrumentsStore {
   /** null clears the override so the instrument follows the global opacity. */
   setInstrumentOpacity: (id: string, v: number | null) => void;
   setDisplayMode: (id: string, mode: InstrumentDisplayMode) => void;
+  /** One display choice for several instruments at once (docked groups). */
+  setDisplayModes: (ids: string[], mode: InstrumentDisplayMode) => void;
+  /** Form a new group from two standalone instruments; pos is the group's
+   * px top-left inside the map container. */
+  dockCreate: (targetId: string, draggedId: string, orientation: DockOrientation, draggedFirst: boolean, pos: { x: number; y: number }) => void;
+  dockAdd: (gid: string, id: string, index: number) => void;
+  /** Attitude-ball constellation: offset is the member's top-left relative to
+   * the ball; pos the new union top-left. */
+  dockCreateCluster: (otherId: string, offset: { x: number; y: number }, pos: { x: number; y: number }) => void;
+  dockAddCluster: (gid: string, id: string, offset: { x: number; y: number }, pos: { x: number; y: number }) => void;
+  dockSetClusterOffset: (gid: string, id: string, offset: { x: number; y: number }, pos: { x: number; y: number }) => void;
+  /** Break a whole group apart, placing every member at the given px spot. */
+  dockDissolve: (gid: string, positions: Record<string, { x: number; y: number }>) => void;
+  /** Undock a member; dropPos places it, null leaves its old stored spot.
+   * survivorPos pins the last remaining member when a pair dissolves. */
+  dockRemove: (id: string, dropPos: { x: number; y: number } | null, survivorPos?: { x: number; y: number } | null) => void;
+  dockReorder: (gid: string, from: number, to: number) => void;
   saveLayout: (name: string) => void;
   applyLayout: (layout: InstrumentLayoutSnapshot) => void;
   deleteLayout: (name: string) => void;
@@ -242,8 +288,17 @@ const initial = readStored();
 
 export const useMapInstrumentsStore = create<MapInstrumentsStore>((set, get) => {
   const persistMain = () => {
-    const { visible, scale, opacity, instrumentOpacity, displayMode } = get();
-    persist({ visible, scale, opacity, instrumentOpacity, displayMode });
+    const { visible, scale, opacity, instrumentOpacity, displayMode, groups } = get();
+    persist({ visible, scale, opacity, instrumentOpacity, displayMode, groups });
+  };
+
+  // Dissolving a pair hands the group's stored spot to the survivor so it
+  // stays put instead of jumping to its pre-dock position.
+  const applyDissolve = (dissolved: { gid: string; remaining: string } | null) => {
+    if (!dissolved) return;
+    const groupPayload = readOverlayPosPayload(groupOverlayKey(dissolved.gid));
+    if (groupPayload !== null) writeOverlayPosPayload('instrument:' + dissolved.remaining, groupPayload);
+    clearOverlayPosPayload(groupOverlayKey(dissolved.gid));
   };
 
   return {
@@ -252,11 +307,29 @@ export const useMapInstrumentsStore = create<MapInstrumentsStore>((set, get) => 
     opacity: initial.opacity,
     instrumentOpacity: initial.instrumentOpacity,
     displayMode: initial.displayMode,
+    groups: initial.groups,
     layoutRev: 0,
     savedLayouts: readStoredLayouts(),
 
     toggle: (id) => {
-      set({ visible: { ...get().visible, [id]: !resolveInstrumentVisible(get().visible, id) } });
+      const wasVisible = resolveInstrumentVisible(get().visible, id);
+      let groups = get().groups;
+      const gid = wasVisible ? groupOf(groups, id) : null;
+      if (gid && id === CLUSTER_ANCHOR && isCluster(groups[gid]!)) {
+        // Hiding the ball breaks the whole constellation; members fall back
+        // to their pre-dock stored spots.
+        clearOverlayPosPayload(groupOverlayKey(gid));
+        groups = dissolveGroup(groups, gid);
+      } else if (gid) {
+        const r = removeMember(groups, id);
+        groups = r.groups;
+        applyDissolve(r.dissolved);
+      }
+      set({
+        visible: { ...get().visible, [id]: !wasVisible },
+        groups,
+        layoutRev: groups === get().groups ? get().layoutRev : get().layoutRev + 1,
+      });
       persistMain();
     },
 
@@ -283,12 +356,97 @@ export const useMapInstrumentsStore = create<MapInstrumentsStore>((set, get) => 
       persistMain();
     },
 
+    setDisplayModes: (ids, mode) => {
+      if (ids.length === 0) return;
+      const next = { ...get().displayMode };
+      for (const id of ids) next[id] = mode;
+      set({ displayMode: next });
+      persistMain();
+    },
+
+    dockCreate: (targetId, draggedId, orientation, draggedFirst, pos) => {
+      let groups = get().groups;
+      if (groupOf(groups, targetId) || groupOf(groups, draggedId)) return;
+      const r = createGroup(groups, targetId, draggedId, orientation, draggedFirst);
+      groups = r.groups;
+      // Legacy px payload: the group re-derives its anchor on first mount.
+      writeOverlayPosPayload(groupOverlayKey(r.gid), { x: pos.x, y: pos.y });
+      set({ groups, layoutRev: get().layoutRev + 1 });
+      persistMain();
+    },
+
+    dockAdd: (gid, id, index) => {
+      const groups = addMember(get().groups, gid, id, index);
+      if (groups === get().groups) return;
+      set({ groups, layoutRev: get().layoutRev + 1 });
+      persistMain();
+    },
+
+    dockCreateCluster: (otherId, offset, pos) => {
+      const groups = get().groups;
+      if (groupOf(groups, CLUSTER_ANCHOR) || groupOf(groups, otherId)) return;
+      const r = createCluster(groups, otherId, offset);
+      writeOverlayPosPayload(groupOverlayKey(r.gid), { x: pos.x, y: pos.y });
+      set({ groups: r.groups, layoutRev: get().layoutRev + 1 });
+      persistMain();
+    },
+
+    dockAddCluster: (gid, id, offset, pos) => {
+      const groups = addClusterMember(get().groups, gid, id, offset);
+      if (groups === get().groups) return;
+      writeOverlayPosPayload(groupOverlayKey(gid), { x: pos.x, y: pos.y });
+      set({ groups, layoutRev: get().layoutRev + 1 });
+      persistMain();
+    },
+
+    dockSetClusterOffset: (gid, id, offset, pos) => {
+      const groups = setClusterOffset(get().groups, gid, id, offset);
+      if (groups === get().groups) return;
+      writeOverlayPosPayload(groupOverlayKey(gid), { x: pos.x, y: pos.y });
+      set({ groups, layoutRev: get().layoutRev + 1 });
+      persistMain();
+    },
+
+    dockDissolve: (gid, positions) => {
+      const groups = get().groups;
+      const g = groups[gid];
+      if (!g) return;
+      for (const member of g.members) {
+        const p = positions[member];
+        if (p) writeOverlayPosPayload('instrument:' + member, { x: p.x, y: p.y });
+      }
+      clearOverlayPosPayload(groupOverlayKey(gid));
+      set({ groups: dissolveGroup(groups, gid), layoutRev: get().layoutRev + 1 });
+      persistMain();
+    },
+
+    dockRemove: (id, dropPos, survivorPos) => {
+      const r = removeMember(get().groups, id);
+      if (r.groups === get().groups) return;
+      if (r.dissolved && survivorPos) {
+        writeOverlayPosPayload('instrument:' + r.dissolved.remaining, { x: survivorPos.x, y: survivorPos.y });
+        clearOverlayPosPayload(groupOverlayKey(r.dissolved.gid));
+      } else {
+        applyDissolve(r.dissolved);
+      }
+      if (dropPos) writeOverlayPosPayload('instrument:' + id, { x: dropPos.x, y: dropPos.y });
+      set({ groups: r.groups, layoutRev: get().layoutRev + 1 });
+      persistMain();
+    },
+
+    dockReorder: (gid, from, to) => {
+      const groups = reorderMember(get().groups, gid, from, to);
+      if (groups === get().groups) return;
+      set({ groups });
+      persistMain();
+    },
+
     saveLayout: (name) => {
       const trimmed = name.trim();
       if (!trimmed) return;
-      const { visible, scale, opacity, instrumentOpacity, displayMode } = get();
+      const { visible, scale, opacity, instrumentOpacity, displayMode, groups } = get();
       const positions: Record<string, unknown> = {};
-      for (const key of layoutPosKeys()) {
+      for (const key of layoutPosKeys(groups)) {
         const payload = readOverlayPosPayload(key);
         if (payload !== null) positions[key] = payload;
       }
@@ -305,6 +463,7 @@ export const useMapInstrumentsStore = create<MapInstrumentsStore>((set, get) => 
           opacity,
           instrumentOpacity: { ...instrumentOpacity },
           displayMode: { ...displayMode },
+          groups: { ...groups },
           positions,
         },
       };
@@ -313,7 +472,11 @@ export const useMapInstrumentsStore = create<MapInstrumentsStore>((set, get) => 
     },
 
     applyLayout: (layout) => {
-      for (const key of layoutPosKeys()) {
+      const nextGroups = layout.groups ?? {};
+      // Union of current and incoming group keys, so stale group positions
+      // are cleared and incoming ones written.
+      const keys = new Set([...layoutPosKeys(get().groups), ...layoutPosKeys(nextGroups)]);
+      for (const key of keys) {
         if (key in layout.positions) writeOverlayPosPayload(key, layout.positions[key]);
         else clearOverlayPosPayload(key);
       }
@@ -323,6 +486,7 @@ export const useMapInstrumentsStore = create<MapInstrumentsStore>((set, get) => 
         opacity: layout.opacity,
         instrumentOpacity: { ...(layout.instrumentOpacity ?? {}) },
         displayMode: { ...(layout.displayMode ?? {}) },
+        groups: { ...nextGroups },
         layoutRev: get().layoutRev + 1,
       });
       persistMain();
@@ -347,7 +511,9 @@ export const useMapInstrumentsStore = create<MapInstrumentsStore>((set, get) => 
     },
 
     resetPositions: () => {
-      for (const key of layoutPosKeys()) clearOverlayPosPayload(key);
+      for (const key of layoutPosKeys(get().groups)) clearOverlayPosPayload(key);
+      set({ groups: {} });
+      persistMain();
       // Remount every slot so it re-reads (the now-absent) stored position and
       // falls back to its registry default class.
       set({ layoutRev: get().layoutRev + 1 });

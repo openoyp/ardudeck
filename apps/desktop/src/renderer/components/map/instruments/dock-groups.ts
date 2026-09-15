@@ -1,0 +1,202 @@
+/** Pure model of docked instrument groups; the store applies the results. */
+import type { DockOrientation } from './dock-snap';
+
+export interface DockGroup {
+  members: string[];
+  orientation: DockOrientation;
+  /** Cluster only: member top-left px relative to the anchor's top-left.
+   * The anchor itself has no entry (it IS the origin). */
+  offsets?: Record<string, { x: number; y: number }>;
+}
+
+export type DockGroups = Record<string, DockGroup>;
+
+export const GROUP_KEY_PREFIX = 'group:';
+
+/** The attitude ball anchors free-form constellations instead of boxed cards. */
+export const CLUSTER_ANCHOR = 'attitude';
+
+export function isCluster(g: DockGroup): boolean {
+  return g.members.includes(CLUSTER_ANCHOR);
+}
+
+export function groupOverlayKey(gid: string): string {
+  return 'instrument:' + GROUP_KEY_PREFIX + gid;
+}
+
+export function nextGroupId(groups: DockGroups): string {
+  let n = 1;
+  while (`d${n}` in groups) n++;
+  return `d${n}`;
+}
+
+export function groupOf(groups: DockGroups, memberId: string): string | null {
+  for (const [gid, g] of Object.entries(groups)) {
+    if (g.members.includes(memberId)) return gid;
+  }
+  return null;
+}
+
+function sanitizeOffsets(parsed: unknown, members: string[]): Record<string, { x: number; y: number }> | undefined {
+  if (!parsed || typeof parsed !== 'object') return undefined;
+  const out: Record<string, { x: number; y: number }> = {};
+  for (const [id, raw] of Object.entries(parsed as Record<string, unknown>)) {
+    const o = raw as { x?: unknown; y?: unknown } | null;
+    if (members.includes(id) && id !== CLUSTER_ANCHOR && o && Number.isFinite(o.x) && Number.isFinite(o.y)) {
+      out[id] = { x: o.x as number, y: o.y as number };
+    }
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+export function sanitizeGroups(parsed: unknown, knownIds: readonly string[]): DockGroups {
+  const out: DockGroups = {};
+  if (!parsed || typeof parsed !== 'object') return out;
+  const seen = new Set<string>();
+  for (const [gid, raw] of Object.entries(parsed as Record<string, unknown>)) {
+    const g = raw as { members?: unknown; orientation?: unknown; offsets?: unknown } | null;
+    if (!g || !Array.isArray(g.members)) continue;
+    const members = g.members.filter(
+      (m): m is string => typeof m === 'string' && knownIds.includes(m) && !seen.has(m),
+    );
+    if (members.length < 2) continue;
+    // A cluster whose ball entry was pruned (unknown/duplicate) is malformed.
+    const wasCluster = g.members.includes(CLUSTER_ANCHOR);
+    if (wasCluster && !members.includes(CLUSTER_ANCHOR)) continue;
+    members.forEach((m) => seen.add(m));
+    const offsets = wasCluster ? sanitizeOffsets(g.offsets, members) : undefined;
+    out[gid] = { members, orientation: g.orientation === 'col' ? 'col' : 'row', ...(offsets ? { offsets } : {}) };
+  }
+  return out;
+}
+
+export function createGroup(
+  groups: DockGroups,
+  targetId: string,
+  draggedId: string,
+  orientation: DockOrientation,
+  draggedFirst: boolean,
+): { groups: DockGroups; gid: string } {
+  const gid = nextGroupId(groups);
+  const members = draggedFirst ? [draggedId, targetId] : [targetId, draggedId];
+  return { groups: { ...groups, [gid]: { members, orientation } }, gid };
+}
+
+export function createCluster(
+  groups: DockGroups,
+  otherId: string,
+  offset: { x: number; y: number },
+): { groups: DockGroups; gid: string } {
+  const gid = nextGroupId(groups);
+  return {
+    groups: {
+      ...groups,
+      [gid]: { members: [CLUSTER_ANCHOR, otherId], orientation: 'row', offsets: { [otherId]: offset } },
+    },
+    gid,
+  };
+}
+
+export function addClusterMember(
+  groups: DockGroups,
+  gid: string,
+  id: string,
+  offset: { x: number; y: number },
+): DockGroups {
+  const g = groups[gid];
+  if (!g || !isCluster(g) || g.members.includes(id)) return groups;
+  return {
+    ...groups,
+    [gid]: { ...g, members: [...g.members, id], offsets: { ...(g.offsets ?? {}), [id]: offset } },
+  };
+}
+
+export function setClusterOffset(
+  groups: DockGroups,
+  gid: string,
+  id: string,
+  offset: { x: number; y: number },
+): DockGroups {
+  const g = groups[gid];
+  if (!g || !isCluster(g) || !g.members.includes(id) || id === CLUSTER_ANCHOR) return groups;
+  return { ...groups, [gid]: { ...g, offsets: { ...(g.offsets ?? {}), [id]: offset } } };
+}
+
+export function dissolveGroup(groups: DockGroups, gid: string): DockGroups {
+  if (!(gid in groups)) return groups;
+  const next = { ...groups };
+  delete next[gid];
+  return next;
+}
+
+export function addMember(groups: DockGroups, gid: string, id: string, index: number): DockGroups {
+  const g = groups[gid];
+  if (!g || g.members.includes(id)) return groups;
+  const members = [...g.members];
+  members.splice(Math.max(0, Math.min(members.length, index)), 0, id);
+  return { ...groups, [gid]: { ...g, members } };
+}
+
+export interface RemoveResult {
+  groups: DockGroups;
+  /** Set when the group shrank to one member and dissolved. */
+  dissolved: { gid: string; remaining: string } | null;
+}
+
+export function removeMember(groups: DockGroups, id: string): RemoveResult {
+  const gid = groupOf(groups, id);
+  if (!gid) return { groups, dissolved: null };
+  const g = groups[gid]!;
+  const members = g.members.filter((m) => m !== id);
+  const next = { ...groups };
+  if (members.length < 2) {
+    delete next[gid];
+    return { groups: next, dissolved: { gid, remaining: members[0]! } };
+  }
+  let offsets = g.offsets;
+  if (offsets && id in offsets) {
+    const { [id]: _gone, ...rest } = offsets;
+    offsets = Object.keys(rest).length > 0 ? rest : undefined;
+  }
+  next[gid] = { ...g, members, ...(offsets ? { offsets } : { offsets: undefined }) };
+  return { groups: next, dissolved: null };
+}
+
+interface DisplayCapable {
+  id: string;
+  NumericComponent?: unknown;
+  variants?: Array<{ id: string; label: string }>;
+}
+
+function modesOf(def: DisplayCapable): string[] {
+  return ['analog', ...(def.NumericComponent ? ['numeric'] : []), ...(def.variants ?? []).map((v) => v.id)];
+}
+
+/**
+ * Display modes a whole group can switch to together. Offered only when EVERY
+ * member can follow (single-look members like mission or RTK would make the
+ * switch restyle a fraction of the group, which reads as broken); the ball is
+ * exempt in a constellation since it is the anchor, not a readout.
+ */
+export function groupDisplayOptions(members: DisplayCapable[]): { ids: string[]; options: Array<{ id: string; label: string }> } | null {
+  const relevant = members.filter((d) => d.id !== CLUSTER_ANCHOR);
+  if (relevant.length === 0 || !relevant.every((d) => modesOf(d).length > 1)) return null;
+  let common = modesOf(relevant[0]!);
+  for (const d of relevant.slice(1)) {
+    const own = new Set(modesOf(d));
+    common = common.filter((m) => own.has(m));
+  }
+  if (common.length < 2) return null;
+  const labels = new Map<string, string>([['analog', 'Analog'], ['numeric', 'Numeric']]);
+  for (const d of relevant) for (const v of d.variants ?? []) if (!labels.has(v.id)) labels.set(v.id, v.label);
+  return { ids: relevant.map((d) => d.id), options: common.map((id) => ({ id, label: labels.get(id) ?? id })) };
+}
+
+export function reorderMember(groups: DockGroups, gid: string, from: number, to: number): DockGroups {
+  const g = groups[gid];
+  if (!g || from === to || from < 0 || from >= g.members.length) return groups;
+  const members = [...g.members];
+  const [moved] = members.splice(from, 1);
+  members.splice(Math.max(0, Math.min(members.length, to)), 0, moved!);
+  return { ...groups, [gid]: { ...g, members } };
+}

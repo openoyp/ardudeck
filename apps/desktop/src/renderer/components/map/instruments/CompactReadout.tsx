@@ -28,6 +28,7 @@ import {
 } from '../../../../shared/user-units.js';
 import { haversineMeters } from '../traffic/proximity';
 import { GAUGE_COLORS } from './RoundGauge';
+import { useInDock } from './dock-context';
 import { SegmentBar, SignalBars, FillBehind, gaugeTint } from './ReadoutPrimitives';
 import { useLinkUp } from './useLinkUp';
 import { useMapHomeStore } from './registry';
@@ -77,12 +78,12 @@ const CARDINALS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 const monoBase = 'font-mono tabular-nums leading-none whitespace-nowrap';
 
 function Shell({ children, style }: { children: ReactNode; style?: CSSProperties }): JSX.Element {
+  const inDock = useInDock();
   return (
     <div
-      className="rounded-[9px] shadow-xl select-none"
+      className={inDock ? 'select-none' : 'rounded-[9px] shadow-xl select-none'}
       style={{
-        background: GAUGE_COLORS.face,
-        border: `1.5px solid ${GAUGE_COLORS.bezelEdge}`,
+        ...(inDock ? {} : { background: GAUGE_COLORS.face, border: `1.5px solid ${GAUGE_COLORS.bezelEdge}` }),
         ...style,
       }}
     >

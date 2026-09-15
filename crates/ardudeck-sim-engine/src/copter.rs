@@ -81,6 +81,19 @@ pub struct StepOptions {
     /// contact: the vehicle-vehicle contact force from the collision pass (spec
     /// 1.5). Default zero is a byte-identical no-op (added only when non-zero).
     pub external_force_world: Vec3,
+    /// Horizontal distance from the CG to the outer landing-gear contact, metres, and the CG's
+    /// height above that contact plane.
+    ///
+    /// Together they are the SUPPORT POLYGON, which is the only thing that lets the ground act
+    /// on ATTITUDE. Without it the ground was a pure force: an airframe parked at 25 degrees of
+    /// roll was still at 25 degrees ten seconds later, because nothing in the model could ever
+    /// change it. So a tilted touchdown stayed tilted with the controller fighting it, and a
+    /// wreck skidded perfectly level instead of tipping over.
+    ///
+    /// Both default to 0.0, which disables the torque entirely and leaves every existing
+    /// trajectory bit-identical.
+    pub contact_radius: f64,
+    pub cg_height: f64,
 }
 
 impl Default for StepOptions {
@@ -92,6 +105,8 @@ impl Default for StepOptions {
             winch_rate: 0.0,
             release_load: false,
             external_force_world: Vec3::zero(),
+            contact_radius: 0.0,
+            cg_height: 0.0,
         }
     }
 }
@@ -607,6 +622,51 @@ fn step_copter_core(
     // linear rotational air resistance. No Euler gyroscopic (w x Iw) term, to
     // match stock SITL exactly.
     let (ixx, iyy, izz) = inertia(p);
+
+    // 11b. GROUND CONTACT TORQUE: the normal force acts at the gear, not at the CG.
+    //
+    // A tilted airframe on its gear has the normal force offset from the CG, and that offset is
+    // a restoring moment - which is what rocks a real aircraft down onto all its legs. Modelled
+    // about the contact, not added as a spring: the lever arm IS the horizontal distance from
+    // the CG to the loaded gear, so the torque falls out of `N * r * sin(tilt)` with nothing
+    // invented.
+    //
+    // It stops at the TIPOVER ANGLE, `atan(r / h)`, where the CG passes outside the support
+    // polygon. Past that the same geometry pushes the other way in reality, and here it simply
+    // stops righting: an airframe that goes over stays over, which is what a wreck should do.
+    let torque = if on_ground && opts.contact_radius > 0.0 && opts.cg_height > 0.0 {
+        // World down expressed in body axes. Level means (0, 0, 1); the cross product of body
+        // +Z with it is the axis that rights the airframe, with magnitude sin(tilt).
+        let down_body = state.attitude.rotate_world_to_body(Vec3::new(0.0, 0.0, 1.0));
+        // `axis` is body +Z crossed with world down: the direction that rights the airframe,
+        // already carrying sin(tilt) as its magnitude.
+        let axis = Vec3::new(-down_body.y, down_body.x, 0.0);
+        let sin_tilt = axis.length();
+        if sin_tilt > 1e-9 {
+            // atan2, NOT asin: asin folds everything past 90 degrees back under it, so an
+            // airframe lying on its BACK read as 60 degrees of tilt and politely righted itself.
+            let tilt = sin_tilt.atan2(down_body.z);
+            let normal = -nf.z.min(0.0); // the support the ground is actually providing, N
+            // Lever arm from the loaded gear to the CG's vertical line. Positive inside the
+            // support polygon (restoring), zero exactly at the tipover angle atan(r/h), and
+            // negative outside it - so going over is the same equation continuing, not a
+            // separate case, and a wreck keeps rolling onto its back instead of freezing at
+            // whatever angle it stopped righting.
+            let lever = opts.contact_radius * tilt.cos() - opts.cg_height * tilt.sin();
+            let k = normal * opts.contact_radius;
+            // Near-critical per axis from the axis inertia, so it settles onto its gear rather
+            // than rocking. `k` is the small-angle torque per radian.
+            let (cx, cy) = (1.4 * (k * ixx).sqrt(), 1.4 * (k * iyy).sqrt());
+            torque
+                .add(axis.scale(normal * lever))
+                .sub(Vec3::new(gyro.x * cx, gyro.y * cy, 0.0))
+        } else {
+            torque
+        }
+    } else {
+        torque
+    };
+
     let mut rot_accel = Vec3::new(torque.x / ixx, torque.y / iyy, torque.z / izz);
     // Rotational damping, verbatim from ArduPilot SIM_Frame:
     //   rot_accel -= gyro * radians(400) / terminal_rotation_rate
@@ -1918,5 +1978,60 @@ mod tests {
 
         // And a walking-pace touchdown must not skate.
         assert!(slide_from(1.0) < 0.2, "a 1 m/s touchdown slid {:.2} m", slide_from(1.0));
+    }
+
+    /// The ground must act on ATTITUDE, not only on position.
+    ///
+    /// It used to be a pure force: an airframe parked at 25 degrees of roll was still at
+    /// exactly 25 degrees ten seconds later, because no term in the model could change it. A
+    /// tilted touchdown therefore stayed tilted with the controller fighting it, and a wreck
+    /// skidded perfectly level instead of going over.
+    #[test]
+    fn the_ground_rights_an_airframe_inside_its_support_polygon() {
+        // A 5 inch quad: gear half-width 0.12 m, CG 0.06 m above the contact plane, so it tips
+        // past atan(0.12 / 0.06) = 63 degrees.
+        let opts = StepOptions {
+            ground_height: 8.0, contact_radius: 0.12, cg_height: 0.06,
+            ..StepOptions::default()
+        };
+
+        let settle = |tilt_deg: f64| -> f64 {
+            let (p, e) = (params(), env());
+            let mut s = initial_state();
+            s.position.z = -8.0;
+            s.attitude = Quat::from_euler(tilt_deg.to_radians(), 0.0, 0.0);
+            for _ in 0..(5.0 / DT) as usize {
+                s = step_copter(&[1000.0; 4], &s, &p, &e, DT, opts);
+            }
+            s.attitude.to_euler().0.to_degrees()
+        };
+
+        for tilt in [10.0, 25.0, 50.0] {
+            let out = settle(tilt);
+            assert!(out.abs() < 1.0, "{tilt} deg is inside the gear, should settle level, got {out:.1}");
+        }
+
+        // Past the tipover the same lever arm reverses sign, so it goes over rather than
+        // freezing at the angle where righting stopped.
+        assert!(settle(70.0).abs() > 170.0, "70 deg is past tipover, should end up on its back");
+
+        // atan2, not asin: asin folds everything past 90 degrees back under it, so an airframe
+        // lying on its back read as 60 degrees of tilt and politely righted itself.
+        assert!(settle(120.0).abs() > 170.0, "an inverted airframe must not right itself");
+    }
+
+    /// The torque is opt-in, so every existing caller keeps the trajectory it had.
+    #[test]
+    fn contact_geometry_defaults_to_the_old_pure_force_ground() {
+        let (p, e) = (params(), env());
+        let mut s = initial_state();
+        s.position.z = -8.0;
+        s.attitude = Quat::from_euler(25.0_f64.to_radians(), 0.0, 0.0);
+        let opts = StepOptions { ground_height: 8.0, ..StepOptions::default() };
+        for _ in 0..(5.0 / DT) as usize {
+            s = step_copter(&[1000.0; 4], &s, &p, &e, DT, opts);
+        }
+        let roll = s.attitude.to_euler().0.to_degrees();
+        assert!((roll - 25.0).abs() < 0.1, "without contact geometry attitude is untouched, got {roll:.1}");
     }
 }

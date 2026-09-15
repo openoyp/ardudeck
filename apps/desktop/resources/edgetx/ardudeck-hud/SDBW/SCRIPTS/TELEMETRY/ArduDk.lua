@@ -634,13 +634,94 @@ local function fieldText(id)
   return f()
 end
 
-local function drawSlots(list, x, y0, count)
-  for i = 1, count or #list do
-    local text, blink = fieldText(list[i])
-    if text then
-      lcd.drawText(x, y0 + (i - 1) * 8, text, SMLSIZE + (blink and BLINK or 0))
+-- Rows are 8px; an emptied row is free space, so the surviving neighbour
+-- grows into it at DBLSIZE rather than leaving a hole. Growth is refused
+-- when the double-height text would reach the bottom strip or run into the
+-- next column, since a readable row beats a bigger broken one.
+local BOTTOM_CHROME_Y = 56
+
+local function isEmptySlot(id)
+  if id == nil or id == 'none' then return true end
+  local text = fieldText(id)
+  return text == nil or text == ''
+end
+
+-- Growing is about using the free HEIGHT, so a value that would be too wide
+-- at the bigger font drops its tag letter and unit rather than refusing to
+-- grow: '100' at MIDSIZE beats 'H100m' in tiny type when the row below it
+-- is empty anyway.
+local COMPACT = {
+  volt = function () return string.format('%.1f', V.voltV) end,
+  curr = function () return string.format('%.1f', V.currA) end,
+  mah = function () return string.format('%d', V.mah) end,
+  alt = function () return string.format('%d', math.floor(V.gpsAltM + 0.5)) end,
+  spd = function () return string.format('%.0f', V.hspdMs) end,
+  vspd = function () return string.format('%+.0f', V.vspdMs) end,
+  sat = function () return string.format('%d', V.sats) end,
+  home = function () return string.format('%d', math.floor(V.homeDistM + 0.5)) end,
+  wind = function () return string.format('%.0f', V.windMs) end,
+  rng = function () return string.format('%.1f', V.rangeM) end,
+  thr = function () return string.format('%d', V.throttle) end,
+  yaw = function () return string.format('%03d', math.floor(V.yawDeg + 0.5) % 360) end,
+  wp = function () return string.format('%d', math.floor(V.wpDistM + 0.5)) end,
+}
+
+-- Yaapu's hardware-proven 128x64 layouts use MIDSIZE and never DBLSIZE for
+-- column data; measuring the widths here reaches the same conclusion.
+local function fitSize(text, room)
+  if #text * 11 <= room then return DBLSIZE end
+  if #text * 8 <= room then return MIDSIZE end
+  return nil
+end
+
+-- Returns the text and font a grown row should use, or nil when even the
+-- compact form cannot fit.
+local function grown(id, text, room)
+  local size = fitSize(text, room)
+  if size then return text, size end
+  local compact = COMPACT[id]
+  if compact then
+    local short = compact()
+    size = fitSize(short, room)
+    if size then return short, size end
+  end
+  return nil, nil
+end
+
+local function drawSlots(list, x, y0, count, w)
+  local n = count or #list
+  local room = w or (LCD_W - x)
+  local i = 1
+  -- row after the last row that actually drew something: trailing empties
+  -- are free space for whatever the caller wants to put there
+  local last = 1
+  while i <= n do
+    local y = y0 + (i - 1) * 8
+    local fits = (y + 16) <= BOTTOM_CHROME_Y
+    local here = list[i]
+    local below = list[i + 1]
+    if isEmptySlot(here) then
+      -- gap above a filled row: that row moves up and takes both
+      if i < n and not isEmptySlot(below) then
+        local text, blink = fieldText(below)
+        local big, size = nil, nil
+        if fits then big, size = grown(below, text, room) end
+        lcd.drawText(x, size and y or (y + 8), big or text, (size or SMLSIZE) + (blink and BLINK or 0))
+        i = i + 2
+        last = i
+      else
+        i = i + 1
+      end
+    else
+      local text, blink = fieldText(here)
+      local big, size = nil, nil
+      if i < n and isEmptySlot(below) and fits then big, size = grown(here, text, room) end
+      lcd.drawText(x, y, big or text, (size or SMLSIZE) + (blink and BLINK or 0))
+      i = i + (size and 2 or 1)
+      last = i
     end
   end
+  return y0 + (last - 1) * 8
 end
 
 -- Large top-left readout (DBLSIZE number + unit tag)
@@ -721,29 +802,38 @@ local function drawFly()
   local num, unit = big()
   lcd.drawText(0, 10, num, DBLSIZE)
   lcd.drawText(44, 10, unit, SMLSIZE)
-  -- left rows
-  drawSlots(CFG.left, 0, 27, 3)
-  local t4 = fieldText(CFG.left[4])
-  if t4 then lcd.drawText(0, 49, t4, SMLSIZE) end -- last row hugs the strip
-  -- center panel: horizon or two more data columns
+  -- center panel geometry decides how wide the left column may grow
   local hx = wide and 62 or 50
   local hw = wide and 64 or 42
+  -- left rows
+  drawSlots(CFG.left, 0, 27, 3, hx - 2)
+  local t4 = fieldText(CFG.left[4])
+  if t4 then lcd.drawText(0, 49, t4, SMLSIZE) end -- last row hugs the strip
   if CFG.center == 'slots' then
-    drawSlots(CFG.cslots, hx, 9, 5)
+    local half = math.floor(hw / 2)
+    drawSlots(CFG.cslots, hx, 9, 5, half)
     local c2 = {}
     for i = 6, 10 do c2[#c2 + 1] = CFG.cslots[i] end
-    drawSlots(c2, hx + math.floor(hw / 2) + 2, 9)
+    drawSlots(c2, hx + half + 2, 9, nil, half)
   else
     drawHorizon(hx, 9, hw, 46)
   end
   -- right column(s)
   local rx = hx + hw + 4
-  drawSlots(CFG.slots, rx, 9)
+  local freeY = drawSlots(CFG.slots, rx, 9, nil, wide and 44 or (LCD_W - rx))
+  -- the home arrow owns whatever height the column did not use: emptying
+  -- slots makes it bigger rather than leaving a hole
   if V.homeDistM > 0 then
-    drawArrow(rx + 8, 52, 5, V.homeBearingDeg - V.yawDeg)
+    local band = BOTTOM_CHROME_Y - freeY
+    if band >= 14 then
+      local r = math.min(math.floor(band / 2) - 1, 16)
+      drawArrow(rx + 10, freeY + math.floor(band / 2), r, V.homeBearingDeg - V.yawDeg)
+    else
+      drawArrow(rx + 8, 52, 5, V.homeBearingDeg - V.yawDeg)
+    end
   end
   if wide then
-    drawSlots(CFG.wslots, rx + 46, 9)
+    drawSlots(CFG.wslots, rx + 46, 9, nil, LCD_W - (rx + 46))
   end
 end
 

@@ -6,6 +6,12 @@ import type { EdgeTxScanResult } from '../../../shared/edgetx-types';
 import logoUrl from './hud-logo.png';
 import logoLightUrl from './hud-logo-light.png';
 import { MapContainer, TileLayer, Circle, Marker, useMap, useMapEvents } from 'react-leaflet';
+import {
+  BatteryMedium, Zap, Fuel, MoveVertical, MoveRight, TrendingUp, Satellite, Home,
+  Wind, Crosshair, Ruler, Thermometer, MapPin, SlidersHorizontal, Compass, X, BookOpen,
+  type LucideIcon,
+} from 'lucide-react';
+import { BwGuide } from './BwGuide';
 import 'leaflet/dist/leaflet.css';
 import { SmoothWheelZoom } from '../map/SmoothWheelZoom';
 import { MapSearchControl } from '../map/MapSearchControl';
@@ -996,50 +1002,203 @@ const BW_INK = '#242b1f';
 const BW_GLASS = '#c9d2bd';
 const BW_FIELD_OPTIONS = Object.entries(BW_FIELDS).map(([v, f]) => [v, f.label] as [string, string]);
 
-/** MODULE-scope (stable identity): defined inside BwPreview these would be
- *  a new component type on every telemetry re-render, remounting the
- *  <select> and instantly closing its just-opened dropdown. */
-function BwPick({ s, SML, x, y, w, value, options, onPick }: {
-  s: number; SML: number; x: number; y: number; w: number; value: string;
-  options: Array<[string, string]>; onPick: (v: string) => void;
-}) {
-  return (
-    <select
-      value={value}
-      onClick={(e) => e.stopPropagation()}
-      onChange={(e) => onPick(e.target.value)}
-      style={{
-        position: 'absolute', left: x * s, top: y * s - 2, width: w * s,
-        fontSize: SML - 2, fontFamily: BW_MONO, fontWeight: 700, color: BW_INK,
-        background: 'rgba(255,255,255,0.6)', border: `1px dashed ${BW_INK}`, borderRadius: 2,
-      }}
-    >
-      {options.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
-    </select>
-  );
-}
+/** Icon and colour per slot field, so the picker reads at a glance. */
+const BW_FIELD_ICONS: Record<string, { Icon: LucideIcon; color: string }> = {
+  volt: { Icon: BatteryMedium, color: 'text-emerald-400' },
+  cellv: { Icon: BatteryMedium, color: 'text-emerald-400' },
+  pct: { Icon: BatteryMedium, color: 'text-emerald-400' },
+  cellpct: { Icon: BatteryMedium, color: 'text-emerald-400' },
+  curr: { Icon: Zap, color: 'text-amber-400' },
+  mah: { Icon: Fuel, color: 'text-amber-400' },
+  alt: { Icon: MoveVertical, color: 'text-sky-400' },
+  spd: { Icon: MoveRight, color: 'text-sky-400' },
+  vspd: { Icon: TrendingUp, color: 'text-sky-400' },
+  sat: { Icon: Satellite, color: 'text-teal-400' },
+  home: { Icon: Home, color: 'text-orange-400' },
+  wind: { Icon: Wind, color: 'text-cyan-400' },
+  hdop: { Icon: Crosshair, color: 'text-teal-400' },
+  rng: { Icon: Ruler, color: 'text-violet-400' },
+  imu: { Icon: Thermometer, color: 'text-rose-400' },
+  wp: { Icon: MapPin, color: 'text-blue-400' },
+  thr: { Icon: SlidersHorizontal, color: 'text-yellow-400' },
+  yaw: { Icon: Compass, color: 'text-purple-400' },
+  none: { Icon: X, color: 'text-content-secondary' },
+};
 
-function BwSlotRows({ s, SML, list, listKey, x, count, i0 = 0, editing, data, batt, onSet }: {
-  s: number; SML: number; list: string[]; listKey: 'left' | 'cslots' | 'slots' | 'wslots';
-  x: number; count: number; i0?: number; editing: boolean;
-  data: PreviewData; batt: BwBatt; onSet: (i: number, v: string) => void;
+/**
+ * Field picker: opens where the slot is, one click to assign.
+ *
+ * Replaces a row of <select>s. On a 128x64 canvas the slots are small, so
+ * the grid is an icon per field rather than a dropdown you have to read
+ * item by item, and "Empty" is a tile like any other.
+ */
+function BwFieldPicker({ x, y, value, options, onPick, onClose }: {
+  x: number; y: number; value: string;
+  options: Array<[string, string]>; onPick: (v: string) => void; onClose: () => void;
 }) {
   return (
     <>
-      {Array.from({ length: count }, (_, i) => {
-        const id = list[i0 + i] ?? 'none';
-        const y = (listKey === 'left' ? 27 : 9) + i * 8;
-        return editing ? (
-          <BwPick key={i} s={s} SML={SML} x={x} y={y} w={42} value={id}
-            options={BW_FIELD_OPTIONS} onPick={(v) => onSet(i0 + i, v)} />
-        ) : (
-          <div key={i} style={{
-            position: 'absolute', left: x * s, top: (listKey === 'left' && i === 3 ? 49 : y) * s,
-            fontSize: SML, lineHeight: 1, fontFamily: BW_MONO, fontWeight: 700,
-            color: BW_INK, whiteSpace: 'nowrap',
-          }}>{BW_FIELDS[id]?.fmt(data, batt) ?? ''}</div>
-        );
-      })}
+      <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); onClose(); }} />
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ position: 'absolute', left: x, top: y }}
+        className="z-50 w-56 p-2 rounded-lg bg-surface-raised border border-subtle shadow-xl"
+      >
+        <div className="grid grid-cols-3 gap-1">
+          {options.map(([id, label]) => {
+            const meta = BW_FIELD_ICONS[id] ?? BW_FIELD_ICONS.none!;
+            const active = id === value;
+            return (
+              <button
+                key={id}
+                onClick={() => { onPick(id); onClose(); }}
+                data-tip={label}
+                className={`flex flex-col items-center gap-0.5 px-1 py-1.5 rounded border text-[10px] transition-colors ${active
+                  ? 'bg-teal-500/20 border-teal-500/50 text-teal-200'
+                  : 'bg-surface-input border-subtle text-content-secondary hover:text-content hover:bg-surface-raised'}`}
+              >
+                <meta.Icon className={`w-3.5 h-3.5 ${active ? 'text-teal-300' : meta.color}`} />
+                <span className="truncate w-full text-center">{label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/**
+ * Compact forms used only when a row grows (mirrors COMPACT in ArduDk.lua).
+ * Growing is about using the free HEIGHT, so a value too wide for the bigger
+ * font drops its tag and unit rather than refusing to grow.
+ */
+const BW_COMPACT: Record<string, (d: PreviewData, b: BwBatt) => string> = {
+  volt: (d) => d.voltV.toFixed(1),
+  curr: (d) => d.currA.toFixed(1),
+  mah: (d) => String(d.mahUsed),
+  alt: (d) => String(Math.round(d.altM)),
+  spd: (d) => d.hspd.toFixed(0),
+  vspd: (d) => `${d.vspd >= 0 ? '+' : ''}${d.vspd.toFixed(0)}`,
+  sat: (d) => String(d.sats),
+  home: (d) => String(Math.round(d.homeDist)),
+  wind: (d) => d.windMs.toFixed(0),
+  rng: (d) => d.range.toFixed(1),
+  thr: (d) => String(Math.round(d.throttle)),
+  yaw: (d) => String(Math.round(d.yaw) % 360).padStart(3, '0'),
+  wp: (d) => String(Math.round(d.wpDist)),
+};
+
+const BW_BOTTOM_CHROME_Y = 56;
+
+type BwSize = 'dbl' | 'mid' | null;
+
+function bwFitSize(text: string, room: number): BwSize {
+  if (text.length * 11 <= room) return 'dbl';
+  if (text.length * 8 <= room) return 'mid';
+  return null;
+}
+
+interface BwRow { text: string; y: number; size: BwSize }
+
+/**
+ * Mirrors drawSlots in ArduDk.lua: an empty neighbour is free space, the
+ * surviving row grows into it, and the row after the last drawn one is
+ * handed back so the caller can use the leftover height (the home arrow).
+ * KEEP THE NUMBERS IN SYNC with that function.
+ */
+function bwRows(
+  list: string[], i0: number, count: number, room: number, y0: number,
+  data: PreviewData, batt: BwBatt,
+): { rows: BwRow[]; freeY: number } {
+  const text = (id: string | undefined) => (id ? BW_FIELDS[id]?.fmt(data, batt) ?? '' : '');
+  const empty = (id: string | undefined) => id === undefined || id === 'none' || text(id) === '';
+  const grown = (id: string, full: string): [string, BwSize] => {
+    const direct = bwFitSize(full, room);
+    if (direct) return [full, direct];
+    const short = BW_COMPACT[id]?.(data, batt);
+    if (short) {
+      const size = bwFitSize(short, room);
+      if (size) return [short, size];
+    }
+    return [full, null];
+  };
+
+  const rows: BwRow[] = [];
+  let i = 0;
+  let last = 0;
+  while (i < count) {
+    const here = list[i0 + i];
+    const below = list[i0 + i + 1];
+    const y = y0 + i * 8;
+    const fits = y + 16 <= BW_BOTTOM_CHROME_Y && i + 1 < count;
+    if (empty(here)) {
+      if (i + 1 < count && !empty(below)) {
+        const [t, size] = fits ? grown(below!, text(below)) : [text(below), null as BwSize];
+        rows.push({ text: t, y: size ? y : y + 8, size });
+        i += 2;
+        last = i;
+      } else {
+        i += 1;
+      }
+    } else {
+      const [t, size] = (i + 1 < count && empty(below) && fits)
+        ? grown(here!, text(here))
+        : [text(here), null as BwSize];
+      rows.push({ text: t, y, size });
+      i += size ? 2 : 1;
+      last = i;
+    }
+  }
+  return { rows, freeY: y0 + last * 8 };
+}
+
+function BwSlotRows({ s, SML, list, listKey, x, count, i0 = 0, room, editing, data, batt, onOpen }: {
+  s: number; SML: number; list: string[]; listKey: 'left' | 'cslots' | 'slots' | 'wslots';
+  x: number; count: number; i0?: number; room: number; editing: boolean;
+  data: PreviewData; batt: BwBatt;
+  onOpen: (index: number, xPx: number, yPx: number) => void;
+}) {
+  const y0 = listKey === 'left' ? 27 : 9;
+
+  if (editing) {
+    return (
+      <>
+        {Array.from({ length: count }, (_, i) => {
+          const id = list[i0 + i] ?? 'none';
+          const meta = BW_FIELD_ICONS[id] ?? BW_FIELD_ICONS.none!;
+          return (
+            <button
+              key={i}
+              onClick={(e) => { e.stopPropagation(); onOpen(i0 + i, x * s, (y0 + i * 8 + 9) * s); }}
+              style={{
+                position: 'absolute', left: x * s, top: (y0 + i * 8) * s - 1,
+                width: Math.min(room, 46) * s, height: 8 * s,
+                display: 'flex', alignItems: 'center', gap: 3, padding: '0 3px', overflow: 'hidden',
+                fontSize: Math.max(8, SML - 2), fontFamily: BW_MONO, fontWeight: 700, color: BW_INK,
+                background: 'rgba(255,255,255,0.6)', border: `1px dashed ${BW_INK}`, borderRadius: 2,
+                cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >
+              <meta.Icon style={{ width: SML, height: SML, flexShrink: 0 }} />
+              {BW_FIELDS[id]?.label ?? '(empty)'}
+            </button>
+          );
+        })}
+      </>
+    );
+  }
+
+  const { rows } = bwRows(list, i0, count, room, y0, data, batt);
+  return (
+    <>
+      {rows.map((row, i) => (
+        <div key={i} style={{
+          position: 'absolute', left: x * s, top: row.y * s,
+          fontSize: row.size === 'dbl' ? SML * 2.2 : row.size === 'mid' ? SML * 1.5 : SML,
+          lineHeight: 1, fontFamily: BW_MONO, fontWeight: 700, color: BW_INK, whiteSpace: 'nowrap',
+        }}>{row.text}</div>
+      ))}
     </>
   );
 }
@@ -1072,6 +1231,10 @@ function BwPreview({ mode, data, cfg, screenW, editing, layout, onLayout }: {
   onLayout: (next: BwLayout) => void;
 }) {
   const [page, setPage] = useState(1);
+  // open field picker: which list, which index, and where to draw it
+  const [picker, setPicker] = useState<
+    { key: 'left' | 'cslots' | 'slots' | 'wslots' | 'big'; index: number; x: number; y: number } | null
+  >(null);
   const s = screenW > 150 ? 2 : 3; // 128->384px, 212->424px: fits the column
   const INK = '#242b1f';
   const GLASS = '#c9d2bd';
@@ -1116,6 +1279,14 @@ function BwPreview({ mode, data, cfg, screenW, editing, layout, onLayout }: {
   const sa = Math.sin(roll);
   const homeA = ((data.homeBearing - data.yaw) * Math.PI) / 180;
   const rx = hx + hw + 4;
+  // the home arrow owns the height the right column did not use, same rule
+  // as drawFly in the script
+  const rightRoom = wide ? 44 : screenW - rx;
+  const rightFree = bwRows(layout.slots, 0, 5, rightRoom, 9, data, batt).freeY;
+  const arrowBand = BW_BOTTOM_CHROME_Y - rightFree;
+  const arrowGeom = arrowBand >= 14
+    ? { cx: rx + 10, cy: rightFree + Math.floor(arrowBand / 2), r: Math.min(Math.floor(arrowBand / 2) - 1, 16) }
+    : { cx: rx + 8, cy: 52, r: 5 };
   const [bigNum, bigUnit] = (BW_BIG[layout.big] ?? BW_BIG.volt!).fmt(data, batt);
   const Arrow = ({ cx, cy, r }: { cx: number; cy: number; r: number }) => {
     const tx = (cx + Math.sin(homeA) * r) * s;
@@ -1161,24 +1332,43 @@ function BwPreview({ mode, data, cfg, screenW, editing, layout, onLayout }: {
               </Txt>
               {page === 1 ? (
                 <>
-                  {editing ? (
-                    <BwPick s={s} SML={SML} x={0} y={12} w={46} value={layout.big}
-                      options={Object.entries(BW_BIG).map(([v, b]) => [v, b.label] as [string, string])}
-                      onPick={(v) => onLayout({ ...layout, big: v })} />
-                  ) : (
-                    <>
-                      <Txt x={0} y={10} size={SML * 2.2}>{bigNum}</Txt>
-                      <Txt x={44} y={10}>{bigUnit}</Txt>
-                    </>
+                  <Txt x={0} y={10} size={SML * 2.2}>{bigNum}</Txt>
+                  <Txt x={44} y={10}>{bigUnit}</Txt>
+                  {editing && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setPicker({ key: 'big', index: 0, x: 0, y: 26 * s }); }}
+                      data-tip="Large readout"
+                      style={{
+                        position: 'absolute', left: 0, top: 9 * s, width: 46 * s, height: 17 * s,
+                        background: 'rgba(255,255,255,0.35)', border: `1px dashed ${INK}`,
+                        borderRadius: 2, cursor: 'pointer',
+                      }}
+                    />
                   )}
-                  <BwSlotRows s={s} SML={SML} list={layout.left} listKey="left" x={0} count={4}
-                    editing={editing} data={data} batt={batt} onSet={(i, v) => setList('left', i, v)} />
+                  <BwSlotRows s={s} SML={SML} list={layout.left} listKey="left" x={0} count={3} room={hx - 2}
+                    editing={editing} data={data} batt={batt}
+                    onOpen={(i, px, py) => setPicker({ key: 'left', index: i, x: px, y: py })} />
+                  {editing ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setPicker({ key: 'left', index: 3, x: 0, y: 50 * s }); }}
+                      style={{
+                        position: 'absolute', left: 0, top: 48 * s, width: Math.min(hx - 2, 46) * s, height: 8 * s,
+                        fontSize: Math.max(8, SML - 2), fontFamily: BW_MONO, fontWeight: 700, color: INK,
+                        background: 'rgba(255,255,255,0.6)', border: `1px dashed ${INK}`, borderRadius: 2,
+                        cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden',
+                      }}
+                    >{BW_FIELDS[layout.left[3] ?? 'none']?.label}</button>
+                  ) : (
+                    <Txt x={0} y={49}>{BW_FIELDS[layout.left[3] ?? 'none']?.fmt(data, batt)}</Txt>
+                  )}
                   {layout.center === 'slots' ? (
                     <>
-                      <BwSlotRows s={s} SML={SML} list={layout.cslots} listKey="cslots" x={hx} count={5}
-                        editing={editing} data={data} batt={batt} onSet={(i, v) => setList('cslots', i, v)} />
-                      <BwSlotRows s={s} SML={SML} list={layout.cslots} listKey="cslots" x={hx + hw / 2 + 2} count={5} i0={5}
-                        editing={editing} data={data} batt={batt} onSet={(i, v) => setList('cslots', i, v)} />
+                      <BwSlotRows s={s} SML={SML} list={layout.cslots} listKey="cslots" x={hx} count={5} room={hw / 2}
+                        editing={editing} data={data} batt={batt}
+                        onOpen={(i, px, py) => setPicker({ key: 'cslots', index: i, x: px, y: py })} />
+                      <BwSlotRows s={s} SML={SML} list={layout.cslots} listKey="cslots" x={hx + hw / 2 + 2} count={5} i0={5} room={hw / 2}
+                        editing={editing} data={data} batt={batt}
+                        onOpen={(i, px, py) => setPicker({ key: 'cslots', index: i, x: px, y: py })} />
                     </>
                   ) : (
                     <>
@@ -1196,15 +1386,37 @@ function BwPreview({ mode, data, cfg, screenW, editing, layout, onLayout }: {
                     </>
                   )}
                   {editing && (
-                    <BwPick s={s} SML={SML} x={hx} y={layout.center === 'slots' ? 51 : 22} w={hw} value={layout.center}
-                      options={[['horizon', 'Horizon'], ['slots', 'Data slots']]}
-                      onPick={(v) => onLayout({ ...layout, center: v as BwLayout['center'] })} />
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        position: 'absolute', left: hx * s, top: (layout.center === 'slots' ? 50 : 22) * s,
+                        display: 'flex', gap: 2,
+                      }}
+                    >
+                      {(['horizon', 'slots'] as const).map((mode) => (
+                        <button
+                          key={mode}
+                          onClick={() => onLayout({ ...layout, center: mode })}
+                          style={{
+                            fontSize: Math.max(8, SML - 2), fontFamily: BW_MONO, fontWeight: 700,
+                            padding: '1px 4px', borderRadius: 2, cursor: 'pointer',
+                            border: `1px ${layout.center === mode ? 'solid' : 'dashed'} ${INK}`,
+                            background: layout.center === mode ? INK : 'rgba(255,255,255,0.6)',
+                            color: layout.center === mode ? GLASS : INK,
+                          }}
+                        >{mode === 'horizon' ? 'Horizon' : 'Slots'}</button>
+                      ))}
+                    </div>
                   )}
                   <BwSlotRows s={s} SML={SML} list={layout.slots} listKey="slots" x={rx} count={5}
-                    editing={editing} data={data} batt={batt} onSet={(i, v) => setList('slots', i, v)} />
-                  {!editing && data.homeDist > 0 && <Arrow cx={rx + 8} cy={52} r={5} />}
+                    room={wide ? 44 : screenW - rx}
+                    editing={editing} data={data} batt={batt}
+                    onOpen={(i, px, py) => setPicker({ key: 'slots', index: i, x: px, y: py })} />
+                  {!editing && data.homeDist > 0 && <Arrow {...arrowGeom} />}
                   {wide && <BwSlotRows s={s} SML={SML} list={layout.wslots} listKey="wslots" x={rx + 46} count={5}
-                    editing={editing} data={data} batt={batt} onSet={(i, v) => setList('wslots', i, v)} />}
+                    room={screenW - (rx + 46)}
+                    editing={editing} data={data} batt={batt}
+                    onOpen={(i, px, py) => setPicker({ key: 'wslots', index: i, x: px, y: py })} />}
                 </>
               ) : (
                 <>
@@ -1222,10 +1434,25 @@ function BwPreview({ mode, data, cfg, screenW, editing, layout, onLayout }: {
             </>
           )}
         </div>
+        {picker && (
+          <BwFieldPicker
+            x={Math.min(6 + picker.x, Math.max(6, screenW * s - 210))}
+            y={6 + picker.y}
+            value={picker.key === 'big' ? layout.big : (layout[picker.key][picker.index] ?? 'none')}
+            options={picker.key === 'big'
+              ? Object.entries(BW_BIG).map(([v, b]) => [v, b.label] as [string, string])
+              : BW_FIELD_OPTIONS}
+            onPick={(v) => {
+              if (picker.key === 'big') onLayout({ ...layout, big: v });
+              else setList(picker.key, picker.index, v);
+            }}
+            onClose={() => setPicker(null)}
+          />
+        )}
       </div>
       <p className="mt-1.5 text-[11px] text-content-tertiary" style={{ maxWidth: screenW * s + 12 }}>
-        Page {page}/2, click to flip (rotary or +/- on the radio). Everything between the status strips is an editable slot: the big readout, both side columns, and the center panel (horizon or two more data columns). Voice alerts and the diagnostic ladder work the same as on color radios.
-        <span className="text-amber-400"> Experimental: not yet verified on real monochrome hardware.</span>
+        Page {page}/2, click to flip (rotary or +/- on the radio). Everything between the status strips is an editable slot: the big readout, both side columns, and the center panel (horizon or two more data columns).
+        {editing && ' Click any slot to pick what it shows; set one to (empty) and its neighbour grows into the space.'}
       </p>
     </div>
   );
@@ -1289,6 +1516,7 @@ export function RadioHudView() {
     setPages((prev) => prev.map((p, i) => (i === activePage ? next : p)));
   }, [activePage]);
   const [editing, setEditing] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [addPageOpen, setAddPageOpen] = useState(false);
   const addPage = (layout: TileDef[]) => {
     setPages((prev) => [...prev, layout]);
@@ -1718,12 +1946,24 @@ export function RadioHudView() {
                 </button>
               )}
               {isBw && (
-                <span
-                  data-tip="B&W support has not been flown on real hardware yet - fonts and spacing may need a nudge after the first field test. Please report what you see."
-                  className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/40"
+                <button
+                  onClick={() => setGuideOpen(true)}
+                  data-tip="How the HUD works on a monochrome radio: installing, opening it, reading it"
+                  className="flex items-center gap-1.5 px-3 py-1 text-xs rounded border bg-surface-input text-content-secondary border-subtle hover:text-content transition-colors"
                 >
-                  Experimental
-                </span>
+                  <BookOpen className="w-3.5 h-3.5 text-teal-400" />
+                  Guide
+                </button>
+              )}
+              {isBw && (
+                <button
+                  onClick={() => setGuideOpen(true)}
+                  data-tip="How the HUD works on a monochrome radio: installing it, opening it, reading it"
+                  className="flex items-center gap-1.5 px-3 py-1 text-xs rounded border bg-surface-input text-content-secondary border-subtle hover:text-content transition-colors"
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-teal-400" />
+                  Guide
+                </button>
               )}
               <button
                 onClick={() => setEditing(!editing)}
@@ -2054,6 +2294,7 @@ export function RadioHudView() {
           Apply to radio
         </button>
       </div>
+      {guideOpen && <BwGuide onClose={() => setGuideOpen(false)} />}
     </div>
   );
 }

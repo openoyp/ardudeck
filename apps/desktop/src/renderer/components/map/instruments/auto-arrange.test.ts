@@ -4,6 +4,7 @@ import {
   SECTOR_COLS,
   SECTOR_ROWS,
   computeArrangement,
+  groupSemantics,
   sectorIndexOf,
   sectorScore,
   semanticsOf,
@@ -173,5 +174,29 @@ describe('toAnchorPayload', () => {
     expect(a.ay).toBe('middle');
     expect(a.dx).toBe(500 + 50 - PANEL.w / 2);
     expect(a.dy).toBe(380 + 30 - PANEL.h / 2);
+  });
+});
+
+describe('docked groups in arrangement', () => {
+  it('groupSemantics takes the strongest member and drops the formation slot', () => {
+    const sem = groupSemantics(['speed', 'battery']);
+    expect(sem.priority).toBe(85);
+    expect(sem.role).toBe('power');
+    expect(sem.formationSide).toBeUndefined();
+  });
+
+  it('groupSemantics falls back for unknown members', () => {
+    expect(groupSemantics(['nope']).priority).toBe(30);
+  });
+
+  it('an item-level sem override drives placement priority', () => {
+    const items: ArrangeItem[] = [
+      { id: 'group:d1', size: { w: 220, h: 120 }, variant: 'group', sem: groupSemantics(['battery', 'gps']) },
+      { id: 'mission', size: { w: 208, h: 46 }, variant: 'analog' },
+    ];
+    const r = computeArrangement(items, PANEL, []);
+    expect(r.placements.has('group:d1')).toBe(true);
+    expect(r.placements.has('mission')).toBe(true);
+    expect(r.cascaded).toEqual([]);
   });
 });

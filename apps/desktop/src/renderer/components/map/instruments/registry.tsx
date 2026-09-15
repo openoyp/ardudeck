@@ -37,6 +37,7 @@ import { FlightControlInstrument } from './FlightControlInstrument';
 import { CompactReadout, type ReadoutSource } from './CompactReadout';
 import { PANEL_WIDTH } from './stripMetrics';
 import { useLinkUp, useHeartbeatAgeMs, HEARTBEAT_STALE_MS } from './useLinkUp';
+import { useInDock } from './dock-context';
 import { LinkInstrument } from './LinkInstrument';
 import { useTelemetryFresh } from './useTelemetryFresh';
 import { RtkInstrument } from './RtkInstrument';
@@ -61,6 +62,22 @@ export interface MapInstrumentDef {
   /** Extra display forms (strip/cell/inline) offered beside analog/numeric.
    * Instruments without any behave exactly as before. */
   variants?: MapInstrumentVariant[];
+  /** Renders as a round gauge in analog mode; a docked group holding one
+   * becomes a tray instead of a merged card. */
+  round?: boolean;
+}
+
+/** Component for the persisted display mode; mirrors InstrumentSlot's pick. */
+export function resolveInstrumentComponent(def: MapInstrumentDef, mode: string): () => JSX.Element {
+  const variant = def.variants?.find((v) => v.id === mode);
+  if (variant) return variant.Component;
+  if (mode === 'numeric' && def.NumericComponent) return def.NumericComponent;
+  return def.Component;
+}
+
+/** True when the instrument shows its round-gauge face in the given mode. */
+export function isRoundInMode(def: MapInstrumentDef, mode: string): boolean {
+  return def.round === true && mode === 'analog';
 }
 
 /** The three compact-readout treatments every wired scalar source offers. */
@@ -360,9 +377,17 @@ function FlightDataInstrument(): JSX.Element {
   const homeStats = home && from
     ? { distance: haversineMeters(from[0], from[1], home[0], home[1]), bearing: bearingDeg(from[0], from[1], home[0], home[1]) }
     : null;
+  const inDock = useInDock();
 
   return (
-    <div className="rounded-lg px-3 py-2 text-xs space-y-1 shadow-xl font-mono" style={{ background: GAUGE_COLORS.face, border: `1.5px solid ${GAUGE_COLORS.bezelEdge}`, color: GAUGE_COLORS.text, width: PANEL_WIDTH }}>
+    <div
+      className={`px-3 py-2 text-xs space-y-1 font-mono ${inDock ? '' : 'rounded-lg shadow-xl'}`}
+      style={{
+        ...(inDock ? {} : { background: GAUGE_COLORS.face, border: `1.5px solid ${GAUGE_COLORS.bezelEdge}` }),
+        color: GAUGE_COLORS.text,
+        width: PANEL_WIDTH,
+      }}
+    >
       <div className="flex justify-between">
         <span className="text-[var(--gauge-text-dim)]">MSL</span>
         <span className="font-mono text-[var(--gauge-text)]">{formatAltitudeFromMeters(msl, altitudeUnit)}</span>
@@ -526,10 +551,14 @@ function NumericReadout({
   sub?: string;
   valueClassName?: string;
 }): JSX.Element {
+  const inDock = useInDock();
   return (
     <div
-      className="rounded-lg px-3 pt-1.5 pb-2 min-w-[100px] shadow-xl select-none"
-      style={{ background: GAUGE_COLORS.face, border: `1.5px solid ${GAUGE_COLORS.bezelEdge}`, color: GAUGE_COLORS.text }}
+      className={`px-3 pt-1.5 pb-2 min-w-[100px] select-none ${inDock ? '' : 'rounded-lg shadow-xl'}`}
+      style={{
+        ...(inDock ? {} : { background: GAUGE_COLORS.face, border: `1.5px solid ${GAUGE_COLORS.bezelEdge}` }),
+        color: GAUGE_COLORS.text,
+      }}
     >
       <div className="text-[9px] font-semibold tracking-[0.14em] leading-none text-[var(--gauge-text-dim)]">{label}</div>
       <div className="mt-1.5 flex items-baseline gap-1 whitespace-nowrap">
@@ -901,15 +930,15 @@ function AttitudeBallInstrument(): JSX.Element {
 }
 
 export const MAP_INSTRUMENTS: MapInstrumentDef[] = [
-  { id: 'attitude', label: 'Attitude ball', defaultClassName: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000]', defaultVisible: true, Component: AttitudeBallInstrument },
+  { id: 'attitude', round: true, label: 'Attitude ball', defaultClassName: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000]', defaultVisible: true, Component: AttitudeBallInstrument },
   { id: 'flight-data', label: 'Flight data', defaultClassName: 'absolute bottom-2 left-2 z-[1000]', defaultVisible: true, Component: FlightDataInstrument },
-  { id: 'battery', label: 'Battery', defaultClassName: 'absolute left-3 top-16 z-[1000]', defaultVisible: false, Component: BatteryInstrument, NumericComponent: BatteryNumeric, variants: compactVariants('battery') },
-  { id: 'gps', label: 'GPS', defaultClassName: 'absolute left-3 top-[176px] z-[1000]', defaultVisible: false, Component: GpsInstrument, NumericComponent: GpsNumeric, variants: compactVariants('gps') },
-  { id: 'altitude', label: 'Altitude', defaultClassName: 'absolute left-3 top-[288px] z-[1000]', defaultVisible: false, Component: AltitudeInstrument, NumericComponent: AltitudeNumeric, variants: compactVariants('altitude') },
-  { id: 'speed', label: 'Speed', defaultClassName: 'absolute left-3 top-[400px] z-[1000]', defaultVisible: false, Component: SpeedInstrument, NumericComponent: SpeedNumeric, variants: compactVariants('speed') },
-  { id: 'heading', label: 'Compass (HDG)', defaultClassName: 'absolute bottom-3 left-[calc(50%+88px)] z-[1000]', defaultVisible: true, Component: HeadingInstrument, NumericComponent: HeadingNumeric, variants: compactVariants('heading') },
-  { id: 'vsi', label: 'VSI', defaultClassName: 'absolute left-3 top-[512px] z-[1000]', defaultVisible: false, Component: VsiInstrument, NumericComponent: VsiNumeric, variants: compactVariants('vsi') },
-  { id: 'home', label: 'Home', defaultClassName: 'absolute left-3 top-[624px] z-[1000]', defaultVisible: false, Component: HomeInstrument, NumericComponent: HomeNumeric, variants: compactVariants('home') },
+  { id: 'battery', round: true, label: 'Battery', defaultClassName: 'absolute left-3 top-16 z-[1000]', defaultVisible: false, Component: BatteryInstrument, NumericComponent: BatteryNumeric, variants: compactVariants('battery') },
+  { id: 'gps', round: true, label: 'GPS', defaultClassName: 'absolute left-3 top-[176px] z-[1000]', defaultVisible: false, Component: GpsInstrument, NumericComponent: GpsNumeric, variants: compactVariants('gps') },
+  { id: 'altitude', round: true, label: 'Altitude', defaultClassName: 'absolute left-3 top-[288px] z-[1000]', defaultVisible: false, Component: AltitudeInstrument, NumericComponent: AltitudeNumeric, variants: compactVariants('altitude') },
+  { id: 'speed', round: true, label: 'Speed', defaultClassName: 'absolute left-3 top-[400px] z-[1000]', defaultVisible: false, Component: SpeedInstrument, NumericComponent: SpeedNumeric, variants: compactVariants('speed') },
+  { id: 'heading', round: true, label: 'Compass (HDG)', defaultClassName: 'absolute bottom-3 left-[calc(50%+88px)] z-[1000]', defaultVisible: true, Component: HeadingInstrument, NumericComponent: HeadingNumeric, variants: compactVariants('heading') },
+  { id: 'vsi', round: true, label: 'VSI', defaultClassName: 'absolute left-3 top-[512px] z-[1000]', defaultVisible: false, Component: VsiInstrument, NumericComponent: VsiNumeric, variants: compactVariants('vsi') },
+  { id: 'home', round: true, label: 'Home', defaultClassName: 'absolute left-3 top-[624px] z-[1000]', defaultVisible: false, Component: HomeInstrument, NumericComponent: HomeNumeric, variants: compactVariants('home') },
   // Strips stack in a second column beside the left-edge gauges (gauge is
   // 104px wide at left-3, so 124px clears it) under the Instruments button.
   { id: 'flight-mode', label: 'Flight mode', defaultClassName: 'absolute left-[124px] top-16 z-[1000]', defaultVisible: false, Component: FlightModeInstrument },

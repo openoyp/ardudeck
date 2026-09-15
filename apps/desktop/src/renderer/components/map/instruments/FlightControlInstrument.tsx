@@ -46,6 +46,7 @@ import {
 import { useModeRequest } from '../../../hooks/useModeRequest';
 import { getModeCategory } from '../tactical-icon-pool';
 import { GAUGE_COLORS } from './RoundGauge';
+import { useInDock } from './dock-context';
 
 const PICKER_WIDTH = 188;
 
@@ -66,6 +67,7 @@ function categoryColor(modeName: string): string {
 }
 
 export function FlightControlInstrument(): JSX.Element {
+  const inDock = useInDock();
   const connected = useInstrumentLinkUp();
   const flight = useTelemetryStore((s) => s.flight);
   const connectionState = useConnectionStore((s) => s.connectionState);
@@ -276,8 +278,11 @@ export function FlightControlInstrument(): JSX.Element {
 
   return (
     <div
-      className="rounded-lg px-3 pt-1.5 pb-2 shadow-xl select-none min-w-[248px]"
-      style={{ background: GAUGE_COLORS.face, border: `1.5px solid ${GAUGE_COLORS.bezelEdge}`, color: GAUGE_COLORS.text }}
+      className={`px-3 pt-1.5 pb-2 select-none min-w-[248px] ${inDock ? '' : 'rounded-lg shadow-xl'}`}
+      style={{
+        ...(inDock ? {} : { background: GAUGE_COLORS.face, border: `1.5px solid ${GAUGE_COLORS.bezelEdge}` }),
+        color: GAUGE_COLORS.text,
+      }}
     >
       <div className="flex items-center">
         <span className="text-[9px] font-semibold tracking-[0.14em] leading-none text-[var(--gauge-text-dim)]">FLIGHT CONTROL</span>
