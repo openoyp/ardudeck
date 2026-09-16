@@ -66,7 +66,11 @@ function categoryColor(modeName: string): string {
     : GAUGE_COLORS.text;
 }
 
-export function FlightControlInstrument(): JSX.Element {
+/** Mobile-parity layouts, not sizes: compact keeps the flight-critical trio
+ * (arm/mode/abort) in one row, bar just arm and mode. */
+export type FlightControlVariant = 'full' | 'compact' | 'bar';
+
+export function FlightControlInstrument({ variant = 'full' }: { variant?: FlightControlVariant } = {}): JSX.Element {
   const inDock = useInDock();
   const connected = useInstrumentLinkUp();
   const flight = useTelemetryStore((s) => s.flight);
@@ -278,13 +282,13 @@ export function FlightControlInstrument(): JSX.Element {
 
   return (
     <div
-      className={`px-3 pt-1.5 pb-2 select-none min-w-[248px] ${inDock ? '' : 'rounded-lg shadow-xl'}`}
+      className={`select-none ${variant === 'full' ? 'px-3 pt-1.5 pb-2 min-w-[248px]' : variant === 'compact' ? 'p-2 min-w-[218px]' : 'p-2 min-w-[176px]'} ${inDock ? '' : 'rounded-lg shadow-xl'}`}
       style={{
         ...(inDock ? {} : { background: GAUGE_COLORS.face, border: `1.5px solid ${GAUGE_COLORS.bezelEdge}` }),
         color: GAUGE_COLORS.text,
       }}
     >
-      <div className="flex items-center">
+      {variant === 'full' && <div className="flex items-center">
         <span className="text-[9px] font-semibold tracking-[0.14em] leading-none text-[var(--gauge-text-dim)]">FLIGHT CONTROL</span>
         <span
           className="ml-auto text-[8px] font-semibold tracking-wider px-1.5 py-[3px] rounded-full leading-none"
@@ -296,9 +300,9 @@ export function FlightControlInstrument(): JSX.Element {
         >
           {!connected ? 'NO LINK' : flight.armed ? 'ARMED' : 'DISARMED'}
         </span>
-      </div>
+      </div>}
 
-      <div className="mt-1.5 flex items-stretch gap-1.5">
+      <div className={(variant === 'full' ? 'mt-1.5 ' : '') + 'flex items-stretch gap-1.5'}>
         <button
           type="button"
           onClick={onArmClick}
@@ -334,9 +338,21 @@ export function FlightControlInstrument(): JSX.Element {
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
+        {variant === 'compact' && (
+          <button
+            type="button"
+            onClick={() => mode.requestMode(missionModes.abort)}
+            disabled={!connected}
+            data-tip={`Abort to ${missionModes.abortLabel}`}
+            className={btnBase}
+            style={{ color: GAUGE_COLORS.red, border: '1px solid rgba(248,113,113,0.5)' }}
+          >
+            {missionModes.abortLabel.toUpperCase()}
+          </button>
+        )}
       </div>
 
-      <div className="mt-1.5 flex items-stretch gap-1.5">
+      {variant === 'full' && <div className="mt-1.5 flex items-stretch gap-1.5">
         {capabilities.takeoff.supported && (
           <button
             type="button"
@@ -450,7 +466,7 @@ export function FlightControlInstrument(): JSX.Element {
             </button>
           </>
         )}
-      </div>
+      </div>}
 
       {statusMsg && (
         <div

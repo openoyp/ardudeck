@@ -164,7 +164,8 @@ const magCalSuccesses = new Set<number>();
 // compass in the mask converges.
 const magCalPcts = new Map<number, number>();
 
-// Per-compass fitness + orientation, keyed by 1-based compass number. Sourced
+// Per-compass fitness + orientation, keyed by the 0-based compass instance
+// (same numbering as MAG_CAL_REPORT's compass_id and AP's "Mag(N)"). Sourced
 // from MAG_CAL_REPORT and, more reliably on FCs that don't deliver 192, the
 // "Mag(N) ... orientation: X <fitness>" STATUSTEXT. Surfaced on completion so
 // the UI can flag a poor fit instead of a bare "success".

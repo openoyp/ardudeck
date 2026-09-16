@@ -64,8 +64,8 @@ describe('compass calibration command', () => {
       success: true,
       rebootRequired: true,
       data: { compassResults: [
-        { compass: 1, fitness: 8.2, orientation: null },
-        { compass: 2, fitness: 9.1, orientation: null },
+        { compass: 0, fitness: 8.2, orientation: null },
+        { compass: 1, fitness: 9.1, orientation: null },
       ] },
     }]);
   });

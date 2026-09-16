@@ -1278,6 +1278,56 @@ function TelemetryViewportSync() {
   return null;
 }
 
+// The split-view layout flow (mobile FPV parity): ask on first entry, then
+// follow the remembered choice.
+const SPLIT_LAYOUT_MODE_KEY = 'map-split-layout-mode'; // ask | split | off
+const SPLIT_LAYOUT_SOURCE_KEY = 'map-split-layout-source'; // preset | custom
+const SPLIT_LAYOUT_CUSTOM_KEY = 'map-split-layout-custom'; // captured snapshot
+
+function resolveSplitProfile() {
+  const store = useMapInstrumentsStore.getState();
+  const savedNames = Object.keys(store.savedLayouts);
+  const savedName =
+    savedNames.find((n) => n.trim().toLowerCase() === 'split') ??
+    savedNames.find((n) => n.trim().toLowerCase().includes('split'));
+  return savedName
+    ? store.savedLayouts[savedName]!
+    : PRESET_INSTRUMENT_LAYOUTS.find((p) => p.name === 'Split cockpit')?.layout ?? null;
+}
+
+/** First-entry prompt for the in-map split: pick the split layout treatment,
+ * optionally remembering it (mirrors mobile's camera-view prompt). */
+function SplitLayoutPrompt({ onChoose }: { onChoose: (action: 'preset' | 'current' | 'keep', remember: boolean) => void }) {
+  const [remember, setRemember] = useState(false);
+  const opt = (title: string, sub: string, action: 'preset' | 'current' | 'keep') => (
+    <button
+      type="button"
+      onClick={() => onChoose(action, remember)}
+      className="w-full text-left px-3.5 py-2.5 rounded-lg border border-default hover:bg-surface-raised transition-colors"
+    >
+      <div className="text-sm font-medium text-content">{title}</div>
+      <div className="text-xs text-content-tertiary">{sub}</div>
+    </button>
+  );
+  return (
+    <div className="absolute inset-0 z-[1500] flex items-center justify-center bg-black/40" onClick={() => onChoose('keep', false)}>
+      <div className="w-[390px] rounded-xl bg-surface-solid border border-strong shadow-2xl p-4" onClick={(e) => e.stopPropagation()}>
+        <div className="text-sm font-semibold text-content">Split view layout</div>
+        <div className="mt-0.5 text-xs text-content-secondary">Switch the instruments to a layout sized for the half-width map?</div>
+        <div className="mt-3 space-y-2">
+          {opt('Use split preset', 'The split cockpit layout (a saved layout named "split" wins)', 'preset')}
+          {opt('Use my current layout', 'Keep what is on screen as the split layout', 'current')}
+          {opt('Keep current, do not switch', 'Leave the layout as it is', 'keep')}
+        </div>
+        <label className="mt-3 flex items-center gap-2 text-xs text-content-secondary cursor-pointer select-none">
+          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="accent-blue-600" />
+          Remember my choice
+        </label>
+      </div>
+    </div>
+  );
+}
+
 // ─── 3D Telemetry Map (wraps Mission3DPanel with HUD overlays) ───────────────
 
 const TelemetryMap3D = React.memo(function TelemetryMap3D() {
@@ -2511,10 +2561,12 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
   // (invalidateSize) or it paints grey tiles.
   const splitTarget = useMapSplitStore((s) => s.target);
 
-  // Opening the split swaps the cockpit to a compact profile sized for a
-  // half-width map (a user-saved layout named "Split" wins over the built-in
-  // preset); closing it restores the exact pre-split arrangement.
+  // Opening the split swaps the cockpit to a profile sized for a half-width
+  // map. First time it ASKS (preset / current / keep, with remember), after
+  // that it follows the remembered choice; closing restores the pre-split
+  // arrangement exactly.
   const prevSplitRef = useRef<string | null>(null);
+  const [splitPrompt, setSplitPrompt] = useState(false);
   useEffect(() => {
     const wasSplit = prevSplitRef.current !== null;
     const isSplit = splitTarget !== null;
@@ -2522,18 +2574,45 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
     if (isSplit === wasSplit) return;
     const store = useMapInstrumentsStore.getState();
     if (isSplit) {
-      const savedNames = Object.keys(store.savedLayouts);
-      const savedName =
-        savedNames.find((n) => n.trim().toLowerCase() === 'split') ??
-        savedNames.find((n) => n.trim().toLowerCase().includes('split'));
-      const profile = savedName
-        ? store.savedLayouts[savedName]!
-        : PRESET_INSTRUMENT_LAYOUTS.find((p) => p.name === 'Split cockpit')?.layout;
-      if (profile) store.enterSplitProfile(profile);
+      const mode = localStorage.getItem(SPLIT_LAYOUT_MODE_KEY) ?? 'ask';
+      if (mode === 'off') return;
+      if (mode === 'split') {
+        let profile: ReturnType<typeof resolveSplitProfile> = null;
+        if ((localStorage.getItem(SPLIT_LAYOUT_SOURCE_KEY) ?? 'preset') === 'custom') {
+          try { profile = JSON.parse(localStorage.getItem(SPLIT_LAYOUT_CUSTOM_KEY) ?? '') as never; } catch { profile = null; }
+        }
+        profile ??= resolveSplitProfile();
+        if (profile) store.enterSplitProfile(profile);
+        return;
+      }
+      setSplitPrompt(true);
     } else {
+      setSplitPrompt(false);
       store.exitSplitProfile();
     }
   }, [splitTarget]);
+  const onSplitPromptChoice = useCallback((action: 'preset' | 'current' | 'keep', remember: boolean) => {
+    setSplitPrompt(false);
+    const store = useMapInstrumentsStore.getState();
+    if (action === 'preset') {
+      const profile = resolveSplitProfile();
+      if (profile) store.enterSplitProfile(profile);
+      if (remember) {
+        localStorage.setItem(SPLIT_LAYOUT_MODE_KEY, 'split');
+        localStorage.setItem(SPLIT_LAYOUT_SOURCE_KEY, 'preset');
+      }
+    } else if (action === 'current') {
+      // The on-screen layout BECOMES the split layout; applying it back is a
+      // visual no-op but arms the exit restore like any other split profile.
+      const current = store.captureLayoutSnapshot();
+      try { localStorage.setItem(SPLIT_LAYOUT_CUSTOM_KEY, JSON.stringify(current)); } catch { /* full/blocked */ }
+      localStorage.setItem(SPLIT_LAYOUT_SOURCE_KEY, 'custom');
+      store.enterSplitProfile(current);
+      if (remember) localStorage.setItem(SPLIT_LAYOUT_MODE_KEY, 'split');
+    } else if (remember) {
+      localStorage.setItem(SPLIT_LAYOUT_MODE_KEY, 'off');
+    }
+  }, []);
   const splitRatio = useMapSplitStore((s) => s.ratio);
   const setSplitRatio = useMapSplitStore((s) => s.setRatio);
   const clearSplit = useMapSplitStore((s) => s.clear);
@@ -2663,6 +2742,7 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
           surface to its right with a draggable divider. The floating overlays
           above (toolbars, instruments) are siblings of this row, so they stay on
           top of the WHOLE panel and span BOTH halves. */}
+      {splitPrompt && <SplitLayoutPrompt onChoose={onSplitPromptChoice} />}
       <div ref={splitRowRef} className="flex-1 min-h-0 flex">
         <div
           className="relative h-full min-w-0"

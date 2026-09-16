@@ -15,6 +15,10 @@ export function variantGlyph(id: string): JSX.Element {
       return (<svg {...p}><rect x="5.5" y="3.5" width="9" height="13" rx="2" stroke="currentColor" strokeWidth="1.3" /><path d="M7.8 13.5H12.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>);
     case 'inline':
       return (<svg {...p}><rect x="3" y="8" width="14" height="4" rx="2" stroke="currentColor" strokeWidth="1.2" /><rect x="3.9" y="8.9" width="7" height="2.2" rx="1.1" fill="currentColor" /></svg>);
+    case 'compact':
+      return (<svg {...p}><rect x="3" y="7" width="4.2" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.2" /><rect x="8.2" y="7" width="4.2" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.2" /><rect x="13.4" y="7" width="3.6" height="6" rx="1.2" fill="currentColor" /></svg>);
+    case 'bar':
+      return (<svg {...p}><rect x="3.5" y="7" width="5.5" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.2" /><rect x="10.5" y="7" width="6" height="6" rx="1.2" fill="currentColor" /></svg>);
     default:
       return (<svg {...p}><circle cx="10" cy="10" r="2.6" fill="currentColor" /></svg>);
   }
