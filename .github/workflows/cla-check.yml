@@ -1,0 +1,82 @@
+name: CLA PR Check
+
+# pull_request_target, not pull_request: fork PRs get a read-only token on
+# pull_request, so the bot could never comment on exactly the PRs this is
+# for. Safe here because the workflow never checks out or runs PR code.
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  cla-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR body for CLA agreement line
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const required = "I have read and agree to the ArduDeck Contributor License Agreement (CLA.md).";
+            const pr = context.payload.pull_request;
+
+            // The maintainer's own PRs don't need the CLA.
+            if (pr.author_association === "OWNER") {
+              core.setOutput("has_cla", "true");
+              return;
+            }
+
+            const body = pr.body || "";
+            const has = body.includes(required);
+
+            core.setOutput("has_cla", has ? "true" : "false");
+            core.setOutput("required_text", required);
+
+            const marker = "<!-- cla-check-comment -->";
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = pr.number;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo, issue_number, per_page: 100
+            });
+
+            const existing = comments.find(c =>
+              c.user?.type === "Bot" && c.body?.includes(marker)
+            );
+
+            if (!has) {
+              const message = `${marker}
+In order for this PR to be reviewed, please follow the contributing rules and accept the agreement.
+
+Please add this exact line to the PR description:
+
+\`${required}\``;
+
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner, repo, comment_id: existing.id, body: message
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number, body: message
+                });
+              }
+
+              core.setFailed("Missing required CLA agreement line in PR description.");
+              return;
+            }
+
+            // If compliant, clean up prior bot comment (if any)
+            if (existing) {
+              await github.rest.issues.deleteComment({
+                owner, repo, comment_id: existing.id
+              });
+            }
+
+      - name: Success message
+        if: steps.check.outputs.has_cla == 'true'
+        run: echo "CLA agreement line found."
