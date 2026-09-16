@@ -20,6 +20,7 @@ import {
   FTP_TIMEOUT_MS,
   FTP_BURST_TIMEOUT_MS,
   FTP_MAX_RETRIES,
+  FTP_MAX_SIZE_OVERRUN,
   type FtpPayload,
   serializeFtpPayload,
   parseFtpPayload,
@@ -43,6 +44,8 @@ export interface FtpClientOptions {
   log?: FtpLogCallback;
   /** Read chunk size (default: 110, matching Mission Planner) */
   readSize?: number;
+  /** Max bytes a download may grow past the reported size (default 8 MiB). */
+  maxOverrunBytes?: number;
 }
 
 /** In-flight BurstReadFile collection. */
@@ -127,7 +130,10 @@ class DownloadBuffer {
   /** Real end of file, once a short read or EOF has revealed it. */
   eof: number | null = null;
 
-  constructor(sizeHint: number) {
+  /** Past `limit` the server is lying about the file; growth stops there. */
+  overflowed = false;
+
+  constructor(sizeHint: number, readonly limit: number) {
     this.data = new Uint8Array(sizeHint);
     this.mask = new Coverage(sizeHint);
   }
@@ -147,7 +153,11 @@ class DownloadBuffer {
 
   /** Stores a chunk at `offset`; returns how many of its bytes were new. */
   store(offset: number, bytes: Uint8Array): number {
-    const end = this.eof === null ? offset + bytes.length : Math.min(offset + bytes.length, this.eof);
+    let end = this.eof === null ? offset + bytes.length : Math.min(offset + bytes.length, this.eof);
+    if (end > this.limit) {
+      this.overflowed = true;
+      end = this.limit;
+    }
     if (end > this.data.length) {
       const next = new Uint8Array(Math.max(end, this.data.length * 2));
       next.set(this.data);
@@ -179,6 +189,7 @@ export class MavlinkFtpClient {
   private sendPacket: SendFtpPacket;
   private log: FtpLogCallback;
   private readSize: number;
+  private maxOverrun: number;
   private seqNumber = 0;
   private sessionId = 0;
 
@@ -196,6 +207,7 @@ export class MavlinkFtpClient {
     this.sendPacket = options.sendPacket;
     this.log = options.log ?? (() => {});
     this.readSize = options.readSize ?? FTP_READ_SIZE;
+    this.maxOverrun = options.maxOverrunBytes ?? FTP_MAX_SIZE_OVERRUN;
   }
 
   /**
@@ -846,7 +858,7 @@ export class MavlinkFtpClient {
     sizeHint: number,
     progress?: FtpProgressCallback,
   ): Promise<Uint8Array | null> {
-    const file = new DownloadBuffer(sizeHint);
+    const file = new DownloadBuffer(sizeHint, sizeHint + this.maxOverrun);
     let offset = 0;
 
     for (;;) {
@@ -861,6 +873,10 @@ export class MavlinkFtpClient {
 
       file.store(offset, chunk);
       offset += chunk.length;
+      if (file.overflowed) {
+        this.log('warn', `FTP: server streamed past ${file.limit} bytes without an EOF, aborting`);
+        return null;
+      }
       if (chunk.length < this.readSize) break;
 
       if (progress) {
@@ -883,7 +899,7 @@ export class MavlinkFtpClient {
     sizeHint: number,
     progress?: FtpProgressCallback,
   ): Promise<Uint8Array | null> {
-    const file = new DownloadBuffer(sizeHint);
+    const file = new DownloadBuffer(sizeHint, sizeHint + this.maxOverrun);
 
     // Sweep the file with bursts, each starting past the last one's coverage.
     // Restarting at the first hole instead would re-send the whole tail on
@@ -913,6 +929,10 @@ export class MavlinkFtpClient {
     // directly rather than replaying the stream.
     let loggedGaps = false;
     for (;;) {
+      if (file.overflowed) {
+        this.log('warn', `FTP: server streamed past ${file.limit} bytes without an EOF, aborting`);
+        return null;
+      }
       let holes = file.mask.holeRanges(file.size);
       const probing = holes.length === 0;
       if (probing) {

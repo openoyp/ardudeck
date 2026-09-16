@@ -153,5 +153,9 @@ export const FTP_BURST_TIMEOUT_MS = 1500;
 /** Max retries per operation */
 export const FTP_MAX_RETRIES = 5;
 
+/** How far a download may grow PAST the reported size before the server is
+ * treated as broken; bounds memory against an endless data stream. */
+export const FTP_MAX_SIZE_OVERRUN = 8 * 1024 * 1024;
+
 /** Virtual file path for packed parameters. Firmware without defaults support ignores the query (as Mission Planner relies on). */
 export const PARAM_PCK_PATH = '@PARAM/param.pck?withdefaults=1';

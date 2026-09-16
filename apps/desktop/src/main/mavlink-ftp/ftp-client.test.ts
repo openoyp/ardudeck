@@ -31,6 +31,10 @@ interface FcOptions {
   lockReadSize?: boolean;
   /** NAK reads past the end with Fail instead of EOF. */
   failPastEnd?: boolean;
+  /** Serve full chunks at ANY offset and never signal EOF, like a runaway server. */
+  endless?: boolean;
+  /** Overrun cap handed to the client (production default is 8 MiB). */
+  maxOverrunBytes?: number;
 }
 
 /**
@@ -68,6 +72,7 @@ function attachFc(file: Uint8Array, opts: FcOptions = {}) {
 
   client = new MavlinkFtpClient({
     readSize: READ_SIZE,
+    maxOverrunBytes: opts.maxOverrunBytes,
     sendPacket: async (raw) => {
       const req = parseFtpPayload(raw);
       switch (req.opcode) {
@@ -86,6 +91,10 @@ function attachFc(file: Uint8Array, opts: FcOptions = {}) {
         case FtpOpcode.ReadFile: {
           stats.reads++;
           if (sizeRejected(req)) { nak(req, FtpError.FailErrno); return; }
+          if (opts.endless) {
+            reply(req, { offset: req.offset, size: req.size, data: new Uint8Array(req.size) });
+            return;
+          }
           if (req.offset >= served) { nak(req, opts.failPastEnd ? FtpError.Fail : FtpError.EOF); return; }
           const end = Math.min(req.offset + req.size, served);
           reply(req, { offset: req.offset, size: end - req.offset, data: file.subarray(req.offset, end) });
@@ -223,6 +232,15 @@ describe('MavlinkFtpClient with an estimated file size (ArduPilot @PARAM/param.p
 
       expect(await client.downloadFile('@PARAM/param.pck')).toEqual(file);
     }
+  });
+});
+
+describe('MavlinkFtpClient runaway server', () => {
+  it('aborts instead of growing forever when full chunks never stop', async () => {
+    const file = makeFile(100);
+    const { client } = attachFc(file, { endless: true, maxOverrunBytes: 4 * READ_SIZE });
+
+    expect(await client.downloadFile('@PARAM/param.pck')).toBeNull();
   });
 });
 
