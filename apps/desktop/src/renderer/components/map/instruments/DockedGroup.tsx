@@ -114,7 +114,10 @@ function UndockIcon(): JSX.Element {
 }
 
 export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): JSX.Element {
-  const drag = useDraggableOverlay(groupOverlayKey(gid));
+  // A ball-in-card group clamps by its CARD edges: the ball's bulge may hang
+  // off the panel so the strip run itself can reach the screen edge.
+  const overhangRef = useRef<{ top: number; right: number; bottom: number; left: number } | null>(null);
+  const drag = useDraggableOverlay(groupOverlayKey(gid), () => overhangRef.current);
   const cluster = isCluster(group);
   const scaleKey = 'group:' + gid;
   const storedScale = useMapInstrumentsStore((s) => s.scale[scaleKey] ?? 1);
@@ -125,6 +128,7 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
   const dockRemove = useMapInstrumentsStore((s) => s.dockRemove);
   const dockReorder = useMapInstrumentsStore((s) => s.dockReorder);
   const dockSetClusterOffset = useMapInstrumentsStore((s) => s.dockSetClusterOffset);
+  const dockSetStretch = useMapInstrumentsStore((s) => s.dockSetStretch);
   const dockDissolve = useMapInstrumentsStore((s) => s.dockDissolve);
 
   const [liveScale, setLiveScale] = useState<number | null>(null);
@@ -135,6 +139,8 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
   const [displayOpen, setDisplayOpen] = useState(false);
   const [displayAnchor, setDisplayAnchor] = useState<DOMRect | null>(null);
   const [cellSizes, setCellSizes] = useState<Record<string, { x: number; y: number; w: number; h: number }> | null>(null);
+  const [bodySize, setBodySize] = useState<{ w: number; h: number } | null>(null);
+  const [panelExt, setPanelExt] = useState<{ before: number; after: number } | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const cellRefs = useRef(new Map<string, HTMLElement>());
   const dragMain = useRef(0);
@@ -158,6 +164,7 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
     .map((id) => MAP_INSTRUMENTS.find((d) => d.id === id))
     .filter((d): d is NonNullable<typeof d> => !!d);
   const ballInCard = !cluster && group.members.includes(CLUSTER_ANCHOR);
+  const stretched = !cluster && group.stretch === true;
   const tray = !cluster && !ballInCard && members.some((d) => isRoundInMode(d, displayMode[d.id] ?? 'analog'));
   const row = group.orientation === 'row';
   const displayChoices = groupDisplayOptions(members);
@@ -182,6 +189,15 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
         if (el && el.offsetWidth > 0) sizes[id] = { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
       }
       if (Object.keys(sizes).length === 0) return;
+      const first = cellRefs.current.values().next().value as HTMLElement | undefined;
+      const body = first?.offsetParent as HTMLElement | null;
+      if (body) {
+        setBodySize((prev) =>
+          prev && prev.w === body.clientWidth && prev.h === body.clientHeight
+            ? prev
+            : { w: body.clientWidth, h: body.clientHeight },
+        );
+      }
       setCellSizes((prev) => {
         if (prev && Object.keys(prev).length === Object.keys(sizes).length
           && Object.entries(sizes).every(([id, s]) => {
@@ -197,6 +213,41 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
     return () => ro.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cluster, ballInCard, group, memberScales, displayMode]);
+
+  // Stretching never moves the members: the bar reaches the panel edges by
+  // extending the chrome PAST the body on the main axis, and the group's
+  // position is fixed while stretched.
+  const measurePanelExt = () => {
+    if (!stretched) {
+      setPanelExt((prev) => (prev === null ? prev : null));
+      return;
+    }
+    const el = wrapperRef.current;
+    const parent = el?.offsetParent as HTMLElement | null;
+    if (!el || !parent) return;
+    const before = Math.round(row ? el.offsetLeft : el.offsetTop);
+    const after = Math.round(row
+      ? parent.clientWidth - el.offsetLeft - el.offsetWidth
+      : parent.clientHeight - el.offsetTop - el.offsetHeight);
+    setPanelExt((prev) => (prev && prev.before === before && prev.after === after ? prev : { before, after }));
+  };
+  // Value deps, not every-commit: the wrapper moves when the overlay position
+  // lands (drag.style) and resizes with scale/size changes; the observer
+  // covers split drags. An unconditional effect ping-pongs into React's
+  // update-depth limit.
+  const posLeft = (drag.style as { left?: number } | undefined)?.left;
+  const posTop = (drag.style as { top?: number } | undefined)?.top;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(measurePanelExt, [stretched, row, scale, posLeft, posTop, bodySize, cellSizes]);
+  useLayoutEffect(() => {
+    if (!stretched) return;
+    const parent = wrapperRef.current?.offsetParent as HTMLElement | null;
+    if (!parent) return;
+    const ro = new ResizeObserver(measurePanelExt);
+    ro.observe(parent);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stretched]);
 
   const clusterSize = cluster && cellSizes
     ? group.members.reduce(
@@ -372,6 +423,7 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
   // a standalone instrument the group absorbs it. Runs beside the overlay
   // drag exactly like the per-instrument tracker.
   const onWrapperPointerDown = (e: ReactPointerEvent) => {
+    if (stretched) return;
     drag.onPointerDown(e);
     if (cluster) return;
     const el = wrapperRef.current;
@@ -408,7 +460,14 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
 
   const chromeStyle: CSSProperties = tray || cluster || ballInCard
     ? {}
-    : { background: GAUGE_COLORS.face, border: `1.5px solid ${GAUGE_COLORS.bezelEdge}` };
+    : {
+        background: GAUGE_COLORS.face,
+        ...(stretched
+          ? row
+            ? { borderTop: `1.5px solid ${GAUGE_COLORS.bezelEdge}`, borderBottom: `1.5px solid ${GAUGE_COLORS.bezelEdge}` }
+            : { borderLeft: `1.5px solid ${GAUGE_COLORS.bezelEdge}`, borderRight: `1.5px solid ${GAUGE_COLORS.bezelEdge}` }
+          : { border: `1.5px solid ${GAUGE_COLORS.bezelEdge}` }),
+      };
 
   // Card group holding the ball: ONE continuous card rectangle spans every
   // non-ball member, passing BEHIND the ball, and the ball's circle is
@@ -418,7 +477,7 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
     if (!ballInCard || !cellSizes) return null;
     const PAD = 18;
     const INFLATE = 5;
-    const shapes: Array<{ kind: 'circle'; cx: number; cy: number; r: number } | { kind: 'rect'; x: number; y: number; w: number; h: number }> = [];
+    const shapes: Array<{ kind: 'circle'; cx: number; cy: number; r: number } | { kind: 'rect'; x: number; y: number; w: number; h: number; rx?: number }> = [];
     const rest = members.filter((d) => d.id !== CLUSTER_ANCHOR).map((d) => cellSizes[d.id]).filter((c): c is NonNullable<typeof c> => !!c);
     const ball = cellSizes[CLUSTER_ANCHOR];
     if (rest.length > 0) {
@@ -426,6 +485,17 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
       let y = Math.min(...rest.map((r) => r.y)) - INFLATE;
       let x2 = Math.max(...rest.map((r) => r.x + r.w)) + INFLATE;
       let y2 = Math.max(...rest.map((r) => r.y + r.h)) + INFLATE;
+      // Stretched: the silhouette extends past the body to the panel edges
+      // (screen px converted into the zoomed coordinate space).
+      if (stretched && bodySize && panelExt) {
+        if (row) {
+          x = -panelExt.before / scale;
+          x2 = bodySize.w + panelExt.after / scale;
+        } else {
+          y = -panelExt.before / scale;
+          y2 = bodySize.h + panelExt.after / scale;
+        }
+      }
       if (ball) {
         // Run the card's straight edges all the way to the ball's center so
         // they meet the arc cleanly; stopping at the last member leaves
@@ -437,7 +507,7 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
         y = Math.min(y, cy);
         y2 = Math.max(y2, cy);
       }
-      shapes.push({ kind: 'rect', x, y, w: x2 - x, h: y2 - y });
+      shapes.push({ kind: 'rect', x, y, w: x2 - x, h: y2 - y, rx: stretched ? 0 : 10 });
     }
     if (ball) {
       // Proud bulge: the arc must read even beside a card nearly as tall as
@@ -452,13 +522,32 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
     return { shapes, PAD, minX, minY, maxX, maxY };
   })();
 
+  overhangRef.current = (() => {
+    if (!ballInCard || !cellSizes || !bodySize) return null;
+    const rest = members
+      .filter((d) => d.id !== CLUSTER_ANCHOR)
+      .map((d) => cellSizes[d.id])
+      .filter((c): c is NonNullable<typeof c> => !!c);
+    if (rest.length === 0) return null;
+    const runTop = Math.min(...rest.map((r) => r.y)) - 5;
+    const runBottom = Math.max(...rest.map((r) => r.y + r.h)) + 5;
+    const runLeft = Math.min(...rest.map((r) => r.x)) - 5;
+    const runRight = Math.max(...rest.map((r) => r.x + r.w)) + 5;
+    return {
+      top: Math.max(0, runTop) * scale,
+      bottom: Math.max(0, bodySize.h - runBottom) * scale,
+      left: Math.max(0, runLeft) * scale,
+      right: Math.max(0, bodySize.w - runRight) * scale,
+    };
+  })();
+
   const contourShapes = (fill: string, stroke?: string): JSX.Element[] | null =>
     contour
       ? contour.shapes.map((sh, i) =>
           sh.kind === 'circle' ? (
             <circle key={i} cx={sh.cx - contour.minX + contour.PAD} cy={sh.cy - contour.minY + contour.PAD} r={sh.r} fill={fill} stroke={stroke} strokeWidth={stroke ? 3 : undefined} />
           ) : (
-            <rect key={i} x={sh.x - contour.minX + contour.PAD} y={sh.y - contour.minY + contour.PAD} width={sh.w} height={sh.h} rx={10} fill={fill} stroke={stroke} strokeWidth={stroke ? 3 : undefined} />
+            <rect key={i} x={sh.x - contour.minX + contour.PAD} y={sh.y - contour.minY + contour.PAD} width={sh.w} height={sh.h} rx={sh.rx ?? 10} fill={fill} stroke={stroke} strokeWidth={stroke ? 3 : undefined} />
           ),
         )
       : null;
@@ -559,14 +648,40 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
           {members.map((def, i) => memberCell(def, i))}
         </div>
       ) : (
-        <div style={{ zoom: scale } as CSSProperties}>
+        <>
+          {stretched && !ballInCard && panelExt && ([true, false] as const).map((before) => {
+            const len = before ? panelExt.before : panelExt.after;
+            if (len <= 0) return null;
+            return (
+              <div
+                key={before ? 'before' : 'after'}
+                className={'absolute shadow-xl' + (tray ? ' bg-surface-overlay-light' : '')}
+                style={{
+                  ...(row
+                    ? { top: 0, height: '100%', ...(before ? { left: -len, width: len } : { right: -len, width: len }) }
+                    : { left: 0, width: '100%', ...(before ? { top: -len, height: len } : { bottom: -len, height: len }) }),
+                  ...(tray
+                    ? {}
+                    : {
+                        background: GAUGE_COLORS.face,
+                        ...(row
+                          ? { borderTop: `1.5px solid ${GAUGE_COLORS.bezelEdge}`, borderBottom: `1.5px solid ${GAUGE_COLORS.bezelEdge}` }
+                          : { borderLeft: `1.5px solid ${GAUGE_COLORS.bezelEdge}`, borderRight: `1.5px solid ${GAUGE_COLORS.bezelEdge}` }),
+                      }),
+                }}
+              />
+            );
+          })}
+        <div
+          style={{ zoom: scale } as CSSProperties}
+        >
           <div
             className={
-              tray
-                ? `flex ${row ? 'flex-row items-center' : 'flex-col items-start'} gap-1.5 p-1.5 rounded-xl bg-surface-overlay-light shadow-xl select-none`
+              (tray
+                ? `flex ${row ? 'flex-row items-center' : 'flex-col items-start'} gap-1.5 p-1.5 ${stretched ? '' : 'rounded-xl'} bg-surface-overlay-light shadow-xl select-none`
                 : ballInCard
                   ? `relative flex ${row ? 'flex-row items-center' : 'flex-col items-center'} ${trayish ? 'gap-1.5' : ''} select-none`
-                  : `flex ${row ? 'flex-row items-stretch' : 'flex-col items-stretch'} rounded-lg shadow-xl select-none overflow-hidden`
+                  : `flex ${row ? 'flex-row items-stretch' : 'flex-col items-stretch'} ${stretched ? '' : 'rounded-lg'} shadow-xl select-none overflow-hidden`)
             }
             style={chromeStyle}
           >
@@ -596,6 +711,7 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
             {members.map((def, i) => memberCell(def, i))}
           </div>
         </div>
+        </>
       )}
       {!cluster && (
         <div
@@ -612,6 +728,36 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
           {Math.round(scale * 100)}%
         </div>
       )}
+      {!cluster && (
+        <button
+          type="button"
+          onClick={() => dockSetStretch(gid, !stretched)}
+          data-tip={stretched
+            ? 'Shrink the group back to its content'
+            : (row ? 'Stretch the group across the panel' : 'Stretch the group down the panel')}
+          style={stretched && panelExt
+            ? (row
+                ? { top: 6, right: 6 - panelExt.after }
+                : { top: 6 - panelExt.before, right: 6 })
+            : undefined}
+          className={
+            'absolute p-1.5 rounded-full bg-surface-solid border shadow-lg transition-opacity pointer-events-auto ' +
+            (stretched ? '' : '-top-2 ' + (displayChoices ? 'right-5' : '-right-2')) + ' ' +
+            (stretched
+              ? 'text-blue-400 border-blue-500 opacity-100'
+              : 'text-content-secondary border-transparent hover:text-content hover:bg-surface-raised ') +
+            (stretched ? '' : (displayOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'))
+          }
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+            {row ? (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M7 8l-4 4 4 4M17 8l4 4-4 4" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16M8 7l4-4 4 4M8 17l4 4 4-4" />
+            )}
+          </svg>
+        </button>
+      )}
       {displayChoices && (
         <button
           type="button"
@@ -620,8 +766,13 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
             if (r) { setDisplayAnchor(r); setDisplayOpen(true); }
           }}
           data-tip="Display mode for the whole group"
+          style={stretched && panelExt
+            ? (row
+                ? { top: 8, right: 38 - panelExt.after }
+                : { top: 38 - panelExt.before, right: 8 })
+            : undefined}
           className={
-            'absolute -top-1.5 -right-1.5 p-1 rounded-full bg-surface shadow-lg text-content-secondary ' +
+            `absolute ${stretched ? '' : '-top-1.5 -right-1.5'} p-1 rounded-full bg-surface-solid shadow-lg text-content-secondary ` +
             'hover:text-content hover:bg-surface-raised pointer-events-auto transition-opacity ' +
             (displayOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100')
           }

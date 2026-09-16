@@ -1517,12 +1517,6 @@ const TelemetryMap3D = React.memo(function TelemetryMap3D() {
     if (gpsPosition) setHomePosition(gpsPosition);
   }, [gpsPosition]);
 
-  // Center on vehicle + re-enable follow (uses display position, works even without GPS)
-  const handleCenterOnVehicle = useCallback(() => {
-    if (!mapInstanceRef.current) return;
-    setFollowVehicle(true);
-    mapInstanceRef.current.flyTo({ center: vehicleLngLat, duration: 800 });
-  }, [vehicleLngLat]);
 
   // Toolbar toggle helper
   const toggleBtn = useCallback((label: string, active: boolean, onClick: () => void, title: string, icon?: React.ReactNode) => (
@@ -1711,31 +1705,6 @@ const TelemetryMap3D = React.memo(function TelemetryMap3D() {
         )}
       </div>
 
-      {/* Center on vehicle FAB — Google Maps style */}
-      <button
-        onClick={handleCenterOnVehicle}
-        className={`absolute bottom-14 right-3 z-[1000] w-9 h-9 rounded-full shadow-lg flex items-center justify-center transition-all ${
-          followVehicle
-            ? 'bg-blue-600 text-white'
-            : 'bg-surface text-content-secondary hover:text-content hover:bg-surface-raised'
-        }`}
-        title={followVehicle ? 'Following vehicle' : 'Center on vehicle'}
-      >
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="4" />
-          <line x1="12" y1="2" x2="12" y2="6" />
-          <line x1="12" y1="18" x2="12" y2="22" />
-          <line x1="2" y1="12" x2="6" y2="12" />
-          <line x1="18" y1="12" x2="22" y2="12" />
-        </svg>
-      </button>
-
-      {/* Armed status indicator */}
-      <div className={`absolute bottom-2 right-3 z-[1000] px-2 py-1 rounded shadow-lg text-xs font-bold ${
-        flight.armed ? 'bg-red-600 text-white' : 'bg-surface text-content-secondary'
-      }`}>
-        {flight.armed ? 'ARMED' : 'DISARMED'}
-      </div>
     </div>
   );
 });
@@ -2533,10 +2502,6 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
     }
   }, []);
 
-  // Center on vehicle + re-enable follow
-  const handleCenterOnVehicle = useCallback(() => {
-    setFollowVehicle(true);
-  }, []);
 
   // ── In-map split ──────────────────────────────────────────────────────────
   // A second panel (Vision first) can share the map panel's content area: map on
@@ -2557,7 +2522,10 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
     if (isSplit === wasSplit) return;
     const store = useMapInstrumentsStore.getState();
     if (isSplit) {
-      const savedName = Object.keys(store.savedLayouts).find((n) => n.trim().toLowerCase() === 'split');
+      const savedNames = Object.keys(store.savedLayouts);
+      const savedName =
+        savedNames.find((n) => n.trim().toLowerCase() === 'split') ??
+        savedNames.find((n) => n.trim().toLowerCase().includes('split'));
       const profile = savedName
         ? store.savedLayouts[savedName]!
         : PRESET_INSTRUMENT_LAYOUTS.find((p) => p.name === 'Split cockpit')?.layout;
@@ -2690,31 +2658,6 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
       {/* The flight-data card that lived here is now the 'flight-data' entry in
           the instruments registry (same bottom-left default, draggable). */}
 
-      {/* Center on vehicle FAB — Google Maps style */}
-      <button
-        onClick={handleCenterOnVehicle}
-        className={`absolute bottom-14 right-3 z-[1000] w-9 h-9 rounded-full shadow-lg flex items-center justify-center transition-all ${
-          followVehicle
-            ? 'bg-blue-600 text-white'
-            : 'bg-surface text-content-secondary hover:text-content hover:bg-surface-raised'
-        }`}
-        title={followVehicle ? 'Following vehicle' : 'Center on vehicle'}
-      >
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="4" />
-          <line x1="12" y1="2" x2="12" y2="6" />
-          <line x1="12" y1="18" x2="12" y2="22" />
-          <line x1="2" y1="12" x2="6" y2="12" />
-          <line x1="18" y1="12" x2="22" y2="12" />
-        </svg>
-      </button>
-
-      {/* Armed status indicator */}
-      <div className={`absolute bottom-2 right-3 z-[1000] px-2 py-1 rounded shadow-lg text-xs font-bold ${
-        armed ? 'bg-red-600 text-white' : 'bg-surface text-content-secondary'
-      }`}>
-        {armed ? 'ARMED' : 'DISARMED'}
-      </div>
 
       {/* Content area: the Leaflet map, plus an optional in-map split second
           surface to its right with a draggable divider. The floating overlays
@@ -2881,7 +2824,7 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
           onClick={() => setControlsHidden(false)}
           data-tip="Show map controls"
           data-arrange-chrome
-          className="absolute top-2 right-2 z-[1000] p-1.5 rounded bg-surface text-content-secondary hover:text-content hover:bg-surface-raised shadow-lg transition-colors"
+          className="absolute top-2 right-2 z-[1100] p-1.5 rounded bg-surface text-content-secondary hover:text-content hover:bg-surface-raised shadow-lg transition-colors"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -2889,7 +2832,7 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
           </svg>
         </button>
       ) : (
-      <div data-tour="telemetry-map-overlays" data-arrange-chrome className="absolute top-2 right-2 z-[1000] flex flex-col gap-1">
+      <div data-tour="telemetry-map-overlays" data-arrange-chrome className="absolute top-2 right-2 z-[1100] flex flex-col gap-1">
         {/* Clean-screen toggle: hides this whole column, leaving the map and
             the flight instruments. Sits at the top of the stack as its handle. */}
         <button

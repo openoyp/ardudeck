@@ -152,10 +152,11 @@ const STRIPS_ONLY: InstrumentLayoutSnapshot = {
   },
 };
 
-/** Split-screen cockpit (baked from the field-made "Split" layout): strips
- * rail on the left, the status strip row on top, and a ball constellation
- * with HOME and BAT bottom-right, sized for a half-width map. Auto-applied
- * when the in-map split opens (a user-saved layout named "Split" wins). */
+/** Split-screen cockpit (baked from the field-made "split view" layout): a
+ * stretched bottom bar carrying flight control, HOME, the ball and BAT; the
+ * data/strips rail docked on the left; the status strip row on top. Sized for
+ * a half-width map and auto-applied when the in-map split opens (a user-saved
+ * layout named "split*" wins). */
 export const SPLIT_COCKPIT: InstrumentLayoutSnapshot = {
   visible: {
     attitude: true,
@@ -183,149 +184,28 @@ export const SPLIT_COCKPIT: InstrumentLayoutSnapshot = {
     speed: 'strip',
   },
   groups: {
-    d2: {
-      members: ['flight-data', 'annunciator', 'gps', 'altitude', 'speed'],
-      orientation: 'col',
-    },
-    d3: {
-      members: ['flight-mode', 'mission', 'link'],
-      orientation: 'row',
-    },
-    d5: {
-      members: ['attitude', 'home', 'battery'],
-      orientation: 'row',
-      offsets: {
-        home: {
-          x: 143.3,
-          y: 31.3,
-        },
-        battery: {
-          x: -106.6,
-          y: 36.6,
-        },
-      },
-    },
+    d1: { members: ['controls', 'home', 'attitude', 'battery'], orientation: 'row', stretch: true },
+    d2: { members: ['flight-data', 'annunciator', 'gps', 'altitude', 'speed'], orientation: 'col' },
+    d3: { members: ['flight-mode', 'mission', 'link'], orientation: 'row' },
   },
   positions: {
-    'instrument:attitude': {
-      ax: 'center',
-      ay: 'bottom',
-      dx: 46,
-      dy: 7,
-      v: 4,
-    },
-    'instrument:flight-data': {
-      ax: 'left',
-      ay: 'middle',
-      dx: 10,
-      dy: -110,
-      v: 4,
-    },
-    'instrument:battery': {
-      ax: 'center',
-      ay: 'bottom',
-      dx: -108,
-      dy: 3,
-      v: 4,
-    },
-    'instrument:gps': {
-      ax: 'center',
-      ay: 'middle',
-      dx: -249,
-      dy: 7,
-      v: 4,
-    },
-    'instrument:altitude': {
-      ax: 'center',
-      ay: 'middle',
-      dx: -254,
-      dy: 37.5,
-      v: 4,
-    },
-    'instrument:speed': {
-      ax: 'center',
-      ay: 'middle',
-      dx: -259.5,
-      dy: 77.5,
-      v: 4,
-    },
-    'instrument:heading': {
-      ax: 'center',
-      ay: 'bottom',
-      dx: -356,
-      dy: 19,
-      v: 4,
-    },
-    'instrument:vsi': {
-      ax: 'right',
-      ay: 'bottom',
-      dx: 103,
-      dy: 19,
-      v: 4,
-    },
-    'instrument:home': {
-      ax: 'center',
-      ay: 'bottom',
-      dx: 148,
-      dy: 99,
-      v: 4,
-    },
-    'instrument:flight-mode': {
-      ax: 'center',
-      ay: 'top',
-      dx: -200,
-      dy: 8,
-      v: 4,
-    },
-    'instrument:link': {
-      ax: 'center',
-      ay: 'top',
-      dx: 216,
-      dy: 8,
-      v: 4,
-    },
-    'instrument:mission': {
-      ax: 'center',
-      ay: 'top',
-      dx: 0,
-      dy: 10,
-      v: 4,
-    },
-    'instrument:annunciator': {
-      ax: 'left',
-      ay: 'middle',
-      dx: 8,
-      dy: 45.5,
-      v: 4,
-    },
-    'instrument:controls': {
-      ax: 'left',
-      ay: 'bottom',
-      dx: 0,
-      dy: 4,
-      v: 4,
-    },
-    'instrument:group:d2': {
-      ax: 'left',
-      ay: 'middle',
-      dx: 0,
-      dy: 29.5,
-      v: 4,
-    },
-    'instrument:group:d3': {
-      ax: 'center',
-      ay: 'top',
-      dx: -13.5,
-      dy: 0,
-      v: 4,
-    },
-    'instrument:group:d5': {
-      ax: 'right',
-      ay: 'bottom',
-      dx: 77,
-      dy: 14,
-      v: 4,
-    },
+    'instrument:attitude': { ax: 'center', ay: 'middle', dx: 164.5, dy: 44.5, v: 4 },
+    'instrument:flight-data': { ax: 'left', ay: 'middle', dx: 10, dy: -110, v: 4 },
+    'instrument:battery': { ax: 'center', ay: 'middle', dx: 154.5, dy: 34.5, v: 4 },
+    'instrument:gps': { ax: 'center', ay: 'middle', dx: -249, dy: 7, v: 4 },
+    'instrument:altitude': { ax: 'center', ay: 'middle', dx: -254, dy: 37.5, v: 4 },
+    'instrument:speed': { ax: 'center', ay: 'middle', dx: -259.5, dy: 77.5, v: 4 },
+    'instrument:heading': { ax: 'center', ay: 'bottom', dx: -356, dy: 19, v: 4 },
+    'instrument:vsi': { ax: 'right', ay: 'bottom', dx: 103, dy: 19, v: 4 },
+    'instrument:home': { ax: 'center', ay: 'middle', dx: 26.5, dy: 138.5, v: 4 },
+    'instrument:flight-mode': { ax: 'center', ay: 'top', dx: -200, dy: 8, v: 4 },
+    'instrument:link': { ax: 'center', ay: 'top', dx: 216, dy: 8, v: 4 },
+    'instrument:mission': { ax: 'center', ay: 'top', dx: 0, dy: 10, v: 4 },
+    'instrument:annunciator': { ax: 'left', ay: 'middle', dx: 8, dy: 45.5, v: 4 },
+    'instrument:controls': { ax: 'left', ay: 'bottom', dx: 32, dy: 4, v: 4 },
+    'instrument:group:d1': { ax: 'left', ay: 'bottom', dx: 32, dy: -13, v: 4 },
+    'instrument:group:d2': { ax: 'left', ay: 'middle', dx: 0, dy: 29.5, v: 4 },
+    'instrument:group:d3': { ax: 'center', ay: 'top', dx: -13.5, dy: 0, v: 4 },
   },
 };
 

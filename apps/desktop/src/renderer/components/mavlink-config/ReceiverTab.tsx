@@ -235,6 +235,78 @@ const ReceiverTab: React.FC = () => {
     return result;
   }, [parameters, calChannelCount]);
 
+  // Channels that never move are skipped on save, not zeroed out.
+  const [isCalibratingRc, setIsCalibratingRc] = useState(false);
+  const [capturedRc, setCapturedRc] = useState<{ min: number; max: number; trim: number }[] | null>(null);
+  const [isSavingRcCal, setIsSavingRcCal] = useState(false);
+  const [rcCalMessage, setRcCalMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isCalibratingRc) return;
+    setCapturedRc((prev) => {
+      if (!prev) return prev;
+      return prev.map((c, i) => {
+        const v = rcChannels.channels[i];
+        if (v === undefined) return c;
+        return { ...c, min: Math.min(c.min, v), max: Math.max(c.max, v) };
+      });
+    });
+  }, [rcChannels.channels, isCalibratingRc]);
+
+  const startRcCalibration = () => {
+    const count = Math.min(Math.max(rcChannels.chancount, 8), 16);
+    setCapturedRc(Array.from({ length: count }, (_, i) => {
+      const v = rcChannels.channels[i] ?? 1500;
+      return { min: v, max: v, trim: v };
+    }));
+    setRcCalMessage(null);
+    setIsCalibratingRc(true);
+  };
+
+  const cancelRcCalibration = () => {
+    setIsCalibratingRc(false);
+    setCapturedRc(null);
+  };
+
+  const finishRcCalibration = async () => {
+    const captured = capturedRc;
+    setIsCalibratingRc(false);
+    if (!captured) return;
+
+    const MOVED_THRESHOLD = 50; // same "did this channel move" threshold used for the active-channel dot above
+    const batch: { paramId: string; value: number; type: number }[] = [];
+    captured.forEach((c, i) => {
+      if (c.max - c.min < MOVED_THRESHOLD) return;
+      const idx = i + 1;
+      batch.push({ paramId: `RC${idx}_MIN`, value: c.min, type: (parameters.get(`RC${idx}_MIN`)?.type as number) ?? 4 });
+      batch.push({ paramId: `RC${idx}_MAX`, value: c.max, type: (parameters.get(`RC${idx}_MAX`)?.type as number) ?? 4 });
+      batch.push({ paramId: `RC${idx}_TRIM`, value: c.trim, type: (parameters.get(`RC${idx}_TRIM`)?.type as number) ?? 4 });
+    });
+
+    if (batch.length === 0) {
+      setCapturedRc(null);
+      setRcCalMessage('No channels moved — nothing saved.');
+      return;
+    }
+
+    setIsSavingRcCal(true);
+    try {
+      const result = await window.electronAPI?.setParameterBatch(batch);
+      const failed = result?.failed?.length ?? 0;
+      const movedChannels = batch.length / 3;
+      setRcCalMessage(
+        failed > 0
+          ? `Saved ${movedChannels - failed}/${movedChannels} channels, ${failed} param${failed === 1 ? '' : 's'} rejected.`
+          : `Saved calibration for ${movedChannels} channel${movedChannels === 1 ? '' : 's'}.`,
+      );
+    } finally {
+      setIsSavingRcCal(false);
+      setCapturedRc(null);
+    }
+  };
+
+  const displayCal = isCalibratingRc && capturedRc ? capturedRc : calData;
+
   const signalBadge = signalStatus === 'active'
     ? { text: 'Active', color: 'green' }
     : signalStatus === 'stale'
@@ -384,14 +456,47 @@ const ReceiverTab: React.FC = () => {
           <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
             <Activity className="w-5 h-5 text-blue-400" />
           </div>
-          <div>
+          <div className="flex-1">
             <h3 className="font-medium text-content">RC Calibration</h3>
             <p className="text-xs text-content-secondary">Current calibration values stored on the flight controller</p>
           </div>
+          {!isCalibratingRc ? (
+            <button
+              onClick={startRcCalibration}
+              disabled={rcChannels.chancount === 0 || isSavingRcCal}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Calibrate Radio
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={cancelRcCalibration}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-raised text-content-secondary hover:bg-surface-raised"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={finishRcCalibration}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-green-600 text-white hover:bg-green-500"
+              >
+                Finish &amp; Save
+              </button>
+            </div>
+          )}
         </div>
-        <InfoBanner color="blue">
-          These are the min/max/center values your flight controller learned during RC calibration. If your sticks don't reach full range or center is off, redo the radio calibration with full stick deflections, or adjust the RCn_MIN/MAX/TRIM parameters directly.
-        </InfoBanner>
+        {isCalibratingRc ? (
+          <InfoBanner color="amber">
+            Move every stick to every extreme, corners included, and every switch through every position. Release the sticks to center when done, then click Finish &amp; Save. Channels that never move are left as they are.
+          </InfoBanner>
+        ) : (
+          <InfoBanner color="blue">
+            These are the min/max/center values your flight controller learned during RC calibration. If your sticks don't reach full range or center is off, click Calibrate Radio and wiggle everything, or adjust the RCn_MIN/MAX/TRIM parameters directly.
+          </InfoBanner>
+        )}
+        {rcCalMessage && !isCalibratingRc && (
+          <p className="mt-2 text-xs text-content-secondary">{rcCalMessage}</p>
+        )}
         <div className="mt-4 rounded-lg border-subtle overflow-hidden">
           <table className="w-full text-xs">
             <thead>
@@ -403,12 +508,12 @@ const ReceiverTab: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {calData.map((cal, i) => (
+              {displayCal.map((cal, i) => (
                 <tr key={i} className="border-t border-subtle">
                   <td className="px-3 py-1.5 text-content">{physicalChannelNames[i] ?? `CH${i + 1}`}</td>
-                  <td className="px-3 py-1.5 text-right font-mono text-content-secondary">{cal.min}</td>
-                  <td className="px-3 py-1.5 text-right font-mono text-content-secondary">{cal.trim}</td>
-                  <td className="px-3 py-1.5 text-right font-mono text-content-secondary">{cal.max}</td>
+                  <td className={`px-3 py-1.5 text-right font-mono ${isCalibratingRc ? 'text-blue-400' : 'text-content-secondary'}`}>{cal.min}</td>
+                  <td className={`px-3 py-1.5 text-right font-mono ${isCalibratingRc ? 'text-blue-400' : 'text-content-secondary'}`}>{cal.trim}</td>
+                  <td className={`px-3 py-1.5 text-right font-mono ${isCalibratingRc ? 'text-blue-400' : 'text-content-secondary'}`}>{cal.max}</td>
                 </tr>
               ))}
             </tbody>

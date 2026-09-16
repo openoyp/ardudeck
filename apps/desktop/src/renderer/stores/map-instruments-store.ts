@@ -267,6 +267,8 @@ interface MapInstrumentsStore {
    * survivorPos pins the last remaining member when a pair dissolves. */
   dockRemove: (id: string, dropPos: { x: number; y: number } | null, survivorPos?: { x: number; y: number } | null) => void;
   dockReorder: (gid: string, from: number, to: number) => void;
+  /** Card groups: toggle spanning the panel along the main axis. */
+  dockSetStretch: (gid: string, on: boolean) => void;
   /** Current full instrument state as a layout snapshot (positions included). */
   captureLayoutSnapshot: () => InstrumentLayoutSnapshot;
   /** In-map split: swap to a compact profile, restore exactly on unsplit. */
@@ -385,7 +387,14 @@ export const useMapInstrumentsStore = create<MapInstrumentsStore>((set, get) => 
       groups = r.groups;
       // Legacy px payload: the group re-derives its anchor on first mount.
       writeOverlayPosPayload(groupOverlayKey(r.gid), { x: pos.x, y: pos.y });
-      set({ groups, layoutRev: get().layoutRev + 1 });
+      // The new group inherits the TARGET's scale: a 70% instrument must not
+      // snap to 100% the moment something docks onto it.
+      const inherited = get().scale[targetId] ?? 1;
+      set({
+        groups,
+        ...(inherited !== 1 ? { scale: { ...get().scale, ['group:' + r.gid]: inherited } } : {}),
+        layoutRev: get().layoutRev + 1,
+      });
       persistMain();
     },
 
@@ -456,6 +465,16 @@ export const useMapInstrumentsStore = create<MapInstrumentsStore>((set, get) => 
       }
       if (dropPos) writeOverlayPosPayload('instrument:' + id, { x: dropPos.x, y: dropPos.y });
       set({ groups: r.groups, layoutRev: get().layoutRev + 1 });
+      persistMain();
+    },
+
+    dockSetStretch: (gid, on) => {
+      const g = get().groups[gid];
+      if (!g || isCluster(g) || (g.stretch === true) === on) return;
+      const next = { ...g };
+      if (on) next.stretch = true;
+      else delete next.stretch;
+      set({ groups: { ...get().groups, [gid]: next }, layoutRev: get().layoutRev + 1 });
       persistMain();
     },
 

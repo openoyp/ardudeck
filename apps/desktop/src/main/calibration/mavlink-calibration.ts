@@ -877,9 +877,9 @@ export function handleMagCalReport(compassId: number, calMask: number, calStatus
 
   if (calStatus === MAG_CAL_SUCCESS) {
     magCalSuccesses.add(compassId);
-    const prev = magCalResults.get(compassId + 1);
-    magCalResults.set(compassId + 1, { fitness, orientation: prev?.orientation ?? null });
-    deps.sendLog('info', `Compass ${compassId + 1} calibrated (fitness ${fitness.toFixed(1)} mGauss)`);
+    const prev = magCalResults.get(compassId);
+    magCalResults.set(compassId, { fitness, orientation: prev?.orientation ?? null });
+    deps.sendLog('info', `Compass ${compassId} calibrated (fitness ${fitness.toFixed(1)} mGauss)`);
     // Done once every compass in the batch has reported success.
     const expected = popcount(calMask);
     if (expected > 0 && magCalSuccesses.size >= expected) {
@@ -896,11 +896,11 @@ export function handleMagCalReport(compassId: number, calMask: number, calStatus
         : calStatus === MAG_CAL_BAD_RADIUS
           ? 'bad radius — strong magnetic interference near the compass'
           : 'the fit did not converge';
-    deps.sendLog('error', `Compass ${compassId + 1} calibration failed: ${reason}`);
+    deps.sendLog('error', `Compass ${compassId} calibration failed: ${reason}`);
     deps.sendComplete({
       type: 'compass',
       success: false,
-      error: `Compass ${compassId + 1} calibration failed: ${reason}. Move away from metal/magnets/wiring and try again.`,
+      error: `Compass ${compassId} calibration failed: ${reason}. Move away from metal/magnets/wiring and try again.`,
     });
     cancelMavlinkCalibration();
   }

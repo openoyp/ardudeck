@@ -143,12 +143,23 @@ function snapToGrid(v: number): number {
   return Math.round(v / GRID_PX) * GRID_PX;
 }
 
-function clampToParent(el: HTMLElement, pos: Pos): Pos {
+/** How far a widget may hang past each panel edge. A ball-in-card group
+ * clamps its CARD to the panel and lets the ball's bulge overflow. */
+export interface OverlayOverhang {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+const NO_OVERHANG: OverlayOverhang = { top: 0, right: 0, bottom: 0, left: 0 };
+
+function clampToParent(el: HTMLElement, pos: Pos, o: OverlayOverhang = NO_OVERHANG): Pos {
   const parent = el.offsetParent as HTMLElement | null;
   if (!parent) return pos;
   return {
-    x: Math.max(0, Math.min(parent.clientWidth - el.offsetWidth, pos.x)),
-    y: Math.max(0, Math.min(parent.clientHeight - el.offsetHeight, pos.y)),
+    x: Math.max(-o.left, Math.min(parent.clientWidth - el.offsetWidth + o.right, pos.x)),
+    y: Math.max(-o.top, Math.min(parent.clientHeight - el.offsetHeight + o.bottom, pos.y)),
   };
 }
 
@@ -184,7 +195,7 @@ function toAnchor(el: HTMLElement, pos: Pos): OverlayAnchorPos | null {
   return { ax, ay, dx, dy };
 }
 
-function fromAnchor(el: HTMLElement, a: OverlayAnchorPos): Pos | null {
+function fromAnchor(el: HTMLElement, a: OverlayAnchorPos, o?: OverlayOverhang): Pos | null {
   const parent = el.offsetParent as HTMLElement | null;
   if (!parent) return null;
   const W = parent.clientWidth;
@@ -195,7 +206,7 @@ function fromAnchor(el: HTMLElement, a: OverlayAnchorPos): Pos | null {
   const y = a.ay === 'top' ? a.dy : a.ay === 'bottom' ? H - h - a.dy : H / 2 + a.dy - h / 2;
   // No grid re-snap here: snapping happens during the drag, and re-snapping a
   // center-anchored widget after resize would walk it off its saved offset.
-  return clampToParent(el, { x, y });
+  return clampToParent(el, { x, y }, o);
 }
 
 function fromRatioLegacy(el: HTMLElement, ratio: { xr: number; yr: number }): Pos | null {
@@ -207,7 +218,10 @@ function fromRatioLegacy(el: HTMLElement, ratio: { xr: number; yr: number }): Po
   });
 }
 
-export function useDraggableOverlay(storageKey: string): {
+export function useDraggableOverlay(
+  storageKey: string,
+  getOverhang?: () => OverlayOverhang | null,
+): {
   ref: (el: HTMLElement | null) => void;
   style: CSSProperties | undefined;
   onPointerDown: (e: ReactPointerEvent) => void;
@@ -228,6 +242,9 @@ export function useDraggableOverlay(storageKey: string): {
   const applyPos = useCallback((next: Pos | null) => {
     setPos((prev) => (prev && next && prev.x === next.x && prev.y === next.y ? prev : next));
   }, []);
+  const overhangRef = useRef(getOverhang);
+  overhangRef.current = getOverhang;
+  const oh = useCallback((): OverlayOverhang => overhangRef.current?.() ?? NO_OVERHANG, []);
 
   // Applying a stored position needs real element/container dimensions, so it
   // happens in the ref callback (post-attach, pre-paint) rather than in state
@@ -246,9 +263,9 @@ export function useDraggableOverlay(storageKey: string): {
         // Older payloads (px, ratio, or anchors from a previous rule
         // version) re-derive from their current on-screen position.
         const px = stored.kind === 'anchor'
-          ? fromAnchor(el, stored.anchor)
+          ? fromAnchor(el, stored.anchor, oh())
           : stored.kind === 'px'
-            ? clampToParent(el, stored.pos)
+            ? clampToParent(el, stored.pos, oh())
             : fromRatioLegacy(el, stored.ratio);
         const anchor = px ? toAnchor(el, px) : null;
         if (!anchor) return;
@@ -256,8 +273,8 @@ export function useDraggableOverlay(storageKey: string): {
         writeAnchor(storageKey, anchor);
       }
     }
-    applyPos(fromAnchor(el, anchorRef.current));
-  }, [storageKey, applyPos]);
+    applyPos(fromAnchor(el, anchorRef.current, oh()));
+  }, [storageKey, applyPos, oh]);
 
   useEffect(() => {
     const onArrange = (e: Event) => {
@@ -267,7 +284,7 @@ export function useDraggableOverlay(storageKey: string): {
       if (!el) return;
       anchorRef.current = { ax: detail.anchor.ax, ay: detail.anchor.ay, dx: detail.anchor.dx, dy: detail.anchor.dy };
       writeAnchor(storageKey, anchorRef.current);
-      const next = fromAnchor(el, anchorRef.current);
+      const next = fromAnchor(el, anchorRef.current, oh());
       if (!next) return;
       // Pin class-positioned widgets at current px first, so the glide has a start point.
       setPos((prev) => {
@@ -297,7 +314,7 @@ export function useDraggableOverlay(storageKey: string): {
     const ro = new ResizeObserver(() => {
       const node = elRef.current;
       if (!node || !anchorRef.current || drag.current) return;
-      applyPos(fromAnchor(node, anchorRef.current));
+      applyPos(fromAnchor(node, anchorRef.current, oh()));
     });
     ro.observe(parent);
     ro.observe(el);
@@ -330,7 +347,7 @@ export function useDraggableOverlay(storageKey: string): {
       setPos(clampToParent(node, {
         x: snapToGrid(d.origin.x + dx),
         y: snapToGrid(d.origin.y + dy),
-      }));
+      }, oh()));
     };
 
     const onUp = () => {

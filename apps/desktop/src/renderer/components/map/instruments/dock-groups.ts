@@ -7,6 +7,9 @@ export interface DockGroup {
   /** 'cluster' = free-form constellation around the ball. Absent = card
    * group; a card group MAY also contain the ball (contoured chrome). */
   kind?: 'cluster';
+  /** Card groups only: span the panel edge-to-edge along the main axis
+   * (a row becomes a full-width bar, a column a full-height rail). */
+  stretch?: boolean;
   /** Cluster only: member top-left px relative to the anchor's top-left.
    * The anchor itself has no entry (it IS the origin). */
   offsets?: Record<string, { x: number; y: number }>;
@@ -75,6 +78,7 @@ export function sanitizeGroups(parsed: unknown, knownIds: readonly string[]): Do
       members,
       orientation: g.orientation === 'col' ? 'col' : 'row',
       ...(wasCluster ? { kind: 'cluster' as const } : {}),
+      ...(!wasCluster && (g as { stretch?: unknown }).stretch === true ? { stretch: true } : {}),
       ...(offsets ? { offsets } : {}),
     };
   }
