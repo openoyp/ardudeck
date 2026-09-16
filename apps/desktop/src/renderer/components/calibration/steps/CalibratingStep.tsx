@@ -116,6 +116,9 @@ export function CalibratingStep() {
   } = useCalibrationStore();
   const isPx4 = useConnectionStore((s) => s.connectionState.firmware === 'px4');
   const elapsed = useElapsedSeconds();
+  // Before the early return: a hook after it breaks hook order the moment
+  // calibrationType clears mid-run.
+  const coverageByCompass = useCompassCoverageStore((s) => s.byCompass);
 
   const calTypeInfo = calibrationType
     ? CALIBRATION_TYPES.find((t) => t.id === calibrationType)
@@ -129,9 +132,6 @@ export function CalibratingStep() {
   const isWaitingForConfirm =
     calibrationType === 'accel-6point' && !isPx4 && !isFinalizing &&
     !positionStatus[currentPosition] && fcHasRequestedPosition;
-
-  // Compass: has the vehicle reported any real percentage yet?
-  const coverageByCompass = useCompassCoverageStore((s) => s.byCompass);
   const coverageProgress = slowestCompassProgress(coverageByCompass);
   // Coverage frames prove the run is live even when the FC's percentage is 0.
   const compassHasData = compassProgress.length > 0 || progress > 0 || coverageByCompass.size > 0;
