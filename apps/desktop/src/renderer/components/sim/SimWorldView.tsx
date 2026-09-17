@@ -35,7 +35,41 @@ import { startVehicleDrag, readVehicleDrag, allowVehicleDrop, FREE_ZONE } from '
 import { getVehicleClass } from '../../../shared/telemetry-types';
 import type { VehicleInfoIpc } from '../../../shared/ipc-channels';
 import { latLngToLocal, localToLatLng } from '../survey/geo-math';
-import { loadElevationGrid, buildTerrainGeometry, sampleElevation } from '../camera/svt/svt-terrain';
+import {
+  loadElevationGrid,
+  buildTerrainGeometry,
+  sampleElevation,
+  type ElevationGrid,
+} from '../camera/svt/svt-terrain';
+import {
+  WIDE_RING_SPANS_M,
+  loadDrapeRings,
+  recenterDistanceM,
+} from '../camera/svt/svt-satellite';
+import { useCameraStore } from '../../stores/camera-store';
+
+/** The sim world is a local patch about the launch point, not the wide SVT
+ * one, so the quality level maps to its own densities. */
+const SIM_PATCH_HALF_M = 8_000;
+const SIM_TERRAIN_RES: Record<'low' | 'medium' | 'high', number> = {
+  low: 48,
+  medium: 96,
+  high: 160,
+};
+
+/**
+ * Imagery range per quality level, sim world only (the vision panel's cockpit
+ * view is right as it is).
+ *
+ * The tile budget rises with the span so the sharp ring keeps the imagery's
+ * native zoom instead of trading detail for size: more range costs texture
+ * memory, which is exactly what the quality setting is there to choose.
+ */
+const SIM_DRAPE: Record<'low' | 'medium' | 'high', { spans: number[]; inner: number; outer: number }> = {
+  low: { spans: [800, 2_500, Infinity], inner: 12, outer: 6 },
+  medium: { spans: [1_000, 3_500, Infinity], inner: 16, outer: 9 },
+  high: { spans: [1_536, 6_000, Infinity], inner: 24, outer: 12 },
+};
 import type { SimFence } from './sim-world-scene';
 import { useSimFlightControlPanelStore } from '../../stores/sim-flight-control-panel-store';
 import { useDraggableSnap } from '../../hooks/useDraggableSnap';
@@ -198,6 +232,8 @@ export default function SimWorldView() {
   // Geo origin (first valid fix) for converting MAVLink lat/lon to local metres
   // when driving the world from telemetry rather than the ArduDeck Sim engine.
   const geoOriginRef = useRef<{ lat: number; lon: number } | null>(null);
+  // Bumped when the world's geo anchor moves, so the terrain rebuilds around it.
+  const [originRev, setOriginRev] = useState(0);
   // Guard so a site's saved obstacle set is loaded only once per origin.
   const siteLoadedRef = useRef(false);
   // Origin key the synthetic-vision terrain was last built for (null = none).
@@ -209,6 +245,18 @@ export default function SimWorldView() {
 
   const [cameraMode, setCameraMode] = useState<SimCameraMode>('orbit');
   const [showTerrain, setShowTerrain] = useState(false);
+  const satellite = useCameraStore((s) => s.svtSatellite);
+  const quality = useCameraStore((s) => s.svtQuality);
+  const setSvtSatellite = useCameraStore((s) => s.setSvtSatellite);
+  const setSvtQuality = useCameraStore((s) => s.setSvtQuality);
+  const [showTerrainMenu, setShowTerrainMenu] = useState(false);
+  // The grid the drape follows; cleared when terrain is switched off.
+  const [simGrid, setSimGrid] = useState<ElevationGrid | null>(null);
+  // Local NED metres the imagery rings are currently centred on.
+  const drapeCenterRef = useRef<{ north: number; east: number } | null>(null);
+  // The loop reads the live spans to know how closely to follow.
+  const spansRef = useRef<number[]>(SIM_DRAPE.medium.spans);
+  const [drapeCenter, setDrapeCenter] = useState<{ north: number; east: number } | null>(null);
   // Terrain toggle feedback: pending while the DEM downloads, and a brief
   // inline note when the toggle has to revert (fetch failed / no GPS origin).
   const [terrainPending, setTerrainPending] = useState(false);
@@ -360,6 +408,20 @@ export default function SimWorldView() {
         });
         const first = engine.values().next();
         primary = engActivePrimary ?? (first.done ? null : first.value);
+        // Engine frames are NED about the ENGINE's home, so the world has to be
+        // anchored there too. Seeding the origin from telemetry instead put the
+        // terrain (and its imagery) at a different point than the vehicles were
+        // being drawn against, which reads as the drone sitting in the wrong
+        // place on the map.
+        const engHome = primary?.home;
+        if (engHome && (engHome.lat !== 0 || engHome.lng !== 0)) {
+          const cur = geoOriginRef.current;
+          if (!cur || Math.abs(cur.lat - engHome.lat) > 1e-5 || Math.abs(cur.lon - engHome.lng) > 1e-5) {
+            geoOriginRef.current = { lat: engHome.lat, lon: engHome.lng };
+            drapeCenterRef.current = null;
+            setOriginRev((r) => r + 1);
+          }
+        }
       } else if (known.length > 0) {
         // Fleet path: render EVERY known vehicle that has a fix, against one
         // shared geo origin, each tinted with its identity colour and labelled
@@ -515,6 +577,19 @@ export default function SimWorldView() {
       scene.update({ vehicles: frames, obstacles, waypoints, fences, showDiagnostics: showXrayRef.current });
       scene.render();
 
+      // Imagery follows the vehicle, not the launch point: the sharp inner ring
+      // is 1.5 km across, so anchoring it at home leaves everything around a
+      // vehicle that has flown away on the coarse outer rings.
+      const lead = frames.find((f) => f.active) ?? frames[0];
+      if (lead) {
+        const [north, east] = lead.position;
+        const c = drapeCenterRef.current;
+        if (!c || Math.hypot(north - c.north, east - c.east) > recenterDistanceM(spansRef.current)) {
+          drapeCenterRef.current = { north, east };
+          setDrapeCenter({ north, east });
+        }
+      }
+
       // Throttled HUD sample from the primary vehicle.
       const now = performance.now();
       if (now - lastHud > 100) {
@@ -538,6 +613,10 @@ export default function SimWorldView() {
   useEffect(() => {
     sceneRef.current?.setCameraMode(cameraMode);
   }, [cameraMode]);
+
+  useEffect(() => {
+    spansRef.current = cameraMode === 'topdown' ? WIDE_RING_SPANS_M : SIM_DRAPE[quality].spans;
+  }, [cameraMode, quality]);
 
   // Keep the rAF loop's X-ray flag in sync with the toggle.
   useEffect(() => {
@@ -593,7 +672,9 @@ export default function SimWorldView() {
       setTerrainPending(false);
       if (terrainOriginRef.current !== null) {
         scene.setTerrain(null);
+        scene.setDrape(null);
         terrainOriginRef.current = null;
+        setSimGrid(null);
       }
       return;
     }
@@ -613,10 +694,14 @@ export default function SimWorldView() {
     setTerrainError(null);
     void (async () => {
       try {
-        const grid = await loadElevationGrid(origin.lat, origin.lon, 8000, 64);
+        // The sim patch is small (8 km), so the quality level drives density
+        // directly rather than through the wide-patch preset resolution.
+        const res = SIM_TERRAIN_RES[quality];
+        const grid = await loadElevationGrid(origin.lat, origin.lon, quality, SIM_PATCH_HALF_M, res);
         if (cancelled) return;
         const homeElev = sampleElevation(grid, origin.lat, origin.lon);
         sceneRef.current?.setTerrain(buildTerrainGeometry(grid), -homeElev);
+        setSimGrid(grid);
       } catch {
         if (!cancelled) {
           terrainOriginRef.current = null; // allow a later retry
@@ -630,7 +715,45 @@ export default function SimWorldView() {
     return () => {
       cancelled = true;
     };
-  }, [showTerrain, fixSignal]);
+  }, [showTerrain, fixSignal, quality, originRev]);
+
+  // Satellite drape over the sim terrain: same rings the synthetic-vision view
+  // builds, centred on the sim's own origin (the world is local metres about
+  // it, so the rings' local-ENU rects line up unchanged).
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    if (!satellite || !showTerrain || !simGrid) {
+      scene.setDrape(null);
+      return;
+    }
+    // Sharp rings everywhere except Top, which looks straight down from high
+    // up and is the only view where coverage beats detail. Orbit sits a few
+    // hundred metres out, close enough that the wide rings just read blurry.
+    const tuning = SIM_DRAPE[quality];
+    const spans = cameraMode === 'topdown' ? WIDE_RING_SPANS_M : tuning.spans;
+    const origin = geoOriginRef.current;
+    const at = origin && drapeCenter
+      ? {
+          lat: origin.lat + drapeCenter.north / 111_320,
+          lon: origin.lon + drapeCenter.east / (111_320 * Math.cos((origin.lat * Math.PI) / 180)),
+        }
+      : undefined;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const rings = await loadDrapeRings(simGrid, tuning.outer, at, spans, tuning.inner);
+        if (cancelled) {
+          for (const ring of rings) ring.texture.dispose();
+          return;
+        }
+        sceneRef.current?.setDrape(rings.length > 0 ? rings : null);
+      } catch {
+        // Imagery is optional; the elevation ramp stays.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [satellite, quality, simGrid, showTerrain, drapeCenter, cameraMode]);
 
   // The revert note is transient: clear it after a few seconds.
   useEffect(() => {
@@ -783,6 +906,46 @@ export default function SimWorldView() {
         >
           {terrainPending ? 'Terrain…' : 'Terrain'}
         </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowTerrainMenu((v) => !v)}
+            data-tip="Terrain imagery and detail"
+            className="rounded-lg border border-subtle bg-surface-raised px-2 py-1.5 text-xs font-medium text-content-secondary shadow-lg transition-colors hover:text-content"
+          >
+            ⚙
+          </button>
+          {showTerrainMenu && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setShowTerrainMenu(false)} />
+              <div className="absolute right-0 top-9 z-40 w-52 rounded-lg border border-default bg-surface-solid p-1.5 shadow-xl">
+                <label className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-[11px] text-content hover:bg-surface-raised">
+                  <input
+                    type="checkbox"
+                    checked={satellite}
+                    onChange={(e) => setSvtSatellite(e.target.checked)}
+                    className="accent-blue-500"
+                  />
+                  Satellite imagery
+                </label>
+                <div className="mt-1 border-t border-subtle pt-1">
+                  <div className="px-1.5 pb-1 text-[10px] uppercase tracking-wide text-content-tertiary">Terrain detail</div>
+                  <div className="flex overflow-hidden rounded-md border border-subtle">
+                    {(['low', 'medium', 'high'] as const).map((q) => (
+                      <button
+                        key={q}
+                        onClick={() => setSvtQuality(q)}
+                        className={`flex-1 px-1.5 py-0.5 text-[11px] capitalize transition-colors ${quality === q ? 'bg-surface-raised text-content' : 'text-content-secondary hover:bg-surface-raised'}`}
+                      >{q}</button>
+                    ))}
+                  </div>
+                  <div className="px-1.5 pt-1 text-[10px] leading-snug text-content-tertiary">
+                    Shared with synthetic vision. The ground nearest the vehicle always uses the sharpest imagery.
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
         <button
           onClick={() => setShowXray((v) => !v)}
           data-tip="Physics X-ray: force budget through the CG (thrust, weight, drag, net resultant), per-motor arrows, CG markers and g-load (ArduDeck sim engine only)"

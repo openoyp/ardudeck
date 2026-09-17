@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { DraftNumberInput } from '../../hooks/useNumericDraft';
 import { useConnectionStore } from '../../stores/connection-store';
+import { useTelemetryStore } from '../../stores/telemetry-store';
 import { useSettingsStore, type DefaultSitlType } from '../../stores/settings-store';
 import { useSitlStore } from '../../stores/sitl-store';
 import { useArduPilotSitlStore } from '../../stores/ardupilot-sitl-store';
@@ -163,8 +164,112 @@ export function ConnectionPanel() {
     downloadProgress: px4DownloadProgress,
   } = usePx4SitlStore();
 
+  // MAV_PARAM_TYPE_REAL32: every SIM_* parameter is a float.
+  const PARAM_TYPE_REAL32 = 9;
+
   // Combined SITL state
   const anySitlRunning = inavIsRunning || ardupilotIsRunning || px4IsRunning;
+  const stopInavSitl = useSitlStore((s) => s.stopSitl);
+  const stopArdupilotSitl = useArduPilotSitlStore((s) => s.stop);
+  const stopPx4Sitl = usePx4SitlStore((s) => s.stop);
+  const [sitlBusy, setSitlBusy] = useState<null | 'stop' | 'recharge' | 'respawn'>(null);
+  const [sitlNote, setSitlNote] = useState<string | null>(null);
+
+  const runSitlAction = useCallback(
+    async (kind: 'stop' | 'recharge' | 'respawn', run: () => Promise<string | void>, note: string) => {
+      setSitlBusy(kind);
+      setSitlNote(null);
+      try {
+        const outcome = await run();
+        setSitlNote(outcome || note);
+      } catch {
+        setSitlNote('Failed, see the SITL screen');
+      } finally {
+        setSitlBusy(null);
+      }
+    },
+    [],
+  );
+
+  // A link is "a SITL" when we launched one, or when it points at the loopback
+  // ports the simulators serve on: a SITL started outside the app (or still up
+  // after a reload) is just as much a simulator as one we spawned.
+  const transport = connectionState.transport ?? '';
+  const looksLocalSim =
+    /(^|[^\d])(127\.0\.0\.1|localhost)/.test(transport) && /:(5760|5761|5762|14550|14551|5501)\b/.test(transport);
+  const connectedToSitl = connectionState.isConnected && (anySitlRunning || looksLocalSim);
+
+  const stopRunningSitl = useCallback(() => {
+    void runSitlAction('stop', async () => {
+      if (inavIsRunning) await stopInavSitl();
+      if (ardupilotIsRunning) await stopArdupilotSitl();
+      if (px4IsRunning) await stopPx4Sitl();
+    }, 'Stopped');
+  }, [runSitlAction, inavIsRunning, ardupilotIsRunning, px4IsRunning, stopInavSitl, stopArdupilotSitl, stopPx4Sitl]);
+
+  // Refilling in flight only works on builds whose SIM_Battery has
+  // maybe_reset() (master); on 4.5 and 4.6 the pack is charged in setup() and a
+  // runtime write does nothing, so a reboot is the only way back to a full
+  // battery. The write is nudged (a same-value write is ignored even where it
+  // does work), then the gauge decides which build this is.
+  const rechargeSitlBattery = useCallback(() => {
+    void runSitlAction('recharge', async () => {
+      const before = useTelemetryStore.getState().battery.voltage || 0;
+      const cells = Math.max(1, Math.round((before || 16.8) / 3.7));
+      const full = Number((cells * 4.2).toFixed(1));
+      await window.electronAPI?.setParameter?.('SIM_BATT_VOLTAGE', Number((full - 0.5).toFixed(1)), PARAM_TYPE_REAL32);
+      await new Promise((r) => setTimeout(r, 400));
+      await window.electronAPI?.setParameter?.('SIM_BATT_VOLTAGE', full, PARAM_TYPE_REAL32);
+      // Believe the gauge, not the write.
+      for (let i = 0; i < 12; i++) {
+        await new Promise((r) => setTimeout(r, 250));
+        if (useTelemetryStore.getState().battery.voltage > before + 0.5) return 'Battery full again';
+      }
+      const echo = await window.electronAPI?.readParameterBatch?.(['SIM_BATT_VOLTAGE']);
+      const accepted = echo?.values?.['SIM_BATT_VOLTAGE'];
+      return typeof accepted === 'number' && Math.abs(accepted - full) < 0.2
+        ? 'This ArduPilot only charges on boot: press Respawn'
+        : 'The vehicle refused the change';
+    }, 'Battery full again');
+  }, [runSitlAction]);
+
+  // Respawn = reboot the autopilot. On a simulated vehicle that puts it back on
+  // the ground at home, upright and disarmed, which is the way out of a crash.
+  const respawnSitl = useCallback(() => {
+    void runSitlAction('respawn', async () => {
+      await window.electronAPI?.mavlinkReboot?.();
+    }, 'Respawning at home');
+  }, [runSitlAction]);
+
+  const linkUp = connectionState.isConnected;
+  const sitlActionRow = (
+    <div className="flex items-center gap-1.5">
+      <button
+        onClick={stopRunningSitl}
+        disabled={sitlBusy !== null}
+        data-tip="Stop the running SITL"
+        className="flex-1 px-2 py-1 text-[11px] rounded-md bg-red-500/15 text-red-300 hover:bg-red-500/25 disabled:opacity-50 transition-colors"
+      >
+        {sitlBusy === 'stop' ? 'Stopping...' : 'Stop SITL'}
+      </button>
+      <button
+        onClick={rechargeSitlBattery}
+        disabled={sitlBusy !== null || !linkUp}
+        data-tip={linkUp ? 'Refill the simulated pack (SIM_BATT_VOLTAGE)' : 'Connect to the SITL first'}
+        className="flex-1 px-2 py-1 text-[11px] rounded-md bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50 transition-colors"
+      >
+        {sitlBusy === 'recharge' ? 'Charging...' : 'Recharge'}
+      </button>
+      <button
+        onClick={respawnSitl}
+        disabled={sitlBusy !== null || !linkUp}
+        data-tip={linkUp ? 'Reboot the simulated vehicle: back on the ground at home, disarmed' : 'Connect to the SITL first'}
+        className="flex-1 px-2 py-1 text-[11px] rounded-md bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 disabled:opacity-50 transition-colors"
+      >
+        {sitlBusy === 'respawn' ? 'Respawning...' : 'Respawn'}
+      </button>
+    </div>
+  );
   const anySitlStarting = inavIsStarting || ardupilotIsStarting || px4IsStarting;
 
   // Per-flavour "needs download?" and the one that applies to the active choice.
@@ -653,6 +758,17 @@ export function ConnectionPanel() {
                 </div>
               )}
             </button>
+            {/* Running-SITL actions: stopping, recharging and respawning are
+                what the sim screen is otherwise opened for. */}
+            {anySitlRunning && (
+              <div className="pt-2">
+                {sitlActionRow}
+                {sitlNote && (
+                  <div className="pt-1 text-center text-[10px] text-content-tertiary">{sitlNote}</div>
+                )}
+              </div>
+            )}
+
             {/* SITL Type Selector - show when not running */}
             {!anySitlRunning && !anySitlStarting && !anySitlDownloading && (
               <div className="flex items-center justify-center gap-1.5 pt-2">
@@ -1231,6 +1347,28 @@ export function ConnectionPanel() {
           (connectionState.transport?.includes('460800') ?? false) && (
             <RadioPreflightCard />
           )}
+
+        {/* Simulator controls: with a SITL on the other end of the link, the
+            sim screen is three clicks away for things wanted mid-flight. */}
+        {connectedToSitl && (
+          <div className="card border-blue-500/30">
+            <div className="card-header">
+              <h3 className="text-sm font-medium text-content flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-400" />
+                Simulator
+              </h3>
+            </div>
+            <div className="card-body space-y-2">
+              {sitlActionRow}
+              {sitlNote && <div className="text-center text-[10px] text-content-tertiary">{sitlNote}</div>}
+              {!anySitlRunning && (
+                <div className="text-[10px] text-content-tertiary">
+                  Started outside ArduDeck: Stop only ends simulators this app launched.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Connection info card */}
         {connectionState.isConnected && (

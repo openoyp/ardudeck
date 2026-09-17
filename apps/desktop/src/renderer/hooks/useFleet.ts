@@ -54,6 +54,8 @@ export interface FleetVehicle {
   groundspeed: number;
   heading: number;
   altitudeAgl: number;
+  /** Altitude above mean sea level (m), as the vehicle reports it. */
+  altitudeMsl: number;
   /** [lat, lon] when a valid GPS fix exists, else null. */
   position: [number, number] | null;
   state: VehicleState;
@@ -97,6 +99,7 @@ export function useFleetVehicles(): FleetVehicle[] {
       groundspeed: tel?.vfrHud?.groundspeed ?? 0,
       heading: tel?.vfrHud?.heading ?? 0,
       altitudeAgl: tel?.position?.relativeAlt ?? 0,
+      altitudeMsl: tel?.position?.alt ?? 0,
       position: hasFix && tel?.gps ? [tel.gps.lat, tel.gps.lon] : null,
       state: deriveState(armed, batteryPct, gpsFix),
       lastUpdate: tel?.lastUpdate ?? null,

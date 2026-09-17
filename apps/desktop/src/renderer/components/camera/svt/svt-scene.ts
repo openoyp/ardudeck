@@ -11,6 +11,8 @@
  */
 
 import * as THREE from 'three';
+import type { DrapeRing } from './svt-satellite';
+import { attachDrape } from './drape-material';
 import {
   type ElevationGrid,
   buildTerrainGridGeometry,
@@ -22,11 +24,11 @@ import {
 
 const DEG = Math.PI / 180;
 
-// Minimum eye height above the local terrain. On the ground AGL is ~0, which
-// would place the camera exactly on the surface — the terrain then collapses to
-// an edge-on sliver at the horizon. A few metres lifts the eye off the surface
-// so the ground fills the lower view; in flight the real AGL dominates.
-const MIN_EYE_M = 12;
+// Floor under the camera, so a landed vehicle does not sit exactly ON the
+// surface (the terrain would collapse to an edge-on sliver). It is a RENDER
+// floor only: the true clearance is reported separately, or the display would
+// quietly hide the aircraft being below the terrain it is drawing.
+const MIN_EYE_M = 2;
 
 // Subtle atmospheric haze near the far horizon only. Terrain reads crisply for
 // most of the patch and fades into the sky just before its nearest possible
@@ -40,6 +42,13 @@ export interface SvtPose {
   lon: number;
   /** Height above terrain at the vehicle (metres). */
   agl: number;
+  /** Altitude above mean sea level (metres), as the vehicle reports it. */
+  altMsl: number;
+  /** Eye altitude in the DEM's own datum: the vehicle's MSL shifted by the
+      measured offset between its altitude reference and the terrain data.
+      This, not AGL, is what the camera flies at, so rising ground rises in
+      the view exactly as it does in the world. */
+  eyeMsl: number;
   rollDeg: number;
   pitchDeg: number;
   /** True heading, degrees (0 = North, 90 = East). */
@@ -50,8 +59,15 @@ export interface SvtScene {
   resize: (width: number, height: number) => void;
   /** Swap in a freshly built terrain mesh; disposes the previous one. */
   setTerrain: (geometry: THREE.BufferGeometry, grid: ElevationGrid) => void;
+  /** Drape satellite imagery over the terrain; null returns to the elevation
+      ramp. Disposes the textures of any previous rings. */
+  setDrape: (rings: DrapeRing[] | null) => void;
   /** Position + orient the camera from a vehicle pose. */
   setPose: (pose: SvtPose) => void;
+  /** Metres between the eye and the terrain directly below it, from the last
+      setPose. Negative means the aircraft is below the DEM surface. NaN until
+      terrain exists. */
+  getClearanceM: () => number;
   /** The perspective camera's vertical FOV (degrees). The HUD world overlay uses
       the SAME fov so its world-locked symbology aligns with the SVT terrain. */
   getFov: () => number;
@@ -62,6 +78,13 @@ export interface SvtScene {
 
 export function createSvtScene(canvas: HTMLCanvasElement): SvtScene {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  // Without preventDefault a lost context is fatal to the whole renderer
+  // process; swallowing it leaves a frozen view that recovers on restore.
+  let contextLost = false;
+  const onLost = (e: Event) => { e.preventDefault(); contextLost = true; };
+  const onRestored = () => { contextLost = false; };
+  canvas.addEventListener('webglcontextlost', onLost, false);
+  canvas.addEventListener('webglcontextrestored', onRestored, false);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -125,7 +148,18 @@ export function createSvtScene(canvas: HTMLCanvasElement): SvtScene {
   scene.add(sky);
 
   // ─── Replaceable terrain mesh ─────────────────────────────────────────────
-  const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 });
+  // DoubleSide on purpose: with FrontSide a camera that dips below the surface
+  // sees straight through it into the sky dome, which reads as the world
+  // vanishing rather than as a clipped view.
+  const terrainMat = new THREE.MeshStandardMaterial({
+    vertexColors: true,
+    roughness: 1,
+    metalness: 0,
+    side: THREE.DoubleSide,
+  });
+
+  const drape = attachDrape(terrainMat);
+
   let terrainMesh: THREE.Mesh | null = null;
   let grid: ElevationGrid | null = null;
 
@@ -133,8 +167,12 @@ export function createSvtScene(canvas: HTMLCanvasElement): SvtScene {
   // Rebuilt from each ElevationGrid in setTerrain so the grid lines ride the
   // hills (a flat plane grid just buries itself in the terrain). Gives the pilot
   // a topographic reference and the lines converge to the horizon = depth cue.
-  const terrainGridMat = new THREE.LineBasicMaterial({ color: 0xbfe6c8, transparent: true, opacity: 0.3, depthWrite: false });
+  const GRID_OPACITY = 0.3;
+  // Over imagery the reference grid is a distraction, not a depth cue.
+  const GRID_OPACITY_DRAPED = 0.12;
+  const terrainGridMat = new THREE.LineBasicMaterial({ color: 0xbfe6c8, transparent: true, opacity: GRID_OPACITY, depthWrite: false });
   let terrainGrid: THREE.LineSegments | null = null;
+  let clearanceM = NaN;
 
   return {
     resize(width: number, height: number) {
@@ -162,10 +200,16 @@ export function createSvtScene(canvas: HTMLCanvasElement): SvtScene {
       scene.add(terrainGrid);
     },
 
+    setDrape(rings: DrapeRing[] | null) {
+      drape.setDrape(rings, renderer);
+      terrainGridMat.opacity = drape.hasDrape() ? GRID_OPACITY_DRAPED : GRID_OPACITY;
+    },
+
     setPose(pose: SvtPose) {
       const local = grid ? lonLatToLocal(grid, pose.lat, pose.lon) : { x: 0, z: 0 };
       const groundElev = grid ? sampleElevation(grid, pose.lat, pose.lon) : 0;
-      camera.position.set(local.x, groundElev + Math.max(MIN_EYE_M, pose.agl), local.z);
+      clearanceM = grid ? pose.eyeMsl - groundElev : NaN;
+      camera.position.set(local.x, Math.max(pose.eyeMsl, groundElev + MIN_EYE_M), local.z);
       camera.rotation.set(pose.pitchDeg * DEG, -pose.headingDeg * DEG, -pose.rollDeg * DEG);
       // Keep the sky dome centred on the camera so it never crosses the far plane.
       sky.position.copy(camera.position);
@@ -175,15 +219,23 @@ export function createSvtScene(canvas: HTMLCanvasElement): SvtScene {
       return camera.fov;
     },
 
+    getClearanceM() {
+      return clearanceM;
+    },
+
     hasTerrain() {
       return terrainMesh !== null;
     },
 
     render() {
+      if (contextLost) return;
       renderer.render(scene, camera);
     },
 
     dispose() {
+      canvas.removeEventListener('webglcontextlost', onLost);
+      canvas.removeEventListener('webglcontextrestored', onRestored);
+      drape.dispose();
       if (terrainMesh) {
         terrainMesh.geometry.dispose();
         terrainMesh = null;

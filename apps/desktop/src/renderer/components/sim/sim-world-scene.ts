@@ -24,6 +24,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { type ModelKey, FALLBACK_MODEL, CLASS_MODEL, modelKeyForClass } from './sim-models';
 import type { SimDiagnostics, SimLoad } from '../../stores/sim-state-store';
 import { createWaypointSymbology } from '../camera/hud3d/waypoint-symbology';
+import { attachDrape } from '../camera/svt/drape-material';
+import type { DrapeRing } from '../camera/svt/svt-satellite';
 import { buildTemplateFromBlueprint } from './sim-frame-builder';
 import type { FrameBlueprintProfile } from '../../../shared/ipc-channels';
 
@@ -152,6 +154,9 @@ export interface SimWorldScene {
    * sits at y = 0, matching the NED vehicle frame.
    */
   setTerrain: (geometry: THREE.BufferGeometry | null, yOffset?: number) => void;
+  /** Drape satellite imagery over the terrain; null returns to the elevation
+      ramp. Same rings the synthetic-vision view builds. */
+  setDrape: (rings: DrapeRing[] | null) => void;
   /** Show/hide the reference grid (spatial-perception aid, over flat ground and
       SVT terrain alike). Default on. */
   setGrid: (on: boolean) => void;
@@ -410,6 +415,7 @@ export function createSimWorldScene(canvas: HTMLCanvasElement): SimWorldScene {
   // ─── Optional synthetic-vision terrain (replaces the flat ground) ─────────
   const DEFAULT_FOG_FAR = (scene.fog as THREE.Fog).far;
   const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 });
+  const drape = attachDrape(terrainMat);
   let terrainMesh: THREE.Mesh | null = null;
 
   function setTerrain(geometry: THREE.BufferGeometry | null, yOffset = 0): void {
@@ -1253,6 +1259,10 @@ export function createSimWorldScene(canvas: HTMLCanvasElement): SimWorldScene {
       camera.updateProjectionMatrix();
     },
 
+    setDrape(rings: DrapeRing[] | null) {
+      drape.setDrape(rings, renderer);
+    },
+
     update(data: SimWorldUpdate) {
       const seen = new Set<string>();
       activeId = null;
@@ -1504,6 +1514,7 @@ export function createSimWorldScene(canvas: HTMLCanvasElement): SimWorldScene {
 
     dispose() {
       if (terrainMesh) terrainMesh.geometry.dispose();
+      drape.dispose();
       terrainMat.dispose();
       for (const v of vehicles.values()) disposeVehicle(v);
       vehicles.clear();

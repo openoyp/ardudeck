@@ -44,6 +44,7 @@ import {
 import { useParameterStore } from '../../stores/parameter-store';
 import { useSettingsStore } from '../../stores/settings-store';
 import { useTelemetryStore } from '../../stores/telemetry-store';
+import { useRcSignalStatus } from '../../hooks/useRcSignalStatus';
 import { useEffectiveRc } from '../../stores/pseudo-tx-store';
 import { useConnectionStore } from '../../stores/connection-store';
 
@@ -249,7 +250,6 @@ const FlightModesTab: React.FC<FlightModesTabProps> = ({ vehicleCategory = 'copt
 
   // --- Live RC from telemetry store (same pattern as ReceiverTab) ---
   const rcChannels = useTelemetryStore((s) => s.rcChannels);
-  const lastRcChannels = useTelemetryStore((s) => s.lastRcChannels);
 
   const [advancedMode, setAdvancedMode] = useState<boolean>(
     () => useSettingsStore.getState().uiVisibility.defaultAdvancedViews
@@ -257,22 +257,7 @@ const FlightModesTab: React.FC<FlightModesTabProps> = ({ vehicleCategory = 'copt
   const [detectMode, setDetectMode] = useState(false);
   const [detectedChannel, setDetectedChannel] = useState<number | null>(null);
 
-  // Signal status tracking
-  const [signalStatus, setSignalStatus] = useState<'none' | 'stale' | 'active'>('none');
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - lastRcChannels;
-      if (lastRcChannels === 0 || rcChannels.chancount === 0) {
-        setSignalStatus('none');
-      } else if (elapsed > 2000) {
-        setSignalStatus('stale');
-      } else {
-        setSignalStatus('active');
-      }
-    }, 250);
-    return () => clearInterval(interval);
-  }, [lastRcChannels, rcChannels.chancount]);
+  const signalStatus = useRcSignalStatus();
 
   // Channel baseline for active detection
   const [channelBaseline, setChannelBaseline] = useState<number[]>([]);

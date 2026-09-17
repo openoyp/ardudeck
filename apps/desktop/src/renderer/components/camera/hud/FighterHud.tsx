@@ -88,6 +88,8 @@ const WARN = '#ff5a5a';
 const PITCH_HALF_SPAN = 18;
 const PITCH_BAND = 250;
 const PX_PER_DEG = HUD_PX_PER_DEG;
+/** Below this ground speed the flight path marker cages to the boresight. */
+const FPM_CAGE_MS = 2;
 const HDG_HALF = 45;
 const HDG_BAND = 360;
 const TAPE_BAND = 200;
@@ -136,18 +138,25 @@ export const FighterHud = memo(function FighterHud({ v: raw, config, profile = '
   const spd = verticalTapeTicks(spdDisp, u.spdHalf, u.spdStepMinor, u.spdStepMajor);
   const alt = verticalTapeTicks(altDisp, u.altHalf, u.altStepMinor, u.altStepMajor);
 
-  // Flight Path Marker geometry.
-  let course = v.heading;
-  let fpa: number;
-  if (v.vx != null && v.vy != null) {
-    const gsH = Math.hypot(v.vx, v.vy);
-    if (gsH > 0.5) course = (Math.atan2(v.vy, v.vx) / DEG + 360) % 360;
-    fpa = Math.atan2(-(v.vz ?? 0), Math.max(gsH, 0.1)) / DEG;
-  } else {
-    fpa = Math.atan2(v.vario, Math.max(v.groundspeed, 0.1)) / DEG;
-  }
-  const fpmDX = Math.max(-26, Math.min(26, wrap180(course - v.heading))) * PX_PER_DEG;
-  const fpmDY = Math.max(-16, Math.min(16, v.pitch - fpa)) * PX_PER_DEG;
+  // Flight Path Marker geometry. Below FPM_CAGE_MS the horizontal track is
+  // noise (a hovering copter drifts a few tenths of a m/s in any direction) and
+  // the climb angle swings to vertical on any vertical speed, so the marker is
+  // caged to the boresight instead of thrashing.
+  const vN = v.vx ?? 0;
+  const vE = v.vy ?? 0;
+  const vD = v.vz ?? -v.vario;
+  const gsH = v.vx != null && v.vy != null ? Math.hypot(vN, vE) : v.groundspeed;
+  const fpmCaged = gsH < FPM_CAGE_MS;
+  // asin against the full speed, not atan against the horizontal component:
+  // the horizontal form divides by ~zero at low speed and throws the marker to
+  // its clamp, which is what made it read wrong in slow flight.
+  const speed3d = Math.hypot(gsH, vD);
+  const fpa = speed3d > 0.1 ? (Math.asin(Math.max(-1, Math.min(1, -vD / speed3d))) / DEG) : 0;
+  const course = fpmCaged || v.vx == null || v.vy == null
+    ? v.heading
+    : (Math.atan2(vE, vN) / DEG + 360) % 360;
+  const fpmDX = fpmCaged ? 0 : Math.max(-26, Math.min(26, wrap180(course - v.heading))) * PX_PER_DEG;
+  const fpmDY = fpmCaged ? 0 : Math.max(-16, Math.min(16, v.pitch - fpa)) * PX_PER_DEG;
 
   // Drag handling for movable widgets (designer only).
   const toViewBox = (clientX: number, clientY: number) => {
@@ -256,7 +265,13 @@ export const FighterHud = memo(function FighterHud({ v: raw, config, profile = '
           )}
 
           {w.fpm && (
-            <g transform={`translate(${CX + fpmDX} ${CY + fpmDY})`} strokeWidth={3 * lw} fill="none">
+            <g
+              transform={`translate(${CX + fpmDX} ${CY + fpmDY})`}
+              strokeWidth={3 * lw}
+              fill="none"
+              opacity={fpmCaged ? 0.45 : 1}
+              strokeDasharray={fpmCaged ? '6 5' : undefined}
+            >
               <circle cx={0} cy={0} r={17} />
               <line x1={17} y1={0} x2={45} y2={0} />
               <line x1={-17} y1={0} x2={-45} y2={0} />

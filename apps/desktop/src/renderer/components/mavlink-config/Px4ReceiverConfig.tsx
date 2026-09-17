@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useParameterStore } from '../../stores/parameter-store';
 import { useTelemetryStore } from '../../stores/telemetry-store';
+import { useRcSignalStatus } from '../../hooks/useRcSignalStatus';
 import { InfoCard } from '../ui/InfoCard';
 import {
   PRIMARY_CHANNEL_COUNT,
@@ -213,7 +214,6 @@ const CalCell: React.FC<{
 const Px4ReceiverConfig: React.FC = () => {
   const { parameters, setParameter, getParameterMetadata } = useParameterStore();
   const rcChannels = useTelemetryStore((s) => s.rcChannels);
-  const lastRcChannels = useTelemetryStore((s) => s.lastRcChannels);
 
   // RC_MAP_* describe which physical channel carries each primary function (1-based).
   const rcmap = useMemo(
@@ -233,19 +233,9 @@ const Px4ReceiverConfig: React.FC = () => {
   );
 
   // --- Live signal status + active-channel detection (same logic as ArduPilot tab) ---
-  const [signalStatus, setSignalStatus] = useState<'none' | 'stale' | 'active'>('none');
+  const signalStatus = useRcSignalStatus();
   const [channelBaseline, setChannelBaseline] = useState<number[]>([]);
   const [activeChannels, setActiveChannels] = useState<boolean[]>(Array(18).fill(false));
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - lastRcChannels;
-      if (lastRcChannels === 0 || rcChannels.chancount === 0) setSignalStatus('none');
-      else if (elapsed > 2000) setSignalStatus('stale');
-      else setSignalStatus('active');
-    }, 250);
-    return () => clearInterval(interval);
-  }, [lastRcChannels, rcChannels.chancount]);
 
   useEffect(() => {
     if (channelBaseline.length === 0 && rcChannels.channels.length > 0) {

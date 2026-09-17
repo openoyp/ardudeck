@@ -13,6 +13,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Radio, Signal, SignalZero, Activity, AlertTriangle, HelpCircle } from 'lucide-react';
 import { useParameterStore } from '../../stores/parameter-store';
 import { useTelemetryStore } from '../../stores/telemetry-store';
+import { useRcSignalStatus } from '../../hooks/useRcSignalStatus';
 import { useEffectiveRc, usePseudoTxStore } from '../../stores/pseudo-tx-store';
 import { useSettingsStore } from '../../stores/settings-store';
 import { useConnectionStore } from '../../stores/connection-store';
@@ -159,38 +160,11 @@ const ReceiverTab: React.FC = () => {
     return reorderChannelsWithRcmap(physicalChannelNames, rcmap);
   }, [physicalChannelNames, rcmap]);
 
-  // Signal status based on last update time
-  const [signalStatus, setSignalStatus] = useState<'none' | 'stale' | 'active'>('none');
+  const signalStatus = useRcSignalStatus();
 
   // Track channel movement for active indicator
   const [channelBaseline, setChannelBaseline] = useState<number[]>([]);
   const [activeChannels, setActiveChannels] = useState<boolean[]>(Array(18).fill(false));
-
-  // Read fresh state inside the tick. If lastRcChannels/chancount were deps, the
-  // effect would recreate this interval on every RC frame (~5-10Hz), faster than
-  // its own 250ms period, so it would never fire and the badge would stay stuck
-  // at "No Signal" even while channels stream in.
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // A USB handset acting as the RC source IS a live signal. Judging this from the
-      // telemetry store alone left the bars moving from the handset while the badge next to
-      // them insisted there was no signal, and anything gated on `signalStatus` stayed dead.
-      const tx = usePseudoTxStore.getState();
-      if (tx.enabled && tx.connected) {
-        setSignalStatus('active');
-        return;
-      }
-      const { lastRcChannels: last, rcChannels: rc } = useTelemetryStore.getState();
-      if (last === 0 || rc.chancount === 0) {
-        setSignalStatus('none');
-      } else if (Date.now() - last > 2000) {
-        setSignalStatus('stale');
-      } else {
-        setSignalStatus('active');
-      }
-    }, 250);
-    return () => clearInterval(interval);
-  }, []);
 
   // Track active channels
   useEffect(() => {

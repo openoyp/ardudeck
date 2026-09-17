@@ -24,6 +24,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Radio, Activity, AlertTriangle, HelpCircle } from 'lucide-react';
 import { useParameterStore } from '../../stores/parameter-store';
 import { useTelemetryStore } from '../../stores/telemetry-store';
+import { useRcSignalStatus } from '../../hooks/useRcSignalStatus';
 import { InfoCard } from '../ui/InfoCard';
 
 // The mode switch spans the channel from PWM_MIN to PWM_MAX, split into 6 equal
@@ -66,19 +67,9 @@ const MODE_ENUM_FALLBACK: Record<number, string> = {
 const Px4FlightModesConfig: React.FC = () => {
   const { parameters, setParameter, getParameterMetadata, modifiedCount } = useParameterStore();
   const rcChannels = useTelemetryStore((s) => s.rcChannels);
-  const lastRcChannels = useTelemetryStore((s) => s.lastRcChannels);
 
   // --- Live signal status (same logic as the ArduPilot tab) ---
-  const [signalStatus, setSignalStatus] = useState<'none' | 'stale' | 'active'>('none');
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - lastRcChannels;
-      if (lastRcChannels === 0 || rcChannels.chancount === 0) setSignalStatus('none');
-      else if (elapsed > 2000) setSignalStatus('stale');
-      else setSignalStatus('active');
-    }, 250);
-    return () => clearInterval(interval);
-  }, [lastRcChannels, rcChannels.chancount]);
+  const signalStatus = useRcSignalStatus();
 
   // --- Mode-switch channel param (RC_MAP_FLTMODE, legacy RC_MAP_MODE_SW) ---
   const channelParamId = parameters.has('RC_MAP_FLTMODE')

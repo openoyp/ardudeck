@@ -9,36 +9,16 @@
  */
 
 import { decodeTerrarium } from '../../../utils/terrain-colors';
+import {
+  TILE_SIZE,
+  TILE_TIMEOUT_MS,
+  acquireTileSlot,
+  latToTileY,
+  lonToTileX,
+  releaseTileSlot,
+} from './svt-tile-queue';
 
 const TILE_URL = 'tile-cache://dem/{z}/{x}/{y}.png';
-const TILE_SIZE = 256;
-/** Abandon a tile that hasn't loaded in this long (treat as missing). */
-const TILE_TIMEOUT_MS = 12_000;
-/**
- * Cap concurrent tile image loads across the whole renderer. With a swarm, many
- * synthetic-vision views load terrain at once; without a cap they starve the
- * connection pool and some Image loads never fire onload/onerror — which would
- * otherwise hang the whole terrain load forever.
- */
-const MAX_CONCURRENT_TILES = 8;
-let activeTileLoads = 0;
-const tileQueue: Array<() => void> = [];
-
-function acquireTileSlot(): Promise<void> {
-  if (activeTileLoads < MAX_CONCURRENT_TILES) {
-    activeTileLoads++;
-    return Promise.resolve();
-  }
-  return new Promise<void>((resolve) => tileQueue.push(() => resolve())).then(() => {
-    activeTileLoads++;
-  });
-}
-
-function releaseTileSlot(): void {
-  activeTileLoads--;
-  const next = tileQueue.shift();
-  if (next) next();
-}
 
 export interface Heightfield {
   zoom: number;
@@ -53,26 +33,17 @@ export interface Heightfield {
   loadedTiles: number;
 }
 
-/** Web-Mercator fractional tile X for a longitude. */
-export function lonToTileX(lon: number, z: number): number {
-  return ((lon + 180) / 360) * 2 ** z;
-}
-
-/** Web-Mercator fractional tile Y for a latitude. */
-export function latToTileY(lat: number, z: number): number {
-  const r = (lat * Math.PI) / 180;
-  return ((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * 2 ** z;
-}
+export { lonToTileX, latToTileY };
 
 /**
  * Pick a zoom so the patch spans roughly three tiles per side — enough tiles to
  * be detailed, few enough to load quickly.
  */
-export function pickZoom(halfSizeM: number, lat: number): number {
+export function pickZoom(halfSizeM: number, lat: number, maxZoom = 12): number {
   const spanM = 2 * halfSizeM;
   const earthAtLat = 40_075_017 * Math.cos((lat * Math.PI) / 180);
   const z = Math.round(Math.log2((earthAtLat * 3) / Math.max(1, spanM)));
-  return Math.max(8, Math.min(12, z));
+  return Math.max(8, Math.min(maxZoom, z));
 }
 
 async function loadTilePixels(z: number, x: number, y: number): Promise<Uint8ClampedArray | null> {

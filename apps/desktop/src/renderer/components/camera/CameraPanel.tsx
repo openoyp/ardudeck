@@ -43,6 +43,7 @@ export function CameraPanel() {
   const { viewMode, renderMode, syntheticFallback, lockedVehicleKey, osd, gridCols } = store;
 
   const [showSources, setShowSources] = useState(false);
+  const [showTerrainMenu, setShowTerrainMenu] = useState(false);
   const [showOsdMenu, setShowOsdMenu] = useState(false);
   const [recordingSourceId, setRecordingSourceId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -174,6 +175,49 @@ export function CameraPanel() {
               title="Record"
             >{recordingSourceId === liveSourceId ? '● Rec' : 'Rec'}</button>
           </>
+        )}
+
+        {/* Synthetic-vision terrain options */}
+        {renderMode === 'synthetic' && (
+          <div className="relative">
+            <button
+              onClick={() => setShowTerrainMenu((v) => !v)}
+              className="rounded px-1.5 py-0.5 text-[11px] text-content-secondary hover:bg-surface-raised"
+              title="Terrain imagery and detail"
+            >Terrain</button>
+            {showTerrainMenu && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setShowTerrainMenu(false)} />
+                <div className="absolute right-0 top-7 z-40 w-52 rounded-lg border border-default bg-surface-solid p-1.5 shadow-xl">
+                  <label className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-[11px] text-content hover:bg-surface-raised">
+                    <input
+                      type="checkbox"
+                      checked={store.svtSatellite}
+                      onChange={(e) => store.setSvtSatellite(e.target.checked)}
+                      className="accent-blue-500"
+                    />
+                    Satellite imagery
+                  </label>
+                  <div className="mt-1 border-t border-subtle pt-1">
+                    <div className="px-1.5 pb-1 text-[10px] uppercase tracking-wide text-content-tertiary">Terrain detail</div>
+                    <div className="flex overflow-hidden rounded-md border border-subtle">
+                      {(['low', 'medium', 'high'] as const).map((q) => (
+                        <button
+                          key={q}
+                          onClick={() => store.setSvtQuality(q)}
+                          className={`flex-1 px-1.5 py-0.5 text-[11px] capitalize transition-colors ${store.svtQuality === q ? 'bg-surface-raised text-content' : 'text-content-secondary hover:bg-surface-raised'}`}
+                          title={q === 'low' ? 'Fewer elevation samples, lightest on the GPU' : q === 'high' ? 'Most elevation detail, heaviest to load' : 'Balanced'}
+                        >{q}</button>
+                      ))}
+                    </div>
+                    <div className="px-1.5 pt-1 text-[10px] leading-snug text-content-tertiary">
+                      Detail of the wider terrain. The ground nearest the aircraft always uses the sharpest imagery.
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         )}
 
         {/* OSD layers */}

@@ -34,6 +34,20 @@ export const M_PER_DEG_LAT = 111_320;
 export const SVT_HALF_SIZE_M = 25_000;
 /** Vertices per side (mesh density). Tile sampling is in-memory, so this is free. */
 export const SVT_GRID_RES = 96;
+
+export type SvtQuality = 'low' | 'medium' | 'high';
+
+/**
+ * Terrain detail per quality level: mesh density and the DEM zoom cap (a zoom
+ * step doubles the elevation samples per side). Imagery is NOT scaled here: the
+ * innermost drape ring always gets the full tile budget, so the ground right in
+ * front of the aircraft looks the same at every level.
+ */
+export const SVT_QUALITY: Record<SvtQuality, { res: number; demZoomMax: number; outerRingTiles: number }> = {
+  low: { res: 70, demZoomMax: 11, outerRingTiles: 6 },
+  medium: { res: 208, demZoomMax: 13, outerRingTiles: 9 },
+  high: { res: 416, demZoomMax: 14, outerRingTiles: 12 },
+};
 /** Rebuild the grid once the vehicle drifts this far from its centre. */
 export const SVT_REBUILD_DISTANCE_M = 6_000;
 
@@ -86,13 +100,16 @@ function vertexEastNorth(halfSizeM: number, res: number, i: number, j: number): 
 export async function loadElevationGrid(
   centerLat: number,
   centerLon: number,
+  quality: SvtQuality = 'medium',
   halfSizeM = SVT_HALF_SIZE_M,
-  res = SVT_GRID_RES,
+  resOverride?: number,
 ): Promise<ElevationGrid> {
+  const { res: qualityRes, demZoomMax } = SVT_QUALITY[quality];
+  const res = resOverride ?? qualityRes;
   const mPerDegLon = metersPerDegLon(centerLat);
   const dLat = halfSizeM / M_PER_DEG_LAT;
   const dLon = halfSizeM / mPerDegLon;
-  const zoom = pickZoom(halfSizeM, centerLat);
+  const zoom = pickZoom(halfSizeM, centerLat, demZoomMax);
 
   const hf = await loadHeightfield(centerLat - dLat, centerLon - dLon, centerLat + dLat, centerLon + dLon, zoom);
   if (hf.loadedTiles === 0) {
