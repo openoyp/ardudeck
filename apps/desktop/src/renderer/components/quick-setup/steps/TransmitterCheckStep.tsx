@@ -253,7 +253,7 @@ export const TransmitterCheckStep: React.FC = () => {
       setNoSignalTimeout(false);
       setConfigLoaded(false); // reload next time if needed
     } catch (err) {
-      setRxSaveError(err instanceof Error ? err.message : 'Failed to save receiver config');
+      setRxSaveError(err instanceof Error ? err.message : '保存接收机配置失败');
     } finally {
       setIsSavingRx(false);
     }
@@ -275,12 +275,12 @@ export const TransmitterCheckStep: React.FC = () => {
           )}
         </div>
         <h2 className="text-xl font-semibold text-content">
-          {allDetected ? 'Transmitter Connected!' : 'Wiggle Your Sticks'}
+          {allDetected ? '遥控器已连接!' : '摇动你的摇杆'}
         </h2>
         <p className="text-sm text-content-secondary mt-2 max-w-md mx-auto">
           {allDetected
-            ? 'Your transmitter is working. You can proceed to review your configuration.'
-            : 'Turn on your transmitter and move all sticks to verify they are being received.'}
+            ? '遥控器工作正常。你可以继续预览配置。'
+            : '打开遥控器并移动所有摇杆,以验证信号正在被接收。'}
         </p>
       </div>
 
@@ -300,12 +300,12 @@ export const TransmitterCheckStep: React.FC = () => {
           )}
           <div>
             <p className={`text-sm font-medium ${allDetected ? 'text-green-300' : 'text-amber-300'}`}>
-              {detectedCount}/4 channels detected
+              已检测到 {detectedCount}/4 个通道
             </p>
             <p className="text-xs text-content-secondary mt-0.5">
               {allDetected
-                ? 'All primary channels (Roll, Pitch, Throttle, Yaw) are responding'
-                : 'Wiggle each stick to detect remaining channels'}
+                ? '所有主通道(横滚、俯仰、油门、偏航)均有响应'
+                : '逐一摇动摇杆以检测剩余通道'}
             </p>
           </div>
         </div>
@@ -315,7 +315,7 @@ export const TransmitterCheckStep: React.FC = () => {
       <div className="p-4 bg-surface rounded-xl space-y-3">
         <h3 className="text-sm font-medium text-content flex items-center gap-2">
           <Radio className="w-4 h-4" />
-          RC Channels
+          RC 通道
           {isPollingRc && (
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           )}
@@ -360,10 +360,10 @@ export const TransmitterCheckStep: React.FC = () => {
               <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-amber-300">
-                  No RC signal detected
+                  未检测到 RC 信号
                 </p>
                 <p className="text-xs text-content-secondary mt-1">
-                  Your receiver may not be configured correctly. Check that it's powered, bound to your transmitter, and the correct protocol is set.
+                  你的接收机可能配置不正确。请检查它已供电、已与遥控器对频,并且协议设置正确。
                 </p>
                 {!showTroubleshoot && (
                   <button
@@ -371,7 +371,7 @@ export const TransmitterCheckStep: React.FC = () => {
                     className="mt-3 flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg transition-colors"
                   >
                     <Wrench className="w-3.5 h-3.5" />
-                    Fix Receiver Config
+                    修复接收机配置
                   </button>
                 )}
               </div>
@@ -384,20 +384,20 @@ export const TransmitterCheckStep: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Wrench className="w-4 h-4 text-blue-400" />
-                  <h3 className="text-sm font-medium text-content">Receiver Configuration</h3>
+                  <h3 className="text-sm font-medium text-content">接收机配置</h3>
                 </div>
                 <button
                   onClick={() => setShowTroubleshoot(false)}
                   className="text-xs text-content-secondary hover:text-content transition-colors"
                 >
-                  Close
+                  关闭
                 </button>
               </div>
 
               {!configLoaded ? (
                 <div className="flex items-center justify-center gap-2 py-4 text-content-secondary">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-sm">Loading config from FC...</span>
+                  <span className="text-sm">正在从飞控读取配置…</span>
                 </div>
               ) : (
                 <>
@@ -405,7 +405,7 @@ export const TransmitterCheckStep: React.FC = () => {
                   {isInav ? (
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs text-content-secondary mb-1.5 block">Receiver Type</label>
+                        <label className="text-xs text-content-secondary mb-1.5 block">接收机类型</label>
                         <div className="flex gap-1.5 flex-wrap">
                           {INAV_RECEIVER_TYPES.map((t) => (
                             <button
@@ -425,7 +425,7 @@ export const TransmitterCheckStep: React.FC = () => {
 
                       {rxType === 'SERIAL' && (
                         <div>
-                          <label className="text-xs text-content-secondary mb-1.5 block">Serial RX Protocol</label>
+                          <label className="text-xs text-content-secondary mb-1.5 block">串行 RX 协议</label>
                           <div className="flex gap-1.5 flex-wrap">
                             {INAV_QUICK_SELECT.map((p) => (
                               <button
@@ -450,7 +450,7 @@ export const TransmitterCheckStep: React.FC = () => {
                   ) : (
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs text-content-secondary mb-1.5 block">Receiver Protocol</label>
+                        <label className="text-xs text-content-secondary mb-1.5 block">接收机协议</label>
                         <div className="flex gap-1.5 flex-wrap">
                           {BF_QUICK_SELECT.map((p) => (
                             <button
@@ -468,13 +468,13 @@ export const TransmitterCheckStep: React.FC = () => {
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs text-content-secondary mb-1.5 block">All Protocols</label>
+                        <label className="text-xs text-content-secondary mb-1.5 block">所有协议</label>
                         <select
                           value={bfProvider ?? ''}
                           onChange={(e) => setBfProvider(Number(e.target.value))}
                           className="w-full bg-surface-raised text-content rounded-lg px-3 py-1.5 text-xs border border focus:border-blue-500 focus:outline-none"
                         >
-                          {bfProvider === null && <option value="">Not loaded</option>}
+                          {bfProvider === null && <option value="">未加载</option>}
                           {BF_PROVIDERS.map((p) => (
                             <option key={p.value} value={p.value}>{p.label}</option>
                           ))}
@@ -489,13 +489,13 @@ export const TransmitterCheckStep: React.FC = () => {
                   {/* Serial RX Port selector */}
                   {serialPorts.length > 0 && (rxType === 'SERIAL' || !isInav) && (
                     <div>
-                      <label className="text-xs text-content-secondary mb-1.5 block">Serial RX Port</label>
+                      <label className="text-xs text-content-secondary mb-1.5 block">串行 RX 端口</label>
                       <select
                         value={rxPortId}
                         onChange={(e) => setRxPortId(Number(e.target.value))}
                         className="w-full bg-surface-raised text-content rounded-lg px-3 py-1.5 text-xs border border focus:border-blue-500 focus:outline-none"
                       >
-                        <option value={-1}>None selected</option>
+                        <option value={-1}>未选择</option>
                         {serialPorts.map((p) => (
                           <option key={p.identifier} value={p.identifier}>
                             {getPortName(p.identifier)}
@@ -503,7 +503,7 @@ export const TransmitterCheckStep: React.FC = () => {
                         ))}
                       </select>
                       <p className="text-[11px] text-content-secondary mt-1">
-                        Select the UART your receiver is wired to. Only one port can have Serial RX.
+                        选择接收机所接的 UART。仅允许一个端口启用串行 RX。
                       </p>
                     </div>
                   )}
@@ -524,10 +524,10 @@ export const TransmitterCheckStep: React.FC = () => {
                     {isSavingRx ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Saving...
+                        保存中…
                       </>
                     ) : (
-                      'Apply & Retry'
+                      '应用并重试'
                     )}
                   </button>
                 </>
@@ -544,7 +544,7 @@ export const TransmitterCheckStep: React.FC = () => {
             <selectedPreset.icon className="w-6 h-6 text-content" />
             <div>
               <p className="text-sm text-content">
-                Applying <strong>{selectedPreset.name}</strong> preset
+                将应用 <strong>{selectedPreset.name}</strong> 预设
               </p>
               <p className="text-xs text-content-secondary">{selectedPreset.description}</p>
             </div>
@@ -559,7 +559,7 @@ export const TransmitterCheckStep: React.FC = () => {
           className="flex items-center gap-2 px-4 py-2 text-sm text-content-secondary hover:text-content hover:bg-surface-raised rounded-lg transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          上一步
         </button>
 
         <button
@@ -571,7 +571,7 @@ export const TransmitterCheckStep: React.FC = () => {
               : 'bg-surface-raised text-content-secondary cursor-not-allowed'
           }`}
         >
-          Continue
+          下一步
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
@@ -585,7 +585,7 @@ export const TransmitterCheckStep: React.FC = () => {
           }}
           className="text-xs text-content-secondary hover:text-content-secondary underline"
         >
-          Skip transmitter check (not recommended)
+          跳过遥控器检查(不推荐)
         </button>
       </div>
     </div>

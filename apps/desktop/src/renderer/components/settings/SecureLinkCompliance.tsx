@@ -4,14 +4,14 @@ import { useSigningStore } from '../../stores/signing-store';
 import type { SigningAuditEntry, SigningAuditEvent, ChainVerification } from '../../../shared/signing-audit-types';
 
 const EVENT_LABELS: Record<SigningAuditEvent, string> = {
-  'key-set': 'Key set',
-  'key-sent-to-fc': 'Key sent to FC',
-  'signing-enabled': 'Signing enabled',
-  'signing-disabled': 'Signing disabled',
-  'key-auto-matched': 'Auto-matched on connect',
-  'key-mismatch': 'Key mismatch',
-  'key-removed': 'Key removed',
-  'startup-auto-enable': 'Auto-enabled at startup',
+  'key-set': '已设置密钥',
+  'key-sent-to-fc': '密钥已发送到 FC',
+  'signing-enabled': '签名已启用',
+  'signing-disabled': '签名已禁用',
+  'key-auto-matched': '连接时自动匹配',
+  'key-mismatch': '密钥不匹配',
+  'key-removed': '密钥已移除',
+  'startup-auto-enable': '启动时自动启用',
 };
 
 const EVENT_TONE: Record<SigningAuditEvent, string> = {
@@ -65,8 +65,8 @@ export function SecureLinkCompliance() {
     setExporting(true);
     try {
       const res = await window.electronAPI?.signingExportEvidence?.();
-      if (res?.success) setMessage('Evidence pack + posture report exported');
-      else if (res && res.error !== 'Cancelled') setMessage(`Export failed: ${res.error}`);
+      if (res?.success) setMessage('证据包与安全态势报告已导出');
+      else if (res && res.error !== 'Cancelled') setMessage(`导出失败：${res.error}`);
     } finally {
       setExporting(false);
     }
@@ -84,31 +84,31 @@ export function SecureLinkCompliance() {
           <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
         )}
         <div className="min-w-0">
-          <div className="text-xs font-medium text-content">Compliance &amp; audit</div>
+          <div className="text-xs font-medium text-content">合规与审计</div>
           <div className="text-[10px] text-content-secondary">
             {chain
               ? chainOk
-                ? `${chain.count} signing event${chain.count === 1 ? '' : 's'} logged, hash chain verified`
-                : `Hash chain broken at entry ${chain.brokenAtSeq} - log may be tampered`
-              : 'Tamper-evident log of signing state changes'}
+                ? `已记录 ${chain.count} 条签名事件，哈希链校验通过`
+                : `哈希链在第 ${chain.brokenAtSeq} 条断开 — 日志可能被篡改`
+              : '签名状态变更的防篡改日志'}
           </div>
         </div>
         <button
           onClick={handleExport}
           disabled={exporting}
           className="ml-auto inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-cyan-700/70 hover:bg-cyan-600 disabled:opacity-50 text-white text-[11px] rounded-lg transition-colors shrink-0"
-          title="Export a secure-link evidence pack (JSON) + posture report (Markdown) for procurement review"
+          title="导出安全链路证据包（JSON）与安全态势报告（Markdown），供采购审查使用"
         >
           <FileDown className="w-3.5 h-3.5" />
-          {exporting ? 'Exporting...' : 'Export evidence'}
+          {exporting ? '正在导出...' : '导出证据'}
         </button>
       </div>
 
       {!chainOk && (
         <div className="rounded-md border border-red-500/20 bg-red-500/5 px-2.5 py-2">
           <p className="text-[11px] text-red-400">
-            The audit log failed hash-chain verification. An entry was edited, inserted, or removed
-            outside the app. Treat the log as compromised and export it for review.
+            审计日志未通过哈希链校验。有条目在应用外被编辑、插入或删除。
+            请将该日志视为已泄露并导出以供审查。
           </p>
         </div>
       )}
@@ -120,7 +120,7 @@ export function SecureLinkCompliance() {
           className="flex items-center gap-1.5 text-[11px] text-content-secondary hover:text-content transition-colors"
         >
           {open ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-          {open ? 'Hide' : 'View'} audit log ({entries.length})
+          {open ? '隐藏' : '查看'}审计日志（{entries.length}）
           <RefreshCw
             className="w-3 h-3 ml-1 hover:text-content"
             onClick={(e) => { e.stopPropagation(); void refresh(); }}
@@ -131,7 +131,7 @@ export function SecureLinkCompliance() {
           <div className="mt-2 max-h-56 overflow-y-auto rounded-md border border-subtle divide-y divide-subtle">
             {recent.length === 0 ? (
               <div className="px-3 py-4 text-center text-[11px] text-content-tertiary">
-                No signing events recorded yet.
+                尚未记录任何签名事件。
               </div>
             ) : (
               recent.map((e) => (
@@ -155,8 +155,7 @@ export function SecureLinkCompliance() {
       </div>
 
       <p className="text-[10px] text-content-tertiary leading-snug">
-        Attests the MAVLink link and ground station only, not the airframe. Signing is
-        authentication, not encryption, and a USB connection bypasses it.
+        仅证明 MAVLink 链路与地面站，不涉及机体本身。签名是身份认证而非加密，USB 连接可绕过签名。
       </p>
 
       {message && (

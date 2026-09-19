@@ -160,7 +160,7 @@ function currentBoard(): { uid: string; name: string; vehicleType?: string; sitl
   // recognizable label; board name is only a seed fallback.
   return {
     uid: profile!.boardUid!,
-    name: profile!.name || profile!.boardName || 'My Vehicle',
+    name: profile!.name || profile!.boardName || '我的飞行器',
     vehicleType: profile!.type,
     sitl: false,
   };
@@ -283,7 +283,7 @@ export function useCurrentVaultUnit(): CurrentVaultUnit | null {
     if (isWeakBoardUid(profile?.boardUid)) return null;
     return {
       uid: profile!.boardUid!,
-      name: profile!.name || profile!.boardName || 'My Vehicle',
+      name: profile!.name || profile!.boardName || '我的飞行器',
       sitl: false,
     };
   }, [conn.isConnected, conn.isSitl, conn.systemId, conn.vehicleType, vehicles, activeVehicleId, unitOverride, units]);

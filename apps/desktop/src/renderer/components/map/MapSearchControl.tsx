@@ -73,10 +73,10 @@ export function MapSearchControl() {
         .then((hits) => {
           if (cancelled) return;
           setResults(hits);
-          setMsg(hits.length === 0 ? 'No match found' : null);
+          setMsg(hits.length === 0 ? '未找到匹配结果' : null);
         })
         .catch(() => {
-          if (!cancelled) setMsg('Search failed');
+          if (!cancelled) setMsg('搜索失败');
         })
         .finally(() => {
           if (!cancelled) setBusy(false);
@@ -105,12 +105,12 @@ export function MapSearchControl() {
     try {
       const hits = await window.electronAPI.geocodeSearch(query);
       if (hits.length === 0) {
-        setMsg('No match found');
+        setMsg('未找到匹配结果');
         return;
       }
       pick(hits[0]!);
     } catch {
-      setMsg('Search failed');
+      setMsg('搜索失败');
     } finally {
       setBusy(false);
     }
@@ -136,8 +136,8 @@ export function MapSearchControl() {
             if (e.key === 'Enter') void submit();
             else if (e.key === 'Escape') closeResults();
           }}
-          placeholder="Go to place or lat, lon"
-          aria-label="Go to location"
+          placeholder="前往地点或输入纬度, 经度"
+          aria-label="前往位置"
           className="flex-1 min-w-0 bg-transparent text-xs text-content placeholder:text-content-tertiary focus:outline-none"
         />
         {busy && (

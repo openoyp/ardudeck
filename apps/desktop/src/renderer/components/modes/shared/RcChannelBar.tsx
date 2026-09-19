@@ -104,7 +104,7 @@ export const RcChannelBar: React.FC<RcChannelBarProps> = ({
               compact ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1'
             } bg-green-500/20 text-green-400 rounded-full font-medium`}
           >
-            ACTIVE
+            已激活
           </span>
         ) : (
           <span
@@ -112,7 +112,7 @@ export const RcChannelBar: React.FC<RcChannelBarProps> = ({
               compact ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1'
             } bg-surface-raised text-content-secondary rounded-full`}
           >
-            INACTIVE
+            未激活
           </span>
         )}
       </div>

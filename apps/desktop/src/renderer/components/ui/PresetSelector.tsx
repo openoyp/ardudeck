@@ -33,8 +33,8 @@ export interface PresetSelectorProps<T extends Record<string, Preset>> {
 export function PresetSelector<T extends Record<string, Preset>>({
   presets,
   onApply,
-  label = 'Quick Presets',
-  hint = 'Click to apply a tuning style',
+  label = '快速预设',
+  hint = '点击应用一种调参风格',
   activeKey,
 }: PresetSelectorProps<T>) {
   const showQuickPresets = useSettingsStore((s) => s.uiVisibility.showQuickPresets);

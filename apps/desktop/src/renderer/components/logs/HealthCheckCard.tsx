@@ -9,7 +9,7 @@ const STATUS_STYLES: Record<CheckStatus, { bg: string; border: string; icon: str
 };
 
 const STATUS_LABELS: Record<CheckStatus, string> = {
-  pass: 'Pass', warn: 'Warning', fail: 'Fail', skip: 'N/A', info: 'Info',
+  pass: '通过', warn: '警告', fail: '失败', skip: '不适用', info: '信息',
 };
 
 function StatusIcon({ status }: { status: CheckStatus }) {
@@ -77,7 +77,7 @@ export function HealthCheckCard({ result, onViewData, onAskAi, aiLabel }: { resu
               onClick={onViewData}
               className="text-xs px-3 py-1.5 bg-surface hover:bg-surface-raised text-content hover:text-content rounded-md transition-colors"
             >
-              View Data
+              查看数据
             </button>
           )}
           {onAskAi && (
@@ -85,7 +85,7 @@ export function HealthCheckCard({ result, onViewData, onAskAi, aiLabel }: { resu
               onClick={onAskAi}
               className="text-xs px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 hover:text-purple-300 border border-purple-500/20 rounded-md transition-colors"
             >
-              {aiLabel ?? 'Analyze with AI'}
+              {aiLabel ?? 'AI 分析'}
             </button>
           )}
         </div>

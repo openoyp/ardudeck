@@ -41,7 +41,7 @@ const AddModeModal: React.FC<AddModeModalProps> = ({
       <div className="bg-surface-solid rounded-xl border border shadow-2xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="px-4 py-3 border-b border-subtle flex items-center justify-between">
-          <h3 className="font-semibold text-content">Add Mode</h3>
+          <h3 className="font-semibold text-content">添加模式</h3>
           <button
             onClick={onClose}
             className="p-1 text-content-secondary hover:text-content rounded"
@@ -54,7 +54,7 @@ const AddModeModal: React.FC<AddModeModalProps> = ({
         <div className="p-3 border-b border-subtle">
           <input
             type="text"
-            placeholder="Search modes..."
+            placeholder="搜索模式…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full px-3 py-2 bg-surface-raised border border rounded-lg text-sm text-content placeholder-content-tertiary focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -66,7 +66,7 @@ const AddModeModal: React.FC<AddModeModalProps> = ({
         <div className="flex-1 overflow-y-auto p-2">
           {filteredModes.length === 0 ? (
             <div className="text-center py-8 text-content-secondary text-sm">
-              {existingModes.length > 0 ? 'No more modes available' : 'No modes found'}
+              {existingModes.length > 0 ? '没有更多可用模式' : '未找到模式'}
             </div>
           ) : (
             <div className="space-y-1">
@@ -90,7 +90,7 @@ const AddModeModal: React.FC<AddModeModalProps> = ({
                     </div>
                     {mode.essential && (
                       <span className="px-1.5 py-0.5 text-[10px] bg-amber-500/20 text-amber-400 rounded">
-                        ESSENTIAL
+                        必备
                       </span>
                     )}
                   </button>
@@ -139,7 +139,7 @@ const EditModeModal: React.FC<EditModeModalProps> = ({
   const IconComponent = info?.icon || HelpCircle;
   const rcValue = rcChannels[auxChannel + 4] || 1500;
   // Use dynamic name from FC if provided, fallback to preset name or boxId
-  const displayName = dynamicName || info?.name || `Mode ${mode.boxId}`;
+  const displayName = dynamicName || info?.name || `模式 ${mode.boxId}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
@@ -164,7 +164,7 @@ const EditModeModal: React.FC<EditModeModalProps> = ({
         <div className="p-4 space-y-4">
           {/* Channel picker */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-content">AUX Channel</label>
+            <label className="block text-sm font-medium text-content">AUX 通道</label>
             <AuxChannelPicker
               selected={auxChannel}
               onChange={setAuxChannel}
@@ -174,7 +174,7 @@ const EditModeModal: React.FC<EditModeModalProps> = ({
 
           {/* Range slider */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-content">PWM Range</label>
+            <label className="block text-sm font-medium text-content">PWM 范围</label>
             <RangeSlider
               rangeStart={rangeStart}
               rangeEnd={rangeEnd}
@@ -193,7 +193,7 @@ const EditModeModal: React.FC<EditModeModalProps> = ({
             onClick={onClose}
             className="flex-1 px-4 py-2 bg-surface-raised hover:bg-surface-raised text-content rounded-lg transition-colors"
           >
-            Cancel
+            取消
           </button>
           <button
             onClick={() => {
@@ -202,7 +202,7 @@ const EditModeModal: React.FC<EditModeModalProps> = ({
             }}
             className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
           >
-            Save
+            保存
           </button>
         </div>
       </div>
@@ -250,14 +250,14 @@ export const ModesAdvancedEditor: React.FC = () => {
               className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Add Mode
+              添加模式
             </button>
             <button
               onClick={resetToOriginal}
               className="px-3 py-1.5 text-content-secondary hover:text-content hover:bg-surface-raised text-sm rounded-lg transition-colors flex items-center gap-1.5"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              Reset
+              重置
             </button>
           </div>
           <div className="flex items-center gap-2">
@@ -267,12 +267,12 @@ export const ModesAdvancedEditor: React.FC = () => {
               className="px-3 py-1.5 text-content-secondary hover:text-content hover:bg-surface-raised text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-              {isLoading ? 'Loading...' : 'Reload'}
+              {isLoading ? '加载中…' : '重新加载'}
             </button>
             {/* Unsaved changes indicator - saves via main "Save All Changes" button */}
             {pendingModes.length > 0 && (
               <span className="text-xs text-content-secondary">
-                Use main Save button to save changes
+                请使用主界面的保存按钮保存更改
               </span>
             )}
           </div>
@@ -292,23 +292,23 @@ export const ModesAdvancedEditor: React.FC = () => {
         {isLoading ? (
           <div className="text-center py-8">
             <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto" />
-            <p className="text-sm text-content-secondary mt-2">Loading modes...</p>
+            <p className="text-sm text-content-secondary mt-2">正在加载模式…</p>
           </div>
         ) : pendingModes.length === 0 ? (
           <div className="text-center py-8">
             <div className="w-16 h-16 rounded-2xl bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
               <Radio className="w-8 h-8 text-purple-400" />
             </div>
-            <h3 className="text-lg font-medium text-content mb-2">No modes configured</h3>
+            <h3 className="text-lg font-medium text-content mb-2">尚未配置模式</h3>
             <p className="text-sm text-content-secondary max-w-md mx-auto mb-4">
-              Add modes to control how your aircraft responds to switch positions.
+              添加模式,以控制飞行器在不同开关位置下的行为。
             </p>
             <button
               onClick={() => setShowAddModal(true)}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm flex items-center gap-2 mx-auto"
             >
               <Plus className="w-4 h-4" />
-              Add Your First Mode
+              添加第一个模式
             </button>
           </div>
         ) : (

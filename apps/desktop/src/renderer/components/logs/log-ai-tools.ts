@@ -277,7 +277,7 @@ export async function runClaudeLogChat(opts: {
   for (let i = 0; i < maxIter; i++) {
     const res = await opts.call({ system: opts.system, messages, tools: CLAUDE_LOG_TOOLS as unknown as unknown[] });
     if (!res.success || !res.content) {
-      return { text: '', error: res.error ?? 'Analysis failed' };
+      return { text: '', error: res.error ?? '分析失败' };
     }
     const blocks = res.content as ClaudeBlock[];
 
@@ -305,5 +305,5 @@ export async function runClaudeLogChat(opts: {
     return { text };
   }
 
-  return { text: '', error: `Stopped after ${maxIter} tool iterations without a final answer.` };
+  return { text: '', error: `已进行 ${maxIter} 轮工具调用仍未得到最终答案，已停止。` };
 }

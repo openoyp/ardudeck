@@ -66,28 +66,28 @@ const ALL_PATTERN_OPTIONS: {
   description: string;
   modes: ('camera' | 'mower')[];
 }[] = [
-  { id: 'grid', label: 'Grid', description: 'Parallel back-and-forth lines', modes: ['camera', 'mower'] },
-  { id: 'crosshatch', label: 'Crosshatch', description: 'Two perpendicular grid passes', modes: ['camera', 'mower'] },
-  { id: 'circular', label: 'Circular', description: 'Concentric rings around centroid', modes: ['camera'] },
-  { id: 'corridor', label: 'Corridor', description: 'Follow a centerline (roads, rail, power lines, pipelines)', modes: ['camera', 'mower'] },
-  { id: 'spiral', label: 'Spiral', description: 'Polygon-aware inward/outward spiral', modes: ['mower'] },
-  { id: 'perimeter-fill', label: 'Perimeter + Fill', description: 'Edge passes then grid interior', modes: ['mower'] },
+  { id: 'grid', label: '网格', description: '平行往复航线', modes: ['camera', 'mower'] },
+  { id: 'crosshatch', label: '交叉网格', description: '两组互相垂直的网格航线', modes: ['camera', 'mower'] },
+  { id: 'circular', label: '环形', description: '围绕质心的同心圆', modes: ['camera'] },
+  { id: 'corridor', label: '走廊', description: '沿中心线飞行(道路、铁路、电力线、管道)', modes: ['camera', 'mower'] },
+  { id: 'spiral', label: '螺旋', description: '贴合多边形的内向/外向螺旋', modes: ['mower'] },
+  { id: 'perimeter-fill', label: '轮廓 + 填充', description: '先沿边飞行再填充内部网格', modes: ['mower'] },
 ];
 
 const CORRIDOR_MODE_OPTIONS: { id: CorridorMode; label: string; description: string }[] = [
-  { id: 'plane', label: 'Plane', description: 'Fixed wing: strips get overshoot and racetrack turns at sharp bends' },
-  { id: 'copter', label: 'Copter', description: 'Multirotor: turns on the spot, no overshoot or turn loops' },
+  { id: 'plane', label: '固定翼', description: '固定翼:条带在急弯处带过冲和跑道式转弯' },
+  { id: 'copter', label: '多旋翼', description: '多旋翼:原地转向,无过冲或转弯环绕' },
 ];
 
 const GROUND_PATTERN_OPTIONS: { id: GroundPattern; label: string; description: string }[] = [
-  { id: 'boustrophedon', label: 'Zigzag', description: 'U-turn at line ends (skid-steer rovers)' },
-  { id: 'reverse-alternating', label: 'Reverse', description: 'Drive forward then reverse: no U-turns (Ackermann/car-like rovers, needs ArduRover DO_SET_REVERSE support)' },
+  { id: 'boustrophedon', label: '折返', description: '行尾 U 形转弯(滑移转向车)' },
+  { id: 'reverse-alternating', label: '倒车交替', description: '前进后倒车行驶:无 U 形转弯(阿克曼/类汽车车体,需 ArduRover DO_SET_REVERSE 支持)' },
 ];
 
 const ALT_REF_OPTIONS: { id: AltitudeReference; label: string; description: string }[] = [
-  { id: 'relative', label: 'Relative', description: 'Altitude relative to home position' },
-  { id: 'terrain', label: 'Terrain', description: 'Altitude above terrain (AGL) at each point' },
-  { id: 'asl', label: 'ASL', description: 'Altitude above mean sea level' },
+  { id: 'relative', label: '相对高度', description: '相对家位置的高度' },
+  { id: 'terrain', label: '地形', description: '每个点高于地形的高度(AGL)' },
+  { id: 'asl', label: '海拔', description: '高于平均海平面的高度' },
 ];
 
 // Rehydrate a persisted preset blob from settings into a typed SurveyPreset.
@@ -97,7 +97,7 @@ function rehydrateUserPreset(p: PersistedSurveyPreset): SurveyPreset {
   return {
     id: p.id,
     name: p.name,
-    description: p.description || 'Saved preset',
+    description: p.description || '已保存预设',
     tag: 'Custom',
     isUserDefined: true,
     config: p.config as SurveyPreset['config'],
@@ -244,7 +244,7 @@ export function SurveyConfigPanel() {
   const terrainFollowStatus = useMemo(() => {
     if (!config.terrainFollow) return null;
     const alts = result?.altitudes;
-    if (!alts || alts.length === 0) return 'sampling terrain...';
+    if (!alts || alts.length === 0) return '正在采样地形...';
     let min = Infinity;
     let max = -Infinity;
     for (const a of alts) {
@@ -367,7 +367,7 @@ export function SurveyConfigPanel() {
   }, [config, isCustomCamera, isManualCamera, saveSurveyPreset, setLastSurveyPresetId]);
 
   const handleDeletePreset = useCallback((id: string) => {
-    if (!window.confirm('Delete this preset?')) return;
+    if (!window.confirm('删除此预设?')) return;
     removeSurveyPreset(id);
   }, [removeSurveyPreset]);
 
@@ -397,7 +397,7 @@ export function SurveyConfigPanel() {
     const generatorId = resolveGeneratorId(fullConfig);
     const reg = getSurveyGenerator(generatorId);
     const survey = createSurveyGroup({
-      name: `Survey ${existingGroups.filter((g) => g.kind === 'survey').length + 1}`,
+      name: `勘测 ${existingGroups.filter((g) => g.kind === 'survey').length + 1}`,
       generatorId,
       generatorVersion: reg?.version ?? '1.0.0',
       polygon: polygon.map((p) => ({ lat: p.lat, lng: p.lng })),
@@ -431,12 +431,12 @@ export function SurveyConfigPanel() {
     if (sorties.length <= 1) return;
     const fullConfig = { ...config, polygon };
     const firmware = useConnectionStore.getState().connectionState.firmware;
-    const baseName = `Survey ${existingGroups.filter((g) => g.kind === 'survey').length + 1}`;
+    const baseName = `勘测 ${existingGroups.filter((g) => g.kind === 'survey').length + 1}`;
     const entries = sorties.map((slice, i) => {
       // Each sortie is its own complete flight: takeoff -> slice -> RTL.
       const items = surveyToMissionItems({ ...result, waypoints: slice }, fullConfig, firmware);
       const group = createManualGroup({
-        name: `${baseName} · Flight ${i + 1}/${sorties.length}`,
+        name: `${baseName} · 架次 ${i + 1}/${sorties.length}`,
         color: GROUP_COLOR_PALETTE[i % GROUP_COLOR_PALETTE.length]!,
       });
       return { group, items };
@@ -454,18 +454,18 @@ export function SurveyConfigPanel() {
         <svg className="w-10 h-10 mb-3 text-content-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
         </svg>
-        <p className="text-sm font-medium mb-1 text-content">No survey polygon</p>
+        <p className="text-sm font-medium mb-1 text-content">还没有勘测多边形</p>
         <p className="text-xs text-content-tertiary max-w-[14rem]">
-          Click the Survey button on the map toolbar, then draw a polygon to plan a grid.
+          点击地图工具栏上的“勘测”按钮,然后绘制多边形以规划网格。
         </p>
         <div className="mt-4 flex flex-col items-center gap-1">
-          <span className="text-[10px] uppercase tracking-wide text-content-tertiary">or</span>
+          <span className="text-[10px] uppercase tracking-wide text-content-tertiary">或</span>
           <button
             onClick={handleImportArea}
             className="px-3 py-1.5 text-xs rounded-md bg-surface-raised text-content hover:text-purple-300 transition-colors"
-            title="Import a boundary from a KML, KMZ, GeoJSON, or Shapefile (.shp / zipped)"
+            title="从 KML、KMZ、GeoJSON 或 Shapefile(.shp / 压缩包)导入边界"
           >
-            Import area from file
+            从文件导入区域
           </button>
           <span className="text-[10px] text-content-tertiary">KML · KMZ · GeoJSON · SHP</span>
 
@@ -473,7 +473,7 @@ export function SurveyConfigPanel() {
               rings (thousands of points) are reduced to this tolerance so the
               map stays responsive; 0 disables simplification. */}
           <div className="flex items-center gap-1.5 mt-2 text-[10px] text-content-tertiary">
-            <span>Simplify</span>
+            <span>抽稀</span>
             <input
               type="number"
               value={simplifyToleranceM}
@@ -485,15 +485,15 @@ export function SurveyConfigPanel() {
               min="0"
               max="50"
               step="0.5"
-              title="RDP tolerance in meters for imported boundaries (0 = off)"
+              title="导入边界的 RDP 容差(米,0 = 关闭)"
             />
             <span>m</span>
             <button
               onClick={goToPerformanceSettings}
               className="ml-1 underline decoration-dotted hover:text-purple-300 transition-colors"
-              title="Open survey performance settings"
+              title="打开勘测性能设置"
             >
-              Performance settings
+              性能设置
             </button>
           </div>
           {importError && <span className="text-[10px] text-red-400 max-w-[14rem]">{importError}</span>}
@@ -516,9 +516,9 @@ export function SurveyConfigPanel() {
           />
         </div>
         <button
-          onClick={() => setPresetNameDraft((d) => (d === null ? `My preset ${userPresets.length + 1}` : null))}
+          onClick={() => setPresetNameDraft((d) => (d === null ? `我的预设 ${userPresets.length + 1}` : null))}
           className={`p-1.5 transition-colors ${presetNameDraft !== null ? 'text-purple-400' : 'text-content-secondary hover:text-purple-400'}`}
-          title="Save current settings as a preset"
+          title="保存当前设置为预设"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 4h11l3 3v13H5z M9 4v5h6V4 M9 17h6" />
@@ -527,7 +527,7 @@ export function SurveyConfigPanel() {
         <button
           onClick={handleImportArea}
           className="p-1.5 text-content-secondary hover:text-purple-400 transition-colors"
-          title="Import area from file (KML/KMZ/GeoJSON/Shapefile)"
+          title="从文件导入区域(KML/KMZ/GeoJSON/Shapefile)"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -536,7 +536,7 @@ export function SurveyConfigPanel() {
         <button
           onClick={startDrawing}
           className="p-1.5 text-content-secondary hover:text-purple-400 transition-colors"
-          title="Redraw polygon"
+          title="重新绘制多边形"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -545,7 +545,7 @@ export function SurveyConfigPanel() {
         <button
           onClick={clearSurvey}
           className="p-1.5 text-content-secondary hover:text-red-400 transition-colors"
-          title="Clear survey"
+          title="清除勘测"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -554,7 +554,7 @@ export function SurveyConfigPanel() {
         <button
           onClick={goToPerformanceSettings}
           className="p-1.5 text-content-secondary hover:text-purple-400 transition-colors"
-          title="Survey performance settings"
+          title="勘测性能设置"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -566,7 +566,7 @@ export function SurveyConfigPanel() {
             onClick={() => setShowFleetSplit(true)}
             disabled={!polygon}
             className="p-1.5 text-content-secondary hover:text-cyan-400 transition-colors disabled:opacity-40"
-            title="Split this survey across the connected fleet"
+            title="将此勘测分割给已连接的机群"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16M12 4v16" />
@@ -586,7 +586,7 @@ export function SurveyConfigPanel() {
               if (e.key === 'Enter') handleSavePreset(presetNameDraft);
               else if (e.key === 'Escape') setPresetNameDraft(null);
             }}
-            placeholder="Preset name"
+            placeholder="预设名称"
             className="flex-1 min-w-0 bg-surface-input text-content text-xs px-2 py-1 rounded border border-default focus:border-purple-500 focus:outline-none"
           />
           <button
@@ -594,13 +594,13 @@ export function SurveyConfigPanel() {
             disabled={!presetNameDraft.trim()}
             className="px-2 py-1 text-xs rounded bg-purple-600 text-white hover:bg-purple-500 disabled:opacity-40 transition-colors"
           >
-            Save
+            保存
           </button>
           <button
             onClick={() => setPresetNameDraft(null)}
             className="px-2 py-1 text-xs rounded text-content-secondary hover:text-content transition-colors"
           >
-            Cancel
+            取消
           </button>
         </div>
       )}
@@ -614,7 +614,7 @@ export function SurveyConfigPanel() {
         {generating && (
           <div className="flex items-center gap-2 text-[11px] text-content-secondary">
             <span className="w-3 h-3 rounded-full border-2 border-teal-400/30 border-t-teal-400 animate-spin" />
-            Computing coverage plan{activeGenerator ? ` (${activeGenerator.displayName})` : ''}...
+            正在计算覆盖规划{activeGenerator ? `(${activeGenerator.displayName})` : ''}...
           </div>
         )}
         {generatorError && !generating && (
@@ -624,7 +624,7 @@ export function SurveyConfigPanel() {
               onClick={() => requestRecompute({ immediate: true })}
               className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-red-500/20 text-red-200 hover:bg-red-500/30 transition-colors"
             >
-              Retry
+              重试
             </button>
           </div>
         )}
@@ -640,25 +640,24 @@ export function SurveyConfigPanel() {
             grid and module coverage engines (TOPAS is polygon-only) don't
             apply, so the whole selector is replaced by a type banner. */}
         {config.pattern === 'panorama' && (
-          <Section title="Type">
+          <Section title="类型">
             <div className="px-2 py-1.5 rounded-lg bg-purple-600/15 border border-purple-500/30">
-              <span className="text-xs font-medium text-purple-300">Panorama capture</span>
+              <span className="text-xs font-medium text-purple-300">全景拍摄</span>
               <p className="text-[10px] text-content-tertiary leading-snug mt-0.5">
-                Line-based capture along a subject. To plan an area survey instead,
-                exit and pick another survey type from the Survey menu.
+                沿主体进行线状拍摄。如需规划区域勘测,
+                请退出并从勘测菜单选择其他勘测类型。
               </p>
               <p className="text-[10px] text-content-secondary leading-snug mt-1.5">
-                Editing the curve: <span className="text-content">click</span> a point to
-                select it - its <span className="text-content">tangent arms</span> appear.
-                Drag the square arm handles to shape the curve through that point
-                (right-click an arm to reset it). Drag the point itself to move it,
-                right-click to delete, click a faint dot or the dashed line to add a point.
+                编辑曲线:<span className="text-content">点击</span>一个点选中它 - 显示其
+                <span className="text-content">切线臂</span>。拖动方形臂柄调整曲线经过该点的形状
+                (右键点击臂可重置)。拖动点本身可移动它,
+                右键删除,点击浅色小点或虚线可添加点。
               </p>
             </div>
             {isManualCamera && (
               <p className="mt-1.5 text-[10px] text-amber-500 leading-snug">
-                Panorama needs a real camera: the frame size at range drives the plan.
-                Pick a camera preset instead of Manual corridor.
+                全景拍摄需要真实相机:远距离的画面尺寸决定规划。
+                请选择相机预设而不是手动走廊。
               </p>
             )}
           </Section>
@@ -669,7 +668,7 @@ export function SurveyConfigPanel() {
             circles regardless of polygon shape; camera mode hides Spiral and
             Perimeter+Fill which are mowing-specific). */}
         {config.pattern !== 'panorama' && (
-        <Section title="Pattern">
+        <Section title="图案">
           {(() => {
             const mode = isManualCamera ? 'mower' : 'camera';
             const visible = ALL_PATTERN_OPTIONS.filter((o) => o.modes.includes(mode));
@@ -718,7 +717,7 @@ export function SurveyConfigPanel() {
                             : 'bg-teal-500/20 text-teal-300 border-teal-500/30'
                         }`}
                       >
-                        Remote
+                        远程
                       </span>
                     )}
                   </span>
@@ -730,7 +729,7 @@ export function SurveyConfigPanel() {
           {/* Spiral direction sub-control — only when spiral pattern is active. */}
           {config.pattern === 'spiral' && (
             <div className="mt-2 flex items-center gap-2">
-              <span className="text-xs text-content-secondary w-14 flex-shrink-0">Direction</span>
+              <span className="text-xs text-content-secondary w-14 flex-shrink-0">方向</span>
               <div className="flex gap-1 flex-1">
                 {(['inward', 'outward'] as const).map((dir) => {
                   const active = (config.spiralDirection ?? 'inward') === dir;
@@ -743,9 +742,9 @@ export function SurveyConfigPanel() {
                           ? 'bg-purple-600/80 text-white'
                           : 'bg-surface-raised text-content-secondary hover:text-content'
                       }`}
-                      title={dir === 'inward' ? 'Start at perimeter, end at center' : 'Start at center, end at perimeter'}
+                      title={dir === 'inward' ? '从轮廓开始,到中心结束' : '从中心开始,到轮廓结束'}
                     >
-                      {dir === 'inward' ? 'In' : 'Out'}
+                      {dir === 'inward' ? '向内' : '向外'}
                     </button>
                   );
                 })}
@@ -756,7 +755,7 @@ export function SurveyConfigPanel() {
           {/* Perimeter+Fill passes — only when that pattern is active. */}
           {config.pattern === 'perimeter-fill' && (
             <div className="mt-2 flex items-center gap-2">
-              <span className="text-xs text-content-secondary w-14 flex-shrink-0">Passes</span>
+              <span className="text-xs text-content-secondary w-14 flex-shrink-0">圈数</span>
               <input
                 type="range"
                 value={config.perimeterPasses ?? 2}
@@ -778,7 +777,7 @@ export function SurveyConfigPanel() {
           {config.pattern === 'crosshatch' && !isManualCamera && (
             <div className="mt-2">
               <SliderInput
-                label="2nd alt"
+                label="第二层高度"
                 value={config.crossGridAltitudeOffset ?? 0}
                 onChange={setCrossGridAltitudeOffset}
                 min={0}
@@ -788,8 +787,8 @@ export function SurveyConfigPanel() {
               />
               <p className="mt-1 text-[10px] text-content-tertiary leading-snug">
                 {(config.crossGridAltitudeOffset ?? 0) > 0
-                  ? `Perpendicular pass flies ${formatAltitudeFromMeters(config.altitude * (1 + (config.crossGridAltitudeOffset ?? 0) / 100), altitudeUnit)} (+${config.crossGridAltitudeOffset}%) for better photogrammetry.`
-                  : 'Both passes at the same altitude. Raise to fly the second pass higher.'}
+                  ? `垂直航线以 ${formatAltitudeFromMeters(config.altitude * (1 + (config.crossGridAltitudeOffset ?? 0) / 100), altitudeUnit)}(+${config.crossGridAltitudeOffset}%)飞行,以获得更好的摄影测量效果。`
+                  : '两组航线同高度。调高可让第二组飞得更高。'}
               </p>
             </div>
           )}
@@ -799,7 +798,7 @@ export function SurveyConfigPanel() {
         {/* Engine parameters - declared by the active module generator via
             its configFields schema. Only shown while that engine is selected. */}
         {engineFields.length > 0 && (
-          <Section title="Engine parameters">
+          <Section title="引擎参数">
             <div className="space-y-2">
               {engineFields.map((field) => (
                 <EngineParamControl
@@ -811,30 +810,30 @@ export function SurveyConfigPanel() {
               ))}
               {turnRadiusTooTight && (
                 <p className="text-[10px] text-amber-500 leading-snug">
-                  {String(currentTurnRadius)} m turn radius looks too tight for a fixed wing at{' '}
-                  {config.speed} m/s: a level 30° bank turn needs about {suggestedTurnRadius} m.
-                  The engine will plan turns the aircraft can't track.
+                  {String(currentTurnRadius)} m 转弯半径对以 {config.speed} m/s 飞行的固定翼来说过小:
+                  30° 坡度水平转弯约需要 {suggestedTurnRadius} m。
+                  引擎将规划出飞机无法跟上的转弯。
                 </p>
               )}
               {smoothedOnCopter && (
                 <p className="text-[10px] text-content-tertiary leading-snug">
-                  Smoothed waypoints on a copter add many extra waypoints for turn curves it
-                  doesn't need; Corners is usually the better choice.
+                  多旋翼上的平滑航点会为它并不需要的转弯曲线添加大量额外航点;
+                  通常选择“拐角”更好。
                 </p>
               )}
             </div>
           </Section>
         )}
 
-        <Section title={isManualCamera ? 'Corridor' : 'Camera'}>
+        <Section title={isManualCamera ? '走廊' : '相机'}>
           <CameraPresetSelector value={config.camera} onChange={handleCameraChange} />
           {isCustomCamera && (
             <div className="grid grid-cols-2 gap-2 mt-2">
-              <NumberInput label="Sensor W (mm)" value={customCamera.sensorWidth} onChange={(v) => handleCustomField('sensorWidth', v)} min={1} max={100} step={0.1} />
-              <NumberInput label="Sensor H (mm)" value={customCamera.sensorHeight} onChange={(v) => handleCustomField('sensorHeight', v)} min={1} max={100} step={0.1} />
-              <NumberInput label="Image W (px)" value={customCamera.imageWidth} onChange={(v) => handleCustomField('imageWidth', v)} min={100} max={20000} step={1} />
-              <NumberInput label="Image H (px)" value={customCamera.imageHeight} onChange={(v) => handleCustomField('imageHeight', v)} min={100} max={20000} step={1} />
-              <NumberInput label="Focal (mm)" value={customCamera.focalLength} onChange={(v) => handleCustomField('focalLength', v)} min={1} max={200} step={0.1} />
+              <NumberInput label="传感器宽 (mm)" value={customCamera.sensorWidth} onChange={(v) => handleCustomField('sensorWidth', v)} min={1} max={100} step={0.1} />
+              <NumberInput label="传感器高 (mm)" value={customCamera.sensorHeight} onChange={(v) => handleCustomField('sensorHeight', v)} min={1} max={100} step={0.1} />
+              <NumberInput label="图像宽 (px)" value={customCamera.imageWidth} onChange={(v) => handleCustomField('imageWidth', v)} min={100} max={20000} step={1} />
+              <NumberInput label="图像高 (px)" value={customCamera.imageHeight} onChange={(v) => handleCustomField('imageHeight', v)} min={100} max={20000} step={1} />
+              <NumberInput label="焦距 (mm)" value={customCamera.focalLength} onChange={(v) => handleCustomField('focalLength', v)} min={1} max={200} step={0.1} />
             </div>
           )}
           {isCustomCamera && (
@@ -842,9 +841,9 @@ export function SurveyConfigPanel() {
               <button
                 onClick={() => setCameraNameDraft('')}
                 className="mt-2 w-full py-1.5 text-xs rounded-md bg-surface-raised text-content hover:text-purple-300 transition-colors"
-                title="Save these specs as a named camera in the dropdown"
+                title="将这些参数保存为下拉列表中的命名相机"
               >
-                Save camera to list
+                保存相机到列表
               </button>
             ) : (
               <div className="mt-2 flex items-center gap-1.5">
@@ -853,7 +852,7 @@ export function SurveyConfigPanel() {
                   value={cameraNameDraft}
                   onChange={(e) => setCameraNameDraft(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') commitCameraName(); if (e.key === 'Escape') setCameraNameDraft(null); }}
-                  placeholder="Camera name"
+                  placeholder="相机名称"
                   className="flex-1 px-2 py-1 text-xs bg-surface-input border border-subtle rounded text-content placeholder-content-tertiary focus:border-purple-500 focus:outline-none"
                 />
                 <button
@@ -861,13 +860,13 @@ export function SurveyConfigPanel() {
                   disabled={!cameraNameDraft.trim()}
                   className="px-2.5 py-1 text-xs rounded bg-purple-600 text-white hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  Save
+                  保存
                 </button>
                 <button
                   onClick={() => setCameraNameDraft(null)}
                   className="px-2 py-1 text-xs rounded bg-surface-raised text-content hover:text-content transition-colors"
                 >
-                  Cancel
+                  取消
                 </button>
               </div>
             )
@@ -875,7 +874,7 @@ export function SurveyConfigPanel() {
           {isManualCamera && (
             <div className="mt-2">
               <NumberInput
-                label="Corridor width (m)"
+                label="走廊宽度 (m)"
                 value={customCamera.manualCorridorWidth ?? 1.5}
                 onChange={handleManualCorridorChange}
                 min={0.1}
@@ -883,19 +882,19 @@ export function SurveyConfigPanel() {
                 step={0.1}
               />
               <p className="mt-1 text-[10px] text-content-tertiary leading-snug">
-                Sets line spacing directly. For ground vehicles (rover/lawnmower) where the corridor is the operating width, not a camera footprint.
+                直接设置行距。适用于走廊即作业宽度(而非相机幅面)的地面车辆(车/割草机)。
               </p>
             </div>
           )}
         </Section>
 
         {/* Movement (or Flight) — always visible. Altitude only for camera modes. */}
-        <Section title={isManualCamera ? 'Movement' : 'Flight'}>
+        <Section title={isManualCamera ? '移动' : '飞行'}>
           <div className="space-y-2">
             {!isManualCamera && (
               <>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-content-secondary w-14 flex-shrink-0">Plan by</span>
+                  <span className="text-xs text-content-secondary w-14 flex-shrink-0">规划方式</span>
                   <div className="flex gap-1 flex-1">
                     {(['altitude', 'gsd'] as const).map((mode) => (
                       <button
@@ -906,9 +905,9 @@ export function SurveyConfigPanel() {
                             ? 'bg-purple-600/80 text-white'
                             : 'bg-surface-raised text-content-secondary hover:text-content'
                         }`}
-                        title={mode === 'gsd' ? 'Set target ground sample distance; altitude is derived' : 'Set altitude directly'}
+                        title={mode === 'gsd' ? '设置目标地面采样距离,高度由其推算' : '直接设置高度'}
                       >
-                        {mode === 'gsd' ? 'GSD' : 'Altitude'}
+                        {mode === 'gsd' ? 'GSD' : '高度'}
                       </button>
                     ))}
                   </div>
@@ -916,7 +915,7 @@ export function SurveyConfigPanel() {
                 {(config.planBy ?? 'altitude') === 'gsd' ? (
                   <>
                     <SliderInput
-                      label="Target GSD"
+                      label="目标 GSD"
                       value={result ? Number(result.stats.gsd.toFixed(1)) : 0}
                       onChange={setGsd}
                       min={0.5}
@@ -925,14 +924,14 @@ export function SurveyConfigPanel() {
                       unit="cm/px"
                     />
                     <p className="text-[10px] text-content-tertiary leading-snug">
-                      Altitude {formatAltitudeFromMeters(config.altitude, altitudeUnit)} (derived from GSD and camera)
+                      高度 {formatAltitudeFromMeters(config.altitude, altitudeUnit)}(由 GSD 和相机推算)
                     </p>
                   </>
                 ) : (
-                  <AltitudeSliderInput label="Altitude" valueMeters={config.altitude} onChangeMeters={setAltitude} minMeters={1} maxMeters={500} stepMeters={1} />
+                  <AltitudeSliderInput label="高度" valueMeters={config.altitude} onChangeMeters={setAltitude} minMeters={1} maxMeters={500} stepMeters={1} />
                 )}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-content-secondary w-14 flex-shrink-0">Alt Ref</span>
+                  <span className="text-xs text-content-secondary w-14 flex-shrink-0">高度参考</span>
                   <div className="flex gap-1 flex-1">
                     {ALT_REF_OPTIONS.map(opt => (
                       <button
@@ -958,9 +957,9 @@ export function SurveyConfigPanel() {
                     className="mt-0.5 w-3.5 h-3.5 rounded border-subtle bg-surface-input accent-purple-600 cursor-pointer"
                   />
                   <span className="text-[11px] text-content-secondary leading-snug">
-                    <span className="text-content">Terrain follow</span> - sample ground
-                    elevation at every waypoint and hold {formatAltitudeFromMeters(config.altitude, altitudeUnit)} above it (bakes
-                    absolute MSL altitudes, no onboard terrain data needed).
+                    <span className="text-content">跟随地形</span> - 在每个航点采样地面
+                    高度并保持高于其 {formatAltitudeFromMeters(config.altitude, altitudeUnit)}(写入
+                    绝对海拔高度,无需机载地形数据)。
                     {terrainFollowStatus && (
                       <span className="text-purple-300"> {terrainFollowStatus}</span>
                     )}
@@ -968,9 +967,9 @@ export function SurveyConfigPanel() {
                 </label>
               </>
             )}
-            <SpeedSliderInput label="Speed" valueMps={config.speed} onChangeMps={setSpeed} minMps={1} maxMps={30} />
+            <SpeedSliderInput label="速度" valueMps={config.speed} onChangeMps={setSpeed} minMps={1} maxMps={30} />
             <SliderInput
-              label="Endurance"
+              label="续航"
               value={config.enduranceMinutes ?? 20}
               onChange={setEnduranceMinutes}
               min={5}
@@ -979,7 +978,7 @@ export function SurveyConfigPanel() {
               unit="min"
             />
             <p className="text-[10px] text-content-tertiary leading-snug -mt-1">
-              Usable flight time per battery (after your reserve). Drives the battery estimate.
+              每块电池的可用飞行时间(扣除预留后)。用于推算电池数。
             </p>
           </div>
         </Section>
@@ -987,15 +986,15 @@ export function SurveyConfigPanel() {
         {/* Panorama: the drawn line is the SUBJECT; the flight path is derived
             to one side of it with the camera yawed onto the subject. */}
         {config.pattern === 'panorama' && (
-          <Section title="Panorama">
+          <Section title="全景">
             <div className="space-y-2">
               <p className="text-[10px] text-content-tertiary leading-snug">
-                The line you draw is what gets captured. The flight path is computed
-                beside it, the highlighted band shows what fits in frame, and the
-                camera turns to face the line at every waypoint.
+                您绘制的线即拍摄对象。航线在其旁计算得出,
+                高亮条带显示可摄入画面的范围,
+                相机在每个航点转向面对该线。
               </p>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-content-secondary w-14 flex-shrink-0">Fly on</span>
+                <span className="text-xs text-content-secondary w-14 flex-shrink-0">飞行侧</span>
                 <div className="flex gap-1 flex-1">
                   {(['left', 'right'] as const).map((side) => (
                     <button
@@ -1006,25 +1005,25 @@ export function SurveyConfigPanel() {
                           ? 'bg-purple-600/80 text-white'
                           : 'bg-surface-raised text-content-secondary hover:text-content'
                       }`}
-                      title={`Aircraft flies on the ${side} side of the line (in drawing direction); camera faces the other way`}
+                      title={`飞机沿绘制方向的${side === 'left' ? '左' : '右'}侧飞行;相机朝向另一侧`}
                     >
-                      {side === 'left' ? 'Left side' : 'Right side'}
+                      {side === 'left' ? '左侧' : '右侧'}
                     </button>
                   ))}
                 </div>
               </div>
-              <SliderInput label="Standoff" value={config.panoramaStandoff ?? 30} onChange={setPanoramaStandoff} min={2} max={500} step={1} unit="m" />
+              <SliderInput label="间隔距离" value={config.panoramaStandoff ?? 30} onChange={setPanoramaStandoff} min={2} max={500} step={1} unit="m" />
               <p className="text-[10px] text-content-tertiary leading-snug -mt-1">
-                Distance from the subject to the flight path. Together with altitude it
-                sets the camera range, so it drives frame size and photo spacing.
+                拍摄对象到航线的距离。它与高度共同决定相机距离,
+                因此影响画面大小和照片间距。
               </p>
               <p className="text-[10px] text-content-tertiary leading-snug">
-                The mission pans the camera smoothly: each leg carries a yaw command
-                whose turn rate spreads the rotation across the whole leg.
+                任务会平滑转动相机:每段航线携带一条偏航命令,
+                其转速将旋转分散到整段航线。
               </p>
               <p className="text-[10px] text-amber-500 leading-snug">
-                Copter: set WP_YAW_BEHAVIOR to 0 so mission yaw commands hold;
-                otherwise the aircraft snaps toward each next waypoint instead.
+                多旋翼:请将 WP_YAW_BEHAVIOR 设为 0 以保持任务偏航命令;
+                否则飞机会改为直接转向下一个航点。
               </p>
             </div>
           </Section>
@@ -1033,11 +1032,11 @@ export function SurveyConfigPanel() {
         {/* Corridor settings — only when the corridor pattern is active. The
             drawn polygon is treated as a centerline, not an area. */}
         {config.pattern === 'corridor' && (
-          <Section title="Corridor">
+          <Section title="走廊">
             <div className="space-y-2">
               {!isManualCamera && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-content-secondary w-14 flex-shrink-0">Mode</span>
+                  <span className="text-xs text-content-secondary w-14 flex-shrink-0">模式</span>
                   <div className="flex gap-1 flex-1">
                     {CORRIDOR_MODE_OPTIONS.map((opt) => {
                       const active = (config.corridorMode ?? 'plane') === opt.id;
@@ -1061,7 +1060,7 @@ export function SurveyConfigPanel() {
               )}
 
               <SliderInput
-                label="Width"
+                label="宽度"
                 value={config.corridorWidth ?? 60}
                 onChange={setCorridorWidth}
                 min={5}
@@ -1071,7 +1070,7 @@ export function SurveyConfigPanel() {
               />
 
               <div className="flex items-center gap-2">
-                <span className="text-xs text-content-secondary w-14 flex-shrink-0">Strips</span>
+                <span className="text-xs text-content-secondary w-14 flex-shrink-0">条带数</span>
                 <input
                   type="range"
                   value={config.corridorStrips ?? 0}
@@ -1082,12 +1081,12 @@ export function SurveyConfigPanel() {
                   className="flex-1 h-1 bg-surface-inset rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-400 [&::-webkit-slider-thumb]:cursor-grab"
                 />
                 <span className="text-xs text-content w-14 text-right tabular-nums font-medium">
-                  {(config.corridorStrips ?? 0) === 0 ? (result ? `${result.stats.lineCount} auto` : 'auto') : config.corridorStrips}
+                  {(config.corridorStrips ?? 0) === 0 ? (result ? `${result.stats.lineCount} 自动` : '自动') : config.corridorStrips}
                 </span>
               </div>
 
               <SliderInput
-                label="Side off"
+                label="侧向偏移"
                 value={config.corridorSideOffset ?? 0}
                 onChange={setCorridorSideOffset}
                 min={-200}
@@ -1099,39 +1098,39 @@ export function SurveyConfigPanel() {
               {/* Branches: extra centerlines that fork off the corridor (forked
                   roads, power-line spurs). Each is flown as its own strip set. */}
               <div className="flex items-center gap-2 pt-1">
-                <span className="text-xs text-content-secondary w-14 flex-shrink-0">Branches</span>
+                <span className="text-xs text-content-secondary w-14 flex-shrink-0">支线</span>
                 {drawMode === 'branch' ? (
                   <button
                     onClick={() => completeBranch()}
                     className="flex-1 px-2 py-1 text-[11px] rounded-md bg-purple-600/80 text-white hover:bg-purple-600 transition-colors"
                   >
-                    Click the map, double-click to finish
+                    点击地图,双击结束
                   </button>
                 ) : (
                   <button
                     onClick={() => startBranchDraw()}
                     className="flex-1 px-2 py-1 text-[11px] rounded-md bg-surface-raised text-content-secondary hover:text-content transition-colors"
-                    title="Draw a branch centerline that forks off this corridor"
+                    title="绘制从本走廊分出的支线中心线"
                   >
-                    + Add branch
+                    + 添加支线
                   </button>
                 )}
                 {(config.corridorBranches?.length ?? 0) > 0 && (
                   <button
                     onClick={() => clearCorridorBranches()}
                     className="px-2 py-1 text-[11px] rounded-md bg-surface-raised text-content-secondary hover:text-content transition-colors tabular-nums"
-                    title="Remove all branches"
+                    title="移除所有支线"
                   >
-                    Clear {config.corridorBranches!.length}
+                    清除 {config.corridorBranches!.length}
                   </button>
                 )}
               </div>
 
               {!isManualCamera && (config.corridorMode ?? 'plane') === 'plane' && (
                 <>
-                  <SliderInput label="Overshoot" value={config.overshoot} onChange={setOvershoot} min={0} max={150} step={5} unit="m" />
+                  <SliderInput label="过冲" value={config.overshoot} onChange={setOvershoot} min={0} max={150} step={5} unit="m" />
                   <SliderInput
-                    label="Max turn"
+                    label="最大转弯角"
                     value={config.maxTurnAngle ?? 15}
                     onChange={setMaxTurnAngle}
                     min={5}
@@ -1140,7 +1139,7 @@ export function SurveyConfigPanel() {
                     unit="°"
                   />
                   <p className="text-[10px] text-content-tertiary leading-snug -mt-1">
-                    Bends sharper than this get racetrack turn waypoints so the plane re-enters the next leg aligned.
+                    比此更急的弯会插入跑道式转弯航点,使固定翼对准后再进入下一段。
                   </p>
                 </>
               )}
@@ -1153,9 +1152,9 @@ export function SurveyConfigPanel() {
                       ? 'bg-purple-600/80 text-white'
                       : 'bg-surface-raised text-content-secondary hover:text-content'
                   }`}
-                  title="Fly the strips starting from the far side"
+                  title="从远端开始飞行条带"
                 >
-                  Flip legs
+                  翻转航线
                 </button>
                 <button
                   onClick={() => setInvertPath(!config.invertPath)}
@@ -1164,14 +1163,14 @@ export function SurveyConfigPanel() {
                       ? 'bg-purple-600/80 text-white'
                       : 'bg-surface-raised text-content-secondary hover:text-content'
                   }`}
-                  title="Reverse the travel direction along the centerline"
+                  title="反转沿中心线的行进方向"
                 >
-                  Invert path
+                  反转路径
                 </button>
               </div>
 
               <p className="text-[10px] text-content-tertiary leading-snug">
-                Draw the centerline as a path (roads, rail, power lines). Strips run parallel to it; an odd strip count rides the centerline, even straddles it.
+                将中心线绘制为路径(道路、铁路、电力线)。条带与其平行;奇数条带沿中心线,偶数条带跨在其两侧。
               </p>
             </div>
           </Section>
@@ -1180,7 +1179,7 @@ export function SurveyConfigPanel() {
         {/* Ground path — manual / mower mode only. Picks how the rover moves
             between lines: zigzag (skid-steer) vs reverse (Ackermann). */}
         {isManualCamera && (
-          <Section title="Path">
+          <Section title="路径">
             <div className="flex gap-1">
               {GROUND_PATTERN_OPTIONS.map(opt => {
                 const active = (config.groundPattern ?? 'boustrophedon') === opt.id;
@@ -1202,8 +1201,8 @@ export function SurveyConfigPanel() {
             </div>
             <p className="mt-1 text-[10px] text-content-tertiary leading-snug">
               {(config.groundPattern ?? 'boustrophedon') === 'reverse-alternating'
-                ? 'Mission inserts DO_SET_REVERSE between lines. Rover firmware must support it.'
-                : 'Standard zigzag pattern. Rover turns 180° at each line end.'}
+                ? '任务会在行间插入 DO_SET_REVERSE。车体固件必须支持该命令。'
+                : '标准折返模式。车体在每行末尾 180° 转向。'}
             </p>
           </Section>
         )}
@@ -1215,9 +1214,9 @@ export function SurveyConfigPanel() {
           <button
             onClick={() => setAdvancedOpen((v) => !v)}
             className="w-full flex items-center justify-between px-2 py-1.5 text-[11px] font-medium text-content-secondary hover:text-content uppercase tracking-wider transition-colors"
-            title="Show/hide advanced settings"
+            title="显示/隐藏高级设置"
           >
-            <span>Advanced</span>
+            <span>高级</span>
             <svg
               className={`w-3 h-3 transition-transform ${advancedOpen ? 'rotate-90' : ''}`}
               fill="none"
@@ -1230,46 +1229,46 @@ export function SurveyConfigPanel() {
           {advancedOpen && (
             <div className="mt-1 space-y-3 pl-2 border-l border-subtle">
               {!isManualCamera && (
-                <Section title="Overlap">
+                <Section title="重叠率">
                   <div className="space-y-2">
-                    <SliderInput label="Front" value={config.frontOverlap} onChange={setFrontOverlap} min={10} max={95} step={1} unit="%" />
-                    <SliderInput label="Side" value={config.sideOverlap} onChange={setSideOverlap} min={10} max={99} step={1} unit="%" />
+                    <SliderInput label="航向" value={config.frontOverlap} onChange={setFrontOverlap} min={10} max={95} step={1} unit="%" />
+                    <SliderInput label="旁向" value={config.sideOverlap} onChange={setSideOverlap} min={10} max={99} step={1} unit="%" />
                   </div>
                 </Section>
               )}
 
               {externalEngine && config.pattern !== 'circular' && config.pattern !== 'corridor' && (
-                <Section title="Grid">
+                <Section title="网格">
                   <div className="space-y-2">
-                    <SliderInput label="Margin" value={config.margin ?? 0} onChange={setMargin} min={-50} max={50} step={1} unit="m" />
+                    <SliderInput label="边距" value={config.margin ?? 0} onChange={setMargin} min={-50} max={50} step={1} unit="m" />
                     <p className="text-[10px] text-content-tertiary leading-snug -mt-1">
-                      Buffers the boundary before it is sent to the engine: positive grows
-                      coverage past the edge, negative keeps lines inside.
+                      发送给引擎前对边界加缓冲:正值扩大到边缘之外,
+                      负值让航线保持在内部。
                     </p>
                     <p className="text-[10px] text-content-tertiary leading-snug">
-                      {activeGenerator?.displayName ?? 'The engine'} picks each region's line
-                      direction and turn style itself, so the Angle, Overshoot and Turns
-                      controls don't apply. Use the engine parameters above (turn radius,
-                      waypoints, track width) to steer the plan.
+                      {activeGenerator?.displayName ?? '引擎'}会自行决定每个区域的航线
+                      方向和转弯方式,因此角度、过冲与转弯
+                      控件不适用。请使用上方的引擎参数(转弯半径、
+                      航点、行距)来调整规划。
                     </p>
                   </div>
                 </Section>
               )}
 
               {!externalEngine && config.pattern !== 'circular' && config.pattern !== 'corridor' && (
-                <Section title="Grid">
+                <Section title="网格">
                   <div className="space-y-2">
-                    <SliderInput label="Angle" value={config.gridAngle} onChange={setGridAngle} min={0} max={359} step={1} unit="°" />
+                    <SliderInput label="角度" value={config.gridAngle} onChange={setGridAngle} min={0} max={359} step={1} unit="°" />
                     {!isManualCamera && (
-                      <SliderInput label="Overshoot" value={config.overshoot} onChange={setOvershoot} min={0} max={100} step={5} unit="m" />
+                      <SliderInput label="过冲" value={config.overshoot} onChange={setOvershoot} min={0} max={100} step={5} unit="m" />
                     )}
-                    <SliderInput label="Margin" value={config.margin ?? 0} onChange={setMargin} min={-50} max={50} step={1} unit="m" />
+                    <SliderInput label="边距" value={config.margin ?? 0} onChange={setMargin} min={-50} max={50} step={1} unit="m" />
                     <p className="text-[10px] text-content-tertiary leading-snug -mt-1">
-                      Buffers the boundary: positive grows coverage past the edge, negative keeps lines inside.
+                      对边界加缓冲:正值扩大到边缘之外,负值让航线保持在内部。
                     </p>
                     {!isManualCamera && (
                       <div className="flex items-center gap-2 pt-1">
-                        <span className="text-xs text-content-secondary w-14 flex-shrink-0">Turns</span>
+                        <span className="text-xs text-content-secondary w-14 flex-shrink-0">转弯</span>
                         <div className="flex gap-1 flex-1">
                           {(['copter', 'plane'] as const).map((mode) => (
                             <button
@@ -1281,10 +1280,10 @@ export function SurveyConfigPanel() {
                                   : 'bg-surface-raised text-content-secondary hover:text-content'
                               }`}
                               title={mode === 'plane'
-                                ? 'Fixed-wing: extend the shorter line end at each turn for a clean 180° racetrack turn'
-                                : 'Multirotor: turn on the spot, lines connect directly'}
+                                ? '固定翼:每次转弯延伸较短一端,形成干净的 180° 跑道式转弯'
+                                : '多旋翼:原地转向,航线直接相连'}
                             >
-                              {mode === 'plane' ? 'Plane' : 'Copter'}
+                              {mode === 'plane' ? '固定翼' : '多旋翼'}
                             </button>
                           ))}
                         </div>
@@ -1296,7 +1295,7 @@ export function SurveyConfigPanel() {
 
               {!externalEngine && !isManualCamera && (config.pattern === 'grid' || config.pattern === 'crosshatch') && (
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-xs text-content-secondary" title="Camera triggers only along the scan lines; off during the turn-arounds outside the boundary">Camera off on turns</span>
+                  <span className="text-xs text-content-secondary" title="相机仅在扫描线上触发;边界外转弯时关闭">转弯时关闭相机</span>
                   <button
                     onClick={() => setCameraOffOutside(!config.cameraOffOutside)}
                     className={`w-8 h-4.5 rounded-full transition-colors relative ${
@@ -1312,7 +1311,7 @@ export function SurveyConfigPanel() {
 
               {!isManualCamera && (
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-xs text-content-secondary">Show footprints</span>
+                  <span className="text-xs text-content-secondary">显示幅面</span>
                   <button
                     onClick={() => setShowFootprints(!showFootprints)}
                     className={`w-8 h-4.5 rounded-full transition-colors relative ${
@@ -1352,23 +1351,23 @@ export function SurveyConfigPanel() {
             polygonEditMode ? (
               <div className="space-y-1.5">
                 <div className="text-[11px] text-center text-amber-300">
-                  Editing polygon - drag points on the map (zoom in to reach them).
-                  {pendingRecompute ? ' Waypoints will recompute on Done.' : ''}
+                  正在编辑多边形 - 在地图上拖动顶点(可放大以便选取)。
+                  {pendingRecompute ? ' 完成后将重新计算航点。' : ''}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => exitPolygonEdit(true)}
                     className="flex-1 py-2 rounded-lg text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white transition-colors"
-                    title="Finish editing and recompute the waypoints"
+                    title="完成编辑并重新计算航点"
                   >
-                    {pendingRecompute ? 'Done - recompute waypoints' : 'Done'}
+                    {pendingRecompute ? '完成 - 重新计算航点' : '完成'}
                   </button>
                   <button
                     onClick={() => exitPolygonEdit(false)}
                     className="px-3 py-2 rounded-lg text-sm font-medium bg-surface-raised text-content hover:text-white hover:bg-surface-input transition-colors"
-                    title="Discard polygon changes"
+                    title="放弃多边形修改"
                   >
-                    Cancel
+                    取消
                   </button>
                 </div>
               </div>
@@ -1377,16 +1376,16 @@ export function SurveyConfigPanel() {
                 <button
                   onClick={enterPolygonEdit}
                   className="flex-1 py-2 rounded-lg text-sm font-medium bg-surface-raised text-content hover:text-purple-300 border border-purple-500/30 transition-colors"
-                  title="Edit the boundary - drag vertices on the map, then Done recomputes the waypoints"
+                  title="编辑边界 - 在地图上拖动顶点,完成后重新计算航点"
                 >
-                  Edit polygon
+                  编辑多边形
                 </button>
                 <button
                   onClick={deactivateSurvey}
                   className="px-3 py-2 rounded-lg text-sm font-medium bg-surface-raised text-content hover:text-white hover:bg-surface-input transition-colors"
-                  title="Finish editing this survey"
+                  title="完成此勘测的编辑"
                 >
-                  Close
+                  关闭
                 </button>
               </div>
             )
@@ -1404,18 +1403,18 @@ export function SurveyConfigPanel() {
                 }`}
               >
                 {insertSuccess
-                  ? `Inserted ${result.waypoints.length} waypoints`
+                  ? `已插入 ${result.waypoints.length} 个航点`
                   : generating
-                    ? 'Computing...'
-                    : `Insert Survey (${result.waypoints.length} WPs)`}
+                    ? '计算中...'
+                    : `插入勘测(${result.waypoints.length} 个航点)`}
               </button>
               {!isManualCamera && estimateBatteryCount(result.stats.flightTime, config.enduranceMinutes ?? 20) > 1 && (
                 <button
                   onClick={handleSplitIntoFlights}
                   className="w-full py-1.5 rounded-lg text-xs font-medium bg-surface-raised text-content hover:text-purple-300 transition-colors"
-                  title="Split into one battery-sized flight group per sortie; upload each from the table"
+                  title="按每块电池的架次分割为多个飞行分组;可在列表中逐个上传"
                 >
-                  Split into {estimateBatteryCount(result.stats.flightTime, config.enduranceMinutes ?? 20)} flights
+                  分割为 {estimateBatteryCount(result.stats.flightTime, config.enduranceMinutes ?? 20)} 个架次
                 </button>
               )}
             </div>
@@ -1823,10 +1822,10 @@ function PresetDropdown({
         ref={triggerRef}
         onClick={() => setIsOpen((v) => !v)}
         className="w-full px-2.5 py-1.5 text-left text-xs bg-surface-raised border border rounded-md text-content hover:border transition-colors flex items-center justify-between"
-        title="Pick a preset (or stay with current settings)"
+        title="选择预设(或沿用当前设置)"
       >
         <span className="truncate">
-          {selected ? selected.name : 'Pick a template…'}
+          {selected ? selected.name : '选择模板…'}
         </span>
         <svg className={`w-3 h-3 text-content-secondary transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -1852,7 +1851,7 @@ function PresetDropdown({
               return (
                 <div key={tag}>
                   <div className="px-3 py-1.5 text-[10px] font-medium text-content-secondary uppercase tracking-wider bg-surface-input">
-                    {tag === 'Custom' ? 'Saved' : tag}
+                    {tag === 'Custom' ? '已保存' : tag === 'Flying' ? '飞行' : tag === 'Ground' ? '地面' : tag}
                   </div>
                   {items.map((p) => (
                     <div
@@ -1874,7 +1873,7 @@ function PresetDropdown({
                         <button
                           onClick={(e) => { e.stopPropagation(); onDelete(p.id); }}
                           className="opacity-0 group-hover:opacity-100 px-2 text-content-tertiary hover:text-red-400 transition-opacity"
-                          title="Delete preset"
+                          title="删除预设"
                         >
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

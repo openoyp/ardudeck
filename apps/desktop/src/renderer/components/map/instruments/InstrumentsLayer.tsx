@@ -68,8 +68,8 @@ function InstrumentConfigPopover({
   // Analog (the default Component) plus the numeric card and any extra
   // variants the registry offers. Only a single option means no picker.
   const displayOptions: Array<{ id: string; label: string }> = [
-    { id: 'analog', label: 'Analog' },
-    ...(instrument.NumericComponent ? [{ id: 'numeric', label: 'Numeric' }] : []),
+    { id: 'analog', label: '模拟' },
+    ...(instrument.NumericComponent ? [{ id: 'numeric', label: '数字' }] : []),
     ...(instrument.variants ?? []).map((v) => ({ id: v.id, label: v.label })),
   ];
 
@@ -87,7 +87,7 @@ function InstrumentConfigPopover({
         <div className="p-2 space-y-2.5">
           {displayOptions.length > 1 && (
             <div>
-              <div className="text-[10px] uppercase tracking-wide text-content-tertiary mb-1.5">Display</div>
+              <div className="text-[10px] uppercase tracking-wide text-content-tertiary mb-1.5">显示</div>
               <div className="grid grid-cols-3 gap-1.5">
                 {displayOptions.map((opt) => {
                   const active = mode === opt.id;
@@ -96,7 +96,7 @@ function InstrumentConfigPopover({
                       key={opt.id}
                       type="button"
                       onClick={() => setDisplayMode(instrument.id, opt.id as InstrumentDisplayMode)}
-                      data-tip={`${opt.label} display`}
+                      data-tip={`${opt.label} 显示`}
                       className={
                         'flex flex-col items-center justify-center gap-1 py-1.5 rounded-md border transition-colors ' +
                         (active
@@ -113,7 +113,7 @@ function InstrumentConfigPopover({
             </div>
           )}
           <div>
-            <div className="text-[10px] uppercase tracking-wide text-content-tertiary mb-1">Opacity</div>
+            <div className="text-[10px] uppercase tracking-wide text-content-tertiary mb-1">不透明度</div>
             <div className="flex items-center gap-2">
               <input
                 type="range"
@@ -131,7 +131,7 @@ function InstrumentConfigPopover({
                 onClick={() => setInstrumentOpacity(instrument.id, null)}
                 className="mt-1 text-[11px] text-blue-500 hover:text-blue-400 transition-colors"
               >
-                Use global opacity
+                使用全局不透明度
               </button>
             )}
           </div>
@@ -143,7 +143,7 @@ function InstrumentConfigPopover({
             className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md border border-subtle text-xs text-red-500 hover:bg-red-500/10 hover:border-red-500/40 transition-colors"
           >
             <EyeOffIcon />
-            Hide instrument
+            隐藏仪表
           </button>
         </div>
       </div>
@@ -326,7 +326,7 @@ function InstrumentSlot({ instrument }: { instrument: MapInstrumentDef }): JSX.E
       <button
         type="button"
         onClick={() => setConfigOpen(true)}
-        data-tip="Instrument settings"
+        data-tip="仪表设置"
         className={
           `absolute ${roundInstrument ? 'top-0 right-0' : '-top-1.5 -right-1.5'} p-1 rounded-full ` +
           'bg-surface shadow-lg text-content-secondary hover:text-content hover:bg-surface-raised ' +
@@ -345,7 +345,7 @@ function InstrumentSlot({ instrument }: { instrument: MapInstrumentDef }): JSX.E
       <button
         type="button"
         onClick={() => toggle(instrument.id)}
-        data-tip="Hide instrument"
+        data-tip="隐藏仪表"
         className={
           `absolute ${roundInstrument ? 'top-0 left-0' : '-top-1.5 -left-1.5'} p-1 rounded-full ` +
           'bg-surface shadow-lg text-content-secondary hover:text-red-500 hover:bg-surface-raised ' +

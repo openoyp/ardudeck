@@ -7,7 +7,7 @@ interface TagInputProps {
   suggestions?: string[];
 }
 
-export function TagInput({ tags, onChange, placeholder = 'Add tags...', suggestions }: TagInputProps) {
+export function TagInput({ tags, onChange, placeholder = '添加标签…', suggestions }: TagInputProps) {
   const [input, setInput] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);

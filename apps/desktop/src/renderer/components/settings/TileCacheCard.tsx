@@ -190,7 +190,7 @@ export function TileCacheCard() {
         <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
         </svg>
-        Offline Maps
+        离线地图
         {stats && (
           <span className="ml-auto px-2 py-0.5 rounded text-xs font-mono bg-surface-raised text-content">
             {formatBytes(stats.totalSizeBytes)}
@@ -202,7 +202,7 @@ export function TileCacheCard() {
       {stats && settings && (
         <div className="mb-4">
           <div className="flex items-center justify-between text-xs text-content-secondary mb-1">
-            <span>{stats.totalTiles.toLocaleString()} tiles</span>
+            <span>{stats.totalTiles.toLocaleString()} 块瓦片</span>
             <span>{formatBytes(stats.totalSizeBytes)} / {settings.maxCacheSizeGB} GB</span>
           </div>
           <div className="w-full h-2 bg-surface-inset rounded-full overflow-hidden">
@@ -226,7 +226,7 @@ export function TileCacheCard() {
             <svg className={`w-3 h-3 transition-transform ${showPerLayer ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-            Per-layer breakdown
+            按图层明细
           </button>
 
           {showPerLayer && (
@@ -236,7 +236,7 @@ export function TileCacheCard() {
                   <span className="text-content">{MAP_LAYERS[layer as LayerKey]?.name ?? layer}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-content-secondary font-mono">
-                      {data.tiles.toLocaleString()} tiles / {formatBytes(data.bytes)}
+                      {data.tiles.toLocaleString()} 块瓦片 / {formatBytes(data.bytes)}
                     </span>
                     {confirmLayer === layer ? (
                       <button
@@ -247,14 +247,14 @@ export function TileCacheCard() {
                         disabled={clearLayer === layer}
                         className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-600 text-white hover:bg-red-500 transition-colors disabled:opacity-50"
                       >
-                        Delete {formatBytes(data.bytes)}?
+                        删除 {formatBytes(data.bytes)}？
                       </button>
                     ) : (
                       <button
                         onClick={() => setConfirmLayer(layer)}
                         disabled={clearLayer === layer}
                         className="text-red-400/60 hover:text-red-400 transition-colors disabled:opacity-50"
-                        title={`Clear ${layer} cache (${formatBytes(data.bytes)})`}
+                        title={`清除 ${layer} 缓存（${formatBytes(data.bytes)}）`}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -288,10 +288,10 @@ export function TileCacheCard() {
           }`}
         >
           {clearing
-            ? 'Clearing...'
+            ? '正在清除...'
             : confirmClearAll
-              ? `Delete ${stats ? formatBytes(stats.totalSizeBytes) : ''}?`
-              : 'Clear All Cache'}
+              ? `删除 ${stats ? formatBytes(stats.totalSizeBytes) : ''}？`
+              : '清除全部缓存'}
         </button>
         <button
           onClick={() => setShowDownload(!showDownload)}
@@ -301,52 +301,52 @@ export function TileCacheCard() {
               : 'bg-surface-raised text-content hover:bg-surface-raised border-subtle'
           }`}
         >
-          Download Region
+          下载区域
         </button>
         <button
           onClick={refreshStats}
           className="px-3 py-1.5 text-xs rounded bg-surface-raised text-content hover:bg-surface-raised border border-subtle transition-colors"
         >
-          Refresh
+          刷新
         </button>
       </div>
 
       {/* Download Region Panel */}
       {showDownload && (
         <div className="rounded-lg border border-subtle p-4 mb-4 space-y-3">
-          <h4 className="text-xs font-medium text-content uppercase tracking-wider">Download Region for Offline Use</h4>
+          <h4 className="text-xs font-medium text-content uppercase tracking-wider">下载区域供离线使用</h4>
 
           {/* Bounding box inputs */}
           <div className="grid grid-cols-2 gap-2">
             <BoundsInput
-              label="North Lat"
+              label="北纬"
               value={dlBounds.north}
-              placeholder="e.g. 51.52"
+              placeholder="如 51.52"
               onCommit={(v) => setDlBounds((b) => ({ ...b, north: v }))}
             />
             <BoundsInput
-              label="South Lat"
+              label="南纬"
               value={dlBounds.south}
-              placeholder="e.g. 51.49"
+              placeholder="如 51.49"
               onCommit={(v) => setDlBounds((b) => ({ ...b, south: v }))}
             />
             <BoundsInput
-              label="West Lon"
+              label="西经"
               value={dlBounds.west}
-              placeholder="e.g. -0.12"
+              placeholder="如 -0.12"
               onCommit={(v) => setDlBounds((b) => ({ ...b, west: v }))}
             />
             <BoundsInput
-              label="East Lon"
+              label="东经"
               value={dlBounds.east}
-              placeholder="e.g. -0.07"
+              placeholder="如 -0.07"
               onCommit={(v) => setDlBounds((b) => ({ ...b, east: v }))}
             />
           </div>
 
           {/* Layer selection */}
           <div>
-            <label className="text-[10px] text-content-secondary block mb-1">Layers to download</label>
+            <label className="text-[10px] text-content-secondary block mb-1">要下载的图层</label>
             <div className="flex flex-wrap gap-1.5">
               {DOWNLOADABLE_LAYERS.map((key) => (
                 <button
@@ -370,7 +370,7 @@ export function TileCacheCard() {
                     : 'bg-surface-raised text-content-secondary border border-subtle hover:text-content'
                 }`}
               >
-                Elevation (DEM)
+                高程（DEM）
               </button>
             </div>
           </div>
@@ -378,7 +378,7 @@ export function TileCacheCard() {
           {/* Zoom range */}
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-[10px] text-content-secondary block mb-0.5">Min Zoom: {dlMinZoom}</label>
+              <label className="text-[10px] text-content-secondary block mb-0.5">最小缩放：{dlMinZoom}</label>
               <input
                 type="range"
                 min={1}
@@ -389,7 +389,7 @@ export function TileCacheCard() {
               />
             </div>
             <div>
-              <label className="text-[10px] text-content-secondary block mb-0.5">Max Zoom: {dlMaxZoom}</label>
+              <label className="text-[10px] text-content-secondary block mb-0.5">最大缩放：{dlMaxZoom}</label>
               <input
                 type="range"
                 min={1}
@@ -404,8 +404,8 @@ export function TileCacheCard() {
           {/* Estimate */}
           {dlEstimate !== null && (
             <div className="text-xs text-content-secondary">
-              Estimated: <span className="text-content font-mono">{dlEstimate.toLocaleString()}</span> tiles
-              (~{formatBytes(dlEstimate * 15000)})
+              预计 <span className="text-content font-mono">{dlEstimate.toLocaleString()}</span> 块瓦片
+              （约 {formatBytes(dlEstimate * 15000)}）
             </div>
           )}
 
@@ -416,7 +416,7 @@ export function TileCacheCard() {
                 <span className="text-content-secondary">
                   {dlProgress.downloadedTiles.toLocaleString()} / {dlProgress.totalTiles.toLocaleString()}
                   {dlProgress.failedTiles > 0 && (
-                    <span className="text-red-400 ml-1">({dlProgress.failedTiles} failed)</span>
+                    <span className="text-red-400 ml-1">（{dlProgress.failedTiles} 块失败）</span>
                   )}
                 </span>
                 <span className="text-content-secondary font-mono">{formatBytes(dlProgress.bytesDownloaded)}</span>
@@ -434,11 +434,11 @@ export function TileCacheCard() {
                   onClick={handleCancelDownload}
                   className="px-3 py-1.5 text-xs rounded bg-red-600/20 text-red-400 hover:bg-red-600/30 border border-red-600/30 transition-colors"
                 >
-                  Cancel Download
+                  取消下载
                 </button>
               ) : (
                 <span className={`text-xs ${dlProgress.status === 'complete' ? 'text-emerald-400' : 'text-yellow-400'}`}>
-                  {dlProgress.status === 'complete' ? 'Download complete' : 'Download cancelled'}
+                  {dlProgress.status === 'complete' ? '下载完成' : '下载已取消'}
                 </span>
               )}
             </div>
@@ -448,7 +448,7 @@ export function TileCacheCard() {
               disabled={dlLayers.size === 0 || (dlBounds.north === 0 && dlBounds.south === 0)}
               className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Start Download
+              开始下载
             </button>
           )}
         </div>
@@ -460,11 +460,11 @@ export function TileCacheCard() {
       {/* Settings */}
       {settings && (
         <div className="space-y-3 pt-3 border-t border-subtle">
-          <h4 className="text-xs font-medium text-content-secondary uppercase tracking-wider">Cache Settings</h4>
+          <h4 className="text-xs font-medium text-content-secondary uppercase tracking-wider">缓存设置</h4>
 
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-xs text-content">Max cache size</span>
+              <span className="text-xs text-content">最大缓存大小</span>
               <span className="text-xs text-content-secondary ml-1.5">{settings.maxCacheSizeGB} GB</span>
             </div>
             <input
@@ -478,7 +478,7 @@ export function TileCacheCard() {
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-xs text-content">Auto-cache tiles while browsing</span>
+            <span className="text-xs text-content">浏览时自动缓存瓦片</span>
             <button
               onClick={() => handleSettingChange('enableAutoCache', !settings.enableAutoCache)}
               className={`relative w-8 h-4 rounded-full transition-colors ${
@@ -495,7 +495,7 @@ export function TileCacheCard() {
 
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-xs text-content">Max auto-cache zoom</span>
+              <span className="text-xs text-content">自动缓存最大缩放</span>
               <span className="text-xs text-content-secondary ml-1.5">{settings.maxZoomAutoCache}</span>
             </div>
             <input
@@ -537,7 +537,7 @@ function SavedRegions() {
         <svg className={`w-3 h-3 transition-transform ${expanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
-        Saved regions ({regions.length})
+        已保存区域（{regions.length}）
       </button>
 
       {expanded && (
@@ -547,13 +547,13 @@ function SavedRegions() {
               <div className="min-w-0">
                 <div className="text-content font-mono text-[10px] truncate">{formatBounds(r.bounds)}</div>
                 <div className="text-content-secondary text-[10px]">
-                  {r.tileCount.toLocaleString()} tiles &middot; z{r.minZoom}-{r.maxZoom} &middot; {new Date(r.downloadedAt).toLocaleDateString()}
+                  {r.tileCount.toLocaleString()} 块瓦片 &middot; z{r.minZoom}-{r.maxZoom} &middot; {new Date(r.downloadedAt).toLocaleDateString()}
                 </div>
               </div>
               <button
                 onClick={() => deleteRegion(r.id)}
                 className="text-red-400/60 hover:text-red-400 transition-colors shrink-0 ml-2"
-                title="Remove this saved region"
+                title="移除此已保存区域"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -573,7 +573,7 @@ function SavedRegions() {
               }}
               className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors mt-1"
             >
-              Remove all saved regions
+              移除所有已保存区域
             </button>
           )}
         </div>

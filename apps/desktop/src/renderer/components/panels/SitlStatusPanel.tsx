@@ -118,15 +118,15 @@ export function SitlStatusPanel() {
       <div className="space-y-4 text-sm">
         {/* Connection Status */}
         <div className="flex items-center justify-between">
-          <span className="text-content-secondary">SITL Status</span>
+          <span className="text-content-secondary">SITL 状态</span>
           <div className="flex items-center gap-2">
             {sitlRunning ? (
-              <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded">Running</span>
+              <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded">运行中</span>
             ) : (
-              <span className="px-2 py-0.5 bg-surface-raised text-content-secondary text-xs rounded">Stopped</span>
+              <span className="px-2 py-0.5 bg-surface-raised text-content-secondary text-xs rounded">已停止</span>
             )}
             {bridgeConnected && (
-              <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded">Bridge</span>
+              <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded">桥接</span>
             )}
           </div>
         </div>
@@ -134,18 +134,18 @@ export function SitlStatusPanel() {
         {/* Firmware Info */}
         {isConnected && (
           <div className="p-2 bg-surface-raised rounded-lg">
-            <div className="text-xs text-content-secondary mb-1">Firmware</div>
+            <div className="text-xs text-content-secondary mb-1">固件</div>
             <div className="text-content font-medium">
               {connectionState.fcVariant} {connectionState.fcVersion}
             </div>
-            {isSitl && <div className="text-xs text-amber-400 mt-1">SITL Simulation</div>}
+            {isSitl && <div className="text-xs text-amber-400 mt-1">SITL 仿真</div>}
           </div>
         )}
 
         {/* Arming Status */}
         <div className="p-2 bg-surface-raised rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-content-secondary">Arming</span>
+            <span className="text-xs text-content-secondary">解锁状态</span>
             <span
               className={`px-2 py-0.5 rounded text-xs font-bold ${
                 flight.armed
@@ -153,14 +153,14 @@ export function SitlStatusPanel() {
                   : 'bg-surface-raised text-content-secondary'
               }`}
             >
-              {flight.armed ? 'ARMED' : 'DISARMED'}
+              {flight.armed ? '已解锁' : '已上锁'}
             </span>
           </div>
 
           {/* Arming Blockers */}
           {!flight.armed && armingFlags.length > 0 && (
             <div className="space-y-1">
-              <div className="text-xs text-red-400">Blockers:</div>
+              <div className="text-xs text-red-400">阻止项:</div>
               <div className="flex flex-wrap gap-1">
                 {armingFlags.map((flag, i) => (
                   <span
@@ -177,13 +177,13 @@ export function SitlStatusPanel() {
 
         {/* Flight Mode */}
         <div className="p-2 bg-surface-raised rounded-lg">
-          <div className="text-xs text-content-secondary mb-1">Flight Mode</div>
-          <div className="text-content font-medium">{flight.mode || 'Unknown'}</div>
+          <div className="text-xs text-content-secondary mb-1">飞行模式</div>
+          <div className="text-content font-medium">{flight.mode || '未知'}</div>
         </div>
 
         {/* Sensors */}
         <div>
-          <div className="text-xs text-content-secondary mb-2">Sensors</div>
+          <div className="text-xs text-content-secondary mb-2">传感器</div>
           <div className="flex flex-wrap gap-1">
             <SensorBadge name="GYRO" status={sensorStatus.gyro} />
             <SensorBadge name="ACC" status={sensorStatus.acc} />
@@ -202,12 +202,12 @@ export function SitlStatusPanel() {
                 gps.fixType >= 3 ? 'text-green-400' : 'text-amber-400'
               }`}
             >
-              {gps.fixType >= 3 ? '3D Fix' : gps.fixType === 2 ? '2D Fix' : 'No Fix'}
-            </span>
+              {gps.fixType >= 3 ? '3D 定位' : gps.fixType === 2 ? '2D 定位' : '无定位'}
+          </span>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
-              <span className="text-content-secondary">Sats: </span>
+              <span className="text-content-secondary">卫星: </span>
               <span className="text-content">{gps.satellites}</span>
             </div>
             <div>
@@ -215,11 +215,11 @@ export function SitlStatusPanel() {
               <span className="text-content">{(gps.hdop / 100).toFixed(1)}</span>
             </div>
             <div>
-              <span className="text-content-secondary">Lat: </span>
+              <span className="text-content-secondary">纬度: </span>
               <span className="text-content">{position.lat.toFixed(6)}</span>
             </div>
             <div>
-              <span className="text-content-secondary">Lon: </span>
+              <span className="text-content-secondary">经度: </span>
               <span className="text-content">{position.lon.toFixed(6)}</span>
             </div>
           </div>
@@ -227,18 +227,18 @@ export function SitlStatusPanel() {
 
         {/* Attitude */}
         <div className="p-2 bg-surface-raised rounded-lg">
-          <div className="text-xs text-content-secondary mb-1">Attitude</div>
+          <div className="text-xs text-content-secondary mb-1">姿态</div>
           <div className="grid grid-cols-3 gap-2 text-xs">
             <div>
-              <span className="text-content-secondary">Roll: </span>
+              <span className="text-content-secondary">横滚: </span>
               <span className="text-content">{attitude.roll.toFixed(1)}°</span>
             </div>
             <div>
-              <span className="text-content-secondary">Pitch: </span>
+              <span className="text-content-secondary">俯仰: </span>
               <span className="text-content">{attitude.pitch.toFixed(1)}°</span>
             </div>
             <div>
-              <span className="text-content-secondary">Yaw: </span>
+              <span className="text-content-secondary">偏航: </span>
               <span className="text-content">{attitude.yaw.toFixed(0)}°</span>
             </div>
           </div>
@@ -246,14 +246,14 @@ export function SitlStatusPanel() {
 
         {/* Altitude */}
         <div className="p-2 bg-surface-raised rounded-lg">
-          <div className="text-xs text-content-secondary mb-1">Altitude</div>
+          <div className="text-xs text-content-secondary mb-1">高度</div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
-              <span className="text-content-secondary">MSL: </span>
+              <span className="text-content-secondary">海拔: </span>
               <span className="text-content">{formatAltitudeFromMeters(position.alt, altitudeUnit)}</span>
             </div>
             <div>
-              <span className="text-content-secondary">AGL: </span>
+              <span className="text-content-secondary">相对高度: </span>
               <span className="text-content">{formatAltitudeFromMeters((position as unknown as Record<string, number>).altAgl ?? 0, altitudeUnit)}</span>
             </div>
           </div>
@@ -262,16 +262,16 @@ export function SitlStatusPanel() {
         {/* RC Channels - GCS Sending vs FC Receiving */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-content-secondary">RC Channels</span>
+            <span className="text-xs text-content-secondary">RC 通道</span>
             {isOverrideActive && (
-              <span className="text-xs text-amber-400">Override Active</span>
+              <span className="text-xs text-amber-400">强制覆盖已启用</span>
             )}
           </div>
 
           {/* Column headers */}
           <div className="flex items-center gap-2 mb-1 text-xs text-content-tertiary">
             <span className="w-12"></span>
-            <span className="flex-1 text-center">FC Receives</span>
+            <span className="flex-1 text-center">飞控接收</span>
             <span className="w-10"></span>
             <span className="w-12 text-center">GCS</span>
           </div>
@@ -279,10 +279,10 @@ export function SitlStatusPanel() {
           <div className="space-y-1.5">
             {/* RPTY order: Roll=0, Pitch=1, Throttle=2, Yaw=3 */}
             {[
-              { label: 'Roll', idx: 0 },
-              { label: 'Pitch', idx: 1 },
-              { label: 'Throt', idx: 2 },
-              { label: 'Yaw', idx: 3 },
+              { label: '横滚', idx: 0 },
+              { label: '俯仰', idx: 1 },
+              { label: '油门', idx: 2 },
+              { label: '偏航', idx: 3 },
               { label: 'AUX1', idx: 4 },
               { label: 'AUX2', idx: 5 },
               { label: 'AUX3', idx: 6 },
@@ -321,21 +321,21 @@ export function SitlStatusPanel() {
           {/* Warning if mismatch detected */}
           {isOverrideActive && rcChannels.some((fc, i) => Math.abs(fc - (gcsChannels[i] || 1000)) > 50) && (
             <div className="mt-2 p-2 bg-red-500/10 border border-red-500/30 rounded text-xs text-red-400">
-              FC not receiving GCS values. Check: <code className="bg-surface-base px-1 rounded">set receiver_type = MSP</code>
+              飞控未收到 GCS 数值。请检查:<code className="bg-surface-base px-1 rounded">set receiver_type = MSP</code>
             </div>
           )}
         </div>
 
         {/* Battery (even if fake) */}
         <div className="p-2 bg-surface-raised rounded-lg">
-          <div className="text-xs text-content-secondary mb-1">Battery</div>
+          <div className="text-xs text-content-secondary mb-1">电池</div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
-              <span className="text-content-secondary">Voltage: </span>
+              <span className="text-content-secondary">电压: </span>
               <span className="text-content">{battery.voltage.toFixed(2)}V</span>
             </div>
             <div>
-              <span className="text-content-secondary">Current: </span>
+              <span className="text-content-secondary">电流: </span>
               <span className="text-content">{battery.current.toFixed(1)}A</span>
             </div>
           </div>
@@ -343,7 +343,7 @@ export function SitlStatusPanel() {
 
         {/* System Info */}
         <div className="text-xs text-content-tertiary border-t border-subtle pt-2">
-          <div>System Load: {(flight as unknown as Record<string, number>).cpuLoad || 0}%</div>
+          <div>系统负载: {(flight as unknown as Record<string, number>).cpuLoad || 0}%</div>
         </div>
       </div>
     </PanelContainer>

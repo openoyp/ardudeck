@@ -85,8 +85,8 @@ export function TrafficSettingsCard() {
           </svg>
         </div>
         <div>
-          <h3 className="text-sm font-medium text-content">Traffic & Gliders</h3>
-          <p className="text-xs text-content-secondary">ADS-B and OGN sources: toggle a layer on the map to go live</p>
+          <h3 className="text-sm font-medium text-content">交通与滑翔机</h3>
+          <p className="text-xs text-content-secondary">ADS-B 与 OGN 数据源：在地图上开启相应图层即可实时接收</p>
         </div>
       </div>
 
@@ -94,10 +94,10 @@ export function TrafficSettingsCard() {
         {/* Local ADS-B receiver */}
         <div className="bg-surface-input rounded-lg p-3 space-y-2">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-content font-medium">Local ADS-B receiver</div>
+            <div className="text-sm text-content font-medium">本地 ADS-B 接收机</div>
             <Toggle on={cfg.localAdsb.enabled} onChange={(v) => patch({ localAdsb: { ...cfg.localAdsb, enabled: v } })} />
           </div>
-          <Field label="aircraft.json URL (dump1090 / readsb / tar1090)">
+          <Field label="aircraft.json URL（dump1090 / readsb / tar1090）">
             <input
               className={`${inputCls} w-full`}
               value={cfg.localAdsb.url}
@@ -110,10 +110,10 @@ export function TrafficSettingsCard() {
         {/* Hosted ADS-B API */}
         <div className="bg-surface-input rounded-lg p-3 space-y-2">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-content font-medium">Hosted ADS-B API</div>
+            <div className="text-sm text-content font-medium">托管 ADS-B API</div>
             <Toggle on={cfg.adsbApi.enabled} onChange={(v) => patch({ adsbApi: { ...cfg.adsbApi, enabled: v } })} />
           </div>
-          <Field label="Provider">
+          <Field label="提供商">
             <select
               className={`${inputCls} w-full`}
               value={cfg.adsbApi.preset}
@@ -128,7 +128,7 @@ export function TrafficSettingsCard() {
           </Field>
           {cfg.adsbApi.preset === 'custom' && (
             <>
-              <Field label="Endpoint URL ({lat} {lon} {radiusNm} substituted)">
+              <Field label="端点 URL（{lat} {lon} {radiusNm} 会被替换）">
                 <input
                   className={`${inputCls} w-full`}
                   value={cfg.adsbApi.customUrl}
@@ -136,7 +136,7 @@ export function TrafficSettingsCard() {
                   placeholder="https://example.com/api/lat/{lat}/lon/{lon}/dist/{radiusNm}"
                 />
               </Field>
-              <Field label="API key header name (optional)">
+              <Field label="API 密钥请求头名称（可选）">
                 <input
                   className={`${inputCls} w-full`}
                   value={cfg.adsbApi.customKeyHeader}
@@ -144,33 +144,33 @@ export function TrafficSettingsCard() {
                   placeholder="X-API-Key"
                 />
               </Field>
-              <Field label="API key (optional)">
-                <input type="password" className={`${inputCls} w-full`} value={customKey} onChange={(e) => setCustomKey(e.target.value)} placeholder="Paste key" />
+              <Field label="API 密钥（可选）">
+                <input type="password" className={`${inputCls} w-full`} value={customKey} onChange={(e) => setCustomKey(e.target.value)} placeholder="粘贴密钥" />
               </Field>
             </>
           )}
           {cfg.adsbApi.preset === 'adsbexchange' && (
-            <Field label="RapidAPI key">
-              <input type="password" className={`${inputCls} w-full`} value={adsbxKey} onChange={(e) => setAdsbxKey(e.target.value)} placeholder="Paste RapidAPI key" />
+            <Field label="RapidAPI 密钥">
+              <input type="password" className={`${inputCls} w-full`} value={adsbxKey} onChange={(e) => setAdsbxKey(e.target.value)} placeholder="粘贴 RapidAPI 密钥" />
             </Field>
           )}
           {!preset.needsKey && cfg.adsbApi.preset !== 'custom' && (
-            <p className="text-xs text-content-tertiary">No key required.</p>
+            <p className="text-xs text-content-tertiary">无需密钥。</p>
           )}
         </div>
 
         {/* OpenSky */}
         <div className="bg-surface-input rounded-lg p-3 space-y-2">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-content font-medium">OpenSky Network</div>
+            <div className="text-sm text-content font-medium">OpenSky 网络</div>
             <Toggle on={cfg.openSky.enabled} onChange={(v) => patch({ openSky: { ...cfg.openSky, enabled: v } })} />
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-content-secondary">Use account (higher rate limit)</span>
+            <span className="text-xs text-content-secondary">使用账号（更高速率限制）</span>
             <Toggle on={cfg.openSky.useAuth} onChange={(v) => patch({ openSky: { ...cfg.openSky, useAuth: v } })} />
           </div>
           {cfg.openSky.useAuth && (
-            <Field label="Credentials (username:password)">
+            <Field label="凭据（用户名:密码）">
               <input type="password" className={`${inputCls} w-full`} value={openSkyCreds} onChange={(e) => setOpenSkyCreds(e.target.value)} placeholder="user:pass" />
             </Field>
           )}
@@ -179,16 +179,16 @@ export function TrafficSettingsCard() {
         {/* OGN gliders */}
         <div className="bg-surface-input rounded-lg p-3 space-y-2">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-content font-medium">Gliders (OGN / APRS-IS)</div>
+            <div className="text-sm text-content font-medium">滑翔机（OGN / APRS-IS）</div>
             <Toggle on={cfg.ogn.enabled} onChange={(v) => patch({ ogn: { ...cfg.ogn, enabled: v } })} />
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2">
-              <Field label="APRS-IS host (public or local receiver)">
+              <Field label="APRS-IS 主机（公共或本地接收机）">
                 <input className={`${inputCls} w-full`} value={cfg.ogn.host} onChange={(e) => patch({ ogn: { ...cfg.ogn, host: e.target.value } })} placeholder="aprs.glidernet.org" />
               </Field>
             </div>
-            <Field label="Port">
+            <Field label="端口">
               <DraftNumberInput
                 className={`${inputCls} w-full`}
                 value={cfg.ogn.port}
@@ -204,14 +204,14 @@ export function TrafficSettingsCard() {
         {/* Remote ID receiver */}
         <div className="bg-surface-input rounded-lg p-3 space-y-2">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-content font-medium">Remote ID receiver</div>
+            <div className="text-sm text-content font-medium">Remote ID 接收机</div>
             <Toggle on={cfg.remoteId.enabled} onChange={(v) => patch({ remoteId: { ...cfg.remoteId, enabled: v } })} />
           </div>
           <p className="text-xs text-content-secondary">
-            Ingest broadcast drone Remote ID (FAA RID / ASTM F3411 / EU Direct Remote ID) from a
-            local receiver or gateway exposing decoded messages as JSON over HTTP.
+            从本地接收机或网关接收广播式无人机 Remote ID（FAA RID / ASTM F3411 / 欧盟 Direct Remote ID），
+            要求以 JSON over HTTP 输出解码后的消息。
           </p>
-          <Field label="Receiver JSON URL">
+          <Field label="接收机 JSON URL">
             <input
               className={`${inputCls} w-full`}
               value={cfg.remoteId.url}
@@ -220,17 +220,17 @@ export function TrafficSettingsCard() {
             />
           </Field>
           <div className="grid grid-cols-2 gap-2">
-            <Field label="JSON format">
+            <Field label="JSON 格式">
               <select
                 className={`${inputCls} w-full`}
                 value={cfg.remoteId.shape}
                 onChange={(e) => patch({ remoteId: { ...cfg.remoteId, shape: e.target.value as RemoteIdShape } })}
               >
-                <option value="ardudeck">Normalised (ArduDeck)</option>
-                <option value="opendroneid">OpenDroneID receiver</option>
+                <option value="ardudeck">规范化（ArduDeck）</option>
+                <option value="opendroneid">OpenDroneID 接收机</option>
               </select>
             </Field>
-            <Field label="Poll (ms)">
+            <Field label="轮询间隔（ms）">
               <DraftNumberInput
                 className={`${inputCls} w-full`}
                 value={cfg.remoteId.pollMs}
@@ -250,12 +250,12 @@ export function TrafficSettingsCard() {
 
         {/* Altitude relevance band */}
         <div className="bg-surface-input rounded-lg p-3 space-y-2">
-          <div className="text-sm text-content font-medium">Altitude filter</div>
+          <div className="text-sm text-content font-medium">高度过滤</div>
           <p className="text-xs text-content-secondary">
-            Your operating band (MSL), used as the default on the map. Below the floor is hidden; above the ceiling fades out (or is hidden, below). These are defaults. The on-map control governs the live view.
+            你的运行高度范围（海拔），作为地图上的默认值。低于下限的目标将被隐藏；高于上限的目标淡出（勾选后则直接隐藏）。这些仅为默认值，实时视图以地图上的控件为准。
           </p>
           <div className="grid grid-cols-2 gap-2">
-            <Field label="Floor (m)">
+            <Field label="下限（m）">
               <DraftNumberInput
                 className={`${inputCls} w-full`}
                 value={cfg.altitudeFilter.floorMeters}
@@ -263,7 +263,7 @@ export function TrafficSettingsCard() {
                 onCommit={(v) => patch({ altitudeFilter: { ...cfg.altitudeFilter, floorMeters: v } })}
               />
             </Field>
-            <Field label="Ceiling (m)">
+            <Field label="上限（m）">
               <DraftNumberInput
                 className={`${inputCls} w-full`}
                 value={cfg.altitudeFilter.ceilingMeters}
@@ -273,12 +273,12 @@ export function TrafficSettingsCard() {
             </Field>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-content-secondary">Hide traffic above ceiling (instead of fading)</span>
+            <span className="text-xs text-content-secondary">隐藏高于上限的目标（而非淡出）</span>
             <Toggle on={cfg.altitudeFilter.hardCeiling} onChange={(v) => patch({ altitudeFilter: { ...cfg.altitudeFilter, hardCeiling: v } })} />
           </div>
           <div className="pt-1">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-content-secondary">Icon size</span>
+              <span className="text-xs text-content-secondary">图标大小</span>
               <span className="text-xs text-content tabular-nums">{Math.round(cfg.iconScale * 100)}%</span>
             </div>
             <input
@@ -295,9 +295,9 @@ export function TrafficSettingsCard() {
 
         {/* Proximity thresholds */}
         <div className="bg-surface-input rounded-lg p-3 space-y-2">
-          <div className="text-sm text-content font-medium">Proximity warning</div>
+          <div className="text-sm text-content font-medium">接近警告</div>
           <div className="grid grid-cols-2 gap-2">
-            <Field label="Range (m)">
+            <Field label="距离（m）">
               <DraftNumberInput
                 className={`${inputCls} w-full`}
                 value={cfg.proximity.rangeMeters}
@@ -306,7 +306,7 @@ export function TrafficSettingsCard() {
                 onCommit={(v) => patch({ proximity: { ...cfg.proximity, rangeMeters: v } })}
               />
             </Field>
-            <Field label="Vertical separation (m)">
+            <Field label="垂直间隔（m）">
               <DraftNumberInput
                 className={`${inputCls} w-full`}
                 value={cfg.proximity.verticalMeters}
@@ -319,7 +319,7 @@ export function TrafficSettingsCard() {
         </div>
 
         <button onClick={() => void save()} className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors">
-          {saved ? 'Saved' : 'Save traffic settings'}
+          {saved ? '已保存' : '保存交通设置'}
         </button>
       </div>
     </div>
@@ -339,7 +339,7 @@ function AlertZonesSection({ zones, onChange }: { zones: AlertZone[]; onChange: 
     const center = viewportCenter ?? { lat: 0, lon: 0 };
     const zone: AlertZone = {
       id: (globalThis.crypto?.randomUUID?.() ?? `zone-${Date.now()}`),
-      name: `Zone ${zones.length + 1}`,
+      name: `警戒区 ${zones.length + 1}`,
       enabled: true,
       shape: 'circle',
       center: { lat: Number(center.lat.toFixed(6)), lon: Number(center.lon.toFixed(6)) },
@@ -355,20 +355,20 @@ function AlertZonesSection({ zones, onChange }: { zones: AlertZone[]; onChange: 
   return (
     <div className="bg-surface-input rounded-lg p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <div className="text-sm text-content font-medium">Perimeter alert zones</div>
+        <div className="text-sm text-content font-medium">周界警戒区</div>
         <button
           onClick={addZone}
           className="px-2 py-1 text-[11px] bg-amber-600 hover:bg-amber-500 text-white rounded-md transition-colors"
         >
-          Add zone here
+          在此添加警戒区
         </button>
       </div>
       <p className="text-xs text-content-secondary">
-        Alert when any contact (ADS-B, glider, or Remote ID) enters a zone. Detect and alert only -
-        ArduDeck never mitigates. New zones centre on the current map view.
+        任何目标（ADS-B、滑翔机或 Remote ID）进入警戒区时告警。仅检测与告警，
+        ArduDeck 不会自动处置。新警戒区以当前地图视图为中心。
       </p>
       {zones.length === 0 ? (
-        <p className="text-[11px] text-content-tertiary">No zones. Pan the map to a site and click "Add zone here".</p>
+        <p className="text-[11px] text-content-tertiary">暂无警戒区。将地图平移到目标位置后点击"在此添加警戒区"。</p>
       ) : (
         <div className="space-y-2">
           {zones.map((z) => (
@@ -380,13 +380,13 @@ function AlertZonesSection({ zones, onChange }: { zones: AlertZone[]; onChange: 
                   value={z.name}
                   onChange={(e) => update(z.id, { name: e.target.value })}
                 />
-                <button onClick={() => remove(z.id)} className="text-content-tertiary hover:text-red-400 text-xs px-1" title="Delete zone">
-                  Remove
+                <button onClick={() => remove(z.id)} className="text-content-tertiary hover:text-red-400 text-xs px-1" title="删除警戒区">
+                  移除
                 </button>
               </div>
               {z.shape === 'circle' && (
                 <div className="grid grid-cols-3 gap-2">
-                  <Field label="Lat">
+                  <Field label="纬度">
                     <input
                       type="number"
                       className={`${inputCls} w-full !py-1`}
@@ -394,7 +394,7 @@ function AlertZonesSection({ zones, onChange }: { zones: AlertZone[]; onChange: 
                       onChange={(e) => update(z.id, { center: { lat: Number(e.target.value) || 0, lon: z.center?.lon ?? 0 } })}
                     />
                   </Field>
-                  <Field label="Lon">
+                  <Field label="经度">
                     <input
                       type="number"
                       className={`${inputCls} w-full !py-1`}
@@ -402,7 +402,7 @@ function AlertZonesSection({ zones, onChange }: { zones: AlertZone[]; onChange: 
                       onChange={(e) => update(z.id, { center: { lat: z.center?.lat ?? 0, lon: Number(e.target.value) || 0 } })}
                     />
                   </Field>
-                  <Field label="Radius (m)">
+                  <Field label="半径（m）">
                     <input
                       type="number"
                       className={`${inputCls} w-full !py-1`}
@@ -413,7 +413,7 @@ function AlertZonesSection({ zones, onChange }: { zones: AlertZone[]; onChange: 
                 </div>
               )}
               <div className="grid grid-cols-2 gap-2">
-                <Field label="Min alt (m, optional)">
+                <Field label="最低高度（m，可选）">
                   <input
                     type="number"
                     className={`${inputCls} w-full !py-1`}
@@ -421,7 +421,7 @@ function AlertZonesSection({ zones, onChange }: { zones: AlertZone[]; onChange: 
                     onChange={(e) => update(z.id, { minAltMeters: e.target.value === '' ? undefined : Number(e.target.value) })}
                   />
                 </Field>
-                <Field label="Max alt (m, optional)">
+                <Field label="最高高度（m，可选）">
                   <input
                     type="number"
                     className={`${inputCls} w-full !py-1`}

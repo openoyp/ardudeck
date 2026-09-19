@@ -29,7 +29,7 @@ export function CachedAreaOverlay() {
           }}
         >
           <Tooltip sticky>
-            Cached: {region.tileCount.toLocaleString()} tiles (z{region.minZoom}-{region.maxZoom})
+            已缓存:{region.tileCount.toLocaleString()} 个瓦片(z{region.minZoom}-{region.maxZoom})
           </Tooltip>
         </Rectangle>
       ))}

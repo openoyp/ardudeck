@@ -106,7 +106,7 @@ export function WindRoseCard(): JSX.Element | null {
         })}
 
         {/* cardinal labels */}
-        {([['N', 0], ['E', 90], ['S', 180], ['W', 270]] as Array<[string, number]>).map(([label, deg]) => {
+        {([['北', 0], ['东', 90], ['南', 180], ['西', 270]] as Array<[string, number]>).map(([label, deg]) => {
           const p = at(R + 12, deg);
           return (
             <text key={label} x={p.x} y={p.y} fontSize={10} fill="#ffffff" stroke="#0b1220" strokeWidth={2.5}
@@ -138,7 +138,7 @@ export function WindRoseCard(): JSX.Element | null {
         ref={closeRef}
         type="button"
         onClick={() => setProbe(null)}
-        data-tip="Close"
+        data-tip="关闭"
         style={{ position: 'absolute', left: '50%', top: -4, transform: 'translateX(-50%)', pointerEvents: 'auto' }}
         className="w-5 h-5 flex items-center justify-center rounded-full bg-surface-solid border border-subtle text-content-tertiary hover:text-content shadow"
       >

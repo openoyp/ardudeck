@@ -87,13 +87,12 @@ function CompassWaitingForData({ elapsed }: { elapsed: number }) {
         </div>
       </div>
       <div className="text-center">
-        <p className="text-sm text-content">Rotate the vehicle, waiting for progress from the flight controller</p>
-        <p className="text-xs text-content-secondary mt-1">Elapsed {formatElapsed(elapsed)}</p>
+        <p className="text-sm text-content">请旋转飞行器，正在等待飞控返回进度</p>
+        <p className="text-xs text-content-secondary mt-1">已用时 {formatElapsed(elapsed)}</p>
         {elapsed >= 20 && (
           <p className="text-xs text-amber-400 mt-2 max-w-sm">
-            Still no progress data. Keep rotating; if this persists past a minute,
-            the link may be dropping calibration messages or the compass is not
-            producing usable data.
+            仍未收到进度数据。请继续旋转；若超过一分钟仍未恢复，
+            可能是链路丢失了校准消息，或罗盘无法输出有效数据。
           </p>
         )}
       </div>
@@ -169,7 +168,7 @@ export function CalibratingStep() {
                 visibly most of the way covered. */}
             <CalibrationProgress
               progress={coverageProgress ?? progress}
-              label="slowest compass"
+              label="最慢罗盘"
             />
           </div>
         )}
@@ -180,7 +179,7 @@ export function CalibratingStep() {
             {!px4CompassStarted && <CompassWaitingForData elapsed={elapsed} />}
             {px4CompassStarted && (
               <div className="flex justify-center">
-                <CalibrationProgress progress={progress} indeterminate={progress === 0} label="Hold and rotate as prompted" />
+                <CalibrationProgress progress={progress} indeterminate={progress === 0} label="按提示保持并旋转" />
               </div>
             )}
             <PositionDots positionStatus={positionStatus} currentPosition={currentPosition} highlightCurrent={px4CompassStarted} />
@@ -198,7 +197,7 @@ export function CalibratingStep() {
           <CalibrationProgress
             progress={progress}
             indeterminate={progress === 0}
-            label={calibrationType === 'gyro' ? 'Keep still' : 'Hold level'}
+            label={calibrationType === 'gyro' ? '保持静止' : '保持水平'}
           />
         )}
 
@@ -214,12 +213,12 @@ export function CalibratingStep() {
                 <p className="text-center text-xs text-content-secondary">
                   {isPx4 ? (
                     positionStatus.some(Boolean) || fcHasRequestedPosition || progress > 0 ? (
-                      <>Detected: <span className="text-cyan-400 font-medium">{ACCEL_6POINT_POSITIONS[currentPosition]}</span>, {positionStatus.filter(Boolean).length} of 6 sides captured</>
+                      <>已检测：<span className="text-cyan-400 font-medium">{ACCEL_6POINT_POSITIONS[currentPosition]}</span>，已采集 6 面中的 {positionStatus.filter(Boolean).length} 面</>
                     ) : (
-                      <>Hold the vehicle still on any side, detection is automatic</>
+                      <>将飞行器任一面朝下保持静止，检测将自动进行</>
                     )
                   ) : (
-                    <>Position {currentPosition + 1} of 6: <span className="text-cyan-400 font-medium">{ACCEL_6POINT_POSITIONS[currentPosition]}</span></>
+                    <>第 {currentPosition + 1}/6 个位置：<span className="text-cyan-400 font-medium">{ACCEL_6POINT_POSITIONS[currentPosition]}</span></>
                   )}
                 </p>
               </div>
@@ -232,7 +231,7 @@ export function CalibratingStep() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                <p className="text-sm text-content-secondary">Writing calibration to flight controller…</p>
+                <p className="text-sm text-content-secondary">正在将校准写入飞行控制器...</p>
               </div>
             )}
 
@@ -246,13 +245,13 @@ export function CalibratingStep() {
       {calibrationType === 'compass' && compassProgress.length > 0 && (
         <div className="bg-surface rounded-xl p-4 border border-subtle">
           <div className="flex justify-between items-baseline mb-3">
-            <h4 className="text-sm font-medium text-content">Compass Progress</h4>
-            <span className="text-xs text-content-secondary">Elapsed {formatElapsed(elapsed)}</span>
+            <h4 className="text-sm font-medium text-content">罗盘进度</h4>
+            <span className="text-xs text-content-secondary">已用时 {formatElapsed(elapsed)}</span>
           </div>
           <div className="space-y-2">
             {compassProgress.map((prog, index) => (
               <div key={index} className="flex items-center gap-3">
-                <span className="text-xs text-content-secondary w-20">Compass {index + 1}</span>
+                <span className="text-xs text-content-secondary w-20">罗盘 {index + 1}</span>
                 <div className="flex-1 h-2 bg-surface-inset rounded-full overflow-hidden">
                   <div
                     className="h-full bg-cyan-500 transition-all duration-300"
@@ -276,7 +275,7 @@ export function CalibratingStep() {
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            Position Ready
+            位置已就绪
           </button>
         )}
 
@@ -288,22 +287,22 @@ export function CalibratingStep() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-            Cancel
+            取消
           </button>
         )}
       </div>
 
       {/* Instructions reminder */}
       <p className="text-center text-xs text-content-secondary">
-        {calibrationType === 'compass' && !isPx4 && 'Keep rotating your vehicle in all directions...'}
-        {calibrationType === 'compass' && isPx4 && 'Hold the vehicle on a side, rotate it when prompted, then move to the next side...'}
-        {calibrationType === 'accel-level' && 'Keep your vehicle still on the level surface...'}
+        {calibrationType === 'compass' && !isPx4 && '请继续向各个方向旋转飞行器...'}
+        {calibrationType === 'compass' && isPx4 && '保持一面朝下，按提示旋转，然后换下一面...'}
+        {calibrationType === 'accel-level' && '请保持飞行器在水平面上静止...'}
         {calibrationType === 'accel-6point' && !isFinalizing && (isPx4
-          ? 'Hold each position still, the vehicle detects and captures sides automatically'
-          : 'Hold the position steady, then click "Position Ready"')}
-        {calibrationType === 'accel-6point' && isFinalizing && 'Please wait - do not disconnect the flight controller'}
-        {calibrationType === 'gyro' && 'Keep your vehicle completely still...'}
-        {calibrationType === 'opflow' && 'Hold steady over the textured surface...'}
+          ? '每个位置保持静止，飞控会自动检测并采集各面'
+          : '保持位置稳定，然后点击"位置已就绪"')}
+        {calibrationType === 'accel-6point' && isFinalizing && '请稍候 — 请勿断开飞行控制器'}
+        {calibrationType === 'gyro' && '请保持飞行器完全静止...'}
+        {calibrationType === 'opflow' && '在有纹理的表面上空保持稳定...'}
       </p>
     </div>
   );

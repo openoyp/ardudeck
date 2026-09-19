@@ -298,14 +298,14 @@ function buildChecks(ctx: CheckContext): BriefingCheck[] {
   const checks: BriefingCheck[] = [
     {
       id: 'flightTime',
-      label: 'Flight time',
+      label: '飞行时间',
       value: formatDurationSec(ctx.flightTimeSec),
       severity: PASSIVE,
       detail: 'estimated at cruise speed',
     },
     {
       id: 'batteries',
-      label: 'Batteries',
+      label: '电池',
       value: ctx.batteryCount > 0 ? `${ctx.batteryCount}` : 'unknown',
       severity: PASSIVE,
       detail:
@@ -315,13 +315,13 @@ function buildChecks(ctx: CheckContext): BriefingCheck[] {
     },
     {
       id: 'distance',
-      label: 'Distance',
+      label: '距离',
       value: formatDistanceM(ctx.distanceM, ctx.distanceUnit),
       severity: PASSIVE,
     },
     {
       id: 'maxAlt',
-      label: 'Max altitude',
+      label: '最大高度',
       value: formatAltitudeM(ctx.maxAltM, ctx.altitudeUnit),
       severity: PASSIVE,
       detail: `ceiling ${formatAltitudeM(ctx.ceilingM, ctx.altitudeUnit)} AGL`,
@@ -331,7 +331,7 @@ function buildChecks(ctx: CheckContext): BriefingCheck[] {
   if (ctx.reservePct !== null) {
     checks.push({
       id: 'reserve',
-      label: 'Reserve',
+      label: '余量',
       value: `${Math.round(ctx.reservePct)}%`,
       severity: PASSIVE,
       detail: 'on the final battery',
@@ -341,7 +341,7 @@ function buildChecks(ctx: CheckContext): BriefingCheck[] {
   if (ctx.hasHome) {
     checks.push({
       id: 'maxFromHome',
-      label: 'Max from home',
+      label: '距家最远',
       value: formatDistanceM(ctx.maxFromHomeM, ctx.distanceUnit),
       severity: PASSIVE,
     });
@@ -350,7 +350,7 @@ function buildChecks(ctx: CheckContext): BriefingCheck[] {
   if (ctx.weather) {
     checks.push({
       id: 'wind',
-      label: 'Wind',
+      label: '风',
       value: formatWindSpeedFromMetersPerSecond(ctx.weather.windSpeedMs, ctx.windSpeedUnit),
       severity: PASSIVE,
       detail: `gusts ${formatWindSpeedFromMetersPerSecond(ctx.weather.windGustMs, ctx.windSpeedUnit)}`,

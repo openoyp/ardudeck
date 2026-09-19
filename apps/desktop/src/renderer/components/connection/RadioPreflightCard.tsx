@@ -37,18 +37,18 @@ export function RadioPreflightCard() {
     try {
       const batch = fixable.map((f) => {
         const existing = parameters.get(f.param);
-        if (!existing) throw new Error(`${f.param} is not loaded yet`);
+        if (!existing) throw new Error(`${f.param} 尚未加载`);
         return { paramId: f.param, value: f.value, type: existing.type };
       });
       const result = await window.electronAPI.setParameterBatch(batch);
       const failed = result?.failed ?? [];
       if (failed.length > 0) {
-        setFailure(`The vehicle rejected: ${failed.join(', ')}`);
+        setFailure(`飞行器拒绝:${failed.join(', ')}`);
       } else {
         setApplied(true);
       }
     } catch (e) {
-      setFailure(e instanceof Error ? e.message : 'Applying settings failed.');
+      setFailure(e instanceof Error ? e.message : '应用设置失败。');
     } finally {
       setApplying(false);
     }
@@ -71,11 +71,11 @@ export function RadioPreflightCard() {
       <div className="card-body space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-content">Radio Link Check</p>
+          <p className="text-sm font-medium text-content">无线链路检查</p>
           <p className="text-xs text-content-secondary">
             {allPass
-              ? 'The vehicle is fully set up for this radio link.'
-              : 'A few vehicle settings need adjusting for this radio link.'}
+              ? '飞行器已完全适配此无线链路。'
+              : '部分飞行器设置需要针对此无线链路调整。'}
           </p>
         </div>
         {applied ? (
@@ -83,9 +83,9 @@ export function RadioPreflightCard() {
             onClick={reboot}
             disabled={rebooting}
             className="btn btn-primary text-xs shrink-0"
-            data-tip="The new settings take effect after a restart"
+            data-tip="新设置将在重启后生效"
           >
-            {rebooting ? 'Restarting...' : 'Restart vehicle'}
+            {rebooting ? '重启中…' : '重启飞行器'}
           </button>
         ) : (
           fixable.length > 0 && (
@@ -93,9 +93,9 @@ export function RadioPreflightCard() {
               onClick={applyFixes}
               disabled={applying}
               className="btn btn-primary text-xs shrink-0"
-              data-tip="Applies the corrected settings to the vehicle"
+              data-tip="将修正后的设置应用到飞行器"
             >
-              {applying ? 'Fixing...' : 'Fix for me'}
+              {applying ? '修复中…' : '帮我修复'}
             </button>
           )
         )}
@@ -115,8 +115,7 @@ export function RadioPreflightCard() {
 
       {applied && (
         <p className="text-xs text-emerald-300">
-          Settings applied. Restart the vehicle (button above) to make them take effect - the link reconnects by
-          itself afterwards.
+          设置已应用。请重启飞行器(上方按钮)使其生效——之后链路会自动重连。
         </p>
       )}
       {failure && <p className="text-xs text-red-300">{failure}</p>}
@@ -126,7 +125,7 @@ export function RadioPreflightCard() {
           onClick={() => setShowDetails((v) => !v)}
           className="text-xs text-content-secondary hover:text-content transition-colors"
         >
-          {showDetails ? 'Hide technical details' : 'Show technical details'}
+          {showDetails ? '隐藏技术细节' : '显示技术细节'}
         </button>
       )}
       {showDetails && fixable.length > 0 && (

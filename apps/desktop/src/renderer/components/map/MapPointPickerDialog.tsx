@@ -71,7 +71,7 @@ export function MapPointPickerDialog({
   title,
   subtitle,
   initial,
-  confirmLabel = 'Use this point',
+  confirmLabel = '使用此点',
   onConfirm,
   onClose,
 }: {
@@ -172,13 +172,13 @@ export function MapPointPickerDialog({
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-content">{title}</h3>
             <p className="text-[11px] text-content-tertiary">
-              {subtitle ?? 'Click the map to drop a point, drag the pin to refine, or search a place.'}
+              {subtitle ?? '点击地图放置点位,拖动图钉微调,或搜索地点。'}
             </p>
           </div>
           <button
             onClick={onClose}
             className="w-7 h-7 rounded-md flex items-center justify-center text-content-tertiary hover:text-content hover:bg-surface-raised transition-colors"
-            data-tip="Close"
+            data-tip="关闭"
           >
             <X className="w-4 h-4" />
           </button>
@@ -194,7 +194,7 @@ export function MapPointPickerDialog({
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search a place (city, airfield, landmark)..."
+              placeholder="搜索地点(城市、机场、地标)…"
               autoFocus
               className="w-full pl-9 pr-9 py-2 bg-surface-input border border-border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
             />
@@ -255,7 +255,7 @@ export function MapPointPickerDialog({
             </MapContainer>
             {!selected && (
               <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 z-[500] px-2.5 py-1 rounded-md bg-surface-solid border border-subtle text-[11px] text-content-secondary shadow">
-                Click the map to set the point
+                点击地图设置点位
               </div>
             )}
           </div>
@@ -268,15 +268,15 @@ export function MapPointPickerDialog({
               {selected ? (
                 <span className="tabular-nums truncate">{selected.lat.toFixed(5)}, {selected.lng.toFixed(5)}</span>
               ) : (
-                <span className="text-content-tertiary">No point selected</span>
+                <span className="text-content-tertiary">未选择点位</span>
               )}
             </div>
             <button
               onClick={() => setShowManual((v) => !v)}
               className="flex items-center gap-1 text-[11px] text-content-tertiary hover:text-content-secondary transition-colors shrink-0"
-              data-tip="Type exact coordinates"
+              data-tip="输入精确坐标"
             >
-              Enter coordinates
+              输入坐标
               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showManual ? 'rotate-180' : ''}`} />
             </button>
           </div>
@@ -287,21 +287,21 @@ export function MapPointPickerDialog({
                 type="number"
                 value={manualLat}
                 onChange={(e) => setManualLat(e.target.value)}
-                placeholder="Lat"
+                placeholder="纬度"
                 className="w-0 flex-1 min-w-0 px-2 py-1.5 bg-surface-input border border-border rounded-md text-xs text-content tabular-nums focus:outline-none focus:border-blue-500"
               />
               <input
                 type="number"
                 value={manualLng}
                 onChange={(e) => setManualLng(e.target.value)}
-                placeholder="Lng"
+                placeholder="经度"
                 className="w-0 flex-1 min-w-0 px-2 py-1.5 bg-surface-input border border-border rounded-md text-xs text-content tabular-nums focus:outline-none focus:border-blue-500"
               />
               <button
                 onClick={applyManual}
                 className="px-2.5 py-1.5 rounded-md text-xs bg-surface-raised text-content hover:brightness-125 transition-colors shrink-0"
               >
-                Go
+                跳转
               </button>
             </div>
           )}
@@ -312,7 +312,7 @@ export function MapPointPickerDialog({
             onClick={onClose}
             className="px-3 py-1.5 rounded-lg text-xs text-content-secondary hover:text-content hover:bg-surface-raised transition-colors"
           >
-            Cancel
+            取消
           </button>
           <button
             onClick={confirm}

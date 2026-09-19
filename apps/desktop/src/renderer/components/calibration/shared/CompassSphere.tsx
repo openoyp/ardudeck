@@ -268,7 +268,7 @@ export function CompassSphere({ mask, direction, size = 260, spinning = true }: 
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
-      aria-label="Compass calibration coverage"
+      aria-label="罗盘校准覆盖"
     />
   );
 }

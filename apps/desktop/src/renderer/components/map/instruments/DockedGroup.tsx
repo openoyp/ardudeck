@@ -75,7 +75,7 @@ function GroupDisplayPopover({
       <div className="fixed z-[9999] rounded-lg bg-surface-solid border border-subtle shadow-xl" style={{ top, left, width }}>
         <div className="px-3 py-2 text-[11px] uppercase tracking-wide text-content-tertiary border-b border-subtle">{title}</div>
         <div className="p-2">
-          <div className="text-[10px] uppercase tracking-wide text-content-tertiary mb-1.5">Display for all</div>
+          <div className="text-[10px] uppercase tracking-wide text-content-tertiary mb-1.5">全部显示为</div>
           <div className="grid grid-cols-3 gap-1.5">
             {options.map((opt) => {
               const active = shared === opt.id;
@@ -84,7 +84,7 @@ function GroupDisplayPopover({
                   key={opt.id}
                   type="button"
                   onClick={() => setDisplayModes(ids, opt.id as InstrumentDisplayMode)}
-                  data-tip={`${opt.label} display for the whole group`}
+                  data-tip={`整组切换为 ${opt.label} 显示`}
                   className={
                     'flex flex-col items-center justify-center gap-1 py-1.5 rounded-md border transition-colors ' +
                     (active
@@ -733,8 +733,8 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
           type="button"
           onClick={() => dockSetStretch(gid, !stretched)}
           data-tip={stretched
-            ? 'Shrink the group back to its content'
-            : (row ? 'Stretch the group across the panel' : 'Stretch the group down the panel')}
+            ? '收起组合至内容大小'
+            : (row ? '横向拉伸组合铺满面板' : '纵向拉伸组合铺满面板')}
           style={stretched && panelExt
             ? (row
                 ? { top: 6, right: 6 - panelExt.after }
@@ -765,7 +765,7 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
             const r = wrapperRef.current?.getBoundingClientRect();
             if (r) { setDisplayAnchor(r); setDisplayOpen(true); }
           }}
-          data-tip="Display mode for the whole group"
+          data-tip="整组的显示模式"
           style={stretched && panelExt
             ? (row
                 ? { top: 8, right: 38 - panelExt.after }
@@ -785,7 +785,7 @@ export function DockedGroup({ gid, group }: { gid: string; group: DockGroup }): 
       )}
       {displayOpen && displayAnchor && displayChoices && (
         <GroupDisplayPopover
-          title={cluster ? 'Constellation' : 'Docked group'}
+          title={cluster ? '环绕组合' : '停靠组合'}
           ids={displayChoices.ids}
           options={displayChoices.options}
           anchorRect={displayAnchor}
@@ -853,7 +853,7 @@ function MemberCell({
       <button
         type="button"
         onPointerDown={onPillPointerDown}
-        data-tip={`Drag out or click to undock ${label}`}
+        data-tip={`拖出或点击以取消停靠 ${label}`}
         className={
           'absolute top-0.5 right-0.5 p-1 rounded-full bg-surface shadow-lg text-content-secondary ' +
           'hover:text-content hover:bg-surface-raised cursor-grab transition-opacity ' +

@@ -28,19 +28,19 @@ export function EnginePlanLegend() {
           onClick={() => setCollapsed(false)}
           className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-surface-solid border border-subtle text-content-secondary hover:text-content shadow-lg transition-colors"
         >
-          Plan legend
+          规划图例
         </button>
       ) : (
         <div className="w-72 rounded-lg bg-surface-solid border border-subtle shadow-xl p-3 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-medium uppercase tracking-wider text-content-secondary">
-              Coverage plan
+              覆盖规划
             </span>
             <button
               onClick={() => setCollapsed(true)}
               className="text-[10px] text-content-tertiary hover:text-content transition-colors"
             >
-              Hide
+              隐藏
             </button>
           </div>
           <div className="flex items-start gap-2">
@@ -58,30 +58,27 @@ export function EnginePlanLegend() {
               ))}
             </span>
             <span className="text-[11px] leading-snug text-content-secondary">
-              <span className="text-content">{cellCount} zones</span> - the area is flown one
-              numbered zone at a time. A color just means a different zone.
+              <span className="text-content">{cellCount} 个分区</span> - 区域按编号逐区飞行。颜色仅表示不同分区。
             </span>
           </div>
           {hasCurve && (
             <div className="flex items-start gap-2">
               <span className="mt-1.5 w-4 h-0.5 shrink-0 rounded bg-teal-400/60" />
               <span className="text-[11px] leading-snug text-content-secondary">
-                <span className="text-content">Planned route</span> (teal) - the route the
-                engine calculated, with real turns.
+                <span className="text-content">规划航线</span>(青色)- 引擎计算的航线,带真实转弯。
               </span>
             </div>
           )}
           <div className="flex items-start gap-2">
             <span className="mt-1.5 w-4 h-0.5 shrink-0 rounded bg-sky-400" />
             <span className="text-[11px] leading-snug text-content-secondary">
-              <span className="text-content">Your mission</span> (blue) - the waypoints that
-              go to the drone. It skips the turn loops: a copter just turns in place at each
-              line end.
+              <span className="text-content">您的任务</span>(蓝色)- 发送给无人机的航点。
+              它省略了转弯环绕:多旋翼在每行末尾原地转向。
             </span>
           </div>
           <p className="text-[10px] leading-snug text-content-tertiary pt-1 border-t border-subtle">
-            Turn loops may extend outside the boundary - the vehicle needs turning room. To keep
-            turns inside a legal area, mark a workspace polygon in the Area Editor.
+            转弯环绕可能超出边界 - 飞机需要转弯空间。要让转弯保持在合法区域内,
+            请在区域编辑器中标记工作区多边形。
           </p>
         </div>
       )}

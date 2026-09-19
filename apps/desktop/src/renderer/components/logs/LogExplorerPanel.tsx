@@ -62,38 +62,38 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
 type ChartPreset = { label: string; desc: string; types: string[]; fields: Record<string, string[]> };
 
 const QUICK_PRESETS: ChartPreset[] = [
-  { label: 'Attitude', desc: 'DesRoll vs Roll, DesPitch vs Pitch', types: ['ATT'], fields: { ATT: ['DesRoll', 'Roll', 'DesPitch', 'Pitch'] } },
-  { label: 'Rate Tuning', desc: 'Desired vs actual body rates', types: ['RATE'], fields: { RATE: ['RDes', 'R', 'PDes', 'P', 'YDes', 'Y'] } },
-  { label: 'Vibration', desc: 'X/Y/Z acceleration variance', types: ['VIBE'], fields: { VIBE: ['VibeX', 'VibeY', 'VibeZ'] } },
-  { label: 'GPS', desc: 'Satellite count & dilution', types: ['GPS'], fields: { GPS: ['NSats', 'HDop'] } },
-  { label: 'Battery', desc: 'Voltage & current draw', types: ['BAT'], fields: { BAT: ['Volt', 'Curr'] } },
-  { label: 'Altitude', desc: 'Desired vs actual altitude', types: ['CTUN'], fields: { CTUN: ['DAlt', 'Alt', 'BAlt'] } },
-  { label: 'Compass', desc: 'Magnetic field X/Y/Z', types: ['MAG'], fields: { MAG: ['MagX', 'MagY', 'MagZ'] } },
-  { label: 'EKF', desc: 'Innovation test ratios', types: ['NKF4'], fields: { NKF4: ['SV', 'SP', 'SH'] } },
-  { label: 'Power', desc: 'Board voltage', types: ['POWR'], fields: { POWR: ['Vcc'] } },
-  { label: 'Motor Outputs', desc: 'PWM out per motor (RCOU)', types: ['RCOU'], fields: { RCOU: ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8'] } },
-  { label: 'ESC RPM', desc: 'RPM per motor: split by instance', types: ['ESC'], fields: { ESC: ['RPM'] } },
-  { label: 'ESC Temp', desc: 'Temperature per ESC', types: ['ESC'], fields: { ESC: ['Temp'] } },
-  { label: 'ESC Power', desc: 'Voltage & current per ESC', types: ['ESC'], fields: { ESC: ['Volt', 'Curr'] } },
-  { label: 'Position', desc: 'Desired vs actual XY position', types: ['PSCN', 'PSCE'], fields: { PSCN: ['DPN', 'PN'], PSCE: ['DPE', 'PE'] } },
-  { label: 'Position (legacy)', desc: 'PSC desired vs actual', types: ['PSC'], fields: { PSC: ['TPX', 'PX', 'TPY', 'PY'] } },
-  { label: 'Airspeed', desc: 'Indicated vs true airspeed', types: ['ARSP'], fields: { ARSP: ['Airspeed', 'DiffPress'] } },
-  { label: 'Rangefinder', desc: 'Distance per sensor (RFND)', types: ['RFND'], fields: { RFND: ['Dist'] } },
-  { label: 'Wind Estimate', desc: 'Wind X/Y/Z (NKF2)', types: ['NKF2'], fields: { NKF2: ['VWN', 'VWE'] } },
-  { label: 'Inputs vs Outputs', desc: 'RC in vs motor out', types: ['RCIN', 'RCOU'], fields: { RCIN: ['C1', 'C2', 'C3', 'C4'], RCOU: ['C1', 'C2', 'C3', 'C4'] } },
+  { label: '姿态', desc: 'DesRoll 与 Roll、DesPitch 与 Pitch 对比', types: ['ATT'], fields: { ATT: ['DesRoll', 'Roll', 'DesPitch', 'Pitch'] } },
+  { label: '速率调参', desc: '期望与实际机体角速率', types: ['RATE'], fields: { RATE: ['RDes', 'R', 'PDes', 'P', 'YDes', 'Y'] } },
+  { label: '振动', desc: 'X/Y/Z 加速度方差', types: ['VIBE'], fields: { VIBE: ['VibeX', 'VibeY', 'VibeZ'] } },
+  { label: 'GPS', desc: '卫星数量与精度因子', types: ['GPS'], fields: { GPS: ['NSats', 'HDop'] } },
+  { label: '电池', desc: '电压与电流', types: ['BAT'], fields: { BAT: ['Volt', 'Curr'] } },
+  { label: '高度', desc: '期望与实际高度', types: ['CTUN'], fields: { CTUN: ['DAlt', 'Alt', 'BAlt'] } },
+  { label: '罗盘', desc: '磁场 X/Y/Z', types: ['MAG'], fields: { MAG: ['MagX', 'MagY', 'MagZ'] } },
+  { label: 'EKF', desc: '新息测试比', types: ['NKF4'], fields: { NKF4: ['SV', 'SP', 'SH'] } },
+  { label: '电源', desc: '板载电压', types: ['POWR'], fields: { POWR: ['Vcc'] } },
+  { label: '电机输出', desc: '各电机 PWM 输出（RCOU）', types: ['RCOU'], fields: { RCOU: ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8'] } },
+  { label: 'ESC 转速', desc: '各电机 RPM：按实例拆分', types: ['ESC'], fields: { ESC: ['RPM'] } },
+  { label: 'ESC 温度', desc: '各 ESC 温度', types: ['ESC'], fields: { ESC: ['Temp'] } },
+  { label: 'ESC 功率', desc: '各 ESC 电压与电流', types: ['ESC'], fields: { ESC: ['Volt', 'Curr'] } },
+  { label: '位置', desc: '期望与实际 XY 位置', types: ['PSCN', 'PSCE'], fields: { PSCN: ['DPN', 'PN'], PSCE: ['DPE', 'PE'] } },
+  { label: '位置（旧版）', desc: 'PSC 期望与实际', types: ['PSC'], fields: { PSC: ['TPX', 'PX', 'TPY', 'PY'] } },
+  { label: '空速', desc: '指示空速与真空速', types: ['ARSP'], fields: { ARSP: ['Airspeed', 'DiffPress'] } },
+  { label: '测距仪', desc: '各传感器距离（RFND）', types: ['RFND'], fields: { RFND: ['Dist'] } },
+  { label: '风估计', desc: '风 X/Y/Z（NKF2）', types: ['NKF2'], fields: { NKF2: ['VWN', 'VWE'] } },
+  { label: '输入与输出', desc: 'RC 输入与电机输出', types: ['RCIN', 'RCOU'], fields: { RCIN: ['C1', 'C2', 'C3', 'C4'], RCOU: ['C1', 'C2', 'C3', 'C4'] } },
 ];
 
 // PX4 ULog quick presets. Keyed by PX4 topic name with flattened array fields
 // (q[0], gyro_rad[0], ...). Preset-filtering by messageTypes.includes hides any
 // preset whose topic a given log lacks.
 const PX4_PRESETS: ChartPreset[] = [
-  { label: 'Attitude', desc: 'Attitude quaternion', types: ['vehicle_attitude'], fields: { vehicle_attitude: ['q[0]', 'q[1]', 'q[2]', 'q[3]'] } },
-  { label: 'Rates (gyro)', desc: 'Body angular rates', types: ['sensor_combined'], fields: { sensor_combined: ['gyro_rad[0]', 'gyro_rad[1]', 'gyro_rad[2]'] } },
-  { label: 'Vibration', desc: 'Accel & gyro vibration', types: ['vehicle_imu_status'], fields: { vehicle_imu_status: ['accel_vibration_metric', 'gyro_vibration_metric'] } },
-  { label: 'GPS', desc: 'Satellite count & fix type', types: ['vehicle_gps_position'], fields: { vehicle_gps_position: ['satellites_used', 'fix_type'] } },
-  { label: 'Battery', desc: 'Voltage & current draw', types: ['battery_status'], fields: { battery_status: ['voltage_v', 'current_a'] } },
-  { label: 'Local Position', desc: 'Local X/Y/Z position', types: ['vehicle_local_position'], fields: { vehicle_local_position: ['x', 'y', 'z'] } },
-  { label: 'EKF', desc: 'Estimator test ratios', types: ['estimator_status'], fields: { estimator_status: ['mag_test_ratio', 'vel_test_ratio', 'pos_test_ratio'] } },
+  { label: '姿态', desc: '姿态四元数', types: ['vehicle_attitude'], fields: { vehicle_attitude: ['q[0]', 'q[1]', 'q[2]', 'q[3]'] } },
+  { label: '角速率（陀螺仪）', desc: '机体角速率', types: ['sensor_combined'], fields: { sensor_combined: ['gyro_rad[0]', 'gyro_rad[1]', 'gyro_rad[2]'] } },
+  { label: '振动', desc: '加速度与陀螺仪振动', types: ['vehicle_imu_status'], fields: { vehicle_imu_status: ['accel_vibration_metric', 'gyro_vibration_metric'] } },
+  { label: 'GPS', desc: '卫星数量与定位类型', types: ['vehicle_gps_position'], fields: { vehicle_gps_position: ['satellites_used', 'fix_type'] } },
+  { label: '电池', desc: '电压与电流', types: ['battery_status'], fields: { battery_status: ['voltage_v', 'current_a'] } },
+  { label: '本地位置', desc: '本地 X/Y/Z 位置', types: ['vehicle_local_position'], fields: { vehicle_local_position: ['x', 'y', 'z'] } },
+  { label: 'EKF', desc: '估计器测试比', types: ['estimator_status'], fields: { estimator_status: ['mag_test_ratio', 'vel_test_ratio', 'pos_test_ratio'] } },
 ];
 
 /**
@@ -415,7 +415,7 @@ function ChartPanel({ chartId }: { chartId: string }) {
       const empty = new Float64Array([NaN, NaN]);
       return {
         data: [time, empty] as uPlot.AlignedData,
-        series: [{ label: '(events only)', data: [NaN, NaN] }],
+        series: [{ label: '(仅事件)', data: [NaN, NaN] }],
         eventMarkers,
       };
     }
@@ -549,7 +549,7 @@ function ChartPanel({ chartId }: { chartId: string }) {
       ticks: { stroke: isLight ? '#d1d5db' : '#374151', width: 1 },
       font: '11px system-ui',
     };
-    const xAxis: uPlot.Axis = { label: 'Time (s)', ...axisTheme };
+    const xAxis: uPlot.Axis = { label: '时间 (s)', ...axisTheme };
 
     // One drawn axis per scale, alternating left/right the way Mission Planner
     // stacks its YAxisList / Y2AxisList. Every scale gets a gutter: an axis a
@@ -584,7 +584,7 @@ function ChartPanel({ chartId }: { chartId: string }) {
     });
 
     const seriesOpts: uPlot.Series[] = [
-      { label: 'Time' },
+      { label: '时间' },
       ...chartData.series.map((s, i) => ({
         label: s.label,
         stroke: seriesColor(i),
@@ -752,7 +752,7 @@ function ChartPanel({ chartId }: { chartId: string }) {
         if (!el) return;
         el.style.cursor = 'ns-resize';
         el.style.pointerEvents = 'auto';
-        el.title = 'Scroll to zoom this axis, drag to pan, double-click for auto';
+        el.title = '滚轮缩放此轴，拖动平移，双击恢复自动';
 
         // Pin as we go: without recording the range, the next auto-refit on an
         // X change would immediately undo the gesture. The ref is written
@@ -1090,7 +1090,7 @@ function ChartPanel({ chartId }: { chartId: string }) {
     if (autoLoaded.current) return;
     autoLoaded.current = true;
     if (selectedTypes.length > 0) return; // already has selection
-    const preferred = ['Altitude', 'Attitude'];
+    const preferred = ['高度', '姿态'];
     for (const name of preferred) {
       const preset = presets.find((p) => p.label === name && p.types.some((t) => messageTypes.includes(t)));
       if (preset) { applyPreset(preset); return; }
@@ -1107,9 +1107,9 @@ function ChartPanel({ chartId }: { chartId: string }) {
         onMouseDown={() => { if (!isActive) setActiveChartId(chartId); }}
       >
         <div className={`text-[10px] uppercase tracking-wider ${isActive ? 'text-blue-400 font-semibold' : 'text-content-tertiary'}`}>
-          Chart {chartIndex + 1}{chartIds.length > 1 ? (isActive ? ' • picker target' : ' • click to target') : ''}
+          图表 {chartIndex + 1}{chartIds.length > 1 ? (isActive ? ' • 选择目标' : ' • 点击设为目标') : ''}
         </div>
-        <div className="text-content-secondary text-sm">Pick a quick plot or select fields</div>
+        <div className="text-content-secondary text-sm">选择一个快速绘图或选取字段</div>
         <div className="flex flex-wrap justify-center gap-2">
           {presets.filter((p) => p.types.some((t) => messageTypes.includes(t))).map((preset) => (
             <button
@@ -1122,7 +1122,7 @@ function ChartPanel({ chartId }: { chartId: string }) {
             </button>
           ))}
         </div>
-        <p className="text-[10px] text-content-tertiary mt-1">Drag = box zoom &middot; Scroll = zoom time &middot; Shift+scroll = zoom Y &middot; Right-drag = pan &middot; Double-click = reset</p>
+        <p className="text-[10px] text-content-tertiary mt-1">拖拽 = 框选缩放 &middot; 滚轮 = 缩放时间 &middot; Shift+滚轮 = 缩放 Y 轴 &middot; 右键拖拽 = 平移 &middot; 双击 = 重置</p>
       </div>
     );
   }
@@ -1208,10 +1208,10 @@ function ChartPanel({ chartId }: { chartId: string }) {
             {/* Header row — chart label + summary + expand/collapse */}
             <div className="flex items-center gap-2 px-3 py-1 text-[10px] min-h-[22px]">
               <span className={`uppercase tracking-wider shrink-0 ${isActive ? 'text-blue-400 font-semibold' : 'text-content-tertiary'}`}>
-                Chart {chartIndex + 1}{chartIds.length > 1 && isActive ? ' • picker target' : ''}
+                图表 {chartIndex + 1}{chartIds.length > 1 && isActive ? ' • 选择目标' : ''}
               </span>
               {seriesCount === 0 ? (
-                <span className="text-content-tertiary italic">no fields selected</span>
+                <span className="text-content-tertiary italic">未选择字段</span>
               ) : (
                 <>
                   <span className="w-px h-3 bg-subtle shrink-0" />
@@ -1242,7 +1242,7 @@ function ChartPanel({ chartId }: { chartId: string }) {
                     </div>
                   ) : (
                     <span className="text-[9px] text-content-tertiary tabular-nums shrink-0">
-                      {seriesCount} series · {groupCount} {groupCount === 1 ? 'group' : 'groups'}
+                      {seriesCount} 条曲线 · {groupCount} 组
                     </span>
                   )}
                 </>
@@ -1254,9 +1254,9 @@ function ChartPanel({ chartId }: { chartId: string }) {
                   <button
                     onClick={() => setLegendExpanded(!legendExpanded)}
                     className="text-[10px] px-1.5 py-0.5 rounded text-content-secondary hover:text-content hover:bg-surface-raised transition-colors flex items-center gap-1"
-                    data-tip={legendExpanded ? 'Collapse legend' : 'Show all field names'}
+                    data-tip={legendExpanded ? '收起图例' : '显示全部字段名'}
                   >
-                    {legendExpanded ? 'Collapse' : 'Expand'}
+                    {legendExpanded ? '收起' : '展开'}
                     <svg className={`w-2.5 h-2.5 transition-transform ${legendExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
@@ -1265,7 +1265,7 @@ function ChartPanel({ chartId }: { chartId: string }) {
                 <button
                   onClick={exportCsv}
                   className="px-1.5 py-0.5 rounded border bg-surface hover:bg-surface-raised text-content-secondary hover:text-content border-subtle transition-colors"
-                  data-tip="Export the visible window as CSV"
+                  data-tip="将可见窗口导出为 CSV"
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0 0l-4-4m4 4l4-4" />
@@ -1293,7 +1293,7 @@ function ChartPanel({ chartId }: { chartId: string }) {
                         ? 'bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 border-blue-500/40'
                         : 'bg-surface hover:bg-surface-raised text-content-secondary hover:text-content border-subtle'
                     }`}
-                    data-tip={syncZoomEnabled ? 'Sync zoom across all charts (on)' : 'Sync zoom across all charts (off)'}
+                    data-tip={syncZoomEnabled ? '同步缩放所有图表（开）' : '同步缩放所有图表（关）'}
                   >
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       {syncZoomEnabled ? (
@@ -1302,16 +1302,16 @@ function ChartPanel({ chartId }: { chartId: string }) {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101M3 3l18 18" />
                       )}
                     </svg>
-                    <span>{syncZoomEnabled ? 'Synced' : 'Unsynced'}</span>
+                    <span>{syncZoomEnabled ? '已同步' : '未同步'}</span>
                   </button>
                 )}
                 {(isZoomed || yZoomed) && (
                   <button
                     onClick={resetZoom}
                     className="text-[10px] px-1.5 py-0.5 rounded border bg-surface hover:bg-surface-raised text-content border-subtle transition-colors"
-                    data-tip="Reset both axes (or double-click the chart)"
+                    data-tip="重置两个轴（或双击图表）"
                   >
-                    Reset Zoom
+                    重置缩放
                   </button>
                 )}
               </div>
@@ -1328,11 +1328,11 @@ function ChartPanel({ chartId }: { chartId: string }) {
                   className="grid items-center text-[9px] uppercase tracking-wider text-content-tertiary pb-0.5 sticky top-0 bg-surface-overlay-subtle"
                   style={{ gridTemplateColumns: legendColumns }}
                 >
-                  <span>{xRange ? 'field · visible window' : 'field · full log'}</span>
-                  <span className="text-right">min</span>
-                  <span className="text-right">avg</span>
-                  <span className="text-right">max</span>
-                  {yMode !== 'shared' && <span className="text-center">y axis</span>}
+                  <span>{xRange ? '字段 · 可见窗口' : '字段 · 完整日志'}</span>
+                  <span className="text-right">最小</span>
+                  <span className="text-right">平均</span>
+                  <span className="text-right">最大</span>
+                  {yMode !== 'shared' && <span className="text-center">Y 轴</span>}
                 </div>
                 {[...groups.entries()].map(([type, items]) => (
                   <div key={type}>
@@ -1346,8 +1346,8 @@ function ChartPanel({ chartId }: { chartId: string }) {
                         }`}
                         style={{ gridTemplateColumns: legendColumns }}
                         data-tip={activeScaleKey === it.scaleKey
-                          ? 'This axis takes the Y gestures: shift+scroll over the plot zooms it. Click to release.'
-                          : 'Click to aim shift+scroll at this axis alone'}
+                          ? '此轴接收 Y 轴手势：在图上 Shift+滚轮即可缩放该轴。点击解除。'
+                          : '点击让 Shift+滚轮 仅作用于该轴'}
                       >
                         <span className="inline-flex items-center gap-1.5 min-w-0">
                           <span className="w-3 h-[3px] rounded-full shrink-0" style={{ backgroundColor: it.color }} />
@@ -1418,13 +1418,13 @@ function ChartPanel({ chartId }: { chartId: string }) {
 // ============================================================================
 
 const FLIGHT_MAP_LAYERS: Record<string, { name: string; tiles: string[]; maxZoom: number }> = {
-  satellite: { name: 'Satellite', tiles: ['https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', 'https://mt2.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', 'https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'], maxZoom: 22 },
-  hybrid: { name: 'Hybrid', tiles: ['https://mt0.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', 'https://mt2.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', 'https://mt3.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'], maxZoom: 22 },
+  satellite: { name: '卫星', tiles: ['https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', 'https://mt2.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', 'https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'], maxZoom: 22 },
+  hybrid: { name: '混合', tiles: ['https://mt0.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', 'https://mt2.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', 'https://mt3.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'], maxZoom: 22 },
   // Bing aerial for regions where Google tiles are unreachable (China).
   // MapLibre substitutes {quadkey} natively.
-  bing: { name: 'Bing Sat', tiles: ['https://ecn.t0.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=14364&n=z', 'https://ecn.t1.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=14364&n=z', 'https://ecn.t2.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=14364&n=z', 'https://ecn.t3.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=14364&n=z'], maxZoom: 19 },
-  street: { name: 'Street', tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', 'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png', 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'], maxZoom: 19 },
-  terrain: { name: 'Terrain', tiles: ['https://a.tile.opentopomap.org/{z}/{x}/{y}.png', 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png', 'https://c.tile.opentopomap.org/{z}/{x}/{y}.png'], maxZoom: 17 },
+  bing: { name: 'Bing 卫星', tiles: ['https://ecn.t0.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=14364&n=z', 'https://ecn.t1.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=14364&n=z', 'https://ecn.t2.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=14364&n=z', 'https://ecn.t3.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=14364&n=z'], maxZoom: 19 },
+  street: { name: '街道', tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', 'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png', 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'], maxZoom: 19 },
+  terrain: { name: '地形', tiles: ['https://a.tile.opentopomap.org/{z}/{x}/{y}.png', 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png', 'https://c.tile.opentopomap.org/{z}/{x}/{y}.png'], maxZoom: 17 },
 };
 
 /**
@@ -1468,7 +1468,7 @@ function AxisRangeEditor({
       onClick={(e) => e.stopPropagation()}
     >
       <input
-        aria-label="Y axis minimum"
+        aria-label="Y 轴最小值"
         className={cell}
         value={shown.min}
         onChange={(e) => setDraft({ ...shown, min: e.target.value })}
@@ -1479,7 +1479,7 @@ function AxisRangeEditor({
         }}
       />
       <input
-        aria-label="Y axis maximum"
+        aria-label="Y 轴最大值"
         className={cell}
         value={shown.max}
         onChange={(e) => setDraft({ ...shown, max: e.target.value })}
@@ -1497,9 +1497,9 @@ function AxisRangeEditor({
             ? 'text-blue-400 hover:text-blue-300'
             : 'text-content-tertiary opacity-40 cursor-default'
         }`}
-        data-tip={pinned ? 'Back to auto-fit for this field' : 'Auto-fitted to the visible window'}
+        data-tip={pinned ? '恢复该字段的自动适配' : '自动适配可见窗口'}
       >
-        auto
+        自动
       </button>
     </span>
   );
@@ -1722,11 +1722,11 @@ function FlightPathPanel() {
       const last = points[points.length - 1]!;
       new maplibregl.Marker({ color: '#22c55e', scale: 0.7 })
         .setLngLat([first.lon, first.lat])
-        .setPopup(new maplibregl.Popup({ offset: 20 }).setText('Takeoff'))
+        .setPopup(new maplibregl.Popup({ offset: 20 }).setText('起飞'))
         .addTo(map);
       new maplibregl.Marker({ color: '#ef4444', scale: 0.7 })
         .setLngLat([last.lon, last.lat])
-        .setPopup(new maplibregl.Popup({ offset: 20 }).setText('Landing'))
+        .setPopup(new maplibregl.Popup({ offset: 20 }).setText('降落'))
         .addTo(map);
 
       map.once('idle', () => {
@@ -1805,7 +1805,7 @@ function FlightPathPanel() {
   if (points.length < 2) {
     return (
       <div className="h-full flex items-center justify-center text-content-tertiary text-xs">
-        No GPS data available
+        无 GPS 数据
       </div>
     );
   }
@@ -1814,8 +1814,8 @@ function FlightPathPanel() {
     <div className="h-full relative">
       <div ref={mapContainerRef} className="h-full w-full" />
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 px-2 py-1 rounded-md bg-surface-overlay backdrop-blur-sm text-[10px] text-content-secondary whitespace-nowrap">
-        {`Altitude above takeoff · peak ${trackAltitudeRange(points).max.toFixed(1)} m · ${track.source}`}
-        {track.altitudeBasis === 'derived' && <span className="text-content-tertiary"> (ground level inferred)</span>}
+        {`起飞点上方高度 · 峰值 ${trackAltitudeRange(points).max.toFixed(1)} m · ${track.source}`}
+        {track.altitudeBasis === 'derived' && <span className="text-content-tertiary">（地面高度为推断值）</span>}
       </div>
       {/* Controls overlay */}
       <div className="absolute top-2 right-2 z-10 flex flex-col items-stretch gap-1.5">
@@ -1838,10 +1838,10 @@ function FlightPathPanel() {
         {/* Path color mode */}
         <div className="flex bg-surface-overlay rounded-md backdrop-blur-sm overflow-hidden">
           {([
-            ['solid', 'Solid'],
-            ['mode', 'Modes'],
-            ['altitude', 'Altitude'],
-            ['speed', 'Speed'],
+            ['solid', '纯色'],
+            ['mode', '模式'],
+            ['altitude', '高度'],
+            ['speed', '速度'],
           ] as [PathColorMode, string][]).map(([key, label]) => (
             <button
               key={key}
@@ -1869,7 +1869,7 @@ function FlightPathPanel() {
           );
         }}
         className="absolute bottom-3 right-3 z-10 w-8 h-8 rounded-full bg-surface-overlay text-content-secondary hover:text-content hover:bg-surface-overlay-light shadow-lg flex items-center justify-center transition-all"
-        title="Center on flight path"
+        title="居中显示飞行轨迹"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="4" />
@@ -2051,7 +2051,7 @@ function FieldPickerPanel() {
           panel focus, so clicking a chart panel directly does the same. */}
       {chartIds.length > 1 && (
         <div className="flex items-center gap-1 px-2 py-1.5 border-b border-subtle bg-surface-overlay-subtle overflow-x-auto">
-          <span className="text-[10px] uppercase tracking-wider text-content-tertiary mr-1 shrink-0">target:</span>
+          <span className="text-[10px] uppercase tracking-wider text-content-tertiary mr-1 shrink-0">目标：</span>
           {chartIds.map((cid, idx) => {
             const isActive = cid === activeChartId;
             const m = selectedFieldsByChart[cid] ?? new Map();
@@ -2066,9 +2066,9 @@ function FieldPickerPanel() {
                     ? 'bg-blue-500/25 text-blue-400 border border-blue-500/40'
                     : 'bg-surface-raised hover:bg-blue-500/10 text-content-secondary border border-transparent'
                 }`}
-                title={isActive ? 'Field picker writes to this chart' : 'Switch picker target to this chart'}
+                title={isActive ? '字段选择器写入此图表' : '将选择器目标切换到此图表'}
               >
-                Chart {idx + 1}
+                图表 {idx + 1}
                 {fieldsCount > 0 && (
                   <span className="text-[9px] text-content-tertiary tabular-nums">{fieldsCount}</span>
                 )}
@@ -2087,7 +2087,7 @@ function FieldPickerPanel() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filter messages..."
+            placeholder="筛选消息..."
             className="w-full bg-surface-input border border-subtle rounded text-[11px] pl-6 pr-2 py-1 text-content placeholder-content-tertiary focus:outline-none focus:border-blue-500/50"
           />
           {search && (
@@ -2122,7 +2122,7 @@ function FieldPickerPanel() {
               }}
               className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"
             >
-              Clear All
+              全部清除
             </button>
           )}
         </div>
@@ -2144,7 +2144,7 @@ function FieldPickerPanel() {
                 onClick={() => toggleExpanded(type)}
                 className={`flex items-center gap-2 text-xs w-full rounded px-2 py-1.5 transition-colors hover:bg-surface-overlay-subtle`}
                 style={{ backgroundColor: hasSelection ? `${groupColor}${isLightTheme ? '20' : '18'}` : undefined, opacity: hasSelection ? 1 : (isLightTheme ? 0.6 : 0.45) }}
-                title={instanceCount ? `${instanceCount} instances: pick the field for all, or expand to pick a specific instance` : undefined}
+                title={instanceCount ? `${instanceCount} 个实例：勾选字段应用于全部，或展开后选择特定实例` : undefined}
               >
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: groupColor }} />
                 <span className={hasSelection ? 'font-semibold' : 'font-medium'} style={{ color: groupColor }}>{type}</span>
@@ -2191,13 +2191,13 @@ function FieldPickerPanel() {
                             checked={isChecked}
                             onChange={() => handleFieldToggle(type, field)}
                             className="rounded border bg-surface-raised text-blue-500 w-3 h-3 cursor-pointer"
-                            title={isEvent ? 'Event marker, renders as vertical line on chart' : showInstancePicker ? 'Plot all instances on the same chart' : undefined}
+                            title={isEvent ? '事件标记，在图表上渲染为竖线' : showInstancePicker ? '在同一图表上绘制所有实例' : undefined}
                           />
                           {isChecked && !isEvent && lineColor && (
                             <span className="w-3 h-[3px] rounded-full flex-shrink-0" style={{ backgroundColor: lineColor }} />
                           )}
                           {isEvent && (
-                            <span className="w-[2px] h-3 flex-shrink-0" style={{ backgroundColor: groupColor }} title="Event marker" />
+                            <span className="w-[2px] h-3 flex-shrink-0" style={{ backgroundColor: groupColor }} title="事件标记" />
                           )}
                           <span
                             className={`${isChecked || pickedInstances.length > 0 ? 'text-content' : 'text-content-secondary'} cursor-pointer flex-1`}
@@ -2210,7 +2210,7 @@ function FieldPickerPanel() {
                             })()}
                           </span>
                           {isEvent && (
-                            <span className="text-[8px] uppercase tracking-wider text-content-tertiary">event</span>
+                            <span className="text-[8px] uppercase tracking-wider text-content-tertiary">事件</span>
                           )}
                           {showInstancePicker && (
                             <button
@@ -2220,7 +2220,7 @@ function FieldPickerPanel() {
                                 return next;
                               })}
                               className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-surface-raised hover:bg-surface-overlay text-content-secondary flex items-center gap-1"
-                              title="Pick specific instances"
+                              title="选择特定实例"
                             >
                               {pickedInstances.length > 0 ? `${pickedInstances.length}/${instanceCount}` : `× ${instanceCount}`}
                               <svg className={`w-2.5 h-2.5 transition-transform ${isInstanceExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
@@ -2241,7 +2241,7 @@ function FieldPickerPanel() {
                                   className={`flex items-center gap-1 text-[10px] cursor-pointer rounded px-1.5 py-0.5 transition-colors ${
                                     instChecked ? 'bg-surface' : 'hover:bg-surface-overlay-subtle'
                                   }`}
-                                  title={`Plot only instance ${inst}`}
+                                  title={`仅绘制实例 ${inst}`}
                                 >
                                   <input
                                     type="checkbox"
@@ -2267,7 +2267,7 @@ function FieldPickerPanel() {
           );
         })}
         {filteredTypes.length === 0 && search && (
-          <p className="text-[11px] text-content-tertiary text-center py-4">No matches for "{search}"</p>
+          <p className="text-[11px] text-content-tertiary text-center py-4">没有匹配 "{search}" 的结果</p>
         )}
       </div>
     </div>
@@ -2318,9 +2318,9 @@ const DEFAULT_LAYOUT: SerializedDockview = {
     orientation: Orientation.HORIZONTAL,
   },
   panels: {
-    map: { id: 'map', contentComponent: 'FlightPathPanel', title: 'Flight Path' },
-    chart: { id: 'chart', contentComponent: 'ChartPanel', title: 'Chart 1', params: { chartId: 'chart' } },
-    fields: { id: 'fields', contentComponent: 'FieldPickerPanel', title: 'Fields' },
+    map: { id: 'map', contentComponent: 'FlightPathPanel', title: '飞行轨迹' },
+    chart: { id: 'chart', contentComponent: 'ChartPanel', title: '图表 1', params: { chartId: 'chart' } },
+    fields: { id: 'fields', contentComponent: 'FieldPickerPanel', title: '字段' },
   },
   activeGroup: '1',
 };
@@ -2330,12 +2330,12 @@ const DEFAULT_LAYOUT: SerializedDockview = {
 // ============================================================================
 
 const PANEL_DEFS = [
-  { id: 'chart', component: 'ChartPanel', title: 'Chart' },
-  { id: 'map', component: 'FlightPathPanel', title: 'Flight Path' },
-  { id: 'fields', component: 'FieldPickerPanel', title: 'Fields' },
-  { id: 'events', component: 'EventsPanel', title: 'Events' },
-  { id: 'params', component: 'LogParamsPanel', title: 'Params' },
-  { id: 'spectrum', component: 'SpectrumPanel', title: 'Spectrum' },
+  { id: 'chart', component: 'ChartPanel', title: '图表' },
+  { id: 'map', component: 'FlightPathPanel', title: '飞行轨迹' },
+  { id: 'fields', component: 'FieldPickerPanel', title: '字段' },
+  { id: 'events', component: 'EventsPanel', title: '事件' },
+  { id: 'params', component: 'LogParamsPanel', title: '参数' },
+  { id: 'spectrum', component: 'SpectrumPanel', title: '频谱' },
 ];
 
 // Session-scoped layout memory: leaving the Flight Logs tab unmounts the
@@ -2433,7 +2433,7 @@ export function LogExplorerPanel() {
     apiRef.current.addPanel({
       id: newId,
       component: 'ChartPanel',
-      title: `Chart ${idx + 1}`,
+      title: `图表 ${idx + 1}`,
       params: { chartId: newId },
     });
   }, [addChart]);
@@ -2459,24 +2459,24 @@ export function LogExplorerPanel() {
             className={`text-[10px] px-2 py-1 transition-colors flex items-center gap-1 ${
               explorerTool === 'zoom' ? 'bg-blue-500/20 text-blue-400' : 'bg-surface text-content-secondary hover:text-content'
             }`}
-            data-tip="Drag selects a region to zoom into"
+            data-tip="拖拽框选区域进行缩放"
           >
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <circle cx="11" cy="11" r="7" /><path strokeLinecap="round" d="M21 21l-4.35-4.35M8 11h6M11 8v6" />
             </svg>
-            Zoom
+            缩放
           </button>
           <button
             onClick={() => setExplorerTool('pan')}
             className={`text-[10px] px-2 py-1 transition-colors flex items-center gap-1 border-l border-subtle ${
               explorerTool === 'pan' ? 'bg-blue-500/20 text-blue-400' : 'bg-surface text-content-secondary hover:text-content'
             }`}
-            data-tip="Drag moves the view - best for touchpads"
+            data-tip="拖拽移动视图 — 适合触控板"
           >
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v20M2 12h20M12 2l-3 3m3-3l3 3M12 22l-3-3m3 3l3-3M2 12l3-3m-3 3l3 3M22 12l-3-3m3 3l-3 3" />
             </svg>
-            Pan
+            平移
           </button>
         </div>
         <div className="relative">
@@ -2485,28 +2485,28 @@ export function LogExplorerPanel() {
             className={`text-[10px] w-6 h-6 rounded-md border transition-colors ${
               helpOpen ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-surface text-content-secondary hover:text-content border-subtle'
             }`}
-            data-tip="Chart gestures"
+            data-tip="图表手势"
           >
             ?
           </button>
           {helpOpen && (
             <div className="absolute left-0 top-8 z-30 w-72 rounded-lg bg-surface-overlay backdrop-blur-md border border-subtle shadow-xl p-3">
-              <div className="text-[10px] uppercase tracking-wider text-content-tertiary mb-2">Chart gestures</div>
+              <div className="text-[10px] uppercase tracking-wider text-content-tertiary mb-2">图表手势</div>
               <div className="grid gap-y-1 text-[11px]" style={{ gridTemplateColumns: 'max-content 1fr', columnGap: '12px' }}>
-                <span className="text-content font-medium">Scroll / pinch</span><span className="text-content-secondary">zoom time, anchored at cursor</span>
-                <span className="text-content font-medium">Two-finger swipe</span><span className="text-content-secondary">pan time (horizontal)</span>
-                <span className="text-content font-medium">Scroll over an axis</span><span className="text-content-secondary">zoom that axis alone</span>
-                <span className="text-content font-medium">Drag an axis</span><span className="text-content-secondary">pan that axis</span>
-                <span className="text-content font-medium">Double-click an axis</span><span className="text-content-secondary">that axis back to auto-fit</span>
-                <span className="text-content font-medium">Shift + scroll</span><span className="text-content-secondary">zoom values (Y) on the selected axis, else all</span>
-                <span className="text-content font-medium">Click a legend row</span><span className="text-content-secondary">aim shift+scroll at that one axis</span>
-                <span className="text-content font-medium">Legend min / max</span><span className="text-content-secondary">type an exact range for that axis</span>
-                <span className="text-content font-medium">Drag</span><span className="text-content-secondary">{explorerTool === 'zoom' ? 'box zoom (Zoom tool)' : 'pan the view (Pan tool)'}</span>
-                <span className="text-content font-medium">Right-drag</span><span className="text-content-secondary">pan (mouse)</span>
-                <span className="text-content font-medium">Double-click</span><span className="text-content-secondary">reset both axes</span>
+                <span className="text-content font-medium">滚轮 / 捏合</span><span className="text-content-secondary">缩放时间，以光标为锚点</span>
+                <span className="text-content font-medium">双指滑动</span><span className="text-content-secondary">平移时间（水平）</span>
+                <span className="text-content font-medium">在轴上滚动滚轮</span><span className="text-content-secondary">仅缩放该轴</span>
+                <span className="text-content font-medium">拖拽轴</span><span className="text-content-secondary">平移该轴</span>
+                <span className="text-content font-medium">双击轴</span><span className="text-content-secondary">该轴恢复自动适配</span>
+                <span className="text-content font-medium">Shift + 滚轮</span><span className="text-content-secondary">缩放所选轴的数值（Y），未选则作用于全部</span>
+                <span className="text-content font-medium">点击图例行</span><span className="text-content-secondary">让 Shift+滚轮 仅作用于该轴</span>
+                <span className="text-content font-medium">图例最小 / 最大</span><span className="text-content-secondary">为该轴输入精确范围</span>
+                <span className="text-content font-medium">拖拽</span><span className="text-content-secondary">{explorerTool === 'zoom' ? '框选缩放（缩放工具）' : '平移视图（平移工具）'}</span>
+                <span className="text-content font-medium">右键拖拽</span><span className="text-content-secondary">平移（鼠标）</span>
+                <span className="text-content font-medium">双击</span><span className="text-content-secondary">重置两个轴</span>
               </div>
               <div className="text-[10px] text-content-tertiary mt-2 pt-2 border-t border-subtle">
-                Hover a chart to see the same instant on every chart and on the flight-path map.
+                悬停任一图表，可在所有图表和飞行轨迹地图上看到同一时刻。
               </div>
             </div>
           )}
@@ -2515,14 +2515,14 @@ export function LogExplorerPanel() {
         <button
           onClick={handleAddChart}
           className="text-[10px] px-2 py-1 rounded-md bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 border border-blue-500/30 transition-colors flex items-center gap-1"
-          data-tip="Add a comparison chart with its own field selection"
+          data-tip="添加一个拥有独立字段选择的对比图表"
         >
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-          Add Chart
+          添加图表
         </button>
         {closedPanels.length > 0 && (
           <>
-            <span className="text-[10px] text-content-tertiary ml-1">Panels:</span>
+            <span className="text-[10px] text-content-tertiary ml-1">面板：</span>
             {closedPanels.map((def) => (
               <button
                 key={def.id}
@@ -2537,9 +2537,9 @@ export function LogExplorerPanel() {
         <button
           onClick={handleResetLayout}
           className="text-[10px] px-2 py-1 rounded-md bg-surface hover:bg-surface-raised text-content-secondary hover:text-content border border-subtle transition-colors ml-auto"
-          data-tip="Restore the default panel arrangement"
+          data-tip="恢复默认面板布局"
         >
-          Reset Layout
+          重置布局
         </button>
       </div>
 

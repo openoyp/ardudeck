@@ -52,7 +52,7 @@ export function LiveOrientationGuide({ position, size = 220 }: LiveOrientationGu
         <div className="flex flex-col items-center gap-2">
           <PositionDiagram position={position} isActive compact />
           <span className="text-[11px] text-amber-400">
-            No attitude telemetry: position cannot be checked
+            无姿态遥测：无法检查位置
           </span>
         </div>
       )}
@@ -68,8 +68,8 @@ export function LiveOrientationGuide({ position, size = 220 }: LiveOrientationGu
           }`}
         >
           {match.matched
-            ? `Held, ${match.errorDeg.toFixed(0)}° off`
-            : hint ?? `${match.errorDeg.toFixed(0)}° off`}
+            ? `已到位，偏差 ${match.errorDeg.toFixed(0)}°`
+            : hint ?? `偏差 ${match.errorDeg.toFixed(0)}°`}
         </div>
       )}
     </div>

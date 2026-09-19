@@ -183,7 +183,7 @@ export function ConnectionPanel() {
         const outcome = await run();
         setSitlNote(outcome || note);
       } catch {
-        setSitlNote('Failed, see the SITL screen');
+        setSitlNote('失败,详情见 SITL 界面');
       } finally {
         setSitlBusy(null);
       }
@@ -204,7 +204,7 @@ export function ConnectionPanel() {
       if (inavIsRunning) await stopInavSitl();
       if (ardupilotIsRunning) await stopArdupilotSitl();
       if (px4IsRunning) await stopPx4Sitl();
-    }, 'Stopped');
+    }, '已停止');
   }, [runSitlAction, inavIsRunning, ardupilotIsRunning, px4IsRunning, stopInavSitl, stopArdupilotSitl, stopPx4Sitl]);
 
   // Refilling in flight only works on builds whose SIM_Battery has
@@ -223,14 +223,14 @@ export function ConnectionPanel() {
       // Believe the gauge, not the write.
       for (let i = 0; i < 12; i++) {
         await new Promise((r) => setTimeout(r, 250));
-        if (useTelemetryStore.getState().battery.voltage > before + 0.5) return 'Battery full again';
+        if (useTelemetryStore.getState().battery.voltage > before + 0.5) return '电量已恢复';
       }
       const echo = await window.electronAPI?.readParameterBatch?.(['SIM_BATT_VOLTAGE']);
       const accepted = echo?.values?.['SIM_BATT_VOLTAGE'];
       return typeof accepted === 'number' && Math.abs(accepted - full) < 0.2
-        ? 'This ArduPilot only charges on boot: press Respawn'
-        : 'The vehicle refused the change';
-    }, 'Battery full again');
+        ? '此 ArduPilot 仅在启动时充电:请点击"重生"'
+        : '飞行器拒绝了该更改';
+    }, '电量已恢复');
   }, [runSitlAction]);
 
   // Respawn = reboot the autopilot. On a simulated vehicle that puts it back on
@@ -238,7 +238,7 @@ export function ConnectionPanel() {
   const respawnSitl = useCallback(() => {
     void runSitlAction('respawn', async () => {
       await window.electronAPI?.mavlinkReboot?.();
-    }, 'Respawning at home');
+    }, '正在回家点重生');
   }, [runSitlAction]);
 
   const linkUp = connectionState.isConnected;
@@ -247,26 +247,26 @@ export function ConnectionPanel() {
       <button
         onClick={stopRunningSitl}
         disabled={sitlBusy !== null}
-        data-tip="Stop the running SITL"
+        data-tip="停止运行中的 SITL"
         className="flex-1 px-2 py-1 text-[11px] rounded-md bg-red-500/15 text-red-300 hover:bg-red-500/25 disabled:opacity-50 transition-colors"
       >
-        {sitlBusy === 'stop' ? 'Stopping...' : 'Stop SITL'}
+        {sitlBusy === 'stop' ? '停止中…' : '停止 SITL'}
       </button>
       <button
         onClick={rechargeSitlBattery}
         disabled={sitlBusy !== null || !linkUp}
-        data-tip={linkUp ? 'Refill the simulated pack (SIM_BATT_VOLTAGE)' : 'Connect to the SITL first'}
+        data-tip={linkUp ? '为模拟电池充电(SIM_BATT_VOLTAGE)' : '请先连接 SITL'}
         className="flex-1 px-2 py-1 text-[11px] rounded-md bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50 transition-colors"
       >
-        {sitlBusy === 'recharge' ? 'Charging...' : 'Recharge'}
+        {sitlBusy === 'recharge' ? '充电中…' : '充电'}
       </button>
       <button
         onClick={respawnSitl}
         disabled={sitlBusy !== null || !linkUp}
-        data-tip={linkUp ? 'Reboot the simulated vehicle: back on the ground at home, disarmed' : 'Connect to the SITL first'}
+        data-tip={linkUp ? '重启模拟飞行器:回到地面原点并上锁' : '请先连接 SITL'}
         className="flex-1 px-2 py-1 text-[11px] rounded-md bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 disabled:opacity-50 transition-colors"
       >
-        {sitlBusy === 'respawn' ? 'Respawning...' : 'Respawn'}
+        {sitlBusy === 'respawn' ? '重生中…' : '重生'}
       </button>
     </div>
   );
@@ -294,13 +294,13 @@ export function ConnectionPanel() {
   const sitlLabel = defaultSitlType === 'ardupilot' ? `ArduPilot ${cap(ardupilotVehicleType)}`
     : defaultSitlType === 'px4' ? `PX4 ${cap(px4VehicleType)}`
     : 'iNav';
-  const sitlSubtitle = anySitlDownloading ? `Downloading${activeDownloadProgress ? ` ${activeDownloadProgress.progress}%` : '...'}`
-    : anySitlStarting ? 'Starting...'
-    : inavIsRunning ? 'iNav running on TCP :5760'
-    : ardupilotIsRunning ? `ArduPilot ${ardupilotVehicleType} running on TCP :5760`
-    : px4IsRunning ? `PX4 ${px4VehicleType} running on UDP :14550`
-    : activeNeedsDownload ? 'Click to download and launch'
-    : 'Launch virtual flight controller';
+  const sitlSubtitle = anySitlDownloading ? `下载中${activeDownloadProgress ? ` ${activeDownloadProgress.progress}%` : '…'}`
+    : anySitlStarting ? '启动中…'
+    : inavIsRunning ? 'iNav 运行于 TCP :5760'
+    : ardupilotIsRunning ? `ArduPilot ${ardupilotVehicleType} 运行于 TCP :5760`
+    : px4IsRunning ? `PX4 ${px4VehicleType} 运行于 UDP :14550`
+    : activeNeedsDownload ? '点击下载并启动'
+    : '启动虚拟飞控';
 
   // Initialize SITL listeners and check status on mount
   useEffect(() => {
@@ -338,8 +338,8 @@ export function ConnectionPanel() {
         const detail = useArduPilotSitlStore.getState().lastError;
         setError(
           detail
-            ? `Failed to download ArduPilot ${ardupilotVehicleType} binary: ${detail}`
-            : `Failed to download ArduPilot ${ardupilotVehicleType} binary.`
+            ? `下载 ArduPilot ${ardupilotVehicleType} 二进制文件失败:${detail}`
+            : `下载 ArduPilot ${ardupilotVehicleType} 二进制文件失败。`
         );
         return;
       }
@@ -350,8 +350,8 @@ export function ConnectionPanel() {
         const detail = usePx4SitlStore.getState().lastError;
         setError(
           detail
-            ? `Failed to download PX4 SITL bundle: ${detail}`
-            : 'Failed to download PX4 SITL bundle.'
+            ? `下载 PX4 SITL 软件包失败:${detail}`
+            : '下载 PX4 SITL 软件包失败。'
         );
         return;
       }
@@ -397,7 +397,7 @@ export function ConnectionPanel() {
       }
     }
 
-    setError('Could not connect to SITL. Make sure it is running on TCP port 5760.');
+    setError('无法连接 SITL。请确认其正在 TCP 端口 5760 上运行。');
   };
 
   // Respond to SITL starting - switch to TCP and auto-connect with retry
@@ -440,7 +440,7 @@ export function ConnectionPanel() {
           const px4StillRunning = usePx4SitlStore.getState().isRunning;
           if (!inavStillRunning && !ardupilotStillRunning && !px4StillRunning) {
             console.warn('[ConnectionPanel] SITL process is no longer running, aborting auto-connect');
-            setError('SITL process failed to start. Check the SITL tab for details.');
+            setError('SITL 进程启动失败。详情请查看 SITL 标签页。');
             return;
           }
 
@@ -459,7 +459,7 @@ export function ConnectionPanel() {
         }
 
         console.warn('[ConnectionPanel] SITL auto-connect failed after all retries');
-        setError('Could not connect to SITL. Try connecting manually.');
+        setError('无法连接 SITL。请尝试手动连接。');
       };
 
       autoConnectWithRetry();
@@ -663,7 +663,7 @@ export function ConnectionPanel() {
           <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
           </svg>
-          Connection
+          连接
         </h2>
       </div>
 
@@ -680,7 +680,7 @@ export function ConnectionPanel() {
                 : 'border-transparent text-content-secondary hover:text-content'
             }`}
           >
-            {tab === 'single' ? 'Single vehicle' : 'Multi-vehicle'}
+            {tab === 'single' ? '单飞行器' : '多飞行器'}
           </button>
         ))}
       </div>
@@ -705,7 +705,7 @@ export function ConnectionPanel() {
                   </svg>
                 </div>
                 <div className="flex-1 text-left min-w-0">
-                  <div className="text-[13px] font-medium text-content">SITL Simulator</div>
+                  <div className="text-[13px] font-medium text-content">SITL 模拟器</div>
                   <div className="text-[11px] text-content-secondary mt-0.5">
                     {sitlSubtitle}
                   </div>
@@ -737,7 +737,7 @@ export function ConnectionPanel() {
                 </span>
                 {activeNeedsDownload && (
                   <span className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-amber-500/15 text-amber-400">
-                    Download needed
+                    需要下载
                   </span>
                 )}
                 {ardupilotUsesDocker && defaultSitlType === 'ardupilot' && !ardupilotNeedsDownload && (
@@ -815,7 +815,7 @@ export function ConnectionPanel() {
               onClick={() => setConnectionType(type)}
               className={`tab ${connectionType === type ? 'tab-active' : ''}`}
             >
-              {type.toUpperCase()}
+              {type === 'serial' ? '串口' : type.toUpperCase()}
             </button>
           ))}
         </div>
@@ -825,7 +825,7 @@ export function ConnectionPanel() {
         {connectionType === 'serial' && (
           <div className="space-y-4">
             <div>
-              <label className="label">Port</label>
+              <label className="label">端口</label>
               <div className="flex gap-2">
                 <select
                   value={selectedPort}
@@ -833,7 +833,7 @@ export function ConnectionPanel() {
                   className="select flex-1"
                   disabled={connectionState.isConnected}
                 >
-                  {ports.length === 0 && <option value="">No ports available</option>}
+                  {ports.length === 0 && <option value="">无可用端口</option>}
                   {ports.map((port) => (
                     <option key={port.path} value={port.path}>
                       {formatPortDisplayName(port)}
@@ -844,8 +844,8 @@ export function ConnectionPanel() {
                   type="button"
                   onClick={refreshPorts}
                   disabled={connectionState.isConnected || isRefreshingPorts}
-                  title="Rescan serial ports"
-                  aria-label="Rescan serial ports"
+                  title="重新扫描串口"
+                  aria-label="重新扫描串口"
                   className="shrink-0 px-2.5 rounded-lg bg-surface-raised hover:bg-surface-raised text-content-secondary hover:text-content disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                 >
                   <svg
@@ -861,7 +861,7 @@ export function ConnectionPanel() {
             </div>
 
             <div>
-              <label className="label">Baud Rate</label>
+              <label className="label">波特率</label>
               <select
                 value={baudRate}
                 onChange={(e) => setBaudRate(Number(e.target.value))}
@@ -878,11 +878,11 @@ export function ConnectionPanel() {
               <button
                 onClick={() => setShowRadioWizard(true)}
                 className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-surface-raised hover:bg-surface transition-colors text-left"
-                data-tip="Guided setup for an ExpressLRS module as your telemetry radio"
+                data-tip="将 ExpressLRS 模块配置为数传电台的向导"
               >
                 <div>
-                  <p className="text-sm text-content">Using an ELRS radio?</p>
-                  <p className="text-xs text-content-secondary">Guided setup - finds and configures it for you</p>
+                  <p className="text-sm text-content">在使用 ELRS 电台?</p>
+                  <p className="text-xs text-content-secondary">向导式设置——自动查找并配置</p>
                 </div>
                 <svg className="w-4 h-4 text-content-secondary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -903,7 +903,7 @@ export function ConnectionPanel() {
         {connectionType === 'tcp' && (
           <div className="space-y-4">
             <div>
-              <label className="label">Host</label>
+              <label className="label">主机</label>
               <div className="relative">
                 <input
                   type="text"
@@ -923,7 +923,7 @@ export function ConnectionPanel() {
               </div>
             </div>
             <div>
-              <label className="label">Port</label>
+              <label className="label">端口</label>
               <DraftNumberInput
                 value={tcpPort}
                 min={1}
@@ -935,7 +935,7 @@ export function ConnectionPanel() {
               />
             </div>
             <div>
-              <label className="label">Protocol</label>
+              <label className="label">协议</label>
               <div className="flex rounded-lg overflow-hidden border border-subtle">
                 {(['mavlink', 'msp'] as const).map((proto) => (
                   <button
@@ -970,7 +970,7 @@ export function ConnectionPanel() {
                     : 'text-content-secondary hover:text-content hover:bg-surface-raised border-r border-subtle'
                 }`}
               >
-                Listen (Server)
+                监听(服务器)
               </button>
               <button
                 onClick={() => setUdpMode('client')}
@@ -981,14 +981,14 @@ export function ConnectionPanel() {
                     : 'text-content-secondary hover:text-content hover:bg-surface-raised'
                 }`}
               >
-                Client (Connect)
+                客户端(连接)
               </button>
             </div>
 
             {udpMode === 'listen' ? (
               <>
                 <div>
-                  <label className="label">Local Port</label>
+                  <label className="label">本地端口</label>
                   <div className="relative">
                     <DraftNumberInput
                       value={udpPort}
@@ -1009,13 +1009,13 @@ export function ConnectionPanel() {
                   </div>
                 </div>
                 <p className="text-xs text-content-secondary">
-                  Listen for incoming packets on this port
+                  在此端口监听传入的数据包
                 </p>
               </>
             ) : (
               <>
                 <div>
-                  <label className="label">Remote Host</label>
+                  <label className="label">远程主机</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -1035,7 +1035,7 @@ export function ConnectionPanel() {
                   </div>
                 </div>
                 <div>
-                  <label className="label">Remote Port</label>
+                  <label className="label">远程端口</label>
                   <DraftNumberInput
                     value={udpRemotePort}
                     min={1}
@@ -1047,7 +1047,7 @@ export function ConnectionPanel() {
                   />
                 </div>
                 <div>
-                  <label className="label">Local Port</label>
+                  <label className="label">本地端口</label>
                   <DraftNumberInput
                     value={udpClientLocalPort}
                     min={1}
@@ -1058,17 +1058,17 @@ export function ConnectionPanel() {
                     disabled={connectionState.isConnected}
                   />
                   <p className="mt-1 text-xs text-content-secondary">
-                    Source port for outgoing packets. Keep stable across reconnects: ArduPilot caches the first source endpoint it sees and replies there for the rest of the link. Change only if 14550 is in use locally.
+                    发送数据包的源端口。重连时请保持不变:ArduPilot 会记住首次看到的源地址,并在链路后续通信中回复到该地址。仅当本地 14550 端口被占用时才更改。
                   </p>
                 </div>
                 <p className="text-xs text-content-secondary">
-                  Connect to a remote device at this address
+                  连接到此地址上的远程设备
                 </p>
               </>
             )}
 
             <div>
-              <label className="label">Protocol</label>
+              <label className="label">协议</label>
               <div className="flex rounded-lg overflow-hidden border border-subtle">
                 {(['mavlink', 'msp'] as const).map((proto) => (
                   <button
@@ -1102,10 +1102,10 @@ export function ConnectionPanel() {
               <svg className={`w-4 h-4 ${savedKeys.length > 0 ? 'text-amber-400' : 'text-content-secondary'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
               </svg>
-              <span className="text-xs font-medium text-content flex-1 text-left">MAVLink Signing</span>
+              <span className="text-xs font-medium text-content flex-1 text-left">MAVLink 签名</span>
               {savedKeys.length > 0 && (
                 <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${keyMismatch ? 'text-red-400 bg-red-400/10' : 'text-emerald-400 bg-emerald-400/10'}`}>
-                  {keyMismatch ? 'Mismatch' : `${savedKeys.length} key${savedKeys.length > 1 ? 's' : ''}`}
+                  {keyMismatch ? '不匹配' : `${savedKeys.length} 个密钥`}
                 </span>
               )}
               <svg className={`w-3.5 h-3.5 text-content-secondary transition-transform ${showSigning ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1115,7 +1115,7 @@ export function ConnectionPanel() {
             {showSigning && (
               <div className="px-3 pb-3 space-y-2.5 border-t border-subtle pt-2.5">
                 <p className="text-[11px] text-content-secondary">
-                  Accepts passphrases, base64 keys (from Mission Planner), or hex keys. All keys are tried automatically on connect.
+                  支持口令、base64 密钥(来自 Mission Planner)或十六进制密钥。连接时会自动逐一尝试所有密钥。
                 </p>
 
                 {/* Saved keys list */}
@@ -1136,12 +1136,12 @@ export function ConnectionPanel() {
                           </svg>
                           <code className="text-[10px] font-mono text-content-secondary flex-1 truncate">{displayKey}</code>
                           {k.systemIds.length > 0 && (
-                            <span className="text-[9px] text-content-tertiary" title={`Matched FC sysid: ${k.systemIds.join(', ')}`}>
+                            <span className="text-[9px] text-content-tertiary" title={`匹配的飞控 sysid:${k.systemIds.join(', ')}`}>
                               sysid {k.systemIds.join(',')}
                             </span>
                           )}
                           {isActive && (
-                            <span className="text-[9px] text-emerald-500">active</span>
+                            <span className="text-[9px] text-emerald-500">生效中</span>
                           )}
                         </div>
                       );
@@ -1164,7 +1164,7 @@ export function ConnectionPanel() {
                           if (ok && signingInputRef.current) { signingInputRef.current.value = ''; setSigningInputHasValue(false); }
                         }
                       }}
-                      placeholder="Passphrase, base64, or hex key..."
+                      placeholder="口令、base64 或十六进制密钥…"
                       autoComplete="new-password"
                       name={`signing-key-${Date.now()}`}
                       className="w-full bg-surface-raised border border-border rounded-lg px-3 py-1.5 text-xs text-content placeholder-content-tertiary focus:outline-none focus:border-amber-500/50 pr-8"
@@ -1197,7 +1197,7 @@ export function ConnectionPanel() {
                     disabled={signingLoading || !signingInputHasValue}
                     className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 disabled:bg-surface-raised disabled:text-content-secondary text-white text-xs rounded-lg transition-colors shrink-0"
                   >
-                    Add Key
+                    添加密钥
                   </button>
                 </div>
               </div>
@@ -1217,14 +1217,14 @@ export function ConnectionPanel() {
             {/* Link Doctor: explain what the port was speaking and what to do */}
             {diagnosis?.suggestion && (
               <div className="p-3 bg-sky-500/10 border border-sky-500/20 rounded-lg space-y-2">
-                <p className="text-xs font-medium text-sky-300">Link Doctor</p>
+                <p className="text-xs font-medium text-sky-300">链路医生</p>
                 <p className="text-xs text-content-secondary">{diagnosis.suggestion}</p>
                 {diagnosis.elrsNormalMode && connectionType === 'serial' && (
                   <button
                     onClick={() => setShowRadioWizard(true)}
                     className="btn btn-secondary w-full text-xs"
                   >
-                    Open Radio Setup - it fixes this for you
+                    打开无线电设置——自动修复此问题
                   </button>
                 )}
               </div>
@@ -1239,7 +1239,7 @@ export function ConnectionPanel() {
         {/* Connect/Disconnect button */}
         {connectionState.isConnected || connectionState.isWaitingForHeartbeat ? (
           <button onClick={disconnect} className="btn btn-danger w-full">
-            Disconnect
+            断开连接
           </button>
         ) : (
           <button
@@ -1253,10 +1253,10 @@ export function ConnectionPanel() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                Connecting...
+                连接中…
               </span>
             ) : (
-              'Connect'
+              '连接'
             )}
           </button>
         )}
@@ -1272,12 +1272,12 @@ export function ConnectionPanel() {
               <svg className={`w-4 h-4 ${forwardStatus?.running ? 'text-emerald-400' : 'text-content-secondary'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3" />
               </svg>
-              <span className="text-xs font-medium text-content flex-1 text-left">Second Screen / Forward</span>
+              <span className="text-xs font-medium text-content flex-1 text-left">第二屏幕 / 转发</span>
               {forwardStatus?.running && (
                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded text-emerald-400 bg-emerald-400/10">
                   {forwardStatus.endpoints.length + forwardStatus.learned.length > 0
-                    ? `${forwardStatus.endpoints.length + forwardStatus.learned.length} client${forwardStatus.endpoints.length + forwardStatus.learned.length > 1 ? 's' : ''}`
-                    : 'Listening'}
+                    ? `${forwardStatus.endpoints.length + forwardStatus.learned.length} 个客户端`
+                    : '监听中'}
                 </span>
               )}
               <svg className={`w-3.5 h-3.5 text-content-secondary transition-transform ${showForward ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1287,20 +1287,20 @@ export function ConnectionPanel() {
             {showForward && (
               <div className="px-3 pb-3 space-y-2.5 border-t border-subtle pt-2.5">
                 <p className="text-[11px] text-content-secondary">
-                  Mirrors this link's raw MAVLink to other devices over UDP and relays their commands back. Any UDP peer that can reach this port is picked up automatically once it sends a heartbeat - a phone on the same WiFi, or one with no network at all, bridged in over USB - or enter its address below.
+                  通过 UDP 将此链路的原始 MAVLink 数据镜像到其他设备,并回传它们的指令。任何能访问此端口的 UDP 对端,只要发出心跳即会被自动接入——同一 WiFi 下的手机,或完全没有网络、通过 USB 桥接的设备——也可以在下方输入其地址。
                 </p>
                 {!forwardStatus?.running && (
                   <input
                     type="text"
                     value={forwardEndpoint}
                     onChange={(e) => setForwardEndpoint(e.target.value)}
-                    placeholder="Phone address (optional), e.g. 192.168.1.42:14550"
+                    placeholder="手机地址(可选),例如 192.168.1.42:14550"
                     className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-input border border-subtle text-content placeholder:text-content-tertiary focus:outline-none focus:border-blue-500/50"
                   />
                 )}
                 {forwardStatus?.running && (
                   <div className="text-[11px] text-content-secondary space-y-0.5">
-                    <div>Listening on UDP :{forwardStatus.listenPort}</div>
+                    <div>正在监听 UDP :{forwardStatus.listenPort}</div>
                     {[...forwardStatus.endpoints, ...forwardStatus.learned].map((ep) => (
                       <div key={`${ep.host}:${ep.port}`} className="tabular-nums">→ {ep.host}:{ep.port}</div>
                     ))}
@@ -1314,7 +1314,7 @@ export function ConnectionPanel() {
                   disabled={forwardBusy}
                   className={`btn w-full text-xs ${forwardStatus?.running ? 'btn-secondary' : 'btn-primary'}`}
                 >
-                  {forwardStatus?.running ? 'Stop forwarding' : 'Start forwarding'}
+                  {forwardStatus?.running ? '停止转发' : '开始转发'}
                 </button>
               </div>
             )}
@@ -1331,7 +1331,7 @@ export function ConnectionPanel() {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
                 <div>
-                  <p className="text-sm font-medium text-yellow-400">Waiting for heartbeat...</p>
+                  <p className="text-sm font-medium text-yellow-400">等待心跳中…</p>
                   <p className="text-xs text-content-secondary">{connectionState.transport}</p>
                 </div>
               </div>
@@ -1355,7 +1355,7 @@ export function ConnectionPanel() {
             <div className="card-header">
               <h3 className="text-sm font-medium text-content flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-blue-400" />
-                Simulator
+                模拟器
               </h3>
             </div>
             <div className="card-body space-y-2">
@@ -1363,7 +1363,7 @@ export function ConnectionPanel() {
               {sitlNote && <div className="text-center text-[10px] text-content-tertiary">{sitlNote}</div>}
               {!anySitlRunning && (
                 <div className="text-[10px] text-content-tertiary">
-                  Started outside ArduDeck: Stop only ends simulators this app launched.
+                  在 ArduDeck 外部启动:停止仅会结束本应用启动的模拟器。
                 </div>
               )}
             </div>
@@ -1376,29 +1376,29 @@ export function ConnectionPanel() {
             <div className="card-header">
               <h3 className="text-sm font-medium text-content flex items-center gap-2">
                 <div className="status-dot status-dot-connected" />
-                Connected
+                已连接
               </h3>
             </div>
             <div className="card-body space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-content-secondary">Transport</span>
+                <span className="text-content-secondary">传输</span>
                 <span className="text-content font-medium">{connectionState.transport}</span>
               </div>
               {(connectionState.autopilot || connectionState.firmware) && (
                 <div className="flex justify-between">
-                  <span className="text-content-secondary">Autopilot</span>
+                  <span className="text-content-secondary">自驾仪</span>
                   <span className="text-content font-medium">{firmwareLabel(connectionState)}</span>
                 </div>
               )}
               {connectionState.vehicleType && (
                 <div className="flex justify-between">
-                  <span className="text-content-secondary">Vehicle</span>
+                  <span className="text-content-secondary">飞行器</span>
                   <span className="text-content font-medium">{connectionState.vehicleType}</span>
                 </div>
               )}
               {connectionState.systemId !== undefined && (
                 <div className="flex justify-between">
-                  <span className="text-content-secondary">System ID</span>
+                  <span className="text-content-secondary">系统 ID</span>
                   <span className="text-content font-medium">{connectionState.systemId}</span>
                 </div>
               )}
@@ -1423,7 +1423,7 @@ export function ConnectionPanel() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Device not showing? Get driver help
+              设备未显示?获取驱动帮助
             </button>
             {showDriverHelp && (
               <div className="mt-3">

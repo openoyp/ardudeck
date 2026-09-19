@@ -37,7 +37,7 @@ export function StallSpeedCalcButton({ vehicle, onCompute }: StallSpeedCalcButto
         className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/25 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
         <Calculator className="w-3 h-3" />
-        Calc
+        计算
       </button>
     </Tooltip>
   );
@@ -52,26 +52,26 @@ function StallExplanation({ vehicle, estimate }: { vehicle: VehicleProfile; esti
   return (
     <div className="w-[260px] text-left p-1 space-y-2">
       <div className="flex items-baseline justify-between gap-3 pb-1.5 border-b border-subtle">
-        <span className="text-[11px] text-content-secondary">Estimated stall speed</span>
+        <span className="text-[11px] text-content-secondary">预估失速速度</span>
         <span className="text-sm font-semibold text-content">{formatSpeedFromMetersPerSecond(estimate, speedUnit)}</span>
       </div>
 
       <div className="text-[11px] text-content-secondary leading-snug">
-        From the lift equation at max C<span className="text-[9px] align-baseline">Lmax</span>:
+        由最大 C<span className="text-[9px] align-baseline">Lmax</span> 下的升力方程得出：
       </div>
       <div className="font-mono text-[10px] text-content-secondary bg-surface-overlay-subtle rounded px-2 py-1">
         V = √(2·m·g / (ρ·S·Cmax))
       </div>
 
       <div className="text-[11px] space-y-0.5">
-        <Row label="AUW"           value={formatWeightFromGrams(vehicle.weight ?? 0, weightUnit)} />
-        <Row label="Wing area (S)" value={formatAreaFromSquareCentimeters(vehicle.wingArea ?? 0, areaUnit)} />
-        <Row label="Air density"   value="1.225 kg/m³" />
-        <Row label="C Lmax"        value={`${clMax} (${wingShapeLabel(vehicle)})`} />
+        <Row label="起飞全重（AUW）" value={formatWeightFromGrams(vehicle.weight ?? 0, weightUnit)} />
+        <Row label="机翼面积（S）" value={formatAreaFromSquareCentimeters(vehicle.wingArea ?? 0, areaUnit)} />
+        <Row label="空气密度"   value="1.225 kg/m³" />
+        <Row label="C Lmax"        value={`${clMax}（${wingShapeLabel(vehicle)}）`} />
       </div>
 
       <div className="text-[10px] text-content-tertiary leading-snug pt-1 border-t border-subtle">
-        Theoretical clean-stall: real-world stall can be lower with flaps, higher in turns or heavier loading.
+        理论净构型失速值：实际失速在放襟翼时可能更低，转弯或超载时可能更高。
       </div>
     </div>
   );
@@ -81,11 +81,11 @@ function MissingInputsHint({ vehicle }: { vehicle: VehicleProfile }) {
   const hasWeight = (vehicle.weight ?? 0) > 0;
   const hasArea   = (vehicle.wingArea ?? 0) > 0;
   const missing: string[] = [];
-  if (!hasWeight) missing.push('all-up weight');
-  if (!hasArea) missing.push('wing area');
+  if (!hasWeight) missing.push('起飞全重');
+  if (!hasArea) missing.push('机翼面积');
   return (
     <div className="w-[200px] text-[11px] text-content-secondary leading-snug p-1">
-      Set {missing.join(' and ')} to estimate stall speed.
+      填写{missing.join('和')}后即可估算失速速度。
     </div>
   );
 }
@@ -114,13 +114,13 @@ function getClMax(vehicle: VehicleProfile): number {
 
 function wingShapeLabel(vehicle: VehicleProfile): string {
   switch (vehicle.wingShape) {
-    case 'delta':        return 'delta';
-    case 'flying-wing':  return 'flying wing';
-    case 'biplane':      return 'biplane';
-    case 'v-tail':       return 'V-tail';
-    case 'inverted-v':   return 'inverted-V';
-    case 'standard':     return 'standard';
-    default:             return 'standard wing';
+    case 'delta':        return '三角翼';
+    case 'flying-wing':  return '飞翼';
+    case 'biplane':      return '双翼机';
+    case 'v-tail':       return 'V 尾';
+    case 'inverted-v':   return '倒 V 尾';
+    case 'standard':     return '常规';
+    default:             return '常规机翼';
   }
 }
 

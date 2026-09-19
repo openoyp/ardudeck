@@ -85,11 +85,11 @@ function airframeImage(mavType: number | undefined): string {
 export function airframeLabel(mavType: number | undefined): string {
   const s = airframeSpec(mavType);
   if (s.kind === 'multirotor') {
-    const named: Record<number, string> = { 3: 'TRI', 4: 'QUAD', 6: 'HEXA', 8: 'OCTO', 10: 'DECA', 12: 'DODECA' };
-    return named[s.rotors ?? 0] ?? `${s.rotors}-ROTOR`;
+    const named: Record<number, string> = { 3: '三旋翼', 4: '四旋翼', 6: '六旋翼', 8: '八旋翼', 10: '十旋翼', 12: '十二旋翼' };
+    return named[s.rotors ?? 0] ?? `${s.rotors} 旋翼`;
   }
   const byKind: Record<Exclude<AirframeKind, 'multirotor'>, string> = {
-    heli: 'HELI', plane: 'FW', vtol: 'VTOL', rover: 'ROVER', boat: 'BOAT', sub: 'SUB', antenna: 'ANT', unknown: '?',
+    heli: '直升机', plane: '固定翼', vtol: '垂直起降', rover: '地面车', boat: '船艇', sub: '潜航器', antenna: '天线', unknown: '?',
   };
   return byKind[s.kind];
 }

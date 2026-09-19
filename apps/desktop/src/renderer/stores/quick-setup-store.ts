@@ -663,16 +663,16 @@ async function applyPresetViaMsp(
   const isFixedWing = preset.category === 'fixed_wing';
 
   const tasks: Array<{ name: string; status: 'pending' | 'in_progress' | 'completed' | 'error'; error?: string }> = [
-    { name: 'Exiting CLI mode', status: 'pending' },
-    { name: 'Checking platform', status: 'pending' },
-    { name: 'Setting PIDs', status: 'pending' },
-    { name: 'Setting Rates', status: 'pending' },
-    { name: isFixedWing ? 'Configuring servo mixer' : 'Clearing servo mixer', status: 'pending' },
-    ...(hasMotorMixer ? [{ name: 'Configuring motor mixer', status: 'pending' as const }] : []),
-    { name: 'Setting failsafe', status: 'pending' },
-    { name: 'Clearing old modes', status: 'pending' },
-    { name: 'Setting flight modes', status: 'pending' },
-    { name: 'Saving to EEPROM', status: 'pending' },
+    { name: '退出 CLI 模式', status: 'pending' },
+    { name: '检查平台', status: 'pending' },
+    { name: '设置 PID', status: 'pending' },
+    { name: '设置 Rates', status: 'pending' },
+    { name: isFixedWing ? '配置舵机混控' : '清除舵机混控', status: 'pending' },
+    ...(hasMotorMixer ? [{ name: '配置电机混控', status: 'pending' as const }] : []),
+    { name: '设置失控保护', status: 'pending' },
+    { name: '清除旧模式', status: 'pending' },
+    { name: '设置飞行模式', status: 'pending' },
+    { name: '保存到 EEPROM', status: 'pending' },
   ];
 
   set({
@@ -996,9 +996,9 @@ async function applyPresetViaCli(
   const commands = generateCliCommands(preset);
 
   const tasks: Array<{ name: string; status: 'pending' | 'in_progress' | 'completed' | 'error'; error?: string }> = [
-    { name: 'Sending CLI commands', status: 'pending' },
-    { name: 'Saving & rebooting', status: 'pending' },
-    { name: 'Reconnecting', status: 'pending' },
+    { name: '发送 CLI 命令', status: 'pending' },
+    { name: '保存并重启', status: 'pending' },
+    { name: '重新连接', status: 'pending' },
   ];
 
   set({

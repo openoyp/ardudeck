@@ -11,12 +11,12 @@ import type { MissionItem } from '../../../shared/mission-types';
 import { formatDistanceFromMeters } from '../../../shared/user-units.js';
 
 const SORT_OPTIONS: { value: MissionSortField; label: string }[] = [
-  { value: 'updatedAt', label: 'Last Modified' },
-  { value: 'createdAt', label: 'Date Created' },
-  { value: 'name', label: 'Name' },
-  { value: 'waypointCount', label: 'Waypoints' },
-  { value: 'totalDistanceMeters', label: 'Distance' },
-  { value: 'flightCount', label: 'Flights' },
+  { value: 'updatedAt', label: '最后修改' },
+  { value: 'createdAt', label: '创建日期' },
+  { value: 'name', label: '名称' },
+  { value: 'waypointCount', label: '航点数' },
+  { value: 'totalDistanceMeters', label: '距离' },
+  { value: 'flightCount', label: '飞行次数' },
 ];
 
 export function MissionLibraryView() {
@@ -122,8 +122,8 @@ export function MissionLibraryView() {
               </svg>
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-content">Mission Library</h1>
-              <p className="text-xs text-content-secondary">{store.missions.length} missions saved</p>
+              <h1 className="text-lg font-semibold text-content">任务库</h1>
+              <p className="text-xs text-content-secondary">已保存 {store.missions.length} 个任务</p>
             </div>
           </div>
 
@@ -135,7 +135,7 @@ export function MissionLibraryView() {
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Import File
+            导入文件
           </button>
 
           {/* Search */}
@@ -148,7 +148,7 @@ export function MissionLibraryView() {
                 type="text"
                 value={searchInput}
                 onChange={e => setSearchInput(e.target.value)}
-                placeholder="Search missions..."
+                placeholder="搜索任务..."
                 className="w-full pl-9 pr-3 py-1.5 bg-surface border border-subtle rounded-lg text-sm text-content placeholder-content-tertiary focus:outline-none focus:border-blue-500/50"
               />
             </div>
@@ -161,7 +161,7 @@ export function MissionLibraryView() {
               onChange={e => store.setFilter({ vehicleProfileId: e.target.value || undefined })}
               className="px-2 py-1.5 bg-surface border border-subtle rounded-lg text-xs text-content focus:outline-none focus:border-blue-500/50"
             >
-              <option value="">All Vehicles</option>
+              <option value="">所有机体</option>
               {vehicles.map(v => (
                 <option key={v.id} value={v.id}>{v.name}</option>
               ))}
@@ -175,7 +175,7 @@ export function MissionLibraryView() {
               onChange={e => store.setFilter({ tags: e.target.value ? [e.target.value] : undefined })}
               className="px-2 py-1.5 bg-surface border border-subtle rounded-lg text-xs text-content focus:outline-none focus:border-blue-500/50"
             >
-              <option value="">All Tags</option>
+              <option value="">所有标签</option>
               {store.allTags.map(tag => (
                 <option key={tag} value={tag}>{tag}</option>
               ))}
@@ -197,7 +197,7 @@ export function MissionLibraryView() {
           <button
             onClick={() => store.setSort(store.sort.field, store.sort.direction === 'asc' ? 'desc' : 'asc')}
             className="p-1.5 rounded-md bg-surface border border-subtle text-content-secondary hover:text-content transition-colors"
-            title={store.sort.direction === 'asc' ? 'Ascending' : 'Descending'}
+            title={store.sort.direction === 'asc' ? '升序' : '降序'}
           >
             <svg className={`w-3.5 h-3.5 transition-transform ${store.sort.direction === 'asc' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -209,7 +209,7 @@ export function MissionLibraryView() {
             <button
               onClick={() => store.setViewMode('grid')}
               className={`p-1.5 transition-colors ${store.viewMode === 'grid' ? 'bg-surface-raised text-content' : 'text-content-secondary hover:text-content'}`}
-              title="Grid view"
+              title="网格视图"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -218,7 +218,7 @@ export function MissionLibraryView() {
             <button
               onClick={() => store.setViewMode('list')}
               className={`p-1.5 transition-colors ${store.viewMode === 'list' ? 'bg-surface-raised text-content' : 'text-content-secondary hover:text-content'}`}
-              title="List view"
+              title="列表视图"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
@@ -236,7 +236,7 @@ export function MissionLibraryView() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Loading...
+            加载中...
           </div>
         ) : store.missions.length === 0 ? (
           /* Empty state */
@@ -246,9 +246,9 @@ export function MissionLibraryView() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             </div>
-            <h3 className="text-sm font-medium text-content mb-1">No missions saved yet</h3>
+            <h3 className="text-sm font-medium text-content mb-1">还没有保存的任务</h3>
             <p className="text-xs text-content-secondary max-w-xs mb-4">
-              Save plans here for reuse. Build them in Mission Planning, or draw survey areas in the Area Editor.
+              将计划保存在这里以便复用。可在任务规划中创建,或在区域编辑器中绘制勘测区域。
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -258,7 +258,7 @@ export function MissionLibraryView() {
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
-                Open Mission Planning
+                打开任务规划
               </button>
               <button
                 onClick={() => { window.electronAPI?.openAreaEditor?.().catch(() => undefined); }}
@@ -269,7 +269,7 @@ export function MissionLibraryView() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 17l4-4" />
                 </svg>
-                Area Editor
+                区域编辑器
               </button>
             </div>
           </div>
@@ -303,12 +303,12 @@ export function MissionLibraryView() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-subtle text-content-secondary">
-                    <th className="text-left px-4 py-2.5 font-medium">Name</th>
-                    <th className="text-left px-4 py-2.5 font-medium">Vehicle</th>
-                    <th className="text-right px-4 py-2.5 font-medium">WPs</th>
-                    <th className="text-right px-4 py-2.5 font-medium">Distance</th>
-                    <th className="text-left px-4 py-2.5 font-medium">Last Flight</th>
-                    <th className="text-left px-4 py-2.5 font-medium">Updated</th>
+                    <th className="text-left px-4 py-2.5 font-medium">名称</th>
+                    <th className="text-left px-4 py-2.5 font-medium">机体</th>
+                    <th className="text-right px-4 py-2.5 font-medium">航点数</th>
+                    <th className="text-right px-4 py-2.5 font-medium">距离</th>
+                    <th className="text-left px-4 py-2.5 font-medium">上次飞行</th>
+                    <th className="text-left px-4 py-2.5 font-medium">更新时间</th>
                     <th className="px-4 py-2.5 w-24"></th>
                   </tr>
                 </thead>
@@ -326,10 +326,10 @@ export function MissionLibraryView() {
                       : m.lastFlightStatus === 'aborted' ? 'bg-red-500/10 text-red-400'
                       : m.lastFlightStatus === 'planned' ? 'bg-blue-500/10 text-blue-400'
                       : '';
-                    const statusLabel = m.lastFlightStatus === 'completed' ? 'Completed'
-                      : m.lastFlightStatus === 'in_progress' ? 'In Progress'
-                      : m.lastFlightStatus === 'aborted' ? 'Aborted'
-                      : m.lastFlightStatus === 'planned' ? 'Planned'
+                    const statusLabel = m.lastFlightStatus === 'completed' ? '已完成'
+                      : m.lastFlightStatus === 'in_progress' ? '进行中'
+                      : m.lastFlightStatus === 'aborted' ? '已中止'
+                      : m.lastFlightStatus === 'planned' ? '已计划'
                       : null;
                     return (
                       <tr
@@ -350,7 +350,7 @@ export function MissionLibraryView() {
                               </span>
                             ) : (
                               <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-surface-raised text-content-secondary">
-                                New
+                                新建
                               </span>
                             )}
                           </div>
@@ -363,7 +363,7 @@ export function MissionLibraryView() {
                         <td className="px-4 py-2.5 text-content-secondary">
                           {m.flightCount > 0 ? (
                             <span className="flex items-center gap-1.5">
-                              <span>{m.flightCount} flights</span>
+                              <span>{m.flightCount} 次飞行</span>
                             </span>
                           ) : '--'}
                         </td>
@@ -373,7 +373,7 @@ export function MissionLibraryView() {
                             <button
                               onClick={(e) => { e.stopPropagation(); handleLoadToEditor(m.id); }}
                               className="p-1 rounded hover:bg-blue-600/20 text-content-secondary hover:text-blue-400 transition-colors"
-                              title="Load into Editor"
+                              title="加载到编辑器"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -382,7 +382,7 @@ export function MissionLibraryView() {
                             <button
                               onClick={(e) => { e.stopPropagation(); handleDuplicate(m.id, m.name); }}
                               className="p-1 rounded hover:bg-surface-raised text-content-secondary hover:text-content transition-colors"
-                              title="Duplicate"
+                              title="复制"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -395,7 +395,7 @@ export function MissionLibraryView() {
                                   ? 'bg-red-600/30 text-red-400'
                                   : 'hover:bg-red-600/20 text-content-secondary hover:text-red-400'
                               }`}
-                              title={confirmDeleteId === m.id ? 'Click again to confirm' : 'Delete'}
+                              title={confirmDeleteId === m.id ? '再次点击确认' : '删除'}
                             >
                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

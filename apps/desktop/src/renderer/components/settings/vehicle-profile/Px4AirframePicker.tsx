@@ -47,7 +47,7 @@ export function Px4AirframePicker() {
     if (ok) {
       setAppliedId(af.id);
     } else {
-      setError(`Failed to write SYS_AUTOSTART (${af.id}). Check the connection and try again.`);
+      setError(`写入 SYS_AUTOSTART（${af.id}）失败。请检查连接后重试。`);
     }
   };
 
@@ -56,8 +56,8 @@ export function Px4AirframePicker() {
       {!canSet && (
         <div className="bg-amber-500/10 rounded-xl border border-amber-500/30 p-4 text-sm text-amber-300">
           {paramSize > 0
-            ? 'SYS_AUTOSTART was not found on this vehicle, so the airframe cannot be set from here.'
-            : 'Connect to a PX4 vehicle and load parameters to select an airframe.'}
+            ? '此飞行器上未找到 SYS_AUTOSTART，无法在此设置机架。'
+            : '请连接 PX4 飞行器并加载参数后再选择机架。'}
         </div>
       )}
 
@@ -66,10 +66,10 @@ export function Px4AirframePicker() {
           <AlertTriangle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-emerald-300">
-              Airframe set (SYS_AUTOSTART = {appliedId}). Reboot required to apply.
+              机架已设置（SYS_AUTOSTART = {appliedId}）。需重启后生效。
             </p>
             <p className="text-xs text-emerald-400/80 mt-0.5">
-              The new airframe takes effect only after the flight controller restarts.
+              新机架只有在飞控重启后才会生效。
             </p>
           </div>
         </div>

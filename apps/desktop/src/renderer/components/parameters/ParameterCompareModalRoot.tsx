@@ -145,23 +145,23 @@ function CompareView({
   return (
     <>
       <div className="px-6 py-4 border-b border-subtle">
-        <h3 className="text-lg font-semibold text-content">Review parameter changes</h3>
+        <h3 className="text-lg font-semibold text-content">确认参数更改</h3>
         <p className="text-sm text-content-secondary mt-1">
           {diffs.length === 0
-            ? 'No differences found: all parameters already match the vehicle.'
-            : `${diffs.length} parameter${diffs.length !== 1 ? 's' : ''} will change. Pick which to apply.`}
+            ? '未发现差异：所有参数已与飞行器一致。'
+            : `${diffs.length} 个参数将被更改，请选择要应用的参数。`}
         </p>
         {fileVehicleType && currentVehicleType && fileVehicleType !== currentVehicleType && (
           <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg">
             <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
             <span className="text-xs text-amber-300">
-              Source vehicle <span className="font-semibold">{fileVehicleType}</span> differs from connected vehicle <span className="font-semibold">{currentVehicleType}</span>
+              来源机型 <span className="font-semibold">{fileVehicleType}</span> 与当前连接的机型 <span className="font-semibold">{currentVehicleType}</span> 不一致
             </span>
           </div>
         )}
         {skippedCount > 0 && (
           <p className="text-xs text-content-secondary mt-2">
-            {totalCount} total: {totalCount - skippedCount} matched the vehicle, {skippedCount} skipped (not on this firmware)
+            共 {totalCount} 个：{totalCount - skippedCount} 个与飞行器匹配，{skippedCount} 个已跳过（此固件中不存在）
           </p>
         )}
         {isSitl && unsafeMap.size > 0 && (
@@ -170,14 +170,14 @@ function CompareView({
             <div className="flex-1 text-xs">
               <div className="text-blue-300">
                 {safeMode
-                  ? `SITL-safe mode hides ${unsafeMap.size} hardware-identity param${unsafeMap.size !== 1 ? 's' : ''} that can crash the simulator.`
-                  : `${unsafeMap.size} param${unsafeMap.size !== 1 ? 's' : ''} below are flagged as hardware-only and may crash SITL on reboot.`}
+                  ? `SITL 安全模式隐藏了 ${unsafeMap.size} 个可能导致模拟器崩溃的硬件标识参数。`
+                  : `下方 ${unsafeMap.size} 个参数被标记为仅硬件参数，重启后可能导致 SITL 崩溃。`}
               </div>
               <button
                 onClick={() => setSafeMode(v => !v)}
                 className="mt-1 text-blue-400 hover:text-blue-300 underline transition-colors"
               >
-                {safeMode ? 'Show all (override)' : 'Re-enable SITL-safe mode'}
+                {safeMode ? '显示全部（忽略警告）' : '重新启用 SITL 安全模式'}
               </button>
             </div>
           </div>
@@ -187,11 +187,11 @@ function CompareView({
       {diffs.length > 0 && (
         <>
           <div className="px-6 py-2 border-b border-subtle flex items-center gap-3">
-            <button onClick={onSelectAll} className="text-xs text-blue-400 hover:text-blue-300 transition-colors">Select all</button>
+            <button onClick={onSelectAll} className="text-xs text-blue-400 hover:text-blue-300 transition-colors">全选</button>
             <span className="text-content-tertiary">|</span>
-            <button onClick={onDeselectAll} className="text-xs text-content-secondary hover:text-content transition-colors">Deselect all</button>
+            <button onClick={onDeselectAll} className="text-xs text-content-secondary hover:text-content transition-colors">取消全选</button>
             <span className="ml-auto text-xs text-content-secondary">
-              {selectedCount} of {visibleDiffs.length} selected{hiddenUnsafeCount > 0 ? ` (${hiddenUnsafeCount} hw-only hidden)` : ''}
+              已选 {selectedCount} / {visibleDiffs.length}{hiddenUnsafeCount > 0 ? `（已隐藏 ${hiddenUnsafeCount} 个仅硬件参数）` : ''}
             </span>
           </div>
 
@@ -200,11 +200,11 @@ function CompareView({
               <thead>
                 <tr className="text-left text-xs text-content-secondary uppercase">
                   <th className="pb-2 w-8"></th>
-                  <th className="pb-2">Parameter</th>
-                  <th className="pb-2 text-right">Current</th>
+                  <th className="pb-2">参数</th>
+                  <th className="pb-2 text-right">当前</th>
                   <th className="pb-2 text-center w-8"></th>
-                  <th className="pb-2">Target</th>
-                  <th className="pb-2 pl-3">Reason</th>
+                  <th className="pb-2">目标</th>
+                  <th className="pb-2 pl-3">原因</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-subtle">
@@ -232,9 +232,9 @@ function CompareView({
                         {unsafeReason && (
                           <span
                             className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wide font-medium bg-red-500/15 text-red-400 border border-red-500/30"
-                            title={`SITL-unsafe: ${unsafeReason}. Applying may crash the simulator.`}
+                            title={`SITL 不安全：${unsafeReason}。应用后可能导致模拟器崩溃。`}
                           >
-                            hw-only
+                            仅硬件
                           </span>
                         )}
                       </td>
@@ -260,7 +260,7 @@ function CompareView({
       {isApplying && progress && (
         <div className="px-6 py-2 border-t border-subtle">
           <div className="flex items-center justify-between text-xs text-content-secondary mb-1">
-            <span>Writing parameters…</span>
+            <span>正在写入参数...</span>
             <span>{progress.applied} / {progress.total}</span>
           </div>
           <div className="h-1.5 bg-surface-inset rounded-full overflow-hidden">
@@ -278,7 +278,7 @@ function CompareView({
           disabled={isApplying}
           className="px-4 py-2 text-sm text-content-secondary hover:text-content disabled:text-content-tertiary transition-colors"
         >
-          {diffs.length === 0 ? 'Close' : 'Cancel'}
+          {diffs.length === 0 ? '关闭' : '取消'}
         </button>
         {diffs.length > 0 && (
           <button
@@ -286,7 +286,7 @@ function CompareView({
             disabled={isApplying || selectedCount === 0}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-surface-raised text-white disabled:text-content-tertiary rounded-lg text-sm font-medium transition-colors"
           >
-            {isApplying ? 'Writing…' : `Apply ${selectedCount} param${selectedCount !== 1 ? 's' : ''}`}
+            {isApplying ? '写入中...' : `应用 ${selectedCount} 个参数`}
           </button>
         )}
       </div>
@@ -304,20 +304,20 @@ function SummaryView({ result, onClose, onGoToParameters }: SummaryViewProps) {
   return (
     <>
       <div className="px-6 py-4 border-b border-subtle">
-        <h3 className="text-lg font-semibold text-content">Apply results</h3>
+        <h3 className="text-lg font-semibold text-content">应用结果</h3>
       </div>
       <div className="flex-1 min-h-0 overflow-auto px-6 py-5 space-y-4">
         <div className="flex items-center gap-3">
           <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
           <span className="text-sm text-emerald-300">
-            {result.applied} parameter{result.applied !== 1 ? 's' : ''} applied
+            {result.applied} 个参数已应用
           </span>
         </div>
         {result.failed > 0 && (
           <div className="flex items-center gap-3">
             <XCircle className="w-5 h-5 text-red-400 shrink-0" />
             <span className="text-sm text-red-300">
-              {result.failed} parameter{result.failed !== 1 ? 's' : ''} failed
+              {result.failed} 个参数失败
             </span>
           </div>
         )}
@@ -329,19 +329,18 @@ function SummaryView({ result, onClose, onGoToParameters }: SummaryViewProps) {
             <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div>
               <span className="text-sm text-amber-300">
-                Not saved permanently yet
+                尚未永久保存
               </span>
               <p className="text-xs text-content-secondary mt-1">
-                The vehicle is using {result.applied === 1 ? 'this value' : 'these values'} now, but
-                {' '}{result.applied === 1 ? 'it' : 'they'} will revert on the next reboot until you
-                press <span className="text-content font-medium">Save All Changes</span> on the
-                Parameters screen.
+                飞行器当前已在使用{result.applied === 1 ? '该值' : '这些值'}，但在你于参数页面
+                按下 <span className="text-content font-medium">写入闪存</span> 之前，
+                下次重启后将回退。
               </p>
               <button
                 onClick={onGoToParameters}
                 className="mt-2 text-xs text-amber-300 underline hover:text-amber-200"
               >
-                Go to Parameters to save
+                前往参数页面保存
               </button>
             </div>
           </div>
@@ -351,7 +350,7 @@ function SummaryView({ result, onClose, onGoToParameters }: SummaryViewProps) {
             <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div>
               <span className="text-sm text-amber-300">
-                {result.rebootRequired.length} require reboot to take effect:
+                {result.rebootRequired.length} 个参数需要重启才能生效：
               </span>
               <p className="font-mono text-xs text-amber-400/70 mt-1 break-words">
                 {result.rebootRequired.join(', ')}
@@ -360,7 +359,7 @@ function SummaryView({ result, onClose, onGoToParameters }: SummaryViewProps) {
                 onClick={onGoToParameters}
                 className="mt-2 text-xs text-amber-300 underline hover:text-amber-200"
               >
-                Go to Parameters tab to flash + reboot
+                前往参数页面写入并重启
               </button>
             </div>
           </div>
@@ -370,13 +369,13 @@ function SummaryView({ result, onClose, onGoToParameters }: SummaryViewProps) {
             <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
             <div>
               <span className="text-sm text-blue-300">
-                {result.skippedParams.length} not found on this firmware:
+                {result.skippedParams.length} 个参数在此固件中不存在：
               </span>
               <p className="font-mono text-xs text-blue-400/70 mt-1 break-words">
                 {result.skippedParams.map(p => p.id).join(', ')}
               </p>
               <p className="text-xs text-content-secondary mt-1">
-                These may become available after reboot
+                重启后这些参数可能会变为可用
               </p>
             </div>
           </div>
@@ -387,7 +386,7 @@ function SummaryView({ result, onClose, onGoToParameters }: SummaryViewProps) {
           onClick={onClose}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors"
         >
-          Done
+          完成
         </button>
       </div>
     </>

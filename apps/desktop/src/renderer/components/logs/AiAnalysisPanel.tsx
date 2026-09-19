@@ -22,11 +22,11 @@ export function AiWarningDialog({ onAccept, onCancel }: { onAccept: (dismiss: bo
               </svg>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-content">AI Analysis is Experimental</h3>
+              <h3 className="text-sm font-semibold text-content">AI 分析为实验性功能</h3>
               <div className="text-xs text-content-secondary mt-2 leading-relaxed space-y-2">
-                <p>AI-generated suggestions may be inaccurate or inappropriate for your specific vehicle and configuration.</p>
-                <p>Always verify parameter recommendations against ArduPilot documentation before applying. Incorrect parameters can lead to loss of vehicle control.</p>
-                <p className="text-amber-400/80">You are solely responsible for any changes applied to your flight controller.</p>
+                <p>AI 生成的建议可能不准确，或并不适合你的飞行器与配置。</p>
+                <p>应用前请务必对照 ArduPilot 文档核实参数建议。错误的参数可能导致飞行器失控。</p>
+                <p className="text-amber-400/80">对飞控所做的任何更改，责任由你自行承担。</p>
               </div>
             </div>
           </div>
@@ -37,7 +37,7 @@ export function AiWarningDialog({ onAccept, onCancel }: { onAccept: (dismiss: bo
               onChange={(e) => setDontShow(e.target.checked)}
               className="w-3.5 h-3.5 rounded border bg-surface-input text-purple-500 focus:ring-purple-500/30 focus:ring-offset-0 cursor-pointer"
             />
-            <span className="text-xs text-content-secondary">Don't show this again</span>
+            <span className="text-xs text-content-secondary">不再显示</span>
           </label>
         </div>
         <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-subtle">
@@ -45,13 +45,13 @@ export function AiWarningDialog({ onAccept, onCancel }: { onAccept: (dismiss: bo
             onClick={onCancel}
             className="px-3 py-1.5 rounded-lg text-xs text-content-secondary hover:text-content hover:bg-surface-raised transition-colors"
           >
-            Cancel
+            取消
           </button>
           <button
             onClick={() => onAccept(dontShow)}
             className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-purple-600 hover:bg-purple-500 transition-colors"
           >
-            I understand
+            我已了解
           </button>
         </div>
       </div>
@@ -161,7 +161,7 @@ function ParamActionCard({ params, requireWarning }: { params: ParamSuggestion[]
     if (ok) {
       setApplied((prev) => new Set(prev).add(p.name));
     } else {
-      setError(`Failed to set ${p.name}`);
+      setError(`设置 ${p.name} 失败`);
     }
   };
 
@@ -175,7 +175,7 @@ function ParamActionCard({ params, requireWarning }: { params: ParamSuggestion[]
       if (ok) {
         setApplied((prev) => new Set(prev).add(p.name));
       } else {
-        setError(`Failed to set ${p.name}`);
+        setError(`设置 ${p.name} 失败`);
         break;
       }
     }
@@ -197,7 +197,7 @@ function ParamActionCard({ params, requireWarning }: { params: ParamSuggestion[]
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-        <span className="text-xs font-semibold text-purple-300">Suggested Parameter Changes</span>
+        <span className="text-xs font-semibold text-purple-300">建议的参数更改</span>
       </div>
 
       <div className="space-y-1.5">
@@ -220,7 +220,7 @@ function ParamActionCard({ params, requireWarning }: { params: ParamSuggestion[]
               <span className="text-content font-medium">{p.value}</span>
               {reboot && (
                 <span className="text-amber-400 text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/25 flex-shrink-0">
-                  Reboot
+                  需重启
                 </span>
               )}
               {isConnected && !isApplied && (
@@ -229,11 +229,11 @@ function ParamActionCard({ params, requireWarning }: { params: ParamSuggestion[]
                   disabled={!!applying}
                   className="ml-auto text-[10px] px-2 py-0.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/25 rounded transition-colors disabled:opacity-50 flex-shrink-0"
                 >
-                  {isApplying ? '...' : 'Apply'}
+                  {isApplying ? '...' : '应用'}
                 </button>
               )}
               {isApplied && (
-                <span className="ml-auto text-emerald-400 text-[10px] flex-shrink-0">Applied</span>
+                <span className="ml-auto text-emerald-400 text-[10px] flex-shrink-0">已应用</span>
               )}
             </div>
           );
@@ -245,7 +245,7 @@ function ParamActionCard({ params, requireWarning }: { params: ParamSuggestion[]
           <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          Some parameters require a flight controller reboot to take effect.
+          部分参数需要重启飞控后才能生效。
         </div>
       )}
 
@@ -259,7 +259,7 @@ function ParamActionCard({ params, requireWarning }: { params: ParamSuggestion[]
               disabled={!!applying}
               className="text-[11px] px-3 py-1 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/25 rounded transition-colors disabled:opacity-50"
             >
-              {applying ? 'Applying...' : 'Apply All'}
+              {applying ? '正在应用...' : '全部应用'}
             </button>
           )
         ) : (
@@ -268,11 +268,11 @@ function ParamActionCard({ params, requireWarning }: { params: ParamSuggestion[]
             disabled={exported}
             className="text-[11px] px-3 py-1 bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 border border-blue-500/25 rounded transition-colors disabled:opacity-50"
           >
-            {exported ? 'Exported' : 'Export .param file'}
+            {exported ? '已导出' : '导出 .param 文件'}
           </button>
         )}
         {!isConnected && (
-          <span className="text-[10px] text-content-secondary self-center">FC not connected</span>
+          <span className="text-[10px] text-content-secondary self-center">FC 未连接</span>
         )}
       </div>
     </div>
@@ -448,7 +448,7 @@ If a parameter requires a reboot, mention it in your explanation text.${rebootPa
       const call = window.electronAPI?.logAiClaudeTool;
       if (!call) {
         store.setIsAiAnalyzing(false);
-        store.setAiAnalysisError('Claude analysis is unavailable.');
+        store.setAiAnalysisError('Claude 分析不可用。');
         return;
       }
       const { text, error } = await runClaudeLogChat({
@@ -468,7 +468,7 @@ If a parameter requires a reboot, mention it in your explanation text.${rebootPa
       if (text) {
         store.addAiMessage({ role: 'assistant', content: text });
       } else {
-        store.setAiAnalysisError(error ?? 'Analysis failed');
+        store.setAiAnalysisError(error ?? '分析失败');
       }
       return;
     }
@@ -484,7 +484,7 @@ If a parameter requires a reboot, mention it in your explanation text.${rebootPa
     if (result?.success && result.response) {
       store.addAiMessage({ role: 'assistant', content: result.response });
     } else {
-      store.setAiAnalysisError(result?.error ?? 'Analysis failed');
+      store.setAiAnalysisError(result?.error ?? '分析失败');
     }
   }, [aiProvider, currentLog, buildSystemContext]);
 
@@ -545,12 +545,12 @@ If a parameter requires a reboot, mention it in your explanation text.${rebootPa
     return (
       <div className="h-full flex items-center justify-center text-content-secondary">
         <div className="text-center">
-          <p className="mb-2">AI Analysis requires an API key.</p>
+          <p className="mb-2">AI 分析需要 API 密钥。</p>
           <button
             onClick={() => useNavigationStore.getState().setView('settings' as never)}
             className="text-purple-400 hover:text-purple-300 text-sm underline"
           >
-            Configure in Settings
+            前往设置配置
           </button>
         </div>
       </div>
@@ -569,7 +569,7 @@ If a parameter requires a reboot, mention it in your explanation text.${rebootPa
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
         <p className="text-[10px] text-amber-300/70 leading-snug">
-          AI suggestions are experimental. Always verify recommendations before applying. Incorrect parameters can cause loss of control.
+          AI 建议为实验性功能。应用前请务必核实建议。错误的参数可能导致失控。
         </p>
       </div>
 
@@ -583,20 +583,20 @@ If a parameter requires a reboot, mention it in your explanation text.${rebootPa
               </svg>
             </div>
             <div className="text-center">
-              <h3 className="text-content font-medium mb-1">Ask about this flight</h3>
+              <h3 className="text-content font-medium mb-1">询问这次飞行的情况</h3>
               <p className="text-xs text-content-secondary">
                 {aiProvider === 'claude'
-                  ? 'Powered by Claude. It reads this log’s raw telemetry on demand to answer.'
-                  : `Powered by ${providerName}. Flight data and health checks are included as context.`}
+                  ? '由 Claude 提供支持。它会按需读取此日志的原始遥测数据来回答。'
+                  : `由 ${providerName} 提供支持。飞行数据与健康检查已作为上下文包含。`}
               </p>
             </div>
             <div className="flex flex-wrap justify-center gap-2 max-w-lg">
               {[
-                'Analyze this flight and highlight any issues',
-                'Is my vibration level safe for auto missions?',
-                'What parameters should I tune based on this flight?',
-                'Explain the battery performance and estimate health',
-                'Were there any GPS or compass anomalies?',
+                '分析这次飞行并指出问题',
+                '我的振动水平对自动任务是否安全？',
+                '根据这次飞行我应该调哪些参数？',
+                '分析电池表现并评估健康状态',
+                '是否有 GPS 或罗盘异常？',
               ].map((suggestion) => (
                 <button
                   key={suggestion}
@@ -647,12 +647,12 @@ If a parameter requires a reboot, mention it in your explanation text.${rebootPa
             {isAiAnalyzing && (
               <div className="flex items-center gap-2 py-2">
                 <div className="w-3.5 h-3.5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
-                <span className="text-xs text-content-secondary">Analyzing...</span>
+                <span className="text-xs text-content-secondary">正在分析...</span>
                 <button
                   onClick={handleStopAi}
                   className="text-xs px-2 py-0.5 rounded-md border border-subtle text-content-secondary hover:text-red-400 hover:border-red-500/40 transition-colors"
                 >
-                  Stop
+                  停止
                 </button>
               </div>
             )}
@@ -674,7 +674,7 @@ If a parameter requires a reboot, mention it in your explanation text.${rebootPa
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={aiMessages.length === 0 ? 'Ask about this flight...' : 'Follow-up question...'}
+            placeholder={aiMessages.length === 0 ? '询问这次飞行的情况...' : '继续提问...'}
             disabled={isAiAnalyzing}
             rows={1}
             className="flex-1 bg-surface-input border border-subtle rounded-xl px-4 py-2.5 text-sm text-content placeholder-content-tertiary focus:outline-none focus:border-purple-500/50 disabled:opacity-50 resize-none"

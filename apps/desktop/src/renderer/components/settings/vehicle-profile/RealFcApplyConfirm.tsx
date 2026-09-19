@@ -43,27 +43,27 @@ export function RealFcApplyConfirm({
               <ShieldAlert className="w-5 h-5 text-amber-400" />
             </div>
             <div className="flex-1">
-              <h3 className="text-base font-semibold text-content">Apply to real hardware</h3>
+              <h3 className="text-base font-semibold text-content">应用到真实硬件</h3>
               <p className="text-xs text-content-secondary mt-1 leading-relaxed">
-                You're about to modify <span className="text-amber-400 font-medium">sysid {systemId}</span> ({vehicleLabel}).
-                This is NOT a simulator.
+                你即将修改 <span className="text-amber-400 font-medium">sysid {systemId}</span>（{vehicleLabel}）。
+                这不是仿真器。
               </p>
             </div>
           </div>
 
           <div className="mt-4 space-y-3">
             <div className="flex items-baseline justify-between text-xs">
-              <span className="text-content-secondary">Total params to write</span>
+              <span className="text-content-secondary">要写入的参数总数</span>
               <span className="text-content font-mono">{totalParams}</span>
             </div>
             {destructiveParams.length > 0 && (
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
                 <div className="flex items-center gap-2 text-xs text-amber-300 mb-1.5">
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  <span className="font-medium">Topology-changing params</span>
+                  <span className="font-medium">改变拓扑结构的参数</span>
                 </div>
                 <div className="text-[11px] text-content-secondary leading-relaxed">
-                  These change how the firmware interprets motor/servo outputs. Reboot required. Misconfiguration may prevent flight.
+                  这些参数会改变固件对电机/舵机输出的解释方式，需要重启。配置错误可能导致无法飞行。
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {destructiveParams.map(p => (
@@ -83,9 +83,9 @@ export function RealFcApplyConfirm({
                 className="mt-0.5"
               />
               <span>
-                <span className="text-content">Save a full parameter backup first</span>
+                <span className="text-content">先保存完整参数备份</span>
                 <span className="block text-content-secondary mt-0.5">
-                  Exports every current param to a timestamped .parm file you can restore from later.
+                  将当前全部参数导出为带时间戳的 .parm 文件，供日后恢复。
                 </span>
               </span>
             </label>
@@ -93,14 +93,14 @@ export function RealFcApplyConfirm({
         </div>
         <div className="flex items-center justify-between gap-2 px-5 py-3 border-t border-subtle">
           <div className="text-[10px] text-content-secondary">
-            {canConfirm ? 'Ready' : `Confirm available in ${secondsLeft}s`}
+            {canConfirm ? '可以确认' : `${secondsLeft} 秒后可确认`}
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={onCancel}
               className="px-3 py-1.5 rounded-lg text-xs text-content-secondary hover:text-content hover:bg-surface-overlay-subtle transition-colors"
             >
-              Cancel
+              取消
             </button>
             <button
               onClick={() => onConfirm({ backupFirst })}
@@ -111,7 +111,7 @@ export function RealFcApplyConfirm({
                   : 'bg-surface-overlay-subtle text-content-secondary cursor-not-allowed'
               }`}
             >
-              I understand, continue
+              我已了解，继续
             </button>
           </div>
         </div>

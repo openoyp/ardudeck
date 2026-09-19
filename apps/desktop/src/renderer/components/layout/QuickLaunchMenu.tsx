@@ -21,10 +21,10 @@ interface LaunchItem {
 const ITEMS: LaunchItem[] = [
   {
     id: 'area-editor',
-    label: 'Area Editor',
-    desc: 'Draw mission areas: multi-area, holes, KML',
+    label: '区域编辑器',
+    desc: '绘制任务区域:多区域、镂空、KML',
     iconColor: 'text-teal-400',
-    badge: 'New',
+    badge: '新',
     icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536M9 11l6.5-6.5a2 2 0 012.828 2.828L11.828 14H9v-3z" />
@@ -36,41 +36,41 @@ const ITEMS: LaunchItem[] = [
   },
   {
     id: 'sim-world',
-    label: '3D Sim World',
-    desc: 'Fly SITL in a persistent 3D world: obstacles, fences, missions',
+    label: '3D 仿真世界',
+    desc: '在持久化 3D 世界中飞行 SITL:障碍物、围栏、任务',
     iconColor: 'text-emerald-400',
-    badge: 'New',
+    badge: '新',
     icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18" />
       </svg>
     ),
-    launch: () => { window.electronAPI?.openDetachedWindow?.({ componentId: 'sim-world', title: '3D Sim World', initialBounds: { width: 1280, height: 800 } }); },
+    launch: () => { window.electronAPI?.openDetachedWindow?.({ componentId: 'sim-world', title: '3D 仿真世界', initialBounds: { width: 1280, height: 800 } }); },
   },
   {
     id: 'inspector',
-    label: 'MAVLink Inspector',
-    desc: 'Watch live messages and graphs',
+    label: 'MAVLink 检查器',
+    desc: '查看实时消息与图表',
     iconColor: 'text-blue-400',
     icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
       </svg>
     ),
-    launch: () => { window.electronAPI?.openDetachedWindow?.({ componentId: 'inspector', title: 'MAVLink Inspector', initialBounds: { width: 1200, height: 800 } }); },
+    launch: () => { window.electronAPI?.openDetachedWindow?.({ componentId: 'inspector', title: 'MAVLink 检查器', initialBounds: { width: 1200, height: 800 } }); },
   },
   {
     id: 'telemetry-dashboard',
-    label: 'Telemetry Dashboard',
-    desc: 'Live telemetry on its own screen',
+    label: '遥测仪表盘',
+    desc: '在独立窗口查看实时遥测',
     iconColor: 'text-purple-400',
     icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
     ),
-    launch: () => { window.electronAPI?.openDetachedWindow?.({ componentId: 'telemetry-dashboard', title: 'Telemetry Dashboard', initialBounds: { width: 1280, height: 800 } }); },
+    launch: () => { window.electronAPI?.openDetachedWindow?.({ componentId: 'telemetry-dashboard', title: '遥测仪表盘', initialBounds: { width: 1280, height: 800 } }); },
   },
 ];
 
@@ -93,12 +93,12 @@ export function QuickLaunchMenu() {
         data-tour="quick-launch"
         onClick={() => setOpen((o) => !o)}
         className="group flex items-center gap-1.5 pl-2.5 pr-2 py-1.5 rounded-lg bg-surface border border-subtle hover:border-teal-500/40 hover:bg-surface-raised transition-colors"
-        title="Quick Launch: open tools in their own window"
+        title="快速启动:在独立窗口中打开工具"
       >
         <svg className="w-4 h-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h5a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
         </svg>
-        <span className="text-sm font-medium text-content-secondary group-hover:text-content transition-colors">Quick Launch</span>
+        <span className="text-sm font-medium text-content-secondary group-hover:text-content transition-colors">快速启动</span>
         <svg className={`w-3 h-3 text-content-tertiary transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>

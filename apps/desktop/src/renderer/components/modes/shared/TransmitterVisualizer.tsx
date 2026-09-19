@@ -17,14 +17,14 @@ interface TransmitterVisualizerProps {
 
 // Channel names in logical RPYT order (after rxMap reordering)
 const CHANNEL_INFO: { name: string; Icon: LucideIcon; description: string }[] = [
-  { name: 'Roll', Icon: MoveHorizontal, description: 'Left stick horizontal' },
-  { name: 'Pitch', Icon: MoveVertical, description: 'Left stick vertical' },
-  { name: 'Yaw', Icon: RotateCw, description: 'Right stick horizontal' },
-  { name: 'Throttle', Icon: ArrowUp, description: 'Right stick vertical' },
-  { name: 'AUX 1', Icon: ToggleRight, description: 'Switch (usually ARM)' },
-  { name: 'AUX 2', Icon: ToggleRight, description: 'Switch or 3-pos' },
-  { name: 'AUX 3', Icon: ToggleRight, description: 'Additional switch' },
-  { name: 'AUX 4', Icon: ToggleRight, description: 'Additional switch' },
+  { name: '横滚', Icon: MoveHorizontal, description: '左摇杆左右' },
+  { name: '俯仰', Icon: MoveVertical, description: '左摇杆上下' },
+  { name: '偏航', Icon: RotateCw, description: '右摇杆左右' },
+  { name: '油门', Icon: ArrowUp, description: '右摇杆上下' },
+  { name: 'AUX 1', Icon: ToggleRight, description: '开关(通常是 ARM)' },
+  { name: 'AUX 2', Icon: ToggleRight, description: '开关或三段开关' },
+  { name: 'AUX 3', Icon: ToggleRight, description: '附加开关' },
+  { name: 'AUX 4', Icon: ToggleRight, description: '附加开关' },
 ];
 
 export const TransmitterVisualizer: React.FC<TransmitterVisualizerProps> = ({

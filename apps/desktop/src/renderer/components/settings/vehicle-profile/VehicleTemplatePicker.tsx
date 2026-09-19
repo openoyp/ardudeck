@@ -10,13 +10,13 @@ import { Px4AirframePicker } from './Px4AirframePicker.js';
 type CategoryFilter = 'all' | VehicleTemplate['category'];
 
 const CATEGORIES: Array<{ id: CategoryFilter; label: string }> = [
-  { id: 'all',        label: 'All' },
-  { id: 'multirotor', label: 'Multirotor' },
-  { id: 'fixed-wing', label: 'Fixed Wing' },
+  { id: 'all',        label: '全部' },
+  { id: 'multirotor', label: '多旋翼' },
+  { id: 'fixed-wing', label: '固定翼' },
   { id: 'vtol',       label: 'VTOL' },
-  { id: 'rover',      label: 'Rover' },
-  { id: 'boat',       label: 'Boat' },
-  { id: 'sub',        label: 'Sub' },
+  { id: 'rover',      label: '漫游车' },
+  { id: 'boat',       label: '船' },
+  { id: 'sub',        label: '潜航器' },
 ];
 
 interface VehicleTemplatePickerProps {
@@ -92,12 +92,12 @@ export function VehicleTemplatePicker({ onSelect, onImportFromConnected, onClose
         <div className="flex items-center justify-between px-5 py-4 border-b border-subtle">
           <div>
             <h2 className="text-base font-semibold text-content">
-              {isPx4 ? 'Choose a PX4 airframe' : 'Choose a vehicle template'}
+              {isPx4 ? '选择 PX4 机架' : '选择飞行器模板'}
             </h2>
             <p className="text-xs text-content-secondary mt-0.5">
               {isPx4
-                ? 'Pick the airframe that matches your aircraft. This writes SYS_AUTOSTART and needs a reboot.'
-                : 'Pick the configuration that matches your aircraft, you can tweak fields after.'}
+                ? '选择与你的飞机匹配的机架。这将写入 SYS_AUTOSTART 并需要重启。'
+                : '选择与你的飞机匹配的配置，之后还可以调整各项参数。'}
             </p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-overlay-subtle text-content-secondary hover:text-content">
@@ -132,7 +132,7 @@ export function VehicleTemplatePicker({ onSelect, onImportFromConnected, onClose
               autoFocus
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Search templates…"
+              placeholder="搜索模板…"
               className="bg-transparent text-xs text-content placeholder:text-content-secondary outline-none w-48"
             />
           </div>
@@ -150,9 +150,9 @@ export function VehicleTemplatePicker({ onSelect, onImportFromConnected, onClose
                   <Download className="w-5 h-5 text-blue-400" />
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-content">Import from connected vehicle</div>
+                  <div className="text-sm font-medium text-content">从已连接的飞行器导入</div>
                   <div className="text-xs text-content-secondary mt-0.5">
-                    Read parameters from the currently connected vehicle and infer the matching template.
+                    读取当前已连接飞行器的参数，并推断匹配的模板。
                   </div>
                 </div>
               </div>
@@ -161,7 +161,7 @@ export function VehicleTemplatePicker({ onSelect, onImportFromConnected, onClose
 
           {filtered.length === 0 ? (
             <div className="text-center py-12 text-content-secondary text-sm">
-              No templates match the current filter.
+              没有符合当前筛选条件的模板。
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -181,8 +181,8 @@ export function VehicleTemplatePicker({ onSelect, onImportFromConnected, onClose
         )}
 
         <div className="px-5 py-3 border-t border-subtle text-[10px] text-content-secondary flex items-center justify-between">
-          <span>{isPx4 ? 'PX4 airframe via SYS_AUTOSTART · reboot to apply' : `${filtered.length} template${filtered.length === 1 ? '' : 's'}`}</span>
-          <span>{isPx4 ? 'Esc cancel' : '↑↓←→ navigate · Enter select · Esc cancel'}</span>
+          <span>{isPx4 ? 'PX4 机架通过 SYS_AUTOSTART 设置 · 重启后生效' : `${filtered.length} 个模板`}</span>
+          <span>{isPx4 ? 'Esc 取消' : '↑↓←→ 导航 · Enter 选择 · Esc 取消'}</span>
         </div>
       </div>
     </div>
@@ -220,7 +220,7 @@ function TemplateCard({ template, focused, onClick, onMouseEnter }: TemplateCard
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 uppercase font-medium tracking-wide">
               {template.vehicleType}
             </span>
-            <span className="text-[10px] text-content-tertiary">{paramCount} params</span>
+            <span className="text-[10px] text-content-tertiary">{paramCount} 个参数</span>
           </div>
         </div>
       </div>

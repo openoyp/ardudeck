@@ -23,9 +23,9 @@ export function ZoneAlertBanner() {
         <div className="flex items-center gap-2 mb-1.5">
           <AlertTriangle className={`w-4 h-4 ${active.length > 0 ? 'text-red-400 animate-pulse' : 'text-amber-400'}`} />
           <span className="text-xs font-semibold text-content">
-            {active.length > 0 ? `${active.length} active perimeter intrusion${active.length === 1 ? '' : 's'}` : 'Perimeter clear'}
+            {active.length > 0 ? `${active.length} 处活跃周界入侵` : '周界正常'}
           </span>
-          <button onClick={dismiss} className="ml-auto text-content-tertiary hover:text-content" title="Clear alert log">
+          <button onClick={dismiss} className="ml-auto text-content-tertiary hover:text-content" title="清除告警记录">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -34,14 +34,14 @@ export function ZoneAlertBanner() {
             <div key={a.id} className={`flex items-center gap-2 text-[11px] ${a.active ? 'text-content' : 'text-content-tertiary'}`}>
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${a.active ? 'bg-red-500' : 'bg-content-tertiary'}`} />
               <span className="font-medium truncate">{a.label}</span>
-              <span className="text-content-secondary shrink-0">in</span>
+              <span className="text-content-secondary shrink-0">进入</span>
               <span className="truncate">{a.zoneName}</span>
               <span className="ml-auto shrink-0 uppercase text-[9px] tracking-wide text-content-tertiary">{a.source}</span>
             </div>
           ))}
         </div>
         <p className="mt-1.5 text-[9px] text-content-tertiary leading-tight">
-          Awareness only. Mitigation, if any, is performed by separately authorized parties.
+          仅作态势提示。任何处置措施(如有)由另行授权方执行。
         </p>
       </div>
     </div>

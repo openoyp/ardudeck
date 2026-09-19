@@ -174,8 +174,8 @@ const RATE_PRESETS: Record<string, {
   rates: Partial<MSPRcTuning>;
 }> = {
   beginner: {
-    name: 'Beginner',
-    description: 'Slow & predictable - great for learning',
+    name: '新手',
+    description: '缓慢且可预测 — 适合学习',
     icon: Egg,
     iconColor: 'text-green-400',
     color: 'from-green-500/20 to-emerald-500/10 border-green-500/30',
@@ -186,8 +186,8 @@ const RATE_PRESETS: Record<string, {
     },
   },
   freestyle: {
-    name: 'Freestyle',
-    description: 'Balanced for tricks & flow',
+    name: '自由飞',
+    description: '兼顾技巧与流畅',
     icon: Drama,
     iconColor: 'text-purple-400',
     color: 'from-purple-500/20 to-violet-500/10 border-purple-500/30',
@@ -198,8 +198,8 @@ const RATE_PRESETS: Record<string, {
     },
   },
   racing: {
-    name: 'Racing',
-    description: 'Fast & responsive for speed',
+    name: '竞速',
+    description: '快速响应，适合竞速',
     icon: Zap,
     iconColor: 'text-red-400',
     color: 'from-red-500/20 to-orange-500/10 border-red-500/30',
@@ -210,8 +210,8 @@ const RATE_PRESETS: Record<string, {
     },
   },
   cinematic: {
-    name: 'Cinematic',
-    description: 'Ultra-smooth for filming',
+    name: '影视',
+    description: '极致顺滑，适合拍摄',
     icon: Film,
     iconColor: 'text-blue-400',
     color: 'from-blue-500/20 to-cyan-500/10 border-blue-500/30',
@@ -252,8 +252,8 @@ const PID_PRESETS: Record<string, {
   pids: { roll: MSPPidCoefficients; pitch: MSPPidCoefficients; yaw: MSPPidCoefficients };
 }> = {
   beginner: {
-    name: 'Beginner',
-    description: 'Smooth & forgiving - great for learning',
+    name: '新手',
+    description: '平滑宽容 — 适合学习',
     icon: Egg,
     iconColor: 'text-green-400',
     color: 'from-green-500/20 to-emerald-500/10 border-green-500/30',
@@ -264,8 +264,8 @@ const PID_PRESETS: Record<string, {
     },
   },
   freestyle: {
-    name: 'Freestyle',
-    description: 'Responsive & smooth for tricks',
+    name: '自由飞',
+    description: '响应灵敏且顺滑，适合技巧飞行',
     icon: Drama,
     iconColor: 'text-purple-400',
     color: 'from-purple-500/20 to-violet-500/10 border-purple-500/30',
@@ -276,8 +276,8 @@ const PID_PRESETS: Record<string, {
     },
   },
   racing: {
-    name: 'Racing',
-    description: 'Snappy & precise for speed',
+    name: '竞速',
+    description: '干脆精准，适合竞速',
     icon: Zap,
     iconColor: 'text-red-400',
     color: 'from-red-500/20 to-orange-500/10 border-red-500/30',
@@ -288,8 +288,8 @@ const PID_PRESETS: Record<string, {
     },
   },
   cinematic: {
-    name: 'Cinematic',
-    description: 'Ultra-smooth for video',
+    name: '影视',
+    description: '极致顺滑，适合录像',
     icon: Film,
     iconColor: 'text-blue-400',
     color: 'from-blue-500/20 to-cyan-500/10 border-blue-500/30',
@@ -304,57 +304,57 @@ const PID_PRESETS: Record<string, {
 // Mode definitions with beginner-friendly explanations
 // iNav permanent box IDs (from fc_msp_box.c) - must match mode-presets.ts BOX_ID
 const MODE_INFO: Record<number, { name: string; icon: LucideIcon; description: string; color: string; beginner: string; configureTab?: string }> = {
-  0: { name: 'ARM', icon: Power, description: 'Enable motors', color: 'bg-red-500', beginner: 'SAFETY SWITCH - Arms/disarms your aircraft. Always have this on a switch!' },
-  1: { name: 'ANGLE', icon: Square, description: 'Self-level', color: 'bg-blue-500', beginner: 'BEGINNER MODE - Aircraft stays level automatically. Best for learning!' },
-  2: { name: 'HORIZON', icon: Sunrise, description: 'Hybrid mode', color: 'bg-cyan-500', beginner: 'TRAINING MODE - Self-levels at center, allows flips at full stick' },
-  3: { name: 'NAV ALTHOLD', icon: ArrowUpFromLine, description: 'Hold altitude', color: 'bg-teal-500', beginner: 'Holds current altitude using barometer/GPS. Throttle controls climb/descent rate.' },
-  5: { name: 'HEADING HOLD', icon: Navigation, description: 'Hold heading', color: 'bg-emerald-500', beginner: 'Maintains current magnetic heading. Useful for flying straight lines.' },
-  6: { name: 'HEADFREE', icon: Move3d, description: 'Headless mode', color: 'bg-purple-500', beginner: 'Stick directions are relative to pilot, not aircraft - useful for beginners' },
-  7: { name: 'HEADADJ', icon: RotateCw, description: 'Head adjust', color: 'bg-gray-500', beginner: 'Resets headfree reference direction' },
-  8: { name: 'CAMSTAB', icon: Camera, description: 'Camera stabilization', color: 'bg-indigo-500', beginner: 'Stabilizes camera servo output' },
-  10: { name: 'NAV RTH', icon: Home, description: 'Return to home', color: 'bg-green-500', beginner: 'Return To Home - Aircraft will climb to safe altitude and fly back to launch point. Essential safety feature!' },
-  11: { name: 'NAV POSHOLD', icon: MapPin, description: 'Hold position', color: 'bg-cyan-500', beginner: 'GPS position hold - Aircraft will stay in place. Great for aerial photography or when you need to stop.' },
-  12: { name: 'MANUAL', icon: Joystick, description: 'Direct control', color: 'bg-rose-500', beginner: 'Direct servo/motor control without stabilization. For experienced pilots only!' },
-  13: { name: 'BEEPER', icon: Volume2, description: 'Find aircraft', color: 'bg-yellow-500', beginner: 'Makes your aircraft beep - great for finding it in grass!' },
-  15: { name: 'LEDS OFF', icon: Lightbulb, description: 'Disable LEDs', color: 'bg-gray-500', beginner: 'Turns off LED strip' },
-  16: { name: 'LIGHTS', icon: Flashlight, description: 'Navigation lights', color: 'bg-amber-500', beginner: 'Turns on navigation lights' },
-  19: { name: 'OSD OFF', icon: Monitor, description: 'Hide OSD', color: 'bg-gray-500', beginner: 'Turns off on-screen display' },
-  20: { name: 'TELEMETRY', icon: Satellite, description: 'Telemetry output', color: 'bg-blue-500', beginner: 'Enables telemetry transmission' },
-  21: { name: 'AUTO TUNE', icon: Settings2, description: 'PID autotune', color: 'bg-violet-500', beginner: 'Automatically tunes PID values during flight' },
-  26: { name: 'BLACKBOX', icon: Package, description: 'Flight logging', color: 'bg-pink-500', beginner: 'Records flight data for tuning analysis' },
-  27: { name: 'FAILSAFE', icon: ShieldAlert, description: 'Emergency', color: 'bg-orange-500', beginner: 'EMERGENCY MODE - Triggers failsafe behavior. Normally activated automatically when signal is lost.' },
-  28: { name: 'NAV WP', icon: Map, description: 'Waypoint mission', color: 'bg-indigo-500', beginner: 'Execute uploaded waypoint mission. Aircraft will fly to each waypoint automatically.' },
-  29: { name: 'AIRMODE', icon: Wind, description: 'Full control at zero throttle', color: 'bg-cyan-500', beginner: 'Keeps full stick authority even at zero throttle. Essential for freestyle tricks and flips.' },
-  30: { name: 'HOME RESET', icon: RotateCcw, description: 'Reset home position', color: 'bg-red-400', beginner: 'Sets current position as new home point. Use when you relocate during a session.' },
-  31: { name: 'GCS NAV', icon: Gamepad2, description: 'Ground control', color: 'bg-purple-500', beginner: 'Allow ground control station to send navigation commands (fly-to-here, etc).' },
-  34: { name: 'FLAPERON', icon: PlaneTakeoff, description: 'Flaps mode', color: 'bg-amber-500', beginner: 'Activates flaperons for slower landing approach. Ailerons droop down to act as flaps.' },
-  35: { name: 'TURN ASSIST', icon: RotateCw, description: 'Coordinated turns', color: 'bg-lime-500', beginner: 'Auto-coordinates rudder with ailerons for smooth turns. Great for fixed-wing beginners.' },
-  36: { name: 'NAV LAUNCH', icon: Rocket, description: 'Auto launch', color: 'bg-orange-500', beginner: 'Automatic launch sequence for fixed-wing. Throw the plane and it will climb to safe altitude.', configureTab: 'auto-launch' },
-  37: { name: 'SERVO AUTOTRIM', icon: Scissors, description: 'Auto trim servos', color: 'bg-gray-500', beginner: 'Automatically adjusts servo trim during flight' },
-  45: { name: 'NAV CRUISE', icon: Plane, description: 'Cruise control', color: 'bg-sky-500', beginner: 'Fixed-wing cruise mode - Maintains heading and altitude. Perfect for long-range flights.' },
-  46: { name: 'MC BRAKING', icon: OctagonX, description: 'Multirotor braking', color: 'bg-red-500', beginner: 'Aggressive braking when releasing sticks on multirotor' },
-  51: { name: 'PREARM', icon: KeyRound, description: 'Pre-arm check', color: 'bg-yellow-600', beginner: 'Safety switch - must be enabled before arming. Prevents accidental arm.' },
-  52: { name: 'TURTLE', icon: Turtle, description: 'Flip over', color: 'bg-stone-500', beginner: 'Flip crashed aircraft back over using motor spin. For multirotors only.' },
-  53: { name: 'COURSE HOLD', icon: Compass, description: 'Hold course', color: 'bg-violet-500', beginner: 'Maintains current heading while allowing altitude control. Good for flying in a straight line.' },
-  55: { name: 'WP PLANNER', icon: Waypoints, description: 'Mission planner', color: 'bg-fuchsia-500', beginner: 'Enable in-flight waypoint planning via stick commands.' },
-  56: { name: 'SOARING', icon: CloudSun, description: 'Thermal soaring', color: 'bg-sky-400', beginner: 'Enables thermal detection and circling for gliders' },
+  0: { name: 'ARM', icon: Power, description: '解锁电机', color: 'bg-red-500', beginner: '安全开关 — 解锁/上锁你的飞行器。务必绑定到开关！' },
+  1: { name: 'ANGLE', icon: Square, description: '自稳', color: 'bg-blue-500', beginner: '新手模式 — 飞行器自动保持水平，最适合学习！' },
+  2: { name: 'HORIZON', icon: Sunrise, description: '混合模式', color: 'bg-cyan-500', beginner: '练习模式 — 摇杆居中时自稳，打满杆可翻滚' },
+  3: { name: 'NAV ALTHOLD', icon: ArrowUpFromLine, description: '定高', color: 'bg-teal-500', beginner: '使用气压计/GPS 保持当前高度，油门控制升降速率。' },
+  5: { name: 'HEADING HOLD', icon: Navigation, description: '定向', color: 'bg-emerald-500', beginner: '保持当前磁航向，适合直线飞行。' },
+  6: { name: 'HEADFREE', icon: Move3d, description: '无头模式', color: 'bg-purple-500', beginner: '摇杆方向相对飞手而非机头 — 适合新手' },
+  7: { name: 'HEADADJ', icon: RotateCw, description: '无头校准', color: 'bg-gray-500', beginner: '重置无头模式参考方向' },
+  8: { name: 'CAMSTAB', icon: Camera, description: '相机增稳', color: 'bg-indigo-500', beginner: '稳定相机舵机输出' },
+  10: { name: 'NAV RTH', icon: Home, description: '返航', color: 'bg-green-500', beginner: '自动返航 — 飞行器将爬升到安全高度并飞回起飞点。必备安全功能！' },
+  11: { name: 'NAV POSHOLD', icon: MapPin, description: '定点', color: 'bg-cyan-500', beginner: 'GPS 定点 — 飞行器将保持原地悬停，适合航拍或需要停下时。' },
+  12: { name: 'MANUAL', icon: Joystick, description: '手动控制', color: 'bg-rose-500', beginner: '不经增稳直接控制舵机/电机，仅限资深飞手！' },
+  13: { name: 'BEEPER', icon: Volume2, description: '寻找飞行器', color: 'bg-yellow-500', beginner: '让飞行器鸣响 — 方便在草丛中寻找！' },
+  15: { name: 'LEDS OFF', icon: Lightbulb, description: '关闭 LED', color: 'bg-gray-500', beginner: '关闭灯带' },
+  16: { name: 'LIGHTS', icon: Flashlight, description: '导航灯', color: 'bg-amber-500', beginner: '打开导航灯' },
+  19: { name: 'OSD OFF', icon: Monitor, description: '隐藏 OSD', color: 'bg-gray-500', beginner: '关闭屏幕显示' },
+  20: { name: 'TELEMETRY', icon: Satellite, description: '遥测输出', color: 'bg-blue-500', beginner: '启用遥测传输' },
+  21: { name: 'AUTO TUNE', icon: Settings2, description: 'PID 自整定', color: 'bg-violet-500', beginner: '飞行中自动整定 PID 值' },
+  26: { name: 'BLACKBOX', icon: Package, description: '黑匣子', color: 'bg-pink-500', beginner: '记录飞行数据用于调参分析' },
+  27: { name: 'FAILSAFE', icon: ShieldAlert, description: '失控保护', color: 'bg-orange-500', beginner: '紧急模式 — 触发失控保护行为，通常在失去信号时自动激活。' },
+  28: { name: 'NAV WP', icon: Map, description: '航点任务', color: 'bg-indigo-500', beginner: '执行上传的航点任务，飞行器将自动飞往每个航点。' },
+  29: { name: 'AIRMODE', icon: Wind, description: '零油门全权控制', color: 'bg-cyan-500', beginner: '即使在零油门也保持完整的摇杆权限，自由飞技巧和翻滚必备。' },
+  30: { name: 'HOME RESET', icon: RotateCcw, description: '重置返航点', color: 'bg-red-400', beginner: '将当前位置设为新返航点，一次飞行中换场地时使用。' },
+  31: { name: 'GCS NAV', icon: Gamepad2, description: '地面站控制', color: 'bg-purple-500', beginner: '允许地面站发送导航指令（飞往此处等）。' },
+  34: { name: 'FLAPERON', icon: PlaneTakeoff, description: '襟翼模式', color: 'bg-amber-500', beginner: '启用襟副翼以减慢进近速度，副翼下垂充当襟翼。' },
+  35: { name: 'TURN ASSIST', icon: RotateCw, description: '协调转弯', color: 'bg-lime-500', beginner: '自动协调方向舵与副翼，转弯更顺畅，适合固定翼新手。' },
+  36: { name: 'NAV LAUNCH', icon: Rocket, description: '自动起飞', color: 'bg-orange-500', beginner: '固定翼自动起飞序列，出手后自动爬升到安全高度。', configureTab: 'auto-launch' },
+  37: { name: 'SERVO AUTOTRIM', icon: Scissors, description: '舵机自动微调', color: 'bg-gray-500', beginner: '飞行中自动调整舵机微调' },
+  45: { name: 'NAV CRUISE', icon: Plane, description: '巡航', color: 'bg-sky-500', beginner: '固定翼巡航模式 — 保持航向和高度，适合远航。' },
+  46: { name: 'MC BRAKING', icon: OctagonX, description: '多旋翼刹车', color: 'bg-red-500', beginner: '多旋翼松杆时急速刹车' },
+  51: { name: 'PREARM', icon: KeyRound, description: '预解锁检查', color: 'bg-yellow-600', beginner: '安全开关 — 解锁前必须先启用，防止误解锁。' },
+  52: { name: 'TURTLE', icon: Turtle, description: '海龟翻正', color: 'bg-stone-500', beginner: '用电机反转让摔翻的飞行器翻回来，仅限多旋翼。' },
+  53: { name: 'COURSE HOLD', icon: Compass, description: '保持航向', color: 'bg-violet-500', beginner: '保持当前航向同时可控高度，适合直线飞行。' },
+  55: { name: 'WP PLANNER', icon: Waypoints, description: '任务规划', color: 'bg-fuchsia-500', beginner: '通过摇杆指令进行飞行中航点规划。' },
+  56: { name: 'SOARING', icon: CloudSun, description: '热气流翱翔', color: 'bg-sky-400', beginner: '为滑翔机启用热气流探测与盘旋' },
 };
 
 
 // Betaflight Rate Types - different curve algorithms
 const RATE_TYPES = [
-  { value: 0, label: 'Betaflight', description: 'Classic exponential + super rate' },
-  { value: 1, label: 'Raceflight', description: 'Polynomial curves for racing' },
-  { value: 2, label: 'KISS', description: 'Linear rate response' },
-  { value: 3, label: 'Actual', description: 'Precise deg/s control (popular)' },
-  { value: 4, label: 'Quick', description: 'Rapid response curves' },
+  { value: 0, label: 'Betaflight', description: '经典指数 + 超级速率' },
+  { value: 1, label: 'Raceflight', description: '面向竞速的多项式曲线' },
+  { value: 2, label: 'KISS', description: '线性速率响应' },
+  { value: 3, label: 'Actual', description: '精确的 deg/s 控制（流行）' },
+  { value: 4, label: 'Quick', description: '快速响应曲线' },
 ];
 
 // Quick Preset Selector Component
 function PresetSelector<T extends Record<string, { name: string; description: string; icon: LucideIcon; iconColor: string; color: string }>>({
   presets,
   onApply,
-  label = 'Quick Presets',
+  label = '快捷预设',
 }: {
   presets: T;
   onApply: (key: keyof T) => void;
@@ -372,7 +372,7 @@ function PresetSelector<T extends Record<string, { name: string; description: st
           </div>
           <div>
             <p className="text-indigo-300 font-medium">{label}</p>
-            <p className="text-xs text-content-secondary">Click to apply a tuning style</p>
+            <p className="text-xs text-content-secondary">点击应用一种调参风格</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -493,9 +493,9 @@ function calculateMaxRate(rcRate: number, superRate: number, ratesType: number):
 // Combined rates preview graph - centered at 0 like Betaflight Configurator
 function CombinedRatesCurve({ rcTuning }: { rcTuning: MSPRcTuning }) {
   const axes = useMemo(() => [
-    { label: 'Roll', color: '#3B82F6', rcRate: rcTuning.rcRate, superRate: rcTuning.rollRate, expo: rcTuning.rcExpo },
-    { label: 'Pitch', color: '#10B981', rcRate: rcTuning.rcPitchRate, superRate: rcTuning.pitchRate, expo: rcTuning.rcPitchExpo },
-    { label: 'Yaw', color: '#F97316', rcRate: rcTuning.rcYawRate, superRate: rcTuning.yawRate, expo: rcTuning.rcYawExpo },
+    { label: '横滚', color: '#3B82F6', rcRate: rcTuning.rcRate, superRate: rcTuning.rollRate, expo: rcTuning.rcExpo },
+    { label: '俯仰', color: '#10B981', rcRate: rcTuning.rcPitchRate, superRate: rcTuning.pitchRate, expo: rcTuning.rcPitchExpo },
+    { label: '偏航', color: '#F97316', rcRate: rcTuning.rcYawRate, superRate: rcTuning.yawRate, expo: rcTuning.rcYawExpo },
   ], [rcTuning]);
 
   // Graph layout constants
@@ -546,7 +546,7 @@ function CombinedRatesCurve({ rcTuning }: { rcTuning: MSPRcTuning }) {
   return (
     <div className="bg-surface rounded-xl border-subtle p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-content-secondary">Rates Preview</h3>
+        <h3 className="text-sm font-medium text-content-secondary">角速率预览</h3>
         <div className="flex items-center gap-4">
           {curves.map(c => (
             <div key={c.label} className="flex items-center gap-1.5">
@@ -642,8 +642,8 @@ function RateCurve({
   return (
     <div className="bg-surface-raised rounded-lg p-3 border-subtle">
       <div className="flex items-center justify-between text-xs text-content-secondary mb-2">
-        <span>Response Curve</span>
-        <span className="text-content-secondary">Max: <span style={{ color }}>{maxRate}°/s</span></span>
+        <span>响应曲线</span>
+        <span className="text-content-secondary">最大：<span style={{ color }}>{maxRate}°/s</span></span>
       </div>
       <svg viewBox="0 0 100 100" className="w-full h-24">
         {/* Grid */}
@@ -652,8 +652,8 @@ function RateCurve({
         <line x1="5" y1="5" x2="5" y2="95" stroke="#374151" strokeWidth="0.5" />
         <line x1="50" y1="5" x2="50" y2="95" stroke="#374151" strokeWidth="0.5" strokeDasharray="2,2" />
         {/* Labels */}
-        <text x="50" y="99" fill="#6B7280" fontSize="4" textAnchor="middle">Stick</text>
-        <text x="2" y="50" fill="#6B7280" fontSize="4" textAnchor="middle" transform="rotate(-90, 2, 50)">Rate</text>
+        <text x="50" y="99" fill="#6B7280" fontSize="4" textAnchor="middle">摇杆</text>
+        <text x="2" y="50" fill="#6B7280" fontSize="4" textAnchor="middle" transform="rotate(-90, 2, 50)">速率</text>
         {/* Curve */}
         <polyline fill="none" stroke={color} strokeWidth="2.5" points={points} strokeLinecap="round" />
       </svg>
@@ -753,8 +753,8 @@ function RatesTab({
             <Info className="w-5 h-5 text-blue-400" />
           </div>
           <div>
-            <p className="text-blue-400 font-medium">What are rates?</p>
-            <p className="text-sm text-content-secondary">Rates control how fast your quad spins when you move the sticks. Higher = faster rotation.</p>
+            <p className="text-blue-400 font-medium">什么是角速率（Rates）？</p>
+            <p className="text-sm text-content-secondary">角速率控制打杆时飞行器的旋转快慢，数值越高旋转越快。</p>
           </div>
         </div>
       )}
@@ -763,7 +763,7 @@ function RatesTab({
       <PresetSelector
         presets={RATE_PRESETS}
         onApply={(key) => applyPreset(key as keyof typeof RATE_PRESETS)}
-        label="Quick Presets"
+        label="快捷预设"
       />
 
       {/* Rate Type Selector (Betaflight only) */}
@@ -775,9 +775,9 @@ function RatesTab({
                 <Gauge className="w-5 h-5 text-orange-400" />
               </div>
               <div>
-                <p className="text-orange-300 font-medium">Rate Profile Type</p>
+                <p className="text-orange-300 font-medium">速率曲线类型</p>
                 <p className="text-xs text-content-secondary">
-                  {RATE_TYPES.find(t => t.value === rcTuning.ratesType)?.description || 'Select curve algorithm'}
+                  {RATE_TYPES.find(t => t.value === rcTuning.ratesType)?.description || '选择曲线算法'}
                 </p>
               </div>
             </div>
@@ -802,14 +802,14 @@ function RatesTab({
       <div className="bg-surface rounded-xl border-subtle p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h4 className="text-sm font-medium text-content-secondary">My Profiles</h4>
+            <h4 className="text-sm font-medium text-content-secondary">我的配置</h4>
             <button
               onClick={resetToDefaults}
               className="px-2 py-1 text-xs rounded bg-surface-raised hover:bg-surface-raised text-content-secondary hover:text-content transition-colors flex items-center gap-1"
-              title="Reset to factory defaults"
+              title="恢复出厂默认"
             >
               <RotateCcw className="w-3 h-3" />
-              Reset
+              重置
             </button>
           </div>
           <div className="flex flex-wrap gap-2 items-center">
@@ -835,7 +835,7 @@ function RatesTab({
                   type="text"
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
-                  placeholder="Name..."
+                  placeholder="名称..."
                   className="w-24 px-2 py-1.5 bg-transparent text-content text-sm focus:outline-none"
                   autoFocus
                   onKeyDown={(e) => {
@@ -861,9 +861,9 @@ function RatesTab({
               <button
                 onClick={() => setShowSaveDialog(true)}
                 className="px-3 py-1.5 text-sm rounded-lg bg-surface-raised hover:bg-surface-raised text-content-secondary hover:text-content transition-colors flex items-center gap-1"
-                title="Save current settings as a profile"
+                title="将当前设置保存为配置"
               >
-                <span>+</span> Save
+                <span>+</span> 保存
               </button>
             )}
           </div>
@@ -873,9 +873,9 @@ function RatesTab({
       {/* Rate sliders */}
       <div className="grid grid-cols-3 gap-5">
         {[
-          { axis: 'Roll', Icon: MoveHorizontal, color: '#3B82F6', rcRate: 'rcRate' as const, superRate: 'rollRate' as const, expo: 'rcExpo' as const },
-          { axis: 'Pitch', Icon: MoveVertical, color: '#10B981', rcRate: 'rcPitchRate' as const, superRate: 'pitchRate' as const, expo: 'rcPitchExpo' as const },
-          { axis: 'Yaw', Icon: RefreshCw, color: '#F97316', rcRate: 'rcYawRate' as const, superRate: 'yawRate' as const, expo: 'rcYawExpo' as const },
+          { axis: '横滚', Icon: MoveHorizontal, color: '#3B82F6', rcRate: 'rcRate' as const, superRate: 'rollRate' as const, expo: 'rcExpo' as const },
+          { axis: '俯仰', Icon: MoveVertical, color: '#10B981', rcRate: 'rcPitchRate' as const, superRate: 'pitchRate' as const, expo: 'rcPitchExpo' as const },
+          { axis: '偏航', Icon: RefreshCw, color: '#F97316', rcRate: 'rcYawRate' as const, superRate: 'yawRate' as const, expo: 'rcYawExpo' as const },
         ].map(({ axis, Icon, color, rcRate, superRate, expo }) => (
           <div key={axis} className="bg-surface rounded-xl border-subtle p-5">
             <h3 className="text-lg font-medium text-content mb-4 flex items-center gap-2">
@@ -886,28 +886,28 @@ function RatesTab({
               {/* Only show for Betaflight which supports configurable rcRate */}
               {!isInav && (
                 <DraggableSlider
-                  label="Center Rate"
+                  label="中心速率"
                   value={rcTuning[rcRate] as number}
                   onChange={(v) => updateRcTuning(rcRate, v)}
                   color={color}
-                  hint="Sensitivity near center"
+                  hint="中心附近灵敏度"
                 />
               )}
               <DraggableSlider
-                label="Max Rate"
+                label="最大速率"
                 value={rcTuning[superRate] as number}
                 onChange={(v) => updateRcTuning(superRate, v)}
                 color={color}
-                hint="Full stick speed"
+                hint="满杆速度"
                 max={isLegacyInav ? 1000 : 200}
               />
               <DraggableSlider
-                label={isInav && axis === 'Pitch' ? 'Expo (linked to Roll)' : 'Expo'}
+                label={isInav && axis === '俯仰' ? '指数（联动横滚）' : '指数'}
                 value={rcTuning[expo] as number}
                 onChange={(v) => updateRcTuning(expo, v)}
                 max={100}
                 color={color}
-                hint={isInav && axis === 'Pitch' ? 'Shared with Roll in iNav' : 'Curve softness'}
+                hint={isInav && axis === '俯仰' ? 'iNav 中与横滚共享' : '曲线柔和度'}
               />
             </div>
             <div className="mt-4">
@@ -1007,21 +1007,21 @@ function PidTuningTab({
       <PresetSelector
         presets={PID_PRESETS}
         onApply={(key) => applyPreset(key as keyof typeof PID_PRESETS)}
-        label="Quick Presets"
+        label="快捷预设"
       />
 
       {/* My Custom Profiles */}
       <div className="bg-surface rounded-xl border-subtle p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h4 className="text-sm font-medium text-content-secondary">My Profiles</h4>
+            <h4 className="text-sm font-medium text-content-secondary">我的配置</h4>
             <button
               onClick={resetToDefaults}
               className="px-2 py-1 text-xs rounded bg-surface-raised hover:bg-surface-raised text-content-secondary hover:text-content transition-colors flex items-center gap-1"
-              title="Reset to factory defaults"
+              title="恢复出厂默认"
             >
               <RotateCcw className="w-3 h-3" />
-              Reset
+              重置
             </button>
           </div>
           <div className="flex flex-wrap gap-2 items-center">
@@ -1047,7 +1047,7 @@ function PidTuningTab({
                   type="text"
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
-                  placeholder="Name..."
+                  placeholder="名称..."
                   className="w-24 px-2 py-1.5 bg-transparent text-content text-sm focus:outline-none"
                   autoFocus
                   onKeyDown={(e) => {
@@ -1073,9 +1073,9 @@ function PidTuningTab({
               <button
                 onClick={() => setShowSaveDialog(true)}
                 className="px-3 py-1.5 text-sm rounded-lg bg-surface-raised hover:bg-surface-raised text-content-secondary hover:text-content transition-colors flex items-center gap-1"
-                title="Save current settings as a profile"
+                title="将当前设置保存为配置"
               >
-                <span>+</span> Save
+                <span>+</span> 保存
               </button>
             )}
           </div>
@@ -1091,14 +1091,14 @@ function PidTuningTab({
               <MoveHorizontal className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h3 className="text-lg font-medium text-content">Roll</h3>
-              <p className="text-xs text-content-secondary">Left/right tilt</p>
+              <h3 className="text-lg font-medium text-content">横滚 Roll</h3>
+              <p className="text-xs text-content-secondary">左右倾斜</p>
             </div>
           </div>
           <div className="space-y-5">
-            <DraggableSlider label="P - Response" value={pid.roll.p} onChange={(v) => updatePid('roll', 'p', v)} color="#3B82F6" hint="Higher = snappier" />
-            <DraggableSlider label="I - Stability" value={pid.roll.i} onChange={(v) => updatePid('roll', 'i', v)} color="#10B981" hint="Higher = more stable" />
-            <DraggableSlider label="D - Smoothness" value={pid.roll.d} onChange={(v) => updatePid('roll', 'd', v)} color="#8B5CF6" hint="Higher = smoother" />
+            <DraggableSlider label="P - 响应" value={pid.roll.p} onChange={(v) => updatePid('roll', 'p', v)} color="#3B82F6" hint="越高越干脆" />
+            <DraggableSlider label="I - 稳定性" value={pid.roll.i} onChange={(v) => updatePid('roll', 'i', v)} color="#10B981" hint="越高越稳定" />
+            <DraggableSlider label="D - 平滑度" value={pid.roll.d} onChange={(v) => updatePid('roll', 'd', v)} color="#8B5CF6" hint="越高越顺滑" />
           </div>
         </div>
 
@@ -1109,14 +1109,14 @@ function PidTuningTab({
               <MoveVertical className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-lg font-medium text-content">Pitch</h3>
-              <p className="text-xs text-content-secondary">Forward/back tilt</p>
+              <h3 className="text-lg font-medium text-content">俯仰 Pitch</h3>
+              <p className="text-xs text-content-secondary">前后倾斜</p>
             </div>
           </div>
           <div className="space-y-5">
-            <DraggableSlider label="P - Response" value={pid.pitch.p} onChange={(v) => updatePid('pitch', 'p', v)} color="#3B82F6" hint="Higher = snappier" />
-            <DraggableSlider label="I - Stability" value={pid.pitch.i} onChange={(v) => updatePid('pitch', 'i', v)} color="#10B981" hint="Higher = more stable" />
-            <DraggableSlider label="D - Smoothness" value={pid.pitch.d} onChange={(v) => updatePid('pitch', 'd', v)} color="#8B5CF6" hint="Higher = smoother" />
+            <DraggableSlider label="P - 响应" value={pid.pitch.p} onChange={(v) => updatePid('pitch', 'p', v)} color="#3B82F6" hint="越高越干脆" />
+            <DraggableSlider label="I - 稳定性" value={pid.pitch.i} onChange={(v) => updatePid('pitch', 'i', v)} color="#10B981" hint="越高越稳定" />
+            <DraggableSlider label="D - 平滑度" value={pid.pitch.d} onChange={(v) => updatePid('pitch', 'd', v)} color="#8B5CF6" hint="越高越顺滑" />
           </div>
         </div>
 
@@ -1127,14 +1127,14 @@ function PidTuningTab({
               <RefreshCw className="w-5 h-5 text-orange-400" />
             </div>
             <div>
-              <h3 className="text-lg font-medium text-content">Yaw</h3>
-              <p className="text-xs text-content-secondary">Rotation</p>
+              <h3 className="text-lg font-medium text-content">偏航 Yaw</h3>
+              <p className="text-xs text-content-secondary">旋转</p>
             </div>
           </div>
           <div className="space-y-5">
-            <DraggableSlider label="P - Response" value={pid.yaw.p} onChange={(v) => updatePid('yaw', 'p', v)} color="#3B82F6" hint="Higher = snappier" />
-            <DraggableSlider label="I - Stability" value={pid.yaw.i} onChange={(v) => updatePid('yaw', 'i', v)} color="#10B981" hint="Higher = more stable" />
-            <DraggableSlider label="D - Smoothness" value={pid.yaw.d} onChange={(v) => updatePid('yaw', 'd', v)} color="#8B5CF6" hint="Higher = smoother" />
+            <DraggableSlider label="P - 响应" value={pid.yaw.p} onChange={(v) => updatePid('yaw', 'p', v)} color="#3B82F6" hint="越高越干脆" />
+            <DraggableSlider label="I - 稳定性" value={pid.yaw.i} onChange={(v) => updatePid('yaw', 'i', v)} color="#10B981" hint="越高越稳定" />
+            <DraggableSlider label="D - 平滑度" value={pid.yaw.d} onChange={(v) => updatePid('yaw', 'd', v)} color="#8B5CF6" hint="越高越顺滑" />
           </div>
         </div>
       </div>
@@ -1143,20 +1143,20 @@ function PidTuningTab({
       {showExplanationCards && (
         <div className="bg-surface rounded-xl border-subtle p-5">
           <h4 className="font-medium text-content mb-3 flex items-center gap-2">
-            <Lightbulb className="w-4 h-4 text-yellow-400" /> What do these numbers mean?
+            <Lightbulb className="w-4 h-4 text-yellow-400" /> 这些数值是什么意思？
           </h4>
           <div className="grid grid-cols-3 gap-6 text-sm">
             <div>
-              <span className="text-blue-400 font-medium">P (Response)</span>
-              <p className="text-content-secondary mt-1">How quickly your quad reacts. Too high = oscillation/vibration. Too low = mushy feeling.</p>
+              <span className="text-blue-400 font-medium">P（响应）</span>
+              <p className="text-content-secondary mt-1">飞行器的反应速度。过高会震荡/振动，过低则发软。</p>
             </div>
             <div>
-              <span className="text-emerald-400 font-medium">I (Stability)</span>
-              <p className="text-content-secondary mt-1">Keeps your quad on target. Helps fight wind and drift. Too high = slow wobbles.</p>
+              <span className="text-emerald-400 font-medium">I（稳定性）</span>
+              <p className="text-content-secondary mt-1">让飞行器锁定姿态，抗风抗漂移。过高会缓慢晃动。</p>
             </div>
             <div>
-              <span className="text-purple-400 font-medium">D (Smoothness)</span>
-              <p className="text-content-secondary mt-1">Dampens overshooting. Too high = hot motors and noise. Too low = bouncy stops.</p>
+              <span className="text-purple-400 font-medium">D（平滑度）</span>
+              <p className="text-content-secondary mt-1">抑制过冲。过高会电机发热和噪声，过低则停止时回弹。</p>
             </div>
           </div>
         </div>
@@ -1177,11 +1177,11 @@ function ModeChannelIndicator({
   onRangeChange?: (start: number, end: number) => void;
 }) {
   const info = MODE_INFO[mode.boxId] || {
-    name: `Mode ${mode.boxId}`,
+    name: `模式 ${mode.boxId}`,
     icon: HelpCircle,
-    description: 'Unknown',
+    description: '未知',
     color: 'bg-gray-500',
-    beginner: 'Unknown mode',
+    beginner: '未知模式',
   };
   const IconComponent = info.icon;
 
@@ -1206,7 +1206,7 @@ function ModeChannelIndicator({
             <span className="font-medium text-content">{info.name}</span>
             {isActive && (
               <span className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/30 text-emerald-400">
-                ACTIVE
+                已激活
               </span>
             )}
           </div>
@@ -1242,7 +1242,7 @@ function ModeChannelIndicator({
 
       {/* Current value */}
       <div className="mt-2 text-center text-xs text-content-secondary">
-        Current: <span className={isActive ? 'text-emerald-400' : 'text-yellow-400'}>{rcValue}</span>
+        当前值：<span className={isActive ? 'text-emerald-400' : 'text-yellow-400'}>{rcValue}</span>
       </div>
     </div>
   );
@@ -1296,7 +1296,7 @@ function SensorCard({
           </div>
           <div className="text-xs text-content-secondary">
             {!hardwareDetected && featureEnabled
-              ? 'Feature enabled but hardware not detected'
+              ? '功能已启用但未检测到硬件'
               : description}
           </div>
         </div>
@@ -1315,7 +1315,7 @@ function SensorCard({
             className={`relative w-11 h-6 rounded-full transition-colors ${
               toggleSaving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
             } ${isEnabled ? 'bg-emerald-500' : 'bg-gray-600'}`}
-            title={isEnabled ? `Disable ${name} feature` : `Enable ${name} feature`}
+            title={isEnabled ? `关闭 ${name} 功能` : `开启 ${name} 功能`}
           >
             <div className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white border border-strong shadow-sm transition-transform ${
               isEnabled ? 'translate-x-5' : 'translate-x-0'
@@ -1329,7 +1329,7 @@ function SensorCard({
               ? 'bg-yellow-500/20 text-yellow-400'
               : 'bg-surface-raised text-content-secondary'
         }`}>
-          {hardwareDetected ? 'OK' : featureEnabled ? 'ON' : 'OFF'}
+          {hardwareDetected ? '正常' : featureEnabled ? '开' : '关'}
         </div>
       </div>
     </div>
@@ -1398,34 +1398,34 @@ function MspSensorsTabContent({
       {/* Sensor Status Cards */}
       <div className="grid grid-cols-2 gap-4">
         <SensorCard
-          name="Gyroscope"
+          name="陀螺仪"
           available={sensors.gyro}
           Icon={RefreshCw}
-          description="Measures rotation speed - essential for flight"
+          description="测量旋转速度 — 飞行必备"
         />
         <SensorCard
-          name="Accelerometer"
+          name="加速度计"
           available={sensors.acc}
           Icon={Ruler}
-          description="Measures tilt angle - needed for self-level"
+          description="测量倾角 — 自稳必需"
           liveValue={`${(attitude?.roll ?? 0).toFixed(0)}° / ${(attitude?.pitch ?? 0).toFixed(0)}°`}
         />
         <SensorCard
           name="GPS"
           available={sensors.gps}
           Icon={Satellite}
-          description={sensors.gps ? `${gps?.satellites || 0} satellites locked` : 'Feature disabled or not connected'}
-          liveValue={sensors.gps ? `${gps?.satellites || 0} sats` : undefined}
+          description={sensors.gps ? `${gps?.satellites || 0} 颗卫星已锁定` : '功能已禁用或未连接'}
+          liveValue={sensors.gps ? `${gps?.satellites || 0} 颗` : undefined}
           canToggle={true}
           isEnabled={(features & (1 << FEATURE_GPS)) !== 0}
           onToggle={(enabled) => onFeatureToggle(FEATURE_GPS, enabled)}
           toggleSaving={featureSaving}
         />
         <SensorCard
-          name="Barometer"
+          name="气压计"
           available={sensors.baro}
           Icon={Gauge}
-          description="Measures altitude via air pressure"
+          description="通过气压测量高度"
           liveValue={sensors.baro ? (vfrHud?.alt ?? 0) : undefined}
           unit="m"
           canToggle={true}
@@ -1434,10 +1434,10 @@ function MspSensorsTabContent({
           toggleSaving={featureSaving}
         />
         <SensorCard
-          name="Magnetometer"
+          name="磁力计"
           available={sensors.mag}
           Icon={Compass}
-          description="Measures heading - needed for GPS navigation"
+          description="测量航向 — GPS 导航必需"
           liveValue={sensors.mag ? `${(attitude?.yaw ?? 0).toFixed(0)}°` : undefined}
           canToggle={true}
           isEnabled={sensors.mag}
@@ -1445,10 +1445,10 @@ function MspSensorsTabContent({
           toggleSaving={featureSaving}
         />
         <SensorCard
-          name="Rangefinder"
+          name="测距仪"
           available={sensors.sonar}
           Icon={Ruler}
-          description="Measures distance to ground - for precise landings"
+          description="测量对地距离 — 用于精准降落"
           canToggle={true}
           isEnabled={(features & (1 << FEATURE_SONAR)) !== 0}
           onToggle={(enabled) => onFeatureToggle(FEATURE_SONAR, enabled)}
@@ -1458,27 +1458,27 @@ function MspSensorsTabContent({
 
       {/* Live Telemetry Section */}
       <div className="space-y-3">
-        <h3 className="text-sm font-medium text-content-secondary uppercase tracking-wider">Live Telemetry</h3>
+        <h3 className="text-sm font-medium text-content-secondary uppercase tracking-wider">实时遥测</h3>
         <div className="grid grid-cols-2 gap-4">
           {/* Attitude Card */}
           <TelemetryCard
-            title="Attitude"
+            title="姿态"
             icon={Target}
             values={[
-              { label: 'Roll', value: attitude?.roll ?? 0, unit: '°' },
-              { label: 'Pitch', value: attitude?.pitch ?? 0, unit: '°' },
-              { label: 'Yaw', value: attitude?.yaw ?? 0, unit: '°' },
+              { label: '横滚', value: attitude?.roll ?? 0, unit: '°' },
+              { label: '俯仰', value: attitude?.pitch ?? 0, unit: '°' },
+              { label: '偏航', value: attitude?.yaw ?? 0, unit: '°' },
             ]}
           />
 
           {/* Altitude Card */}
           <TelemetryCard
-            title="Altitude"
+            title="高度"
             icon={Ruler}
             values={[
-              { label: 'Alt', value: vfrHud?.alt ?? 0, unit: 'm' },
-              { label: 'Vario', value: vfrHud?.climb ?? 0, unit: 'm/s' },
-              { label: 'Voltage', value: battery?.voltage ?? 0, unit: 'V' },
+              { label: '高度', value: vfrHud?.alt ?? 0, unit: 'm' },
+              { label: '垂直速度', value: vfrHud?.climb ?? 0, unit: 'm/s' },
+              { label: '电压', value: battery?.voltage ?? 0, unit: 'V' },
             ]}
           />
         </div>
@@ -1488,34 +1488,34 @@ function MspSensorsTabContent({
           <div className="p-4 rounded-xl border bg-blue-500/10 border-blue-500/30">
             <div className="flex items-center gap-2 mb-3">
               <Satellite className="w-5 h-5 text-blue-400" />
-              <span className="font-medium text-blue-300">GPS Position</span>
+              <span className="font-medium text-blue-300">GPS 位置</span>
             </div>
             <div className="grid grid-cols-4 gap-3">
               <div className="text-center">
                 <div className="text-lg font-mono text-cyan-400">
                   {(gps?.lat || 0).toFixed(6)}
                 </div>
-                <div className="text-xs text-content-secondary">Latitude</div>
+                <div className="text-xs text-content-secondary">纬度</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-mono text-cyan-400">
                   {(gps?.lon || 0).toFixed(6)}
                 </div>
-                <div className="text-xs text-content-secondary">Longitude</div>
+                <div className="text-xs text-content-secondary">经度</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-mono text-cyan-400">
                   {(gps?.alt || 0).toFixed(1)}
                   <span className="text-xs text-content-secondary ml-1">m</span>
                 </div>
-                <div className="text-xs text-content-secondary">GPS Alt</div>
+                <div className="text-xs text-content-secondary">GPS 高度</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-mono text-cyan-400">
                   {(vfrHud?.groundspeed || 0).toFixed(1)}
                   <span className="text-xs text-content-secondary ml-1">m/s</span>
                 </div>
-                <div className="text-xs text-content-secondary">Speed</div>
+                <div className="text-xs text-content-secondary">速度</div>
               </div>
             </div>
           </div>
@@ -1527,9 +1527,9 @@ function MspSensorsTabContent({
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-6 h-6 text-yellow-400" />
             <div>
-              <h4 className="font-medium text-yellow-400">GPS Not Connected</h4>
+              <h4 className="font-medium text-yellow-400">GPS 未连接</h4>
               <p className="text-sm text-content-secondary">
-                To use GPS Rescue (automatic return home), connect a GPS module to your flight controller.
+                要使用 GPS 救援（自动返航），请为飞行控制器连接 GPS 模块。
               </p>
             </div>
           </div>
@@ -1541,9 +1541,9 @@ function MspSensorsTabContent({
           <div className="flex items-center gap-3">
             <Map className="w-6 h-6 text-green-400" />
             <div>
-              <h4 className="font-medium text-green-400">iNav - Mission Planning Available!</h4>
+              <h4 className="font-medium text-green-400">iNav — 支持任务规划！</h4>
               <p className="text-sm text-content-secondary">
-                Your board runs iNav which supports autonomous waypoint missions. Check Mission Planning in the navigation.
+                你的飞控运行 iNav，支持自主航点任务。请查看导航中的任务规划。
               </p>
             </div>
           </div>
@@ -1553,9 +1553,9 @@ function MspSensorsTabContent({
           <div className="flex items-center gap-3">
             <Info className="w-6 h-6 text-content-secondary" />
             <div>
-              <h4 className="font-medium text-content">Betaflight - FPV Racing & Freestyle</h4>
+              <h4 className="font-medium text-content">Betaflight — FPV 竞速与自由飞</h4>
               <p className="text-sm text-content-secondary">
-                Betaflight is optimized for manual flight. For autonomous missions and GPS navigation, consider flashing iNav firmware.
+                Betaflight 针对手动飞行优化。如需自主任务和 GPS 导航，请考虑刷入 iNav 固件。
               </p>
             </div>
           </div>
@@ -1620,7 +1620,7 @@ function ModesTabContent({ onNavigateToTab }: { onNavigateToTab?: (tabId: string
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
-          <span className="font-medium">Modes saved to flight controller!</span>
+          <span className="font-medium">模式已保存到飞行控制器！</span>
         </div>
       )}
 
@@ -1631,10 +1631,10 @@ function ModesTabContent({ onNavigateToTab }: { onNavigateToTab?: (tabId: string
             <Radio className="w-6 h-6 text-purple-400" />
           </div>
           <div>
-            <p className="text-purple-300 font-medium">Flight Modes</p>
+            <p className="text-purple-300 font-medium">飞行模式</p>
             {showSectionDescriptions && (
               <p className="text-sm text-purple-200/60">
-                Configure how your {connectionState.vehicleType?.toLowerCase() || 'aircraft'} responds to switch positions on your transmitter.
+                配置你的{connectionState.vehicleType || '飞行器'}如何响应遥控器上的开关位置。
               </p>
             )}
           </div>
@@ -1651,7 +1651,7 @@ function ModesTabContent({ onNavigateToTab }: { onNavigateToTab?: (tabId: string
                   : 'text-content-secondary hover:text-content'
               }`}
             >
-              Simple
+              简单
             </button>
             <button
               onClick={() => setViewMode('advanced')}
@@ -1661,7 +1661,7 @@ function ModesTabContent({ onNavigateToTab }: { onNavigateToTab?: (tabId: string
                   : 'text-content-secondary hover:text-content'
               }`}
             >
-              Advanced
+              高级
             </button>
           </div>
         </div>
@@ -1674,7 +1674,7 @@ function ModesTabContent({ onNavigateToTab }: { onNavigateToTab?: (tabId: string
           {isLoading ? (
             <div className="text-center py-8">
               <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto" />
-              <p className="text-sm text-content-secondary mt-2">Loading modes from flight controller...</p>
+              <p className="text-sm text-content-secondary mt-2">正在从飞行控制器加载模式...</p>
             </div>
           ) : originalModes.length === 0 ? (
             /* No modes configured - show wizard prompt */
@@ -1682,17 +1682,17 @@ function ModesTabContent({ onNavigateToTab }: { onNavigateToTab?: (tabId: string
               <div className="w-16 h-16 rounded-2xl bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
                 <Radio className="w-8 h-8 text-purple-400" />
               </div>
-              <h3 className="text-lg font-medium text-content mb-2">No Modes Configured</h3>
+              <h3 className="text-lg font-medium text-content mb-2">尚未配置模式</h3>
               <p className="text-sm text-content-secondary max-w-md mx-auto mb-6">
-                Your flight controller doesn't have any modes set up yet.
-                Use the wizard to configure recommended modes for your flying style.
+                你的飞行控制器尚未设置任何模式。
+                使用向导为你的飞行风格配置推荐模式。
               </p>
               <button
                 onClick={openWizard}
                 className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors flex items-center gap-2 mx-auto"
               >
                 <Wand2 className="w-4 h-4" />
-                Start Setup Wizard
+                启动设置向导
               </button>
             </div>
           ) : (
@@ -1703,8 +1703,8 @@ function ModesTabContent({ onNavigateToTab }: { onNavigateToTab?: (tabId: string
                 <div className="flex items-start gap-3 p-3 bg-blue-500/10 border-blue-500/20 rounded-lg">
                   <HelpCircle className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
                   <p className="text-sm text-blue-200/80">
-                    <strong>How this works:</strong> Each mode is triggered by a switch on your transmitter.
-                    Move your switches to see which modes activate. The bar shows where your switch needs to be.
+                    <strong>工作原理：</strong>每个模式由遥控器上的开关触发。
+                    拨动开关即可看到哪些模式被激活。进度条显示开关需要处于的位置。
                   </p>
                 </div>
               )}
@@ -1714,7 +1714,7 @@ function ModesTabContent({ onNavigateToTab }: { onNavigateToTab?: (tabId: string
                 {originalModes.map((mode, idx) => {
                   const modeInfo = MODE_INFO[mode.boxId];
                   const info = MODE_DISPLAY[mode.boxId] || {
-                    name: `Mode ${mode.boxId}`,
+                    name: `模式 ${mode.boxId}`,
                     Icon: HelpCircle,
                     color: 'bg-zinc-500'
                   };
@@ -1731,22 +1731,22 @@ function ModesTabContent({ onNavigateToTab }: { onNavigateToTab?: (tabId: string
                   const currentPercent = ((rcValue - rangeMin) / totalRange) * 100;
 
                   // Friendly switch names
-                  const switchNames = ['Switch A', 'Switch B', 'Switch C', 'Switch D', 'Switch E', 'Switch F', 'Switch G', 'Switch H', 'Switch I', 'Switch J', 'Switch K', 'Switch L'];
-                  const switchName = switchNames[mode.auxChannel] || `Switch ${mode.auxChannel + 1}`;
+                  const switchNames = ['开关 A', '开关 B', '开关 C', '开关 D', '开关 E', '开关 F', '开关 G', '开关 H', '开关 I', '开关 J', '开关 K', '开关 L'];
+                  const switchName = switchNames[mode.auxChannel] || `开关 ${mode.auxChannel + 1}`;
 
                   // Convert PWM range to friendly position description
                   const getPositionName = (pwm: number) => {
-                    if (pwm <= 1100) return 'Low';
-                    if (pwm <= 1400) return 'Low-Mid';
-                    if (pwm <= 1600) return 'Mid';
-                    if (pwm <= 1800) return 'Mid-High';
-                    return 'High';
+                    if (pwm <= 1100) return '低';
+                    if (pwm <= 1400) return '中低';
+                    if (pwm <= 1600) return '中';
+                    if (pwm <= 1800) return '中高';
+                    return '高';
                   };
                   const startPos = getPositionName(mode.rangeStart);
                   const endPos = getPositionName(mode.rangeEnd);
                   const positionDescription = startPos === endPos
-                    ? `${startPos} position`
-                    : `${startPos} to ${endPos}`;
+                    ? `${startPos} 挡位`
+                    : `${startPos}至${endPos}挡位`;
 
                   return (
                     <div
@@ -1776,19 +1776,19 @@ function ModesTabContent({ onNavigateToTab }: { onNavigateToTab?: (tabId: string
                             <button
                               onClick={() => onNavigateToTab(modeInfo.configureTab!)}
                               className="px-2 py-1 text-xs bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 rounded-lg transition-colors flex items-center gap-1"
-                              title={`Configure ${info.name} settings`}
+                              title={`配置 ${info.name} 设置`}
                             >
                               <Settings2 className="w-3 h-3" />
-                              Configure
+                              配置
                             </button>
                           )}
                           {isActive ? (
                             <span className="px-3 py-1 text-xs font-medium bg-green-500/20 text-green-400 rounded-full">
-                              ACTIVE
+                              已激活
                             </span>
                           ) : (
                             <span className="px-3 py-1 text-xs bg-surface-raised text-content-secondary rounded-full">
-                              INACTIVE
+                              未激活
                             </span>
                           )}
                         </div>
@@ -1799,7 +1799,7 @@ function ModesTabContent({ onNavigateToTab }: { onNavigateToTab?: (tabId: string
                         <div className="flex items-center justify-between text-xs text-content-secondary">
                           <span>{switchName}</span>
                           <span className={isActive ? 'text-green-400' : 'text-content-secondary'}>
-                            Position: {rcValue < 1300 ? 'Low' : rcValue < 1700 ? 'Mid' : 'High'}
+                            位置：{rcValue < 1300 ? '低' : rcValue < 1700 ? '中' : '高'}
                           </span>
                         </div>
                         <div className="relative h-4 bg-surface-inset rounded-full overflow-hidden">
@@ -1820,13 +1820,13 @@ function ModesTabContent({ onNavigateToTab }: { onNavigateToTab?: (tabId: string
                           />
                           {/* Low/Mid/High labels */}
                           <div className="absolute inset-0 flex items-center justify-between px-2 text-[10px] text-content-secondary pointer-events-none">
-                            <span>Low</span>
-                            <span>Mid</span>
-                            <span>High</span>
+                            <span>低</span>
+                            <span>中</span>
+                            <span>高</span>
                           </div>
                         </div>
                         <div className="text-[10px] text-content-tertiary text-center">
-                          Activates when {switchName} is in {positionDescription}
+                          {switchName} 处于{positionDescription}时激活
                         </div>
                       </div>
                     </div>
@@ -1841,7 +1841,7 @@ function ModesTabContent({ onNavigateToTab }: { onNavigateToTab?: (tabId: string
                   className="px-4 py-2 bg-surface-raised hover:bg-surface-raised text-content rounded-lg text-sm transition-colors flex items-center gap-2"
                 >
                   <Wand2 className="w-4 h-4" />
-                  Reconfigure with Wizard
+                  用向导重新配置
                 </button>
               </div>
             </div>
@@ -1932,7 +1932,7 @@ export function MspConfigView() {
 
   // Handle platform change with auto-reconnect
   const handlePlatformChange = async (platformType: number) => {
-    const targetLabel = PLATFORM_OPTIONS.find(o => o.value === platformType)?.label || 'Unknown';
+    const targetLabel = PLATFORM_OPTIONS.find(o => o.value === platformType)?.label || '未知';
 
     setShowPlatformDropdown(false);
     setPlatformChangeTarget(targetLabel);
@@ -1943,7 +1943,7 @@ export function MspConfigView() {
     try {
       // 1. Set platform type
       const success = await window.electronAPI?.mspSetInavPlatformType(platformType);
-      if (!success) throw new Error('Failed to change platform type');
+      if (!success) throw new Error('更改机型失败');
 
       // 2. Save to EEPROM
       setPlatformChangeState('saving');
@@ -1969,7 +1969,7 @@ export function MspConfigView() {
     } catch (err) {
       console.error('Platform change error:', err);
       setPlatformChangeState('error');
-      setPlatformChangeError(err instanceof Error ? err.message : 'Unknown error');
+      setPlatformChangeError(err instanceof Error ? err.message : '未知错误');
     }
   };
 
@@ -1996,7 +1996,7 @@ export function MspConfigView() {
       setRebootNeeded(false);
     } catch (err) {
       console.error('[UI] Reboot error:', err);
-      setError('Reboot failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      setError('重启失败：' + (err instanceof Error ? err.message : '未知错误'));
     } finally {
       // Give time for the board to disconnect before clearing state
       setTimeout(() => setRebooting(false), 3000);
@@ -2034,8 +2034,8 @@ export function MspConfigView() {
         setRebootNeeded(true);
       }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-      setError(`Hardware toggle error: ${errorMsg}`);
+      const errorMsg = err instanceof Error ? err.message : '未知错误';
+      setError(`硬件开关错误：${errorMsg}`);
       console.error('[UI] Hardware sensor toggle error:', err);
     } finally {
       setFeatureSaving(false);
@@ -2059,7 +2059,7 @@ export function MspConfigView() {
           setFeatures(reloaded);
           console.log('[UI] Reloaded features:', reloaded.toString(2).padStart(32, '0'));
         } else {
-          setError('Failed to load features - cannot toggle');
+          setError('加载功能列表失败 — 无法切换');
           return;
         }
       }
@@ -2079,12 +2079,12 @@ export function MspConfigView() {
         await window.electronAPI?.mspSaveEeprom();
         console.log(`[UI] Feature bit ${bit} ${enabled ? 'enabled' : 'disabled'} and saved`);
       } else {
-        setError('Failed to set features');
+        setError('设置功能失败');
         console.error('[UI] Failed to set features');
       }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-      setError(`Feature toggle error: ${errorMsg}`);
+      const errorMsg = err instanceof Error ? err.message : '未知错误';
+      setError(`功能切换错误：${errorMsg}`);
       console.error('[UI] Feature toggle error:', err);
     } finally {
       setFeatureSaving(false);
@@ -2208,7 +2208,7 @@ export function MspConfigView() {
       setPidRatesModified(false);
       setRebootNeeded(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load config');
+      setError(err instanceof Error ? err.message : '加载配置失败');
     } finally {
       setLoading(false);
       loadInProgressRef.current = false;
@@ -2252,7 +2252,7 @@ export function MspConfigView() {
         console.log('[UI] Saving PIDs...');
         const pidSuccess = await window.electronAPI?.mspSetPid(pid);
         if (!pidSuccess) {
-          setError('Failed to save PIDs');
+          setError('保存 PID 失败');
           return;
         }
       }
@@ -2262,7 +2262,7 @@ export function MspConfigView() {
         console.log('[UI] Saving Rates...');
         const ratesSuccess = await window.electronAPI?.mspSetRcTuning(rcTuning);
         if (!ratesSuccess) {
-          setError('Failed to save Rates');
+          setError('保存角速率失败');
           return;
         }
       }
@@ -2272,7 +2272,7 @@ export function MspConfigView() {
         console.log('[UI] Saving Modes...');
         const modesSuccess = await saveModesToFC();
         if (!modesSuccess) {
-          setError('Failed to save Modes');
+          setError('保存模式失败');
           return;
         }
       }
@@ -2282,7 +2282,7 @@ export function MspConfigView() {
         console.log('[UI] Saving Safety...');
         const safetySuccess = await safetyRef.current.save();
         if (!safetySuccess) {
-          setError('Failed to save Safety settings');
+          setError('保存安全设置失败');
           return;
         }
       }
@@ -2292,7 +2292,7 @@ export function MspConfigView() {
         console.log('[UI] Saving Receiver config...');
         const receiverSuccess = await useReceiverStore.getState().saveConfig();
         if (!receiverSuccess) {
-          setError('Failed to save Receiver config');
+          setError('保存接收机配置失败');
           return;
         }
       }
@@ -2302,7 +2302,7 @@ export function MspConfigView() {
         console.log('[UI] Saving to EEPROM...');
         const eepromSuccess = await window.electronAPI?.mspSaveEeprom();
         if (!eepromSuccess) {
-          setError('Failed to save to EEPROM');
+          setError('写入 EEPROM 失败');
           return;
         }
       }
@@ -2312,7 +2312,7 @@ export function MspConfigView() {
       console.log('[UI] All settings saved successfully');
     } catch (err) {
       console.error('[UI] Save error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      setError(err instanceof Error ? err.message : '保存失败');
     } finally {
       setSaving(false);
     }
@@ -2355,7 +2355,7 @@ export function MspConfigView() {
       <div className="h-full flex items-center justify-center bg-surface-base">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <div className="text-content-secondary">Loading your settings...</div>
+          <div className="text-content-secondary">正在加载你的设置...</div>
         </div>
       </div>
     );
@@ -2382,20 +2382,20 @@ export function MspConfigView() {
 
             {/* Title */}
             <h3 className="text-lg font-semibold text-content mb-2">
-              {platformChangeState === 'changing' && `Changing to ${platformChangeTarget}`}
-              {platformChangeState === 'saving' && 'Saving Configuration'}
-              {platformChangeState === 'rebooting' && 'Rebooting Board'}
-              {platformChangeState === 'reconnecting' && 'Reconnecting'}
-              {platformChangeState === 'error' && 'Change Failed'}
+              {platformChangeState === 'changing' && `正在切换到 ${platformChangeTarget}`}
+              {platformChangeState === 'saving' && '正在保存配置'}
+              {platformChangeState === 'rebooting' && '正在重启飞控'}
+              {platformChangeState === 'reconnecting' && '正在重新连接'}
+              {platformChangeState === 'error' && '切换失败'}
             </h3>
 
             {/* Message */}
             <p className="text-sm text-content-secondary mb-4">
-              {platformChangeState === 'changing' && 'Sending platform change command...'}
-              {platformChangeState === 'saving' && 'Writing to EEPROM...'}
-              {platformChangeState === 'rebooting' && 'Waiting for board to reboot...'}
-              {platformChangeState === 'reconnecting' && 'Connecting to board...'}
-              {platformChangeState === 'error' && (platformChangeError || 'An error occurred')}
+              {platformChangeState === 'changing' && '正在发送机型切换命令...'}
+              {platformChangeState === 'saving' && '正在写入 EEPROM...'}
+              {platformChangeState === 'rebooting' && '等待飞控重启...'}
+              {platformChangeState === 'reconnecting' && '正在连接飞控...'}
+              {platformChangeState === 'error' && (platformChangeError || '发生错误')}
             </p>
 
             {/* Progress indicator for non-terminal states */}
@@ -2415,7 +2415,7 @@ export function MspConfigView() {
                 onClick={clearPlatformChangeState}
                 className="mt-4 px-6 py-2 bg-surface-raised hover:bg-surface-raised text-content rounded-lg text-sm transition-colors"
               >
-                Dismiss
+                忽略
               </button>
             )}
           </div>
@@ -2439,7 +2439,7 @@ export function MspConfigView() {
             </div>
             <div>
               <h2 className="text-xl font-bold text-content">
-                {connectionState.fcVariant === 'BTFL' ? 'Betaflight' : connectionState.fcVariant === 'INAV' ? 'iNav' : connectionState.fcVariant} Tuning
+                {connectionState.fcVariant === 'BTFL' ? 'Betaflight' : connectionState.fcVariant === 'INAV' ? 'iNav' : connectionState.fcVariant} 调参
               </h2>
               <div className="flex items-center gap-2 text-sm text-content-secondary">
                 <span className="text-blue-400">{connectionState.fcVersion}</span>
@@ -2454,7 +2454,7 @@ export function MspConfigView() {
                         }}
                         disabled={platformChangeState !== 'idle'}
                         className="text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer flex items-center gap-1 disabled:opacity-50"
-                        title="Click to change platform type"
+                        title="点击更改机型"
                       >
                         {connectionState.vehicleType}
                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -2504,20 +2504,20 @@ export function MspConfigView() {
               className="px-4 py-2 text-sm font-medium rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg shadow-blue-500/20 flex items-center gap-2 transition-all"
             >
               <Rocket className="w-4 h-4" />
-              Quick Setup
+              快速设置
             </button>
 
-            {modified && (
+          {modified && (
               <span className="px-3 py-1 text-sm rounded-lg bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                Unsaved
+                未保存
               </span>
-            )}
+          )}
             <button
               onClick={loadConfig}
               disabled={loading}
               className="px-4 py-2 text-sm rounded-lg bg-surface-raised hover:bg-surface-raised text-content border"
             >
-              Refresh
+              刷新
             </button>
             <button
               onClick={handleReboot}
@@ -2527,10 +2527,10 @@ export function MspConfigView() {
                   ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 animate-pulse'
                   : 'bg-surface-raised hover:bg-surface-raised text-content border'
               }`}
-              title={rebootNeeded ? 'Settings changed - reboot to apply' : 'Reboot flight controller'}
+              title={rebootNeeded ? '设置已更改 — 重启后生效' : '重启飞行控制器'}
             >
               <RotateCw className={`w-4 h-4 ${rebooting ? 'animate-spin' : ''}`} />
-              {rebooting ? 'Rebooting...' : rebootNeeded ? 'Reboot to Apply' : 'Reboot'}
+              {rebooting ? '重启中...' : rebootNeeded ? '重启以生效' : '重启'}
             </button>
             <button
               onClick={saveAll}
@@ -2541,7 +2541,7 @@ export function MspConfigView() {
                   : 'bg-surface-raised text-content-secondary cursor-not-allowed'
               }`}
             >
-              {saving ? <><Save className="w-4 h-4 inline mr-1" />Saving...</> : <><Save className="w-4 h-4 inline mr-1" />Save All Changes</>}
+              {saving ? <><Save className="w-4 h-4 inline mr-1" />保存中...</> : <><Save className="w-4 h-4 inline mr-1" />保存全部更改</>}
             </button>
           </div>
         </div>
@@ -2550,9 +2550,9 @@ export function MspConfigView() {
         <div className="flex gap-1.5 mt-4 flex-wrap items-center">
           {/* Main tabs */}
           {[
-            { id: 'tuning', label: 'PID Tuning', icon: SlidersHorizontal, color: 'text-blue-400' },
-            { id: 'rates', label: 'Rates', icon: Gauge, color: 'text-purple-400' },
-            { id: 'modes', label: 'Modes', icon: Gamepad2, color: 'text-green-400' },
+            { id: 'tuning', label: 'PID 调参', icon: SlidersHorizontal, color: 'text-blue-400' },
+            { id: 'rates', label: '角速率', icon: Gauge, color: 'text-purple-400' },
+            { id: 'modes', label: '模式', icon: Gamepad2, color: 'text-green-400' },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -2582,7 +2582,7 @@ export function MspConfigView() {
             }`}
           >
             <Radio className={`w-4 h-4 ${activeTab === 'receiver' ? 'text-teal-400' : 'text-teal-400 opacity-50'}`} />
-            <span className="text-sm font-medium">Receiver</span>
+            <span className="text-sm font-medium">接收机</span>
           </button>
 
           {/* Ports */}
@@ -2595,7 +2595,7 @@ export function MspConfigView() {
             }`}
           >
             <Cable className={`w-4 h-4 ${activeTab === 'ports' ? 'text-sky-400' : 'text-sky-400 opacity-50'}`} />
-            <span className="text-sm font-medium">Ports</span>
+            <span className="text-sm font-medium">端口</span>
           </button>
 
           {/* Mixing dropdown (iNav only) */}
@@ -2618,18 +2618,18 @@ export function MspConfigView() {
                     : 'text-cyan-400 opacity-50'
                 }`} />
                 <span className="text-sm font-medium">
-                  {activeTab === 'servo-tuning' ? 'Servo Tuning' :
-                   activeTab === 'servo-mixer' ? 'Servo Mixer' :
-                   activeTab === 'motor-mixer' ? 'Motor Mixer' : 'Mixing'}
+                  {activeTab === 'servo-tuning' ? '舵机调试' :
+                   activeTab === 'servo-mixer' ? '舵机混控' :
+                   activeTab === 'motor-mixer' ? '电机混控' : '混控'}
                 </span>
                 <ChevronDown className={`w-3 h-3 transition-transform ${showMixingDropdown ? 'rotate-180' : ''}`} />
               </button>
               {showMixingDropdown && (
                 <div className="absolute top-full left-0 mt-1 bg-surface-solid border rounded-lg shadow-xl z-50 min-w-[180px] py-1">
                   {[
-                    { id: 'servo-tuning', label: 'Servo Tuning', icon: SlidersHorizontal, color: 'text-orange-400', desc: 'Endpoints' },
-                    { id: 'servo-mixer', label: 'Servo Mixer', icon: Shuffle, color: 'text-cyan-400', desc: 'Surfaces' },
-                    { id: 'motor-mixer', label: 'Motor Mixer', icon: Cog, color: 'text-rose-400', desc: 'Motors' },
+                    { id: 'servo-tuning', label: '舵机调试', icon: SlidersHorizontal, color: 'text-orange-400', desc: '行程' },
+                    { id: 'servo-mixer', label: '舵机混控', icon: Shuffle, color: 'text-cyan-400', desc: '翼面' },
+                    { id: 'motor-mixer', label: '电机混控', icon: Cog, color: 'text-rose-400', desc: '电机' },
                   ].map((item) => {
                     const Icon = item.icon;
                     const isActive = activeTab === item.id;
@@ -2670,7 +2670,7 @@ export function MspConfigView() {
               }`}
             >
               <Compass className={`w-4 h-4 ${activeTab === 'navigation' ? 'text-amber-400' : 'text-amber-400 opacity-50'}`} />
-              <span className="text-sm font-medium">Navigation</span>
+              <span className="text-sm font-medium">导航</span>
             </button>
           )}
 
@@ -2685,7 +2685,7 @@ export function MspConfigView() {
               }`}
             >
               <PlaneTakeoff className={`w-4 h-4 ${activeTab === 'auto-launch' ? 'text-orange-400' : 'text-orange-400 opacity-50'}`} />
-              <span className="text-sm font-medium">Auto Launch</span>
+              <span className="text-sm font-medium">自动起飞</span>
             </button>
           )}
 
@@ -2700,7 +2700,7 @@ export function MspConfigView() {
               }`}
             >
               <Waves className={`w-4 h-4 ${activeTab === 'filters' ? 'text-purple-400' : 'text-purple-400 opacity-50'}`} />
-              <span className="text-sm font-medium">Filters</span>
+              <span className="text-sm font-medium">滤波器</span>
             </button>
           )}
 
@@ -2721,12 +2721,12 @@ export function MspConfigView() {
           {!isInav && (
             <button
               disabled
-              title="Coming Soon - Launch Control for race starts"
+              title="敬请期待 — 用于竞速起跑的起飞控制"
               className="px-3 py-2 rounded-lg flex items-center gap-2 text-content-tertiary cursor-not-allowed opacity-50"
             >
               <Rocket className="w-4 h-4 text-cyan-400 opacity-50" />
-              <span className="text-sm font-medium">Launch Control</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-raised text-content-secondary">Soon</span>
+              <span className="text-sm font-medium">起飞控制</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-raised text-content-secondary">即将推出</span>
             </button>
           )}
 
@@ -2740,7 +2740,7 @@ export function MspConfigView() {
             }`}
           >
             <Shield className={`w-4 h-4 ${activeTab === 'safety' ? 'text-red-400' : 'text-red-400 opacity-50'}`} />
-            <span className="text-sm font-medium">Safety</span>
+            <span className="text-sm font-medium">安全</span>
           </button>
 
           {/* Sensors */}
@@ -2753,7 +2753,7 @@ export function MspConfigView() {
             }`}
           >
             <Radio className={`w-4 h-4 ${activeTab === 'sensors' ? 'text-emerald-400' : 'text-emerald-400 opacity-50'}`} />
-            <span className="text-sm font-medium">Sensors</span>
+            <span className="text-sm font-medium">传感器</span>
           </button>
         </div>
       </div>
@@ -2770,12 +2770,12 @@ export function MspConfigView() {
       {rebootNeeded && !rebooting && (
         <div className="px-6 py-3 bg-amber-500/10 border-b border-amber-500/30 text-amber-300 text-sm flex items-center gap-2">
           <RotateCw className="w-4 h-4" />
-          <span>Settings changed that require a reboot to take effect.</span>
+          <span>设置已更改，需要重启才能生效。</span>
           <button
             onClick={handleReboot}
             className="ml-auto px-3 py-1 text-xs font-medium rounded bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/40 transition-colors"
           >
-            Reboot Now
+            立即重启
           </button>
         </div>
       )}

@@ -142,8 +142,8 @@ function DaylightBar({ d }: { d: DaylightWindow }) {
   return (
     <div className="relative h-2 rounded-full bg-surface-input overflow-hidden mt-1">
       <div className="absolute inset-y-0 bg-amber-400/50" style={{ left: `${left}%`, width: `${width}%` }} />
-      <div className="absolute inset-y-0 w-0.5 bg-content/70" style={{ left: `${pct(d.nowMin)}%` }} title="now" />
-      <div className="absolute inset-y-0 w-0.5 bg-sky-400" style={{ left: `${pct(d.endMin)}%` }} title="mission end" />
+      <div className="absolute inset-y-0 w-0.5 bg-content/70" style={{ left: `${pct(d.nowMin)}%` }} title="现在" />
+      <div className="absolute inset-y-0 w-0.5 bg-sky-400" style={{ left: `${pct(d.endMin)}%` }} title="任务结束" />
     </div>
   );
 }
@@ -241,9 +241,9 @@ export function FlightInfoPanel() {
     return (
       <div data-tour="flight-info-panel" className="h-full flex flex-col items-center justify-center text-center p-6 text-content-secondary bg-surface">
         <Plane className="w-10 h-10 mb-3 text-content-tertiary" />
-        <p className="text-sm font-medium mb-1 text-content">Aerial vehicles only</p>
+        <p className="text-sm font-medium mb-1 text-content">仅限飞行器</p>
         <p className="text-xs text-content-tertiary max-w-[14rem]">
-          The flight briefing (endurance, altitude, daylight) applies to copters, planes and VTOL. Switch the active vehicle to an aerial type to use it.
+          飞行简报(续航、高度、日照)适用于多旋翼、固定翼和 VTOL。请将当前机体切换为飞行器类型后使用。
         </p>
       </div>
     );
@@ -253,9 +253,9 @@ export function FlightInfoPanel() {
     return (
       <div data-tour="flight-info-panel" className="h-full flex flex-col items-center justify-center text-center p-6 text-content-secondary bg-surface">
         <Plane className="w-10 h-10 mb-3 text-content-tertiary" />
-        <p className="text-sm font-medium mb-1 text-content">No mission to brief</p>
+        <p className="text-sm font-medium mb-1 text-content">暂无可简报的任务</p>
         <p className="text-xs text-content-tertiary max-w-[14rem]">
-          Plan or load a mission to see flight time, distance, batteries and site weather.
+          规划或读取任务后可查看飞行时间、距离、电池和现场天气。
         </p>
       </div>
     );
@@ -267,20 +267,20 @@ export function FlightInfoPanel() {
   return (
     <div data-tour="flight-info-panel" className="h-full overflow-y-auto bg-surface p-2 space-y-2">
       {/* Endurance - the number a pilot opens this for. */}
-      <Section icon={<Clock className={ICON} />} title="Endurance">
+      <Section icon={<Clock className={ICON} />} title="续航">
         <Hero
           value={formatDurationSec(briefing.flightTimeSec)}
-          unit="flight time"
-          sub={`at ~${formatSpeedFromMetersPerSecond(cruiseSpeedMs, speedUnit)} cruise (${vehicleName})`}
+          unit="飞行时间"
+          sub={`约以 ${formatSpeedFromMetersPerSecond(cruiseSpeedMs, speedUnit)} 巡航(${vehicleName})`}
         />
         <Stat
-          label="Batteries"
-          value={briefing.batteryCount > 0 ? `${briefing.batteryCount}` : 'set vehicle'}
-          detail={briefing.enduranceSec > 0 ? `~${formatDurationSec(briefing.enduranceSec)} usable each` : undefined}
+          label="电池数"
+          value={briefing.batteryCount > 0 ? `${briefing.batteryCount}` : '请设置机体'}
+          detail={briefing.enduranceSec > 0 ? `每块可用约 ${formatDurationSec(briefing.enduranceSec)}` : undefined}
         />
         {briefing.reservePct !== null && (
           <MeterStat
-            label="Reserve (final pack)"
+            label="余量(最后一块)"
             value={`${Math.round(briefing.reservePct)}%`}
             pct={briefing.reservePct}
           />
@@ -288,40 +288,40 @@ export function FlightInfoPanel() {
       </Section>
 
       {/* Route */}
-      <Section icon={<Ruler className={ICON} />} title="Route">
-        <Stat label="Total distance" value={formatDistanceM(briefing.distanceM, distanceUnit)} />
+      <Section icon={<Ruler className={ICON} />} title="航线">
+        <Stat label="总距离" value={formatDistanceM(briefing.distanceM, distanceUnit)} />
         {homePosition && (
-          <Stat label="Max from home" value={formatDistanceM(briefing.maxFromHomeM, distanceUnit)} />
+          <Stat label="距家最远" value={formatDistanceM(briefing.maxFromHomeM, distanceUnit)} />
         )}
         <MeterStat
-          label="Max altitude"
+          label="最大高度"
           value={`${formatAltitudeM(briefing.maxAltM, altitudeUnit)} AGL`}
-          detail={`ceiling ${formatAltitudeM(briefing.ceilingM, altitudeUnit)}`}
+          detail={`升限 ${formatAltitudeM(briefing.ceilingM, altitudeUnit)}`}
           pct={altPct}
           tone={altPct > 100 ? 'bg-amber-500/80' : 'bg-blue-500/70'}
         />
         <Stat
-          label="Total climb"
+          label="总爬升"
           value={formatAltitudeM(briefing.totalClimbM, altitudeUnit)}
-          detail={`from ${formatAltitudeM(briefing.minAltM, altitudeUnit)} lowest`}
+          detail={`最低 ${formatAltitudeM(briefing.minAltM, altitudeUnit)}`}
         />
         <Stat
-          label="Waypoints"
+          label="航点数"
           value={briefing.waypointCount.toLocaleString()}
-          detail={briefing.waypointCount > FC_WAYPOINT_SOFT_LIMIT ? 'very large - split into sorties before upload' : undefined}
+          detail={briefing.waypointCount > FC_WAYPOINT_SOFT_LIMIT ? '规模过大 - 上传前请分割为多个架次' : undefined}
         />
       </Section>
 
       {/* Weather */}
       <Section
         icon={<Wind className={ICON} />}
-        title="Site weather"
+        title="现场天气"
         action={
           weather && (
             <button
               onClick={() => setRefreshTick((t) => t + 1)}
               className="p-1 text-content-secondary hover:text-content transition-colors"
-              title="Refresh forecast"
+              title="刷新天气预报"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${weatherLoading ? 'animate-spin' : ''}`} />
             </button>
@@ -329,58 +329,58 @@ export function FlightInfoPanel() {
         }
       >
         {weatherLoading && !weather ? (
-          <p className="text-xs text-content-tertiary">Fetching forecast...</p>
+          <p className="text-xs text-content-tertiary">正在获取天气预报...</p>
         ) : weather ? (
           <>
             <div className="flex items-center gap-3 py-1">
               <WindRose dirDeg={weather.windDirDeg} speedMs={weather.windSpeedMs} unit={windSpeedUnit} />
               <div className="min-w-0">
                 <div className="text-sm text-content">
-                  Wind from <span className="font-medium">{compassPoint(weather.windDirDeg)}</span>
+                  风来自 <span className="font-medium">{compassPoint(weather.windDirDeg)}</span>
                   <span className="text-content-secondary"> ({Math.round(weather.windDirDeg)}°)</span>
                 </div>
                 <div className="text-[11px] text-content-tertiary mt-0.5">
-                  gusting to {formatWindSpeedFromMetersPerSecond(weather.windGustMs, windSpeedUnit)}
-                  {cruiseSpeedMs > 0 && <> · {Math.round((weather.windSpeedMs / cruiseSpeedMs) * 100)}% of cruise</>}
+                  阵风 {formatWindSpeedFromMetersPerSecond(weather.windGustMs, windSpeedUnit)}
+                  {cruiseSpeedMs > 0 && <> · 相当于 {Math.round((weather.windSpeedMs / cruiseSpeedMs) * 100)}% 巡航速度</>}
                 </div>
               </div>
             </div>
             <div className="border-t border-subtle mt-1.5 pt-1.5">
-              <Stat label="Temperature" value={`${weather.tempC.toFixed(0)}°C`} />
-              <Stat label="Precipitation" value={`${weather.precipMm.toFixed(1)} mm`} />
+              <Stat label="温度" value={`${weather.tempC.toFixed(0)}°C`} />
+              <Stat label="降水" value={`${weather.precipMm.toFixed(1)} mm`} />
               {briefing.daylight ? (
                 <>
                   <Stat
-                    label="Daylight"
+                    label="日照"
                     value={`${clockFromMin(briefing.daylight.sunriseMin)} - ${clockFromMin(briefing.daylight.sunsetMin)}`}
                   />
                   <DaylightBar d={briefing.daylight} />
                   <div className="text-[10px] text-content-tertiary mt-1">
                     {briefing.daylight.marginMin >= 0
-                      ? `Ends ~${clockFromMin(briefing.daylight.endMin)} if launched now, ${formatDurationSec(briefing.daylight.marginMin * 60)} before sunset`
-                      : `Ends ~${clockFromMin(briefing.daylight.endMin)} if launched now, ${formatDurationSec(-briefing.daylight.marginMin * 60)} after sunset`}
+                      ? `现在起飞约 ${clockFromMin(briefing.daylight.endMin)} 结束,日落前 ${formatDurationSec(briefing.daylight.marginMin * 60)}`
+                      : `现在起飞约 ${clockFromMin(briefing.daylight.endMin)} 结束,日落后 ${formatDurationSec(-briefing.daylight.marginMin * 60)}`}
                   </div>
                 </>
               ) : weather.sunriseIso && weather.sunsetIso ? (
                 <Stat
-                  label="Daylight"
+                  label="日照"
                   value={`${weather.sunriseIso.slice(11, 16)} - ${weather.sunsetIso.slice(11, 16)}`}
                 />
               ) : null}
             </div>
           </>
         ) : (
-          <p className="text-xs text-content-tertiary">Weather unavailable for this site.</p>
+          <p className="text-xs text-content-tertiary">该站点无法获取天气。</p>
         )}
       </Section>
 
       {/* Survey quality (only when a survey is active) */}
       {survey && (
-        <Section icon={<Camera className={ICON} />} title="Survey">
-          <Stat label="Coverage" value={formatAreaFromSquareMeters(survey.areaM2, areaUnit)} />
-          <Stat label="GSD" value={survey.gsdCm > 0 ? `${survey.gsdCm.toFixed(1)} cm/px` : 'n/a'} />
-          <Stat label="Photos" value={survey.photoCount.toLocaleString()} />
-          <Stat label="Data" value={`~${survey.dataGb.toFixed(1)} GB`} detail="JPEG+RAW estimate" />
+        <Section icon={<Camera className={ICON} />} title="勘测">
+          <Stat label="覆盖面积" value={formatAreaFromSquareMeters(survey.areaM2, areaUnit)} />
+          <Stat label="GSD" value={survey.gsdCm > 0 ? `${survey.gsdCm.toFixed(1)} cm/px` : '不适用'} />
+          <Stat label="照片数" value={survey.photoCount.toLocaleString()} />
+          <Stat label="数据量" value={`~${survey.dataGb.toFixed(1)} GB`} detail="JPEG+RAW 估算" />
         </Section>
       )}
     </div>

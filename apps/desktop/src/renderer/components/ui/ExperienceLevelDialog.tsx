@@ -11,9 +11,9 @@ export function ExperienceLevelDialog({ onSelect }: ExperienceLevelDialogProps) 
       <div className="bg-surface-solid rounded-2xl border border-subtle w-full max-w-lg mx-4 shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="px-6 pt-6 pb-2 text-center">
-          <h2 className="text-lg font-semibold text-content">Welcome to ArduDeck</h2>
+          <h2 className="text-lg font-semibold text-content">欢迎使用 ArduDeck</h2>
           <p className="text-sm text-content-secondary mt-1">
-            Choose your experience level to tailor the interface
+            选择你的经验等级,以定制界面
           </p>
         </div>
 
@@ -27,9 +27,9 @@ export function ExperienceLevelDialog({ onSelect }: ExperienceLevelDialogProps) 
             <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center mb-4 group-hover:bg-blue-500/20 transition-colors">
               <BookOpen className="w-5 h-5 text-blue-400" />
             </div>
-            <div className="text-sm font-semibold text-content mb-1">Beginner</div>
+            <div className="text-sm font-semibold text-content mb-1">新手</div>
             <p className="text-xs text-content-secondary leading-relaxed">
-              Show tips, explanations, and guides throughout the interface to help you learn.
+              在界面各处显示提示、说明和指南,帮助你学习。
             </p>
           </button>
 
@@ -41,9 +41,9 @@ export function ExperienceLevelDialog({ onSelect }: ExperienceLevelDialogProps) 
             <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center mb-4 group-hover:bg-purple-500/20 transition-colors">
               <Zap className="w-5 h-5 text-purple-400" />
             </div>
-            <div className="text-sm font-semibold text-content mb-1">Advanced</div>
+            <div className="text-sm font-semibold text-content mb-1">高级</div>
             <p className="text-xs text-content-secondary leading-relaxed">
-              Clean interface with no hand-holding. Hide educational cards and inline tips.
+              界面简洁,不显示教学卡片和内联提示。
             </p>
           </button>
         </div>
@@ -51,7 +51,7 @@ export function ExperienceLevelDialog({ onSelect }: ExperienceLevelDialogProps) 
         {/* Footer hint */}
         <div className="px-6 pb-5 text-center">
           <p className="text-[11px] text-content-tertiary">
-            You can change this anytime in Settings
+            你可以随时在设置中更改
           </p>
         </div>
       </div>

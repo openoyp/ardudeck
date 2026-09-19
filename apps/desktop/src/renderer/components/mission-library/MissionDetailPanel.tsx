@@ -14,10 +14,10 @@ const STATUS_COLORS: Record<FlightStatus, string> = {
 };
 
 const STATUS_LABELS: Record<FlightStatus, string> = {
-  planned: 'Planned',
-  in_progress: 'In Progress',
-  completed: 'Completed',
-  aborted: 'Aborted',
+  planned: '已计划',
+  in_progress: '进行中',
+  completed: '已完成',
+  aborted: '已中止',
 };
 
 interface MissionDetailPanelProps {
@@ -120,7 +120,7 @@ export function MissionDetailPanel({ onLoadToEditor }: MissionDetailPanelProps) 
             <button
               onClick={handleStartEdit}
               className="p-1.5 rounded-md hover:bg-surface-raised text-content-secondary hover:text-content transition-colors"
-              title="Edit"
+              title="编辑"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -130,7 +130,7 @@ export function MissionDetailPanel({ onLoadToEditor }: MissionDetailPanelProps) 
           <button
             onClick={clearSelection}
             className="p-1.5 rounded-md hover:bg-surface-raised text-content-secondary hover:text-content transition-colors"
-            title="Close"
+            title="关闭"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -145,12 +145,12 @@ export function MissionDetailPanel({ onLoadToEditor }: MissionDetailPanelProps) 
           {/* Description */}
           {isEditing ? (
             <div>
-              <label className="block text-xs font-medium text-content-secondary mb-1">Description</label>
+              <label className="block text-xs font-medium text-content-secondary mb-1">描述</label>
               <textarea
                 value={editDescription}
                 onChange={e => setEditDescription(e.target.value)}
                 rows={3}
-                placeholder="Optional mission description..."
+                placeholder="任务描述(可选)..."
                 className="w-full px-2.5 py-1.5 bg-surface-input border border rounded-lg text-sm text-content placeholder-content-tertiary focus:outline-none focus:border-blue-500/50 resize-none"
               />
             </div>
@@ -161,19 +161,19 @@ export function MissionDetailPanel({ onLoadToEditor }: MissionDetailPanelProps) 
           {/* Metadata grid */}
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="bg-surface-raised rounded-lg px-3 py-2">
-              <span className="text-content-secondary block">Waypoints</span>
+              <span className="text-content-secondary block">航点数</span>
               <span className="text-content font-medium">{selectedMission.waypointCount}</span>
             </div>
             <div className="bg-surface-raised rounded-lg px-3 py-2">
-              <span className="text-content-secondary block">Distance</span>
+              <span className="text-content-secondary block">距离</span>
               <span className="text-content font-medium">{formatDistanceFromMeters(selectedMission.totalDistanceMeters, distanceUnit)}</span>
             </div>
             <div className="bg-surface-raised rounded-lg px-3 py-2">
-              <span className="text-content-secondary block">Vehicle</span>
-              <span className="text-content font-medium">{vehicle?.name ?? 'None'}</span>
+              <span className="text-content-secondary block">机体</span>
+              <span className="text-content font-medium">{vehicle?.name ?? '无'}</span>
             </div>
             <div className="bg-surface-raised rounded-lg px-3 py-2">
-              <span className="text-content-secondary block">Flights</span>
+              <span className="text-content-secondary block">飞行次数</span>
               <span className="text-content font-medium">{selectedMission.flightCount}</span>
             </div>
           </div>
@@ -181,11 +181,11 @@ export function MissionDetailPanel({ onLoadToEditor }: MissionDetailPanelProps) 
           {/* Tags */}
           {isEditing ? (
             <div>
-              <label className="block text-xs font-medium text-content-secondary mb-1">Tags</label>
+              <label className="block text-xs font-medium text-content-secondary mb-1">标签</label>
               <TagInput
                 tags={editTags}
                 onChange={setEditTags}
-                placeholder="survey, field-1, high-alt"
+                placeholder="勘测, 田地1, 高海拔"
                 suggestions={allTags}
               />
             </div>
@@ -205,8 +205,8 @@ export function MissionDetailPanel({ onLoadToEditor }: MissionDetailPanelProps) 
           {/* Dates */}
           {!isEditing && (
             <div className="text-[11px] text-content-secondary space-y-0.5">
-              <div>Created: {new Date(selectedMission.createdAt).toLocaleDateString()}</div>
-              <div>Updated: {new Date(selectedMission.updatedAt).toLocaleDateString()}</div>
+              <div>创建:{new Date(selectedMission.createdAt).toLocaleDateString()}</div>
+              <div>更新:{new Date(selectedMission.updatedAt).toLocaleDateString()}</div>
             </div>
           )}
 
@@ -223,13 +223,13 @@ export function MissionDetailPanel({ onLoadToEditor }: MissionDetailPanelProps) 
                       : 'bg-blue-600 hover:bg-blue-500 text-white'
                   }`}
                 >
-                  {saving ? 'Saving...' : 'Save Changes'}
+                  {saving ? '保存中...' : '保存修改'}
                 </button>
                 <button
                   onClick={handleCancelEdit}
                   className="px-3 py-1.5 text-xs font-medium bg-surface-raised hover:bg-surface-raised text-content rounded-lg transition-colors"
                 >
-                  Cancel
+                  取消
                 </button>
               </>
             ) : (
@@ -241,7 +241,7 @@ export function MissionDetailPanel({ onLoadToEditor }: MissionDetailPanelProps) 
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                   </svg>
-                  Load into Editor
+                  加载到编辑器
                 </button>
                 <button
                   onClick={handleStartEdit}
@@ -250,13 +250,13 @@ export function MissionDetailPanel({ onLoadToEditor }: MissionDetailPanelProps) 
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
-                  Edit
+                  编辑
                 </button>
                 <button
                   onClick={handleDuplicate}
                   className="px-3 py-1.5 text-xs font-medium bg-surface-raised hover:bg-surface-raised text-content rounded-lg transition-colors"
                 >
-                  Duplicate
+                  复制
                 </button>
                 <button
                   onClick={handleDelete}
@@ -266,7 +266,7 @@ export function MissionDetailPanel({ onLoadToEditor }: MissionDetailPanelProps) 
                       : 'bg-red-600/20 hover:bg-red-600/30 text-red-400'
                   }`}
                 >
-                  {confirmDelete ? 'Confirm Delete' : 'Delete'}
+                  {confirmDelete ? '确认删除' : '删除'}
                 </button>
               </>
             )}

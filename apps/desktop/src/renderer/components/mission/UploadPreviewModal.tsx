@@ -76,25 +76,25 @@ export function UploadPreviewModal({ open, onClose, onConfirm }: UploadPreviewMo
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="bg-surface-solid rounded-xl border border-subtle w-full max-w-lg mx-4 overflow-hidden shadow-2xl">
         <div className="px-6 py-4 border-b border-subtle">
-          <h2 className="text-lg font-semibold text-content">Upload to vehicle</h2>
+          <h2 className="text-lg font-semibold text-content">上传到无人机</h2>
           <p className="text-xs text-content-secondary mt-1">
-            This will replace the existing mission on the vehicle.
+            这将替换无人机上的现有任务。
           </p>
         </div>
 
         <div className="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
           {/* Top-line summary */}
           <div className="grid grid-cols-3 gap-3">
-            <Stat label="Waypoints" value={String(wpCount)} />
-            <Stat label="Distance" value={distanceLabel} />
-            <Stat label="ETA @ planned speed" value={`${etaMin} min`} />
+            <Stat label="航点" value={String(wpCount)} />
+            <Stat label="距离" value={distanceLabel} />
+            <Stat label="预计时间(按计划速度)" value={`${etaMin} 分钟`} />
           </div>
 
           {/* WP ceiling warning */}
           {summary.overCeiling && (
             <Warning>
-              {wpCount} waypoints exceeds the typical ArduPilot ceiling of{' '}
-              {DEFAULT_AP_MISSION_CEILING}. Deselect a group or split the mission.
+              {wpCount} 个航点超过 ArduPilot 典型上限{' '}
+              {DEFAULT_AP_MISSION_CEILING}。请取消选择某个分组或分割任务。
             </Warning>
           )}
 
@@ -102,16 +102,15 @@ export function UploadPreviewModal({ open, onClose, onConfirm }: UploadPreviewMo
           {summary.jumpIssues.length > 0 && (
             <Warning>
               {summary.jumpIssues.length}{' '}
-              {summary.jumpIssues.length === 1 ? 'DO_JUMP' : 'DO_JUMPs'} target a
-              waypoint that no longer exists:
+              个 DO_JUMP 跳转的目标航点已不存在:
               <ul className="list-disc list-inside mt-1 text-[11px] text-red-300">
                 {summary.jumpIssues.slice(0, 4).map((j, i) => (
                   <li key={i}>
-                    WP {j.jumpSeq + 1} jumps to WP {j.targetSeq + 1} (missing)
+                    第 {j.jumpSeq + 1} 个航点跳转到第 {j.targetSeq + 1} 个航点(已缺失)
                   </li>
                 ))}
                 {summary.jumpIssues.length > 4 && (
-                  <li>... and {summary.jumpIssues.length - 4} more</li>
+                  <li>...还有 {summary.jumpIssues.length - 4} 个</li>
                 )}
               </ul>
             </Warning>
@@ -119,7 +118,7 @@ export function UploadPreviewModal({ open, onClose, onConfirm }: UploadPreviewMo
 
           {/* Included groups */}
           {summary.includedGroups.length > 0 && (
-            <Section title="Included">
+            <Section title="已包含">
               {summary.includedGroups.map((g) => {
                 const count = missionItems.filter((it) => it.groupId === g.id).length;
                 return (
@@ -132,7 +131,7 @@ export function UploadPreviewModal({ open, onClose, onConfirm }: UploadPreviewMo
           {/* No groups but items exist (legacy, pre-migration) */}
           {groups.length === 0 && missionItems.length > 0 && (
             <p className="text-xs text-content-secondary italic">
-              Mission has no groups; all {missionItems.length} WPs will be uploaded.
+              任务没有分组;全部 {missionItems.length} 个航点将被上传。
             </p>
           )}
         </div>
@@ -142,7 +141,7 @@ export function UploadPreviewModal({ open, onClose, onConfirm }: UploadPreviewMo
             onClick={onClose}
             className="px-3 py-1.5 text-sm text-content-secondary hover:text-content rounded transition-colors"
           >
-            Cancel
+            取消
           </button>
           <button
             onClick={onConfirm}
@@ -154,13 +153,13 @@ export function UploadPreviewModal({ open, onClose, onConfirm }: UploadPreviewMo
             }`}
             title={
               wpCount === 0
-                ? 'No waypoints selected'
+                ? '未选择航点'
                 : blocked
-                ? 'Resolve warnings above before uploading'
-                : 'Upload to vehicle'
+                ? '请先解决上方警告再上传'
+                : '上传到无人机'
             }
           >
-            Upload {wpCount} {wpCount === 1 ? 'WP' : 'WPs'}
+            上传 {wpCount} 个航点
           </button>
         </div>
       </div>
@@ -207,7 +206,7 @@ function GroupRow({
       <span className="font-medium text-content truncate">{name}</span>
       <span className="text-[10px] uppercase text-content-tertiary">{kind}</span>
       <span className="ml-auto text-content-secondary">
-        {count} {count === 1 ? 'WP' : 'WPs'}
+        {count} 个航点
       </span>
     </div>
   );

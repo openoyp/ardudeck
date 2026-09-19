@@ -193,12 +193,12 @@ export function PrepareCalibrationStep() {
   if (!calibrationType || !calTypeInfo) {
     return (
       <div className="text-center py-8">
-        <p className="text-content-secondary">No calibration type selected.</p>
+        <p className="text-content-secondary">未选择校准类型。</p>
         <button
           onClick={() => setStep('select')}
           className="mt-3 px-4 py-2 bg-surface-raised hover:bg-surface-raised rounded-lg text-content transition-colors"
         >
-          Go Back
+          返回
         </button>
       </div>
     );
@@ -224,7 +224,7 @@ export function PrepareCalibrationStep() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-content">{calTypeInfo.name}</h3>
-                <p className="text-xs text-content-secondary">~{calTypeInfo.estimatedDuration}s duration</p>
+                <p className="text-xs text-content-secondary">约 {calTypeInfo.estimatedDuration}s</p>
               </div>
             </div>
 
@@ -234,7 +234,7 @@ export function PrepareCalibrationStep() {
                 theme.iconColor.replace('text-', 'bg-').replace('400', '500')
               } hover:brightness-110 text-white shadow-lg`}
             >
-              Start
+              开始
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
@@ -248,13 +248,13 @@ export function PrepareCalibrationStep() {
                 {/* Instructions */}
                 <div className="flex-1 space-y-2">
                   <InstructionItem theme={theme} num={1}>
-                    Place vehicle on a <strong className="text-content">level surface</strong>
+                    将飞行器放在<strong className="text-content">水平表面</strong>上
                   </InstructionItem>
                   <InstructionItem theme={theme} num={2}>
-                    Keep <strong className="text-content">completely still</strong> during calibration
+                    校准期间保持<strong className="text-content">完全静止</strong>
                   </InstructionItem>
                   <InstructionItem theme={theme} num={3}>
-                    Click Start when ready
+                    准备好后点击开始
                   </InstructionItem>
                 </div>
                 {/* Diagram */}
@@ -269,9 +269,9 @@ export function PrepareCalibrationStep() {
             {calibrationType === 'accel-6point' && (
               <>
                 <p className="text-content text-sm">
-                  Place vehicle in <strong className="text-content">6 positions</strong> - {isPx4
-                    ? 'each side is detected and captured automatically.'
-                    : "you'll be guided step by step."}
+                  将飞行器放置在 <strong className="text-content">6 个位置</strong> — {isPx4
+                    ? '每一面都会被自动检测并采集。'
+                    : '系统将逐步引导你操作。'}
                 </p>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                   {ACCEL_6POINT_POSITIONS.map((pos, index) => (
@@ -285,8 +285,8 @@ export function PrepareCalibrationStep() {
                 </div>
                 <WarningBox>
                   {isPx4
-                    ? <>Hold each position <strong className="text-content">steady</strong> until the vehicle captures it.</>
-                    : <>Hold each position <strong className="text-content">steady</strong>, then confirm with the button.</>}
+                    ? <>每个位置保持<strong className="text-content">稳定</strong>，直到系统采集完成。</>
+                    : <>每个位置保持<strong className="text-content">稳定</strong>，然后点击按钮确认。</>}
                 </WarningBox>
               </>
             )}
@@ -295,21 +295,21 @@ export function PrepareCalibrationStep() {
               <>
                 <div className="grid sm:grid-cols-3 gap-2">
                   <InstructionItem theme={theme} num={1}>
-                    Move away from <strong className="text-content">metal/electronics</strong>
+                    远离<strong className="text-content">金属/电子设备</strong>
                   </InstructionItem>
                   <InstructionItem theme={theme} num={2}>
                     {isPx4
-                      ? <>Hold on a side, <strong className="text-content">rotate when prompted</strong></>
-                      : <><strong className="text-content">Rotate continuously</strong> in all directions</>}
+                      ? <>保持一面朝下，<strong className="text-content">按提示旋转</strong></>
+                      : <>向各个方向<strong className="text-content">持续旋转</strong></>}
                   </InstructionItem>
                   <InstructionItem theme={theme} num={3}>
                     {isPx4
-                      ? <>Repeat for all <strong className="text-content">6 sides</strong></>
-                      : <>Continue until <strong className="text-content">every compass reaches 100%</strong></>}
+                      ? <>对所有 <strong className="text-content">6 个面</strong>重复操作</>
+                      : <>继续直到<strong className="text-content">每个罗盘都达到 100%</strong></>}
                   </InstructionItem>
                 </div>
                 <WarningBox>
-                  External compass must be firmly mounted.
+                  外接罗盘必须牢固安装。
                 </WarningBox>
               </>
             )}
@@ -318,17 +318,17 @@ export function PrepareCalibrationStep() {
               <>
                 <div className="grid sm:grid-cols-3 gap-2">
                   <InstructionItem theme={theme} num={1}>
-                    Place on <strong className="text-content">stable surface</strong>
+                    放在<strong className="text-content">稳定表面</strong>上
                   </InstructionItem>
                   <InstructionItem theme={theme} num={2}>
-                    Keep <strong className="text-content">completely still</strong>
+                    保持<strong className="text-content">完全静止</strong>
                   </InstructionItem>
                   <InstructionItem theme={theme} num={3}>
-                    Auto-completes in seconds
+                    数秒内自动完成
                   </InstructionItem>
                 </div>
                 <InfoBox theme={theme}>
-                  Gyro calibration runs automatically on boot. Manual calibration only needed for drift issues.
+                  陀螺仪校准会在开机时自动运行。仅在出现漂移问题时需要手动校准。
                 </InfoBox>
               </>
             )}
@@ -336,13 +336,13 @@ export function PrepareCalibrationStep() {
             {calibrationType === 'opflow' && (
               <div className="grid sm:grid-cols-3 gap-2">
                 <InstructionItem theme={theme} num={1}>
-                  Hold <strong className="text-content">1-2m above textured surface</strong>
+                  悬停在<strong className="text-content">有纹理的表面上方 1-2 米</strong>
                 </InstructionItem>
                 <InstructionItem theme={theme} num={2}>
-                  Surface needs <strong className="text-content">visible patterns</strong>
+                  表面需要有<strong className="text-content">可见图案</strong>
                 </InstructionItem>
                 <InstructionItem theme={theme} num={3}>
-                  Keep still for ~{countdown}s
+                  保持静止约 {countdown} 秒
                 </InstructionItem>
               </div>
             )}
@@ -366,7 +366,7 @@ export function PrepareCalibrationStep() {
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Change calibration type
+          更换校准类型
         </button>
       </div>
     </div>

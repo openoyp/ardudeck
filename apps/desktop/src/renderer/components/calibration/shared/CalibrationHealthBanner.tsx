@@ -42,27 +42,27 @@ function assess(record: CalibrationRecordIpc): { tone: Tone; headline: string; d
   if (record.persistence && record.persistence.state !== 'verified') {
     return {
       tone: 'danger',
-      headline: `${name} calibration did not survive the reboot`,
-      detail: `${record.persistence.summary} Do not fly on this calibration. Run it again.`,
+      headline: `${name}校准未在重启后保留`,
+      detail: `${record.persistence.summary} 请勿使用此校准飞行，请重新校准。`,
     };
   }
   if (!record.persistence) {
     return {
       tone: 'warn',
-      headline: `${name} calibration not yet confirmed`,
-      detail: 'Reboot the flight controller and reconnect. ArduDeck will read the values back and confirm they stuck.',
+      headline: `${name}校准尚未确认`,
+      detail: '请重启飞行控制器并重新连接。ArduDeck 会回读数值并确认已生效。',
     };
   }
   if (record.verdict === 'bad' || record.verdict === 'marginal') {
     return {
       tone: record.verdict === 'bad' ? 'danger' : 'warn',
-      headline: `${name} calibration is on the vehicle, but weak`,
+      headline: `${name}校准已在飞行器上，但质量偏弱`,
       detail: record.summary,
     };
   }
   return {
     tone: 'good',
-    headline: `${name} calibration confirmed on the vehicle`,
+    headline: `${name}校准已在飞行器上确认`,
     detail: record.summary,
   };
 }

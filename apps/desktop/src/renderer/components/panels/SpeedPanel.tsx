@@ -11,10 +11,10 @@ export function SpeedPanel() {
   return (
     <PanelContainer>
       <div className="space-y-1">
-        <StatRow label="Ground" value={formatNumber(speedValueFromMetersPerSecond(vfrHud.groundspeed, speedUnit), 1)} unit={speedLabel} highlight />
-        <StatRow label="Air" value={formatNumber(speedValueFromMetersPerSecond(vfrHud.airspeed, speedUnit), 1)} unit={speedLabel} />
-        <StatRow label="Heading" value={formatNumber(vfrHud.heading, 0)} unit="°" />
-        <StatRow label="Throttle" value={vfrHud.throttle} unit="%" />
+        <StatRow label="地速" value={formatNumber(speedValueFromMetersPerSecond(vfrHud.groundspeed, speedUnit), 1)} unit={speedLabel} highlight />
+        <StatRow label="空速" value={formatNumber(speedValueFromMetersPerSecond(vfrHud.airspeed, speedUnit), 1)} unit={speedLabel} />
+        <StatRow label="航向" value={formatNumber(vfrHud.heading, 0)} unit="°" />
+        <StatRow label="油门" value={vfrHud.throttle} unit="%" />
       </div>
     </PanelContainer>
   );

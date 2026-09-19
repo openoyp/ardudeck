@@ -283,7 +283,7 @@ export function SelectCalibrationStep() {
             <AlertTriangle className="mt-0.5 w-5 h-5 shrink-0 text-amber-400" />
             <div>
               <div className="text-sm font-medium text-amber-300">
-                This board has no 3D accelerometer calibration
+                此飞控没有 3D 加速度计校准
               </div>
               <p className="mt-0.5 text-xs text-amber-200/90">{accelNote}</p>
             </div>
@@ -293,10 +293,9 @@ export function SelectCalibrationStep() {
 
       {/* Introduction */}
       <div className="text-center max-w-2xl mx-auto">
-        <h3 className="text-xl font-semibold text-content mb-2">Select Calibration Type</h3>
+        <h3 className="text-xl font-semibold text-content mb-2">选择校准类型</h3>
         <p className="text-content-secondary">
-          Choose the sensor you want to calibrate. Some calibrations require specific sensors
-          to be present on your flight controller.
+          选择要校准的传感器。部分校准要求飞行控制器上装有特定传感器。
         </p>
       </div>
 
@@ -359,14 +358,14 @@ export function SelectCalibrationStep() {
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                         </svg>
-                        OK
+                        正常
                       </div>
                     ) : calibrationNeeded ? (
                       <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-medium">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
-                        Needed
+                        需要校准
                       </div>
                     ) : null}
                   </div>
@@ -391,7 +390,7 @@ export function SelectCalibrationStep() {
                   isAvailable ? 'text-content-secondary' : 'text-content-tertiary'
                 }`}>
                   {noCompass
-                    ? 'No magnetometer detected on this flight controller. Add an external compass on I2C to enable it. Not required for Stabilize.'
+                    ? '此飞行控制器未检测到磁力计。请在 I2C 上外接罗盘以启用。姿态模式（Stabilize）无需罗盘。'
                     : calType.description}
                 </p>
 
@@ -410,7 +409,7 @@ export function SelectCalibrationStep() {
                 {/* Unavailable indicator */}
                 {!isAvailable && (
                   <div className="absolute top-4 right-4 px-2 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-medium">
-                    {noCompass ? 'No compass detected' : 'Sensor Missing'}
+                    {noCompass ? '未检测到罗盘' : '缺少传感器'}
                   </div>
                 )}
               </button>
@@ -430,16 +429,16 @@ export function SelectCalibrationStep() {
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-semibold text-content">Large Vehicle MagCal</h4>
+              <h4 className="text-sm font-semibold text-content">大型飞行器罗盘校准</h4>
               <p className="text-xs text-content-secondary mt-0.5 leading-relaxed">
-                Single-shot compass cal for aircraft too large to rotate. Requires GPS lock and a known true heading.
+                适用于太大无法旋转的飞行器的单次罗盘校准。需要 GPS 定位和已知的真航向。
               </p>
             </div>
             <button
               onClick={() => setShowLargeVehicleMagCal(true)}
               className="px-3 py-1.5 rounded-lg text-xs font-medium text-amber-300 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-400/60 transition-colors shrink-0"
             >
-              Run
+              运行
             </button>
           </div>
 
@@ -451,17 +450,16 @@ export function SelectCalibrationStep() {
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-semibold text-content">Compass/Motor Calibration</h4>
+              <h4 className="text-sm font-semibold text-content">罗盘/电机干扰校准</h4>
               <p className="text-xs text-content-secondary mt-0.5 leading-relaxed">
-                Measures compass interference from the motors under load and writes COMPASS_MOT
-                compensation. Copter only. Motors spin, secure the vehicle first.
+                测量负载下电机对罗盘的干扰并写入 COMPASS_MOT 补偿。仅限多旋翼。电机将旋转，请先固定飞行器。
               </p>
             </div>
             <button
               onClick={() => setShowCompassMot(true)}
               className="px-3 py-1.5 rounded-lg text-xs font-medium text-orange-300 bg-orange-500/10 border border-orange-500/30 hover:bg-orange-500/20 hover:border-orange-400/60 transition-colors shrink-0"
             >
-              Run
+              运行
             </button>
           </div>
 
@@ -473,16 +471,16 @@ export function SelectCalibrationStep() {
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-semibold text-content">Load calibration from file</h4>
+              <h4 className="text-sm font-semibold text-content">从文件加载校准</h4>
               <p className="text-xs text-content-secondary mt-0.5 leading-relaxed">
-                Restore ACC / MAG calibration from a .param file. The source board's sensor IDs are verified against this FC before writing.
+                从 .param 文件恢复加速度计/罗盘校准。写入前会核对源飞控的传感器 ID 与本机是否一致。
               </p>
             </div>
             <button
               onClick={() => setShowLoadCalFromFile(true)}
               className="px-3 py-1.5 rounded-lg text-xs font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 hover:border-cyan-400/60 transition-colors shrink-0"
             >
-              Open
+              打开
             </button>
           </div>
         </div>
@@ -491,8 +489,8 @@ export function SelectCalibrationStep() {
       {/* Help text */}
       <div className="text-center text-xs text-content-secondary mt-6">
         <p>
-          Ensure your vehicle is disarmed and in a safe location before calibrating.
-          {protocol === 'msp' && ' For best results, disconnect motors.'}
+          校准前请确保飞行器已上锁且处于安全位置。
+          {protocol === 'msp' && ' 为获得最佳效果，请断开电机。'}
         </p>
       </div>
 

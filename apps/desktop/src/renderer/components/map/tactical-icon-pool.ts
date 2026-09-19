@@ -47,14 +47,14 @@ export const TACTICAL_ICON_POOL: Record<TacticalVehicleClass, TacticalIconDef> =
       'M14 14m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0',
     ].join(''),
     strokeOnly: true,
-    label: 'Multirotor',
-    defaultDesignation: 'QUAD',
+    label: '多旋翼',
+    defaultDesignation: '四旋翼',
   },
   plane: {
     // Delta/chevron with swept wings - classic fixed-wing strategic icon
     svgPath: 'M14 3L4 23L14 17L24 23Z',
-    label: 'Fixed Wing',
-    defaultDesignation: 'FW',
+    label: '固定翼',
+    defaultDesignation: '固定翼',
   },
   vtol: {
     // Chevron body with small rotor dots at wingtips
@@ -63,37 +63,37 @@ export const TACTICAL_ICON_POOL: Record<TacticalVehicleClass, TacticalIconDef> =
       'M5 21m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0',
       'M23 21m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0',
     ].join(''),
-    label: 'VTOL',
-    defaultDesignation: 'VTOL',
+    label: '垂直起降',
+    defaultDesignation: '垂直起降',
   },
   rover: {
     // Rounded rectangle with forward arrow notch - ground unit
     svgPath: 'M8 5L14 2L20 5L20 25L8 25Z',
-    label: 'Ground Rover',
-    defaultDesignation: 'ROV',
+    label: '地面车',
+    defaultDesignation: '地面车',
   },
   boat: {
     // Pointed hull shape - naval surface vessel
     svgPath: 'M14 3L6 14L8 25L20 25L22 14Z',
-    label: 'Surface Boat',
-    defaultDesignation: 'BOAT',
+    label: '水面艇',
+    defaultDesignation: '船艇',
   },
   sub: {
     // Oval hull with periscope tick at top
     svgPath: 'M14 2L14 6M9 7Q4 14 9 23L19 23Q24 14 19 7Z',
-    label: 'Submarine',
-    defaultDesignation: 'SUB',
+    label: '潜航器',
+    defaultDesignation: '潜航器',
   },
   antenna: {
     // Diamond - static, no heading rotation
     svgPath: 'M14 3L25 14L14 25L3 14Z',
-    label: 'Antenna Tracker',
-    defaultDesignation: 'ANT',
+    label: '天线跟踪',
+    defaultDesignation: '天线',
   },
   unknown: {
     // Circle
     svgPath: 'M14 14m-10 0a10 10 0 1 0 20 0a10 10 0 1 0-20 0',
-    label: 'Unknown',
+    label: '未知',
     defaultDesignation: '???',
   },
 };

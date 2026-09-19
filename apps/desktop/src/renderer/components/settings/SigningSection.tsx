@@ -53,31 +53,31 @@ export function SigningSection() {
 
   const handleSetKey = async () => {
     if (!passphrase.trim()) {
-      setLocalError('Enter a passphrase');
+      setLocalError('请输入口令');
       return;
     }
     setLocalError(null);
     const ok = await setKey(passphrase.trim());
     if (ok) {
       setPassphrase('');
-      setSuccessMsg('Signing key saved');
+      setSuccessMsg('签名密钥已保存');
     }
   };
 
   const handleSendToFc = async () => {
     setLocalError(null);
     const ok = await sendToFc();
-    if (ok) setSuccessMsg('Key sent to FC and signing enabled');
+    if (ok) setSuccessMsg('密钥已发送到 FC 并启用签名');
   };
 
   const handleToggleSigning = async () => {
     setLocalError(null);
     if (enabled) {
       await disable();
-      setSuccessMsg('Signing paused');
+      setSuccessMsg('签名已暂停');
     } else {
       const ok = await enable();
-      if (ok) setSuccessMsg('Signing resumed');
+      if (ok) setSuccessMsg('签名已恢复');
     }
   };
 
@@ -86,7 +86,7 @@ export function SigningSection() {
     setConfirmDisable(false);
     const result = await removeKey();
     setPassphrase('');
-    setSuccessMsg('Signing disabled on FC and key removed');
+    setSuccessMsg('已在 FC 上禁用签名并移除本地密钥');
   };
 
   const fullyConfigured = hasKey && sentToFc;
@@ -101,31 +101,31 @@ export function SigningSection() {
           </svg>
         </div>
         <div>
-          <h3 className="text-sm font-medium text-content">MAVLink Signing</h3>
+          <h3 className="text-sm font-medium text-content">MAVLink 签名</h3>
           <p className="text-xs text-content-secondary">
-            Prevent unauthorized access to your vehicle
+            防止未经授权访问你的飞行器
           </p>
         </div>
         <div className="ml-auto">
           {isV1Only ? (
             <span className="text-[10px] font-medium text-content-secondary bg-content-secondary/10 px-2 py-1 rounded-full">
-              Unavailable
+              不可用
             </span>
           ) : fullyConfigured && enabled ? (
             <span className="text-[10px] font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-full">
-              Active
+              已启用
             </span>
           ) : fullyConfigured ? (
             <span className="text-[10px] font-medium text-amber-400 bg-amber-400/10 px-2 py-1 rounded-full">
-              Paused
+              已暂停
             </span>
           ) : hasKey ? (
             <span className="text-[10px] font-medium text-amber-400 bg-amber-400/10 px-2 py-1 rounded-full">
-              Key Set
+              已设置密钥
             </span>
           ) : (
             <span className="text-[10px] font-medium text-content-secondary bg-content-secondary/10 px-2 py-1 rounded-full">
-              Not Configured
+              未配置
             </span>
           )}
         </div>
@@ -134,8 +134,7 @@ export function SigningSection() {
       {isV1Only && (
         <div className="rounded-lg border border-subtle bg-surface px-3 py-2.5">
           <p className="text-xs text-content-secondary">
-            This board communicates using MAVLink v1 which does not support packet signing.
-            Signing requires a MAVLink v2 capable flight controller.
+            此板卡使用 MAVLink v1 通信，不支持数据包签名。签名需要支持 MAVLink v2 的飞控。
           </p>
         </div>
       )}
@@ -143,10 +142,10 @@ export function SigningSection() {
       {/* Key mismatch warning */}
       {!isV1Only && keyMismatch && (
         <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2.5">
-          <p className="text-xs text-red-400 font-medium mb-1">Signing key mismatch</p>
+          <p className="text-xs text-red-400 font-medium mb-1">签名密钥不匹配</p>
           <p className="text-xs text-content-secondary">
-            Your signing key doesn't match the vehicle/proxy key. Paste the base64 key the vehicle was
-            set up with, or enter the same passphrase used on the proxy.
+            你的签名密钥与飞行器/代理的密钥不匹配。请粘贴飞行器初始设置时使用的 base64 密钥，
+            或输入与代理相同的口令。
           </p>
         </div>
       )}
@@ -155,9 +154,9 @@ export function SigningSection() {
       {!isV1Only && isConnected && (connectionState.connectionType === 'tcp' || connectionState.connectionType === 'udp') && (
         <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 px-3 py-2.5">
           <p className="text-xs text-content-secondary">
-            Connected over {connectionState.connectionType === 'tcp' ? 'TCP' : 'UDP'}.
-            If using a proxy (UDPProxy/mavproxy), enter the same passphrase or paste its base64 key.
-            All saved keys are tried automatically on connect.
+            当前通过 {connectionState.connectionType === 'tcp' ? 'TCP' : 'UDP'} 连接。
+            如果使用了代理（UDPProxy/mavproxy），请输入相同口令或粘贴其 base64 密钥。
+            连接时会自动尝试所有已保存的密钥。
           </p>
         </div>
       )}
@@ -169,12 +168,12 @@ export function SigningSection() {
         <div className={`rounded-lg border p-3 ${hasKey ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-subtle bg-surface'}`}>
           <div className="flex items-center gap-2.5 mb-2">
             <StepIndicator step={1} done={hasKey} active={!hasKey} />
-            <span className="text-xs font-medium text-content">Set signing passphrase</span>
+            <span className="text-xs font-medium text-content">设置签名口令</span>
           </div>
           <div className="ml-7">
             {hasKey && keyBase64 && (
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] text-content-secondary">Key:</span>
+                <span className="text-[10px] text-content-secondary">密钥：</span>
                 <code className="text-[10px] font-mono text-content-secondary bg-surface-raised px-1.5 py-0.5 rounded max-w-[220px] truncate" title={keyBase64}>
                   {keyBase64}
                 </code>
@@ -186,7 +185,7 @@ export function SigningSection() {
                     setTimeout(() => setKeyCopied(false), 2000);
                   }}
                   className="text-[10px] text-content-secondary hover:text-content transition-colors shrink-0"
-                  title="Copy key (Base64 - same format as Mission Planner)"
+                  title="复制密钥（Base64 — 与 Mission Planner 格式相同）"
                 >
                   {keyCopied ? (
                     <svg className="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -202,8 +201,8 @@ export function SigningSection() {
             )}
             <p className="text-xs text-content-secondary mb-2">
               {hasKey
-                ? 'Add another passphrase, base64, or hex key.'
-                : 'Enter a passphrase, or paste a base64/hex key from another GCS.'}
+                ? '添加其他口令、base64 或十六进制密钥。'
+                : '输入口令，或粘贴来自其他地面站的 base64 / 十六进制密钥。'}
             </p>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -212,7 +211,7 @@ export function SigningSection() {
                   value={passphrase}
                   onChange={(e) => setPassphrase(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleSetKey(); }}
-                  placeholder={hasKey ? 'Passphrase, base64, or hex key...' : 'Passphrase, base64, or hex key...'}
+                  placeholder={hasKey ? '口令、base64 或十六进制密钥...' : '口令、base64 或十六进制密钥...'}
                   className="w-full bg-surface-input border border-border rounded-lg px-3 py-1.5 text-sm text-content placeholder-content-tertiary focus:outline-none focus:border-amber-500/50"
                   disabled={loading}
                 />
@@ -238,7 +237,7 @@ export function SigningSection() {
                 disabled={loading || !passphrase.trim()}
                 className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 disabled:bg-surface-raised disabled:text-content-secondary text-white text-xs rounded-lg transition-colors"
               >
-                {hasKey ? 'Add Key' : 'Set Key'}
+                {hasKey ? '添加密钥' : '设置密钥'}
               </button>
             </div>
           </div>
@@ -251,7 +250,7 @@ export function SigningSection() {
               <svg className="w-3.5 h-3.5 text-content-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
               </svg>
-              <span className="text-[11px] text-content-secondary">{savedKeys.length} saved keys (auto-tried on connect)</span>
+              <span className="text-[11px] text-content-secondary">{savedKeys.length} 个已保存密钥（连接时自动尝试）</span>
             </div>
             <div className="space-y-1">
               {savedKeys.map((k) => {
@@ -267,7 +266,7 @@ export function SigningSection() {
                     {k.systemIds.length > 0 && (
                       <span className="text-[9px] text-content-tertiary">sysid {k.systemIds.join(',')}</span>
                     )}
-                    {isActive && <span className="text-[9px] text-emerald-500">active</span>}
+                    {isActive && <span className="text-[9px] text-emerald-500">生效中</span>}
                   </div>
                 );
               })}
@@ -280,26 +279,26 @@ export function SigningSection() {
         <div className={`rounded-lg border p-3 ${sentToFc ? 'border-emerald-500/20 bg-emerald-500/5' : !hasKey ? 'border-subtle bg-surface opacity-40' : 'border-subtle bg-surface'}`}>
           <div className="flex items-center gap-2.5">
             <StepIndicator step={2} done={sentToFc} active={hasKey && !sentToFc} />
-            <span className="text-xs font-medium text-content">Activate on flight controller</span>
+            <span className="text-xs font-medium text-content">在飞控上启用</span>
             {hasKey && (
               <button
                 onClick={handleSendToFc}
                 disabled={loading || !hasKey}
                 className="ml-auto px-3 py-1 bg-blue-600 hover:bg-blue-500 disabled:bg-surface-raised disabled:text-content-secondary text-white text-[11px] rounded-lg transition-colors"
               >
-                {sentToFc ? 'Re-send' : 'Send to FC'}
+                {sentToFc ? '重新发送' : '发送到 FC'}
               </button>
             )}
           </div>
           <div className="ml-7 mt-1">
             <p className="text-xs text-content-secondary">
               {sentToFc
-                ? 'Both GCS and flight controller share the signing key. Signing is active.'
-                : 'Sends the key to the FC and enables signing. Both sides must share the same key.'}
+                ? '地面站与飞控已共享签名密钥，签名已生效。'
+                : '将密钥发送到飞控并启用签名。双方必须使用相同密钥。'}
             </p>
             {(connectionState.connectionType === 'tcp' || connectionState.connectionType === 'udp') && (
               <p className="text-[10px] text-content-tertiary mt-0.5">
-                Sends your key to the FC/proxy. If the proxy rejects it, paste the proxy's key instead.
+                将你的密钥发送到飞控/代理。如果代理拒绝该密钥，请改为粘贴代理的密钥。
               </p>
             )}
           </div>
@@ -313,9 +312,9 @@ export function SigningSection() {
           {/* Pause/resume toggle */}
           <div className="flex items-center justify-between rounded-lg border border-subtle bg-surface px-3 py-2.5">
             <div>
-              <span className="text-xs font-medium text-content">Packet signing</span>
+              <span className="text-xs font-medium text-content">数据包签名</span>
               <p className="text-[10px] text-content-secondary mt-0.5">
-                {enabled ? 'All outgoing packets are signed with SHA-256' : 'Signing is paused. Outgoing packets are unsigned.'}
+                {enabled ? '所有发出数据包均使用 SHA-256 签名' : '签名已暂停，发出的数据包未签名。'}
               </p>
             </div>
             <button
@@ -332,8 +331,8 @@ export function SigningSection() {
             <div className={`w-2 h-2 rounded-full ${connectionState.fcSigning ? 'bg-emerald-400' : 'bg-surface-raised'}`} />
             <span className="text-[10px] text-content-secondary">
               {connectionState.fcSigning
-                ? 'Vehicle is sending signed packets'
-                : 'Waiting for signed packets from vehicle...'}
+                ? '飞行器正在发送已签名的数据包'
+                : '正在等待飞行器的已签名数据包...'}
             </span>
           </div>
 
@@ -341,8 +340,7 @@ export function SigningSection() {
           {confirmDisable ? (
             <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
               <p className="text-xs text-content mb-2">
-                This will disable signing on the flight controller and remove your local key.
-                Any GCS will be able to connect without a key.
+                这将在飞控上禁用签名并移除本地密钥。任何地面站都将可以无需密钥连接。
               </p>
               <div className="flex gap-2">
                 <button
@@ -350,13 +348,13 @@ export function SigningSection() {
                   disabled={loading}
                   className="px-3 py-1.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-xs rounded-lg transition-colors"
                 >
-                  Confirm Disable
+                  确认禁用
                 </button>
                 <button
                   onClick={() => setConfirmDisable(false)}
                   className="px-3 py-1.5 bg-surface-raised hover:bg-surface-raised text-content text-xs rounded-lg transition-colors"
                 >
-                  Cancel
+                  取消
                 </button>
               </div>
             </div>
@@ -366,7 +364,7 @@ export function SigningSection() {
               disabled={loading}
               className="w-full px-3 py-2 rounded-lg border border-subtle bg-surface text-xs text-content-secondary hover:text-red-400 hover:border-red-500/30 transition-colors disabled:opacity-50"
             >
-              Disable signing and remove key
+              禁用签名并移除密钥
             </button>
           )}
         </div>

@@ -61,7 +61,7 @@ export function RadioSdView() {
     setProgress(null);
     setError(null);
     const result = await window.electronAPI.edgetxInstall(card.volumePath, pkg.id, variantId);
-    if (!result.success) setError(result.error ?? 'Install failed');
+    if (!result.success) setError(result.error ?? '安装失败');
     setScreens(result.screens ?? null);
     setBusyPackageId(null);
     setProgress(null);
@@ -73,7 +73,7 @@ export function RadioSdView() {
     setBusyPackageId(pkg.id);
     setError(null);
     const result = await window.electronAPI.edgetxRemove(card.volumePath, pkg.id);
-    if (!result.success) setError(result.error ?? 'Remove failed');
+    if (!result.success) setError(result.error ?? '移除失败');
     setBusyPackageId(null);
     await rescan();
   };
@@ -84,23 +84,23 @@ export function RadioSdView() {
         {/* Detected radio card */}
         <div className="bg-surface-raised border border-subtle rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-content">Radio SD Card</h3>
+            <h3 className="text-sm font-medium text-content">遥控器 SD 卡</h3>
             <button
               onClick={rescan}
               disabled={isScanning}
               className="px-2.5 py-1 text-xs text-content-secondary hover:text-content bg-surface-input hover:bg-surface-raised border border-subtle rounded transition-colors disabled:opacity-50"
             >
-              {isScanning ? 'Scanning…' : 'Rescan'}
+              {isScanning ? '扫描中…' : '重新扫描'}
             </button>
           </div>
 
           {!card && (
             <div className="text-sm text-content-secondary space-y-2">
-              <p>No EdgeTX SD card detected.</p>
+              <p>未检测到 EdgeTX SD 卡。</p>
               <ol className="list-decimal list-inside space-y-1 text-xs">
-                <li>Power on the radio and connect it via USB</li>
-                <li>Choose <span className="text-content">USB Storage (SD)</span> on the radio screen</li>
-                <li>Click Rescan</li>
+                <li>打开遥控器电源并通过 USB 连接</li>
+                <li>在遥控器屏幕上选择 <span className="text-content">USB Storage (SD)</span></li>
+                <li>点击重新扫描</li>
               </ol>
             </div>
           )}
@@ -124,22 +124,22 @@ export function RadioSdView() {
                   {card.radioLabel && <span className="ml-2 text-xs text-content-secondary">{card.volumeName}</span>}
                 </span>
                 <span className="text-content-secondary text-xs">
-                  {card.firmwareVersion ? `EdgeTX ${card.firmwareVersion}` : card.sdCardVersion ? `EdgeTX SD ${card.sdCardVersion}` : 'version unknown'}
+                  {card.firmwareVersion ? `EdgeTX ${card.firmwareVersion}` : card.sdCardVersion ? `EdgeTX SD ${card.sdCardVersion}` : '版本未知'}
                   {' · '}
-                  {(card.freeBytes / 1e6).toFixed(0)} MB free
+                  剩余 {(card.freeBytes / 1e6).toFixed(0)} MB
                 </span>
               </div>
               {card.firmwareVersion && card.sdCardVersion
                 && card.firmwareVersion.slice(0, 4) !== card.sdCardVersion.slice(0, 4) && (
                 <p className="text-[11px] text-amber-400">
-                  SD card contents are from EdgeTX {card.sdCardVersion} but the radio runs {card.firmwareVersion}.
-                  Update the card from the EdgeTX sdcard release before relying on sounds or themes.
+                  SD 卡内容来自 EdgeTX {card.sdCardVersion},但遥控器运行的是 {card.firmwareVersion}。
+                  在依赖声音或主题之前,请先从 EdgeTX sdcard 发行版更新卡内内容。
                 </p>
               )}
               <label className="block">
                 <span className="text-xs text-content-secondary">
-                  Radio screen
-                  {suggestedVariantId && !variantTouched && ' · detected from the card'}
+                  遥控器屏幕
+                  {suggestedVariantId && !variantTouched && ' · 从卡中检测'}
                 </span>
                 <select
                   value={variantId}
@@ -191,19 +191,19 @@ export function RadioSdView() {
                       onClick={() => handleInstall(pkg)}
                       disabled={!card || busy || !variantSupported}
                       data-tip={!variantSupported
-                        ? 'Not available for the selected radio screen'
-                        : record ? 'Reinstall or update to the latest release' : 'Fetch the package and copy it to the SD card'}
+                        ? '当前所选遥控器屏幕不可用'
+                        : record ? '重新安装或更新到最新版本' : '下载软件包并复制到 SD 卡'}
                       className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 disabled:bg-surface-input disabled:text-content-secondary text-white rounded transition-colors"
                     >
-                      {busy ? 'Working…' : record ? 'Update' : 'Install'}
+                      {busy ? '处理中…' : record ? '更新' : '安装'}
                     </button>
                     {record && !busy && (
                       <button
                         onClick={() => handleRemove(pkg)}
-                        data-tip="Remove all files this package installed"
+                        data-tip="移除此软件包安装的所有文件"
                         className="px-3 py-1 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
                       >
-                        Remove
+                        移除
                       </button>
                     )}
                   </div>
@@ -211,14 +211,14 @@ export function RadioSdView() {
 
                 {pkg.id === 'ardudeck-hud' && record && (
                   <p className="mt-2 text-[11px] text-content-secondary">
-                    Configure and preview this widget in the{' '}
+                    在{' '}
                     <button
                       onClick={() => useNavigationStore.getState().setView('radio-hud')}
                       className="text-teal-400 hover:text-teal-300 underline"
                     >
                       Radio HUD
                     </button>{' '}
-                    view.
+                    视图中配置和预览此小部件。
                   </p>
                 )}
 
@@ -226,11 +226,11 @@ export function RadioSdView() {
                   <div className="mt-3">
                     <div className="flex items-center justify-between text-[10px] text-content-secondary mb-1">
                       <span>
-                        {progress.phase === 'resolve' && 'Resolving latest release…'}
-                        {progress.phase === 'download' && `Downloading ${progress.detail ?? ''}…`}
-                        {progress.phase === 'extract' && 'Extracting…'}
-                        {progress.phase === 'copy' && 'Copying to SD card…'}
-                        {progress.phase === 'done' && 'Done'}
+                        {progress.phase === 'resolve' && '正在解析最新版本…'}
+                        {progress.phase === 'download' && `正在下载 ${progress.detail ?? ''}…`}
+                        {progress.phase === 'extract' && '正在解压…'}
+                        {progress.phase === 'copy' && '正在复制到 SD 卡…'}
+                        {progress.phase === 'done' && '完成'}
                       </span>
                       {progress.percent >= 0 && <span>{progress.percent}%</span>}
                     </div>
@@ -253,36 +253,32 @@ export function RadioSdView() {
               {screens ? (
                 <>
                   <p className="text-content">
-                    Set up on the radio: telemetry screen pointed at the HUD on{' '}
-                    {screens.added + screens.already} model{screens.added + screens.already === 1 ? '' : 's'}.
+                    在遥控器上完成设置:已有 {screens.added + screens.already} 个模型的遥测屏幕指向 HUD。
                   </p>
-                  <p>Eject, unplug, then press <span className="text-content">PAGE</span> from the main view.</p>
+                  <p>弹出、拔出 USB,然后在主界面按 <span className="text-content">PAGE</span>。</p>
                   {screens.full.length > 0 && (
                     <p className="text-amber-400">
-                      No free telemetry screen on {screens.full.join(', ')}: free one of the four screens there
-                      and install again.
+                      {screens.full.join(', ')} 上没有空闲遥测屏幕:请释放该处四个屏幕之一后重新安装。
                     </p>
                   )}
                 </>
               ) : (
                 <p>
-                  Monochrome radios have no widgets, so install also points every model's telemetry
-                  screen at the script. Nothing to set up on the radio: eject, unplug, press{' '}
-                  <span className="text-content">PAGE</span> from the main view.
+                  黑白屏遥控器不支持小部件,因此安装时还会将每个模型的遥测屏幕指向该脚本。遥控器上无需
+                  额外设置:弹出、拔出 USB,然后在主界面按 <span className="text-content">PAGE</span>。
                 </p>
               )}
               <button
                 onClick={() => setGuideOpen(true)}
                 className="mt-1 text-teal-400 hover:text-teal-300 underline"
               >
-                Read the guide for monochrome radios
+                阅读黑白屏遥控器指南
               </button>
             </div>
           ) : (
             <p className="text-[11px] text-content-secondary">
-              After installing: eject the SD volume, unplug USB, then on the radio add the widget to a
-              model screen (long-press TELE, full-screen widget). Packages are downloaded from their
-              official repositories at install time.
+              安装完成后:弹出 SD 卷、拔出 USB,然后在遥控器上将小部件添加到模型屏幕(长按 TELE,
+              全屏小部件)。软件包在安装时从其官方仓库下载。
             </p>
           )
         )}

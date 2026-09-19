@@ -48,27 +48,27 @@ const NAV_RTH_ALT_MODE = {
 } as const;
 
 const NAV_RTH_ALT_MODE_NAMES: Record<number, { name: string; description: string }> = {
-  0: { name: 'Current', description: 'Stay at current height, could hit obstacles!' },
-  1: { name: 'Extra', description: 'Climb higher by RTH Altitude before returning' },
-  2: { name: 'Fixed', description: 'Always return at exactly RTH Altitude' },
-  3: { name: 'Maximum', description: 'Use higher of current or RTH Altitude' },
-  4: { name: 'At Least (Recommended)', description: 'Climb to RTH Altitude if below, otherwise stay' },
+  0: { name: '当前高度', description: '保持当前高度，可能撞上障碍物！' },
+  1: { name: '额外高度', description: '返航前先爬升返航高度再加高' },
+  2: { name: '固定高度', description: '始终以设定的返航高度返航' },
+  3: { name: '最高高度', description: '取当前高度与返航高度中的较高值' },
+  4: { name: '至少（推荐）', description: '低于返航高度则爬升到该高度，否则保持' },
 };
 
 const GPS_PROVIDER_NAMES: Record<number, string> = {
   0: 'NMEA',
   1: 'u-blox',
   2: 'MSP',
-  3: 'Fake (Testing)',
+  3: '模拟（测试）',
 };
 
 const GPS_SBAS_NAMES: Record<number, string> = {
-  0: 'Auto',
-  1: 'EGNOS (Europe)',
-  2: 'WAAS (USA)',
-  3: 'MSAS (Japan)',
-  4: 'GAGAN (India)',
-  5: 'None',
+  0: '自动',
+  1: 'EGNOS（欧洲）',
+  2: 'WAAS（美国）',
+  3: 'MSAS（日本）',
+  4: 'GAGAN（印度）',
+  5: '无',
 };
 
 // Default nav config (iNav defaults)
@@ -158,7 +158,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
         setWpSettingsSupported(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load navigation config');
+      setError(err instanceof Error ? err.message : '加载导航配置失败');
     } finally {
       setLoading(false);
     }
@@ -203,7 +203,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
         console.log('[Navigation] Saving GPS config...');
         const gpsSuccess = await window.electronAPI.mspSetGpsConfig(gpsConfig);
         if (!gpsSuccess) {
-          setError('Failed to set GPS config');
+          setError('设置 GPS 配置失败');
           return;
         }
       }
@@ -227,7 +227,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
       console.log('[Navigation] Saving to EEPROM...');
       const eepromSuccess = await window.electronAPI.mspSaveEeprom();
       if (!eepromSuccess) {
-        setError('Config sent but EEPROM save failed - changes may not persist');
+        setError('配置已发送但 EEPROM 保存失败 — 更改可能不会保留');
         return;
       }
 
@@ -235,7 +235,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
       setModified(false);
     } catch (err) {
       console.error('[Navigation] Save error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      setError(err instanceof Error ? err.message : '保存失败');
     }
   };
 
@@ -252,7 +252,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mb-2 mx-auto" />
-          <p className="text-content-secondary">Loading navigation configuration...</p>
+          <p className="text-content-secondary">正在加载导航配置...</p>
         </div>
       </div>
     );
@@ -264,16 +264,16 @@ export default function NavigationTab({ modified, setModified }: Props) {
       <div className="bg-blue-500/10 rounded-xl border-blue-500/30 p-4 flex items-start gap-4">
         <Compass className="w-6 h-6 text-blue-400" />
         <div>
-          <p className="text-blue-400 font-medium">Navigation Settings (iNav): Autonomous Flight</p>
+          <p className="text-blue-400 font-medium">导航设置（iNav）：自主飞行</p>
           <p className="text-sm text-content-secondary mt-1">
-            These settings control what happens when your aircraft flies <strong className="text-content">without your input</strong>,
-            like flying home automatically or following a mission.
+            这些设置控制飞机在<strong className="text-content">无人工输入</strong>时的行为，
+            例如自动返航或执行任务。
           </p>
           <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-content-secondary">
-            <p><span className="text-green-400 inline-flex items-center gap-1"><Home className="w-3.5 h-3.5" /> RTH</span>: "Return To Home" flies back to where it took off</p>
-            <p><span className="text-purple-400 inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> Waypoints</span>: Pre-planned GPS points the aircraft will fly to</p>
-            <p><span className="text-amber-400 inline-flex items-center gap-1"><PlaneLanding className="w-3.5 h-3.5" /> Landing</span>: How fast/slow it comes down after RTH</p>
-            <p><span className="text-blue-400 inline-flex items-center gap-1"><Satellite className="w-3.5 h-3.5" /> GPS</span>: Satellite settings (usually leave on Auto)</p>
+            <p><span className="text-green-400 inline-flex items-center gap-1"><Home className="w-3.5 h-3.5" /> 返航</span>："Return To Home" 自动飞回起飞点</p>
+            <p><span className="text-purple-400 inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> 航点</span>：预先规划的 GPS 点，飞机将依次飞往</p>
+            <p><span className="text-amber-400 inline-flex items-center gap-1"><PlaneLanding className="w-3.5 h-3.5" /> 降落</span>：返航后下降的快慢</p>
+            <p><span className="text-blue-400 inline-flex items-center gap-1"><Satellite className="w-3.5 h-3.5" /> GPS</span>：卫星设置（通常保持自动）</p>
           </div>
         </div>
       </div>
@@ -295,15 +295,15 @@ export default function NavigationTab({ modified, setModified }: Props) {
             <Home className="w-5 h-5 text-green-400" />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-content">Return to Home (RTH)</h3>
-            <p className="text-xs text-content-secondary">What happens when RTH is triggered</p>
+            <h3 className="text-sm font-medium text-content">返航（RTH）</h3>
+            <p className="text-xs text-content-secondary">触发返航时的行为</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-6">
           {/* RTH Altitude Mode */}
           <div className="space-y-3">
-            <label className="text-xs text-content-secondary block">RTH Altitude Mode</label>
+            <label className="text-xs text-content-secondary block">返航高度模式</label>
             <div className="space-y-2">
               {Object.entries(NAV_RTH_ALT_MODE_NAMES).map(([value, info]) => (
                 <label
@@ -334,7 +334,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
           {/* RTH Altitude & Speeds */}
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-content-secondary block mb-1.5">RTH Altitude (m)</label>
+              <label className="text-xs text-content-secondary block mb-1.5">返航高度（m）</label>
               <DraftNumberInput
                 value={Number(toM(navConfig.rthAltitude ?? 3000))}
                 onCommit={(v) => updateNavConfig({ rthAltitude: fromM(v) })}
@@ -342,11 +342,11 @@ export default function NavigationTab({ modified, setModified }: Props) {
                 min={5}
                 max={300}
               />
-              <p className="text-[10px] text-content-tertiary mt-1">Used with Fixed/Max/At Least modes</p>
+              <p className="text-[10px] text-content-tertiary mt-1">用于固定/最高/至少模式</p>
             </div>
 
             <div>
-              <label className="text-xs text-content-secondary block mb-1.5">Max Navigation Speed (m/s)</label>
+              <label className="text-xs text-content-secondary block mb-1.5">最大导航速度（m/s）</label>
               <DraftNumberInput
                 value={Number(toMs(navConfig.maxNavigationSpeed ?? 300))}
                 onCommit={(v) => updateNavConfig({ maxNavigationSpeed: fromMs(v) })}
@@ -358,7 +358,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
             </div>
 
             <div>
-              <label className="text-xs text-content-secondary block mb-1.5">Max Climb Rate (m/s)</label>
+              <label className="text-xs text-content-secondary block mb-1.5">最大爬升速率（m/s）</label>
               <DraftNumberInput
                 value={Number(toMs(navConfig.maxClimbRate ?? 500))}
                 onCommit={(v) => updateNavConfig({ maxClimbRate: fromMs(v) })}
@@ -379,14 +379,14 @@ export default function NavigationTab({ modified, setModified }: Props) {
             <PlaneLanding className="w-5 h-5 text-amber-400" />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-content">Landing Configuration</h3>
-            <p className="text-xs text-content-secondary">How the aircraft lands after RTH</p>
+            <h3 className="text-sm font-medium text-content">降落配置</h3>
+            <p className="text-xs text-content-secondary">返航后飞机如何降落</p>
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="text-xs text-content-secondary block mb-1.5">Descent Rate (m/s)</label>
+            <label className="text-xs text-content-secondary block mb-1.5">下降速率（m/s）</label>
             <DraftNumberInput
               value={Number(toMs(navConfig.landDescendRate ?? 200))}
               onCommit={(v) => updateNavConfig({ landDescendRate: fromMs(v) })}
@@ -395,11 +395,11 @@ export default function NavigationTab({ modified, setModified }: Props) {
               max={5}
               step={0.1}
             />
-            <p className="text-[10px] text-content-tertiary mt-1">Slower = softer landing</p>
+            <p className="text-[10px] text-content-tertiary mt-1">越慢降落越柔和</p>
           </div>
 
           <div>
-            <label className="text-xs text-content-secondary block mb-1.5">Slowdown Min Alt (m)</label>
+            <label className="text-xs text-content-secondary block mb-1.5">减速起始高度（m）</label>
             <DraftNumberInput
               value={Number(toM(navConfig.landSlowdownMinAlt ?? 500))}
               onCommit={(v) => updateNavConfig({ landSlowdownMinAlt: fromM(v) })}
@@ -407,11 +407,11 @@ export default function NavigationTab({ modified, setModified }: Props) {
               min={1}
               max={50}
             />
-            <p className="text-[10px] text-content-tertiary mt-1">Start slowing at this alt</p>
+            <p className="text-[10px] text-content-tertiary mt-1">在此高度开始减速</p>
           </div>
 
           <div>
-            <label className="text-xs text-content-secondary block mb-1.5">Emergency Descent (m/s)</label>
+            <label className="text-xs text-content-secondary block mb-1.5">紧急下降（m/s）</label>
             <DraftNumberInput
               value={Number(toMs(navConfig.emergencyDescentRate ?? 500))}
               onCommit={(v) => updateNavConfig({ emergencyDescentRate: fromMs(v) })}
@@ -420,7 +420,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
               max={10}
               step={0.5}
             />
-            <p className="text-[10px] text-content-tertiary mt-1">GPS loss descent rate</p>
+            <p className="text-[10px] text-content-tertiary mt-1">GPS 丢失时的下降速率</p>
           </div>
         </div>
       </div>
@@ -432,14 +432,14 @@ export default function NavigationTab({ modified, setModified }: Props) {
             <MapPin className="w-5 h-5 text-purple-400" />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-content">Waypoint Navigation</h3>
-            <p className="text-xs text-content-secondary">Settings for mission waypoints</p>
+            <h3 className="text-sm font-medium text-content">航点导航</h3>
+            <p className="text-xs text-content-secondary">任务航点设置</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-xs text-content-secondary block mb-1.5">Waypoint Radius (m)</label>
+            <label className="text-xs text-content-secondary block mb-1.5">航点半径（m）</label>
             <DraftNumberInput
               value={Number(toM(navConfig.waypointRadius ?? 100))}
               onCommit={(v) => updateNavConfig({ waypointRadius: fromM(v) })}
@@ -448,11 +448,11 @@ export default function NavigationTab({ modified, setModified }: Props) {
               max={20}
               step={0.5}
             />
-            <p className="text-[10px] text-content-tertiary mt-1">Waypoint considered reached within this radius</p>
+            <p className="text-[10px] text-content-tertiary mt-1">进入此半径即视为到达航点</p>
           </div>
 
           <div>
-            <label className="text-xs text-content-secondary block mb-1.5">Safe Altitude (m)</label>
+            <label className="text-xs text-content-secondary block mb-1.5">安全高度（m）</label>
             <DraftNumberInput
               value={Number(toM(navConfig.waypointSafeAlt ?? 2000))}
               onCommit={(v) => updateNavConfig({ waypointSafeAlt: fromM(v) })}
@@ -460,7 +460,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
               min={5}
               max={200}
             />
-            <p className="text-[10px] text-content-tertiary mt-1">Minimum safe altitude for missions</p>
+            <p className="text-[10px] text-content-tertiary mt-1">任务的最低安全高度</p>
           </div>
         </div>
 
@@ -468,10 +468,10 @@ export default function NavigationTab({ modified, setModified }: Props) {
         {wpSettingsSupported && (
           <>
             <div className="border-t border-subtle pt-4 mt-4">
-              <p className="text-xs text-content-secondary mb-3">Advanced Mission Settings</p>
+              <p className="text-xs text-content-secondary mb-3">高级任务设置</p>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs text-content-secondary block mb-1.5">Max Safe Distance (m)</label>
+                  <label className="text-xs text-content-secondary block mb-1.5">最大安全距离（m）</label>
                   <DraftNumberInput
                     value={wpSettings.nav_wp_max_safe_distance}
                     onCommit={(v) => updateWpSettings({ nav_wp_max_safe_distance: v })}
@@ -480,21 +480,21 @@ export default function NavigationTab({ modified, setModified }: Props) {
                     max={1500}
                     step={10}
                   />
-                  <p className="text-[10px] text-content-tertiary mt-1">Max distance from home (0 = disabled)</p>
+                  <p className="text-[10px] text-content-tertiary mt-1">距返航点的最大距离（0 = 禁用）</p>
                 </div>
 
                 <div>
-                  <label className="text-xs text-content-secondary block mb-1.5">Mission Restart Mode</label>
+                  <label className="text-xs text-content-secondary block mb-1.5">任务重启模式</label>
                   <select
                     value={wpSettings.nav_wp_mission_restart}
                     onChange={(e) => updateWpSettings({ nav_wp_mission_restart: e.target.value })}
                     className="w-full px-3 py-2 bg-surface-raised border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
                   >
-                    <option value="START">Start from beginning</option>
-                    <option value="RESUME">Resume from last WP</option>
-                    <option value="SWITCH">Switch to next mission</option>
+                    <option value="START">从头开始</option>
+                    <option value="RESUME">从上个航点继续</option>
+                    <option value="SWITCH">切换到下一个任务</option>
                   </select>
-                  <p className="text-[10px] text-content-tertiary mt-1">What happens after RTH</p>
+                  <p className="text-[10px] text-content-tertiary mt-1">返航后的行为</p>
                 </div>
               </div>
             </div>
@@ -507,7 +507,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
                   onChange={(e) => updateWpSettings({ nav_wp_load_on_boot: e.target.checked ? 'ON' : 'OFF' })}
                   className="w-4 h-4 rounded border bg-surface-raised text-purple-500"
                 />
-                <span className="text-sm text-content-secondary">Load mission on boot</span>
+                <span className="text-sm text-content-secondary">开机加载任务</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -517,7 +517,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
                   onChange={(e) => updateWpSettings({ nav_mc_wp_slowdown: e.target.checked ? 'ON' : 'OFF' })}
                   className="w-4 h-4 rounded border bg-surface-raised text-purple-500"
                 />
-                <span className="text-sm text-content-secondary">Slowdown at waypoints (MC)</span>
+                <span className="text-sm text-content-secondary">航点减速（多旋翼）</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -526,11 +526,11 @@ export default function NavigationTab({ modified, setModified }: Props) {
                   onChange={(e) => updateWpSettings({ nav_fw_wp_turn_smoothing: e.target.value })}
                   className="px-2 py-1 bg-surface-raised border rounded text-sm text-content focus:outline-none focus:border-blue-500"
                 >
-                  <option value="OFF">Off</option>
-                  <option value="ON">On</option>
-                  <option value="ON-CUT">On + Cut throttle</option>
+                  <option value="OFF">关闭</option>
+                  <option value="ON">开启</option>
+                  <option value="ON-CUT">开启 + 收油门</option>
                 </select>
-                <span className="text-sm text-content-secondary">Turn smoothing (FW)</span>
+                <span className="text-sm text-content-secondary">转弯平滑（固定翼）</span>
               </label>
             </div>
           </>
@@ -545,14 +545,14 @@ export default function NavigationTab({ modified, setModified }: Props) {
               <Satellite className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-content">GPS Configuration</h3>
-              <p className="text-xs text-content-secondary">GPS module settings</p>
+              <h3 className="text-sm font-medium text-content">GPS 配置</h3>
+              <p className="text-xs text-content-secondary">GPS 模块设置</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-content-secondary block mb-1.5">GPS Provider</label>
+              <label className="text-xs text-content-secondary block mb-1.5">GPS 提供方</label>
               <select
                 value={gpsConfig.provider}
                 onChange={(e) => updateGpsConfig({ provider: Number(e.target.value) })}
@@ -567,7 +567,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
             </div>
 
             <div>
-              <label className="text-xs text-content-secondary block mb-1.5">SBAS Mode</label>
+              <label className="text-xs text-content-secondary block mb-1.5">SBAS 模式</label>
               <select
                 value={gpsConfig.sbasMode}
                 onChange={(e) => updateGpsConfig({ sbasMode: Number(e.target.value) })}
@@ -590,7 +590,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
                 onChange={(e) => updateGpsConfig({ autoConfig: e.target.checked })}
                 className="w-4 h-4 rounded border bg-surface-raised text-blue-500"
               />
-              <span className="text-sm text-content-secondary">Auto-configure GPS</span>
+              <span className="text-sm text-content-secondary">自动配置 GPS</span>
             </label>
 
             <label className="flex items-center gap-2 cursor-pointer">
@@ -600,7 +600,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
                 onChange={(e) => updateGpsConfig({ autoBaud: e.target.checked })}
                 className="w-4 h-4 rounded border bg-surface-raised text-blue-500"
               />
-              <span className="text-sm text-content-secondary">Auto-detect baud rate</span>
+              <span className="text-sm text-content-secondary">自动检测波特率</span>
             </label>
 
             <label className="flex items-center gap-2 cursor-pointer">
@@ -610,7 +610,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
                 onChange={(e) => updateGpsConfig({ ubloxUseGalileo: e.target.checked })}
                 className="w-4 h-4 rounded border bg-surface-raised text-blue-500"
               />
-              <span className="text-sm text-content-secondary">Enable Galileo (u-blox)</span>
+              <span className="text-sm text-content-secondary">启用 Galileo（u-blox）</span>
             </label>
 
             <label className="flex items-center gap-2 cursor-pointer">
@@ -620,7 +620,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
                 onChange={(e) => updateGpsConfig({ homePointOnce: e.target.checked })}
                 className="w-4 h-4 rounded border bg-surface-raised text-blue-500"
               />
-              <span className="text-sm text-content-secondary">Set home once (don't update)</span>
+              <span className="text-sm text-content-secondary">仅设置一次返航点（不更新）</span>
             </label>
           </div>
         </div>
@@ -630,12 +630,12 @@ export default function NavigationTab({ modified, setModified }: Props) {
       <div className="bg-amber-500/10 rounded-xl border-amber-500/30 p-4 flex items-start gap-4">
         <AlertTriangle className="w-6 h-6 text-amber-400" />
         <div>
-          <p className="text-amber-400 font-medium">Important Safety Notes</p>
+          <p className="text-amber-400 font-medium">重要安全提示</p>
           <ul className="text-sm text-content-secondary mt-1 space-y-1 list-disc list-inside">
-            <li>Always test RTH in an open area before relying on it</li>
-            <li>Ensure RTH altitude is above all obstacles in your flying area</li>
-            <li>Check GPS satellite count (8+) before autonomous flight</li>
-            <li>Configure failsafe to RTH for added safety</li>
+            <li>在依赖返航功能前，务必先在开阔场地测试</li>
+            <li>确保返航高度高于飞行区域内的所有障碍物</li>
+            <li>自主飞行前检查 GPS 卫星数（8 颗以上）</li>
+            <li>为安全起见，将失控保护配置为返航</li>
           </ul>
         </div>
       </div>
@@ -646,7 +646,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
           onClick={loadConfig}
           className="px-4 py-2 text-sm bg-surface-raised text-content rounded-lg hover:bg-surface-raised"
         >
-          Refresh
+          刷新
         </button>
         <button
           onClick={saveAll}
@@ -657,7 +657,7 @@ export default function NavigationTab({ modified, setModified }: Props) {
               : 'bg-surface-raised text-content-secondary cursor-not-allowed'
           }`}
         >
-          Save Navigation Config
+          保存导航配置
         </button>
       </div>
     </div>

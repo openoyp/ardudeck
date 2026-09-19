@@ -25,7 +25,7 @@ export function OrchestrationPanel() {
 
   return (
     <div className="mt-3 pt-3 border-t border-subtle flex flex-col gap-2">
-      <span className="text-[11px] uppercase tracking-wide text-content-secondary">Orchestration</span>
+      <span className="text-[11px] uppercase tracking-wide text-content-secondary">编排</span>
       {list.map((srv) => (
         <ServerCard key={srv.transportId} transportId={srv.transportId} selectedSysids={selectedSysids} />
       ))}
@@ -63,7 +63,7 @@ function ServerCard({ transportId, selectedSysids }: { transportId: string; sele
       </div>
 
       {caps.length === 0 ? (
-        <p className="mt-1 text-[10px] text-content-tertiary">No capabilities advertised yet.</p>
+        <p className="mt-1 text-[10px] text-content-tertiary">尚未通告任何能力。</p>
       ) : (
         <div className="mt-2 flex items-end gap-2">
           <select
@@ -79,9 +79,9 @@ function ServerCard({ transportId, selectedSysids }: { transportId: string; sele
             onClick={submit}
             disabled={busy}
             className="btn btn-secondary shrink-0 px-3 py-1.5 text-xs"
-            data-tip={selectedSysids.length > 0 ? `Target sysids: ${selectedSysids.join(', ')}` : 'No vehicles selected; server decides scope'}
+            data-tip={selectedSysids.length > 0 ? `目标 sysid:${selectedSysids.join(', ')}` : '未选择飞行器;由服务器决定范围'}
           >
-            {busy ? '...' : 'Submit'}
+            {busy ? '…' : '提交'}
           </button>
         </div>
       )}

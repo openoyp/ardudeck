@@ -18,17 +18,17 @@ export function VelocityPanel() {
     <PanelContainer>
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
-          <div className="text-content-secondary text-xs mb-1">North</div>
+          <div className="text-content-secondary text-xs mb-1">北向</div>
           <div className="text-content font-mono text-lg">{formatNumber(speedValueFromMetersPerSecond(position.vx, speedUnit), 1)}</div>
           <div className="text-content-tertiary text-[10px]">{speedLabel}</div>
         </div>
         <div>
-          <div className="text-content-secondary text-xs mb-1">East</div>
+          <div className="text-content-secondary text-xs mb-1">东向</div>
           <div className="text-content font-mono text-lg">{formatNumber(speedValueFromMetersPerSecond(position.vy, speedUnit), 1)}</div>
           <div className="text-content-tertiary text-[10px]">{speedLabel}</div>
         </div>
         <div>
-          <div className="text-content-secondary text-xs mb-1">Down</div>
+          <div className="text-content-secondary text-xs mb-1">垂直</div>
           <div className="text-content font-mono text-lg">{formatNumber(verticalSpeedValueFromMetersPerSecond(position.vz, verticalSpeedUnit), verticalSpeedUnit === 'fpm' ? 0 : 1)}</div>
           <div className="text-content-tertiary text-[10px]">{verticalSpeedLabel}</div>
         </div>

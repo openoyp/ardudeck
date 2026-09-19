@@ -98,9 +98,9 @@ export function isRoundInMode(def: MapInstrumentDef, mode: string): boolean {
 /** The three compact-readout treatments every wired scalar source offers. */
 function compactVariants(source: ReadoutSource): MapInstrumentVariant[] {
   return [
-    { id: 'strip', label: 'Strip', Component: () => <CompactReadout source={source} treatment="strip" /> },
-    { id: 'cell', label: 'Cell', Component: () => <CompactReadout source={source} treatment="cell" /> },
-    { id: 'inline', label: 'Inline', Component: () => <CompactReadout source={source} treatment="inline" /> },
+    { id: 'strip', label: '条状', Component: () => <CompactReadout source={source} treatment="strip" /> },
+    { id: 'cell', label: '格状', Component: () => <CompactReadout source={source} treatment="cell" /> },
+    { id: 'inline', label: '行内', Component: () => <CompactReadout source={source} treatment="inline" /> },
   ];
 }
 
@@ -156,7 +156,7 @@ function BatteryMonitorBadge({ className }: { className?: string }): JSX.Element
     <button
       type="button"
       onClick={() => setPrimaryBattery(next)}
-      data-tip={`Switch to B${next + 1}. ${tip}`}
+      data-tip={`切换到 B${next + 1}。${tip}`}
       className={
         'pointer-events-auto text-[9px] font-semibold leading-none px-1.5 py-[3px] rounded border border-[var(--gauge-bezel-edge)] ' +
         'text-[var(--gauge-text-dim)] hover:text-[var(--gauge-text)] hover:border-[var(--gauge-text-dim)] transition-colors ' + (className ?? '')
@@ -189,7 +189,7 @@ function makeBatteryInstanceGauge(monitorId: number): () => JSX.Element {
     const known = fresh && remaining >= 0;
     const valueColor = !known ? 'text-[var(--gauge-text)]' : remaining > 30 ? 'text-[var(--gauge-green)]' : remaining > 15 ? 'text-[var(--gauge-amber)]' : 'text-[var(--gauge-red)]';
     return (
-      <RoundGauge label={`BAT${monitorId + 1}`} scale={BATTERY_SCALE} needleValue={known ? remaining : null}>
+      <RoundGauge label={`电池 ${monitorId + 1}`} scale={BATTERY_SCALE} needleValue={known ? remaining : null}>
         <span className={`text-[15px] font-semibold leading-none ${valueColor}`}>
           {fresh ? voltage.toFixed(1) : '--'}
           {fresh && <span className="text-[8px] font-normal text-[var(--gauge-text-dim)] ml-0.5">V</span>}
@@ -209,7 +209,7 @@ function makeBatteryInstanceNumeric(monitorId: number): () => JSX.Element {
     const valueClassName = !known ? undefined : remaining > 30 ? 'text-[var(--gauge-green)]' : remaining > 15 ? 'text-[var(--gauge-amber)]' : 'text-[var(--gauge-red)]';
     return (
       <NumericReadout
-        label={`BAT${monitorId + 1}`}
+        label={`电池 ${monitorId + 1}`}
         value={fresh ? voltage.toFixed(1) : '--'}
         unit={fresh ? 'V' : undefined}
         sub={known ? `${Math.round(remaining)}%` : '--%'}
@@ -228,7 +228,7 @@ function BatteryInstrument(): JSX.Element {
   const valueColor = !known ? 'text-[var(--gauge-text)]' : remaining > 30 ? 'text-[var(--gauge-green)]' : remaining > 15 ? 'text-[var(--gauge-amber)]' : 'text-[var(--gauge-red)]';
 
   return (
-    <RoundGauge label="BAT" scale={BATTERY_SCALE} needleValue={known ? remaining : null}>
+    <RoundGauge label="电池" scale={BATTERY_SCALE} needleValue={known ? remaining : null}>
       <span className={`text-[15px] font-semibold leading-none ${valueColor}`}>
         {connected ? voltage.toFixed(1) : '--'}
         {connected && <span className="text-[8px] font-normal text-[var(--gauge-text-dim)] ml-0.5">V</span>}
@@ -289,10 +289,10 @@ function GpsInstrument(): JSX.Element {
   return (
     <RoundGauge label="GPS" svgContent={<GpsSegmentRing lit={lit} color={segColor} />}>
       <span className={`text-[12px] font-semibold leading-none whitespace-nowrap ${fixColor}`}>
-        {connected ? (GPS_FIX_SHORT[fixType] ?? 'NO FIX') : '--'}
+        {connected ? (GPS_FIX_SHORT[fixType] ?? '无定位') : '--'}
       </span>
       <span className="mt-1 text-[9px] leading-none text-[var(--gauge-text-dim)]">
-        {connected ? `${satellites} sats` : '-- sats'}
+        {connected ? `${satellites} 颗卫星` : '-- 颗卫星'}
       </span>
     </RoundGauge>
   );
@@ -327,7 +327,7 @@ function AltitudeInstrument(): JSX.Element {
   const climbText = `${climbValue > 0 ? '+' : ''}${trimmed(climbValue, UNIT_PRECISION.verticalSpeed[verticalSpeedUnit])}`;
 
   return (
-    <RoundGauge label="ALT" svgContent={<VsiIndicator climb={climb} connected={connected} climbText={climbText} />}>
+    <RoundGauge label="高度" svgContent={<VsiIndicator climb={climb} connected={connected} climbText={climbText} />}>
       <span className="text-[15px] font-semibold leading-none text-[var(--gauge-text)] whitespace-nowrap">
         {connected ? fmtAlt(agl) : '--'}
         {connected && <span className="text-[8px] font-normal text-[var(--gauge-text-dim)] ml-0.5">{UNIT_LABELS.altitude[altitudeUnit]}</span>}
@@ -383,7 +383,7 @@ function SpeedInstrument(): JSX.Element {
 
   return (
     <RoundGauge
-      label="SPD"
+      label="速度"
       scale={scale}
       needleValue={connected ? gs : null}
       svgContent={
@@ -406,15 +406,15 @@ function SpeedInstrument(): JSX.Element {
       </span>
       {connected && air > 0 && (
         <span className="mt-1 text-[8px] leading-none text-[var(--gauge-text-dim)] whitespace-nowrap">
-          AIR {fmt(air)}
+          空速 {fmt(air)}
         </span>
       )}
     </RoundGauge>
   );
 }
 
-const CARDINALS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-const CARDINAL_LETTERS = ['N', 'E', 'S', 'W'];
+const CARDINALS = ['北', '东北', '东', '东南', '南', '西南', '西', '西北'];
+const CARDINAL_LETTERS = ['北', '东', '南', '西'];
 
 // Rotating rose (current heading at the top lubber line, like CompassOverlay's
 // bigger sibling): cardinal + 30-degree ticks, letters oriented radially.
@@ -459,7 +459,7 @@ function HeadingInstrument(): JSX.Element {
   const cardinal = CARDINALS[Math.round(deg / 45) % 8];
 
   return (
-    <RoundGauge label="HDG" svgContent={<HeadingRose heading={connected ? heading : 0} />}>
+    <RoundGauge label="航向" svgContent={<HeadingRose heading={connected ? heading : 0} />}>
       <span className="text-[15px] font-semibold leading-none text-[var(--gauge-text)]">
         {connected ? deg : '--'}
         {connected && <span className="text-[8px] font-normal text-[var(--gauge-text-dim)] ml-0.5">°</span>}
@@ -507,30 +507,30 @@ function FlightDataInstrument(): JSX.Element {
       }}
     >
       <div className="flex justify-between">
-        <span className="text-[var(--gauge-text-dim)]">MSL</span>
+        <span className="text-[var(--gauge-text-dim)]">海拔</span>
         <span className="font-mono text-[var(--gauge-text)]">{formatAltitudeFromMeters(msl, altitudeUnit)}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-[var(--gauge-text-dim)]">Rel</span>
+        <span className="text-[var(--gauge-text-dim)]">相对</span>
         <span className="font-mono text-[var(--gauge-text)]">{formatAltitudeFromMeters(rel, altitudeUnit)}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-[var(--gauge-text-dim)]">Spd</span>
+        <span className="text-[var(--gauge-text-dim)]">速度</span>
         <span className="font-mono text-[var(--gauge-text)]">{formatSpeedFromMetersPerSecond(groundspeed, speedUnit)}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-[var(--gauge-text-dim)]">Hdg</span>
+        <span className="text-[var(--gauge-text-dim)]">航向</span>
         <span className="font-mono text-[var(--gauge-text)]">{heading.toFixed(0)}<span className="text-[var(--gauge-text-dim)] ml-0.5">°</span></span>
       </div>
       {homeStats && (
         <>
           <div className="my-1" style={{ borderTop: `1px solid ${GAUGE_COLORS.bezelEdge}` }} />
           <div className="flex justify-between">
-            <span className="text-[var(--gauge-text-dim)]">Home</span>
+            <span className="text-[var(--gauge-text-dim)]">家点</span>
             <span className="font-mono text-[var(--gauge-green)]">{formatDistanceFromMeters(homeStats.distance, distanceUnit)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[var(--gauge-text-dim)]">Brng</span>
+            <span className="text-[var(--gauge-text-dim)]">方位</span>
             {/* Bearing to a point you are standing on is undefined: within GPS
                 noise of home (~sub-meter jitter) it swings tens of degrees per
                 sample. Blank it until the distance makes direction meaningful. */}
@@ -584,7 +584,7 @@ function VsiInstrument(): JSX.Element {
 
   return (
     <RoundGauge
-      label="VSI"
+      label="升降速"
       scale={VSI_SCALE}
       // 0, not null: parking a VSI needle at scale min would read as a -5 dive.
       needleValue={connected ? climb : 0}
@@ -643,7 +643,7 @@ function TiltInstrument(): JSX.Element {
 
   return (
     <RoundGauge
-      label="TILT"
+      label="倾角"
       scale={TILT_SCALE}
       needleValue={shown}
       svgContent={
@@ -669,10 +669,10 @@ function TiltInstrument(): JSX.Element {
     >
       {/* Pushed below the horizon so the needle and the numbers never overlap. */}
       <span className="mt-[26px] text-[13px] font-semibold leading-none whitespace-nowrap" style={{ color }}>
-        {fresh ? `${roll > 0 ? 'R' : roll < 0 ? 'L' : ''} ${Math.abs(Math.round(roll))}\u00b0` : '--'}
+        {fresh ? `${roll > 0 ? '右' : roll < 0 ? '左' : ''} ${Math.abs(Math.round(roll))}\u00b0` : '--'}
       </span>
       <span className="mt-0.5 text-[8px] leading-none text-[var(--gauge-text-dim)]">
-        {fresh ? `PITCH ${Math.round(pitch)}\u00b0` : 'ROLL'}
+        {fresh ? `俯仰 ${Math.round(pitch)}\u00b0` : '横滚'}
       </span>
     </RoundGauge>
   );
@@ -695,8 +695,8 @@ function SteerInstrument(): JSX.Element {
 
   return (
     <InstrumentShell
-      label="Steer"
-      value={steer === null ? '--' : magnitude < 1 ? 'CTR' : `${steer < 0 ? 'L' : 'R'} ${Math.round(magnitude)}`}
+      label="转向"
+      value={steer === null ? '--' : magnitude < 1 ? '居中' : `${steer < 0 ? '左' : '右'} ${Math.round(magnitude)}`}
       unit={steer === null || magnitude < 1 ? undefined : '%'}
     >
       <div className="relative h-1.5 w-full rounded-full bg-surface-raised">
@@ -713,7 +713,7 @@ function SteerInstrument(): JSX.Element {
       </div>
       {throttle !== null && (
         <div className="text-[10px] text-content-tertiary">
-          THR {throttle > 0 ? '+' : ''}{Math.round(throttle)}%
+          油门 {throttle > 0 ? '+' : ''}{Math.round(throttle)}%
         </div>
       )}
     </InstrumentShell>
@@ -730,16 +730,16 @@ function XtrackInstrument(): JSX.Element {
 
   return (
     <InstrumentShell
-      label="Xtrack"
+      label="偏航距"
       value={
         xtrack === undefined || magnitude === null
           ? '--'
-          : `${xtrack < 0 ? 'L' : 'R'} ${formatDistanceFromMeters(magnitude, distanceUnit)}`
+          : `${xtrack < 0 ? '左' : '右'} ${formatDistanceFromMeters(magnitude, distanceUnit)}`
       }
       valueClassName={magnitude !== null && magnitude > 5 ? 'text-amber-400' : undefined}
     >
       <div className="text-[10px] text-content-tertiary">
-        {nav?.wpDist === undefined ? 'No active leg' : `WP ${formatDistanceFromMeters(nav.wpDist, distanceUnit)}`}
+        {nav?.wpDist === undefined ? '无活动航段' : `航点 ${formatDistanceFromMeters(nav.wpDist, distanceUnit)}`}
       </div>
     </InstrumentShell>
   );
@@ -760,7 +760,7 @@ function HomeInstrument(): JSX.Element {
 
   return (
     <RoundGauge
-      label="HOME"
+      label="家点"
       svgContent={
         // Rotated by bearing MINUS heading (OSD home-arrow convention): it
         // points the turn the pilot must make, not the map direction of home.
@@ -778,7 +778,7 @@ function HomeInstrument(): JSX.Element {
         {distance !== null ? formatDistanceFromMeters(distance, distanceUnit) : '--'}
       </span>
       <span className="mt-1 text-[8px] leading-none text-[var(--gauge-text-dim)]">
-        {active ? `BRG ${Math.round((bearing + 360) % 360)}°` : ''}
+        {active ? `方位 ${Math.round((bearing + 360) % 360)}°` : ''}
       </span>
     </RoundGauge>
   );
@@ -835,7 +835,7 @@ function BatteryNumeric(): JSX.Element {
   const valueClassName = !known ? undefined : remaining > 30 ? 'text-[var(--gauge-green)]' : remaining > 15 ? 'text-[var(--gauge-amber)]' : 'text-[var(--gauge-red)]';
   return (
     <NumericReadout
-      label="BAT"
+      label="电池"
       value={connected ? voltage.toFixed(1) : '--'}
       unit={connected ? 'V' : undefined}
       sub={known ? `${Math.round(remaining)}%` : '--%'}
@@ -853,8 +853,8 @@ function GpsNumeric(): JSX.Element {
   return (
     <NumericReadout
       label="GPS"
-      value={connected ? (GPS_FIX_SHORT[fixType] ?? 'NO FIX') : '--'}
-      sub={connected ? `${satellites} sats` : '-- sats'}
+      value={connected ? (GPS_FIX_SHORT[fixType] ?? '无定位') : '--'}
+      sub={connected ? `${satellites} 颗卫星` : '-- 颗卫星'}
       valueClassName={valueClassName}
     />
   );
@@ -868,10 +868,10 @@ function AltitudeNumeric(): JSX.Element {
   const fmtAlt = (m: number) => trimmed(altitudeValueFromMeters(m, altitudeUnit), UNIT_PRECISION.altitude[altitudeUnit]);
   return (
     <NumericReadout
-      label="ALT"
+      label="高度"
       value={connected ? fmtAlt(agl) : '--'}
       unit={connected ? UNIT_LABELS.altitude[altitudeUnit] : undefined}
-      sub={connected ? `MSL ${fmtAlt(msl)}` : undefined}
+      sub={connected ? `海拔 ${fmtAlt(msl)}` : undefined}
     />
   );
 }
@@ -884,10 +884,10 @@ function SpeedNumeric(): JSX.Element {
   const fmt = (mps: number) => trimmed(speedValueFromMetersPerSecond(mps, speedUnit), UNIT_PRECISION.speed[speedUnit]);
   return (
     <NumericReadout
-      label="SPD"
+      label="速度"
       value={connected ? fmt(groundspeed) : '--'}
       unit={connected ? UNIT_LABELS.speed[speedUnit] : undefined}
-      sub={connected && airspeed > 0 ? `AIR ${fmt(airspeed)}` : undefined}
+      sub={connected && airspeed > 0 ? `空速 ${fmt(airspeed)}` : undefined}
     />
   );
 }
@@ -898,7 +898,7 @@ function HeadingNumeric(): JSX.Element {
   const deg = Math.round(heading) % 360;
   return (
     <NumericReadout
-      label="HDG"
+      label="航向"
       value={connected ? String(deg) : '--'}
       unit={connected ? '°' : undefined}
       sub={connected ? CARDINALS[Math.round(deg / 45) % 8] : undefined}
@@ -914,7 +914,7 @@ function VsiNumeric(): JSX.Element {
   const valueText = `${value > 0 ? '+' : ''}${trimmed(value, UNIT_PRECISION.verticalSpeed[verticalSpeedUnit])}`;
   return (
     <NumericReadout
-      label="VSI"
+      label="升降速"
       value={connected ? valueText : '--'}
       unit={connected ? UNIT_LABELS.verticalSpeed[verticalSpeedUnit] : undefined}
       valueClassName={connected && Math.abs(climb) > 3 ? 'text-[var(--gauge-amber)]' : undefined}
@@ -934,9 +934,9 @@ function HomeNumeric(): JSX.Element {
   const distance = active ? haversineMeters(lat, lon, home[0], home[1]) : null;
   return (
     <NumericReadout
-      label="HOME"
+      label="家点"
       value={distance !== null ? formatDistanceFromMeters(distance, distanceUnit) : '--'}
-      sub={active ? `BRG ${Math.round((bearing + 360) % 360)}°` : undefined}
+      sub={active ? `方位 ${Math.round((bearing + 360) % 360)}°` : undefined}
       valueClassName={active ? 'text-[var(--gauge-green)]' : undefined}
     />
   );
@@ -958,7 +958,7 @@ function FlightModeInstrument(): JSX.Element {
     : GAUGE_COLORS.text;
 
   return (
-    <InstrumentStrip label="Flight mode">
+    <InstrumentStrip label="飞行模式">
       <div className="flex items-center gap-2">
         <span
           className="w-1 self-stretch rounded-full shrink-0"
@@ -968,7 +968,7 @@ function FlightModeInstrument(): JSX.Element {
           className="text-[15px] font-semibold leading-none whitespace-nowrap"
           style={{ color: connected ? modeColor : GAUGE_COLORS.text }}
         >
-          {connected ? (mode || 'Unknown').toUpperCase() : '--'}
+          {connected ? (mode || '未知').toUpperCase() : '--'}
         </span>
         {connected && (
           <span
@@ -979,7 +979,7 @@ function FlightModeInstrument(): JSX.Element {
                 : { color: GAUGE_COLORS.textDim, border: `1px solid ${GAUGE_COLORS.bezelEdge}` }
             }
           >
-            {armed ? 'ARMED' : 'DISARMED'}
+            {armed ? '已解锁' : '已上锁'}
           </span>
         )}
       </div>
@@ -992,17 +992,17 @@ type AnnunState = 'absent' | 'ok' | 'amber' | 'red';
 // MAV_SYS_STATUS_SENSOR bits. PREARM lights amber, not red: it blocks arming
 // but is not a failing sensor.
 const ANNUN_SENSOR_CELLS: Array<{ label: string; bit: number; bad: 'red' | 'amber' }> = [
-  { label: 'GYRO', bit: 0x01, bad: 'red' },
-  { label: 'ACC', bit: 0x02, bad: 'red' },
-  { label: 'MAG', bit: 0x04, bad: 'red' },
-  { label: 'BARO', bit: 0x08, bad: 'red' },
+  { label: '陀螺', bit: 0x01, bad: 'red' },
+  { label: '加计', bit: 0x02, bad: 'red' },
+  { label: '磁罗', bit: 0x04, bad: 'red' },
+  { label: '气压', bit: 0x08, bad: 'red' },
   { label: 'GPS', bit: 0x20, bad: 'red' },
-  { label: 'RC', bit: 0x10000, bad: 'red' },
-  { label: 'FENCE', bit: 0x100000, bad: 'red' },
+  { label: '遥控', bit: 0x10000, bad: 'red' },
+  { label: '围栏', bit: 0x100000, bad: 'red' },
   { label: 'AHRS', bit: 0x200000, bad: 'red' },
-  { label: 'TERRAIN', bit: 0x400000, bad: 'red' },
-  { label: 'BATT', bit: 0x1000000, bad: 'red' },
-  { label: 'PREARM', bit: 0x10000000, bad: 'amber' },
+  { label: '地形', bit: 0x400000, bad: 'red' },
+  { label: '电池', bit: 0x1000000, bad: 'red' },
+  { label: '预解锁', bit: 0x10000000, bad: 'amber' },
 ];
 
 // Lamp styling: an off annunciator is a recessed dark window with an engraved
@@ -1067,13 +1067,13 @@ function AnnunciatorInstrument(): JSX.Element {
   const battFsState: AnnunState = !connected ? 'absent' : remaining >= 0 && remaining <= 15 ? 'red' : 'ok';
 
   return (
-    <InstrumentStrip label="Annunciator" tall>
+    <InstrumentStrip label="告警面板" tall>
       <div className="grid grid-cols-3 gap-1">
         {ANNUN_SENSOR_CELLS.map((c) => (
           <AnnunCell key={c.label} label={c.label} state={sensorState(c.bit, c.bad)} />
         ))}
-        <AnnunCell label="LINK" state={linkState} />
-        <AnnunCell label="BATT FS" state={battFsState} />
+        <AnnunCell label="链路" state={linkState} />
+        <AnnunCell label="电池保护" state={battFsState} />
       </div>
     </InstrumentStrip>
   );
@@ -1111,7 +1111,7 @@ function MissionInstrument(): JSX.Element {
 
   return (
     <InstrumentStrip
-      label="Mission"
+      label="任务"
       bar={
         total > 0 ? (
           <div className="h-[3px]" style={{ background: GAUGE_COLORS.bezel }}>
@@ -1125,19 +1125,19 @@ function MissionInstrument(): JSX.Element {
     >
       {total === 0 ? (
         <span className="text-[11px] leading-none" style={{ color: GAUGE_COLORS.tickMinor }}>
-          No mission
+          无任务
         </span>
       ) : (
         <div className="flex items-baseline gap-2 whitespace-nowrap w-full">
           <span className="text-[15px] font-semibold leading-none text-[var(--gauge-text)]">
-            WP {cur ?? '--'}
+            航点 {cur ?? '--'}
             <span className="text-[10px] font-normal text-[var(--gauge-text-dim)]">/{total}</span>
           </span>
           {dirty && cur === null ? (
             /* The plan on screen is not on the vehicle; say so where the
                pilot looks instead of implying a ready-to-fly mission. */
             <span className="ml-auto text-[8px] font-semibold tracking-wider leading-none text-[var(--gauge-amber)]">
-              NOT UPLOADED
+              未上传
             </span>
           ) : (
             <>
@@ -1146,7 +1146,7 @@ function MissionInstrument(): JSX.Element {
                   {formatDistanceFromMeters(distance, distanceUnit)}
                 </span>
               )}
-              {eta && <span className="ml-auto text-[9px] leading-none text-[var(--gauge-text-dim)]">ETA {eta}</span>}
+              {eta && <span className="ml-auto text-[9px] leading-none text-[var(--gauge-text-dim)]">预计 {eta}</span>}
             </>
           )}
         </div>
@@ -1177,7 +1177,7 @@ function AttitudeBallInstrument(): JSX.Element {
       {!attitudeFresh && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <span className="px-1.5 py-0.5 rounded bg-surface-overlay-light text-[10px] font-semibold tracking-wide text-[var(--gauge-amber)]">
-            NO ATT
+            无姿态
           </span>
         </div>
       )}
@@ -1199,9 +1199,9 @@ const BATTERY_INSTANCE_DEFAULT_POS = [
 ];
 
 export const MAP_INSTRUMENTS: MapInstrumentDef[] = [
-  { id: 'attitude', round: true, profiles: ['air'], label: 'Attitude ball', defaultClassName: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000]', defaultVisible: true, Component: AttitudeBallInstrument },
-  { id: 'flight-data', label: 'Flight data', defaultClassName: 'absolute bottom-2 left-2 z-[1000]', defaultVisible: true, Component: FlightDataInstrument },
-  { id: 'battery', round: true, label: 'Battery', defaultClassName: 'absolute left-3 top-16 z-[1000]', defaultVisible: false, Component: BatteryInstrument, NumericComponent: BatteryNumeric, variants: compactVariants('battery') },
+  { id: 'attitude', round: true, profiles: ['air'], label: '姿态球', defaultClassName: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000]', defaultVisible: true, Component: AttitudeBallInstrument },
+  { id: 'flight-data', label: '飞行数据', defaultClassName: 'absolute bottom-2 left-2 z-[1000]', defaultVisible: true, Component: FlightDataInstrument },
+  { id: 'battery', round: true, label: '电池', defaultClassName: 'absolute left-3 top-16 z-[1000]', defaultVisible: false, Component: BatteryInstrument, NumericComponent: BatteryNumeric, variants: compactVariants('battery') },
   // Fixed-monitor gauges (#126), one per possible ArduPilot instance: show a
   // specific pack regardless of the primary selection. The catalog surfaces
   // only the ones this vehicle actually streams.
@@ -1209,30 +1209,30 @@ export const MAP_INSTRUMENTS: MapInstrumentDef[] = [
     id: `battery${k + 2}`,
     monitorId: k + 1,
     round: true,
-    label: `Battery ${k + 2}`,
+    label: `电池 ${k + 2}`,
     defaultClassName: cls,
     defaultVisible: false,
     Component: makeBatteryInstanceGauge(k + 1),
     NumericComponent: makeBatteryInstanceNumeric(k + 1),
   })),
   { id: 'gps', round: true, label: 'GPS', defaultClassName: 'absolute left-3 top-[176px] z-[1000]', defaultVisible: false, Component: GpsInstrument, NumericComponent: GpsNumeric, variants: compactVariants('gps') },
-  { id: 'altitude', round: true, profiles: ['air'], label: 'Altitude', defaultClassName: 'absolute left-3 top-[288px] z-[1000]', defaultVisible: false, Component: AltitudeInstrument, NumericComponent: AltitudeNumeric, variants: compactVariants('altitude') },
-  { id: 'speed', round: true, label: 'Speed', defaultClassName: 'absolute left-3 top-[400px] z-[1000]', defaultVisible: false, Component: SpeedInstrument, NumericComponent: SpeedNumeric, variants: compactVariants('speed') },
-  { id: 'tilt', round: true, profiles: ['ground'], label: 'Tilt', defaultClassName: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000]', defaultVisible: false, Component: TiltInstrument },
-  { id: 'steer', profiles: ['ground'], label: 'Steering', defaultClassName: 'absolute left-[124px] top-[344px] z-[1000]', defaultVisible: false, Component: SteerInstrument },
-  { id: 'xtrack', profiles: ['ground'], label: 'Cross-track', defaultClassName: 'absolute left-[124px] top-[420px] z-[1000]', defaultVisible: false, Component: XtrackInstrument },
-  { id: 'heading', round: true, label: 'Compass (HDG)', defaultClassName: 'absolute bottom-3 left-[calc(50%+88px)] z-[1000]', defaultVisible: true, Component: HeadingInstrument, NumericComponent: HeadingNumeric, variants: compactVariants('heading') },
-  { id: 'vsi', round: true, profiles: ['air'], label: 'VSI', defaultClassName: 'absolute left-3 top-[512px] z-[1000]', defaultVisible: false, Component: VsiInstrument, NumericComponent: VsiNumeric, variants: compactVariants('vsi') },
-  { id: 'home', round: true, label: 'Home', defaultClassName: 'absolute left-3 top-[624px] z-[1000]', defaultVisible: false, Component: HomeInstrument, NumericComponent: HomeNumeric, variants: compactVariants('home') },
+  { id: 'altitude', round: true, profiles: ['air'], label: '高度', defaultClassName: 'absolute left-3 top-[288px] z-[1000]', defaultVisible: false, Component: AltitudeInstrument, NumericComponent: AltitudeNumeric, variants: compactVariants('altitude') },
+  { id: 'speed', round: true, label: '速度', defaultClassName: 'absolute left-3 top-[400px] z-[1000]', defaultVisible: false, Component: SpeedInstrument, NumericComponent: SpeedNumeric, variants: compactVariants('speed') },
+  { id: 'tilt', round: true, profiles: ['ground'], label: '倾角', defaultClassName: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000]', defaultVisible: false, Component: TiltInstrument },
+  { id: 'steer', profiles: ['ground'], label: '转向', defaultClassName: 'absolute left-[124px] top-[344px] z-[1000]', defaultVisible: false, Component: SteerInstrument },
+  { id: 'xtrack', profiles: ['ground'], label: '偏航距', defaultClassName: 'absolute left-[124px] top-[420px] z-[1000]', defaultVisible: false, Component: XtrackInstrument },
+  { id: 'heading', round: true, label: '罗盘(航向)', defaultClassName: 'absolute bottom-3 left-[calc(50%+88px)] z-[1000]', defaultVisible: true, Component: HeadingInstrument, NumericComponent: HeadingNumeric, variants: compactVariants('heading') },
+  { id: 'vsi', round: true, profiles: ['air'], label: '升降速', defaultClassName: 'absolute left-3 top-[512px] z-[1000]', defaultVisible: false, Component: VsiInstrument, NumericComponent: VsiNumeric, variants: compactVariants('vsi') },
+  { id: 'home', round: true, label: '家点', defaultClassName: 'absolute left-3 top-[624px] z-[1000]', defaultVisible: false, Component: HomeInstrument, NumericComponent: HomeNumeric, variants: compactVariants('home') },
   // Strips stack in a second column beside the left-edge gauges (gauge is
   // 104px wide at left-3, so 124px clears it) under the Instruments button.
-  { id: 'flight-mode', label: 'Flight mode', defaultClassName: 'absolute left-[124px] top-16 z-[1000]', defaultVisible: false, Component: FlightModeInstrument },
-  { id: 'link', label: 'Link', defaultClassName: 'absolute left-[124px] top-[128px] z-[1000]', defaultVisible: false, Component: LinkInstrument, variants: compactVariants('link') },
-  { id: 'mission', label: 'Mission', defaultClassName: 'absolute left-[124px] top-[192px] z-[1000]', defaultVisible: false, Component: MissionInstrument },
-  { id: 'annunciator', label: 'Annunciator', defaultClassName: 'absolute left-[124px] top-[268px] z-[1000]', defaultVisible: false, Component: AnnunciatorInstrument },
+  { id: 'flight-mode', label: '飞行模式', defaultClassName: 'absolute left-[124px] top-16 z-[1000]', defaultVisible: false, Component: FlightModeInstrument },
+  { id: 'link', label: '链路', defaultClassName: 'absolute left-[124px] top-[128px] z-[1000]', defaultVisible: false, Component: LinkInstrument, variants: compactVariants('link') },
+  { id: 'mission', label: '任务', defaultClassName: 'absolute left-[124px] top-[192px] z-[1000]', defaultVisible: false, Component: MissionInstrument },
+  { id: 'annunciator', label: '告警面板', defaultClassName: 'absolute left-[124px] top-[268px] z-[1000]', defaultVisible: false, Component: AnnunciatorInstrument },
   { id: 'rtk', label: 'RTK', defaultClassName: 'absolute left-[124px] top-[600px] z-[1000]', defaultVisible: false, Component: RtkInstrument },
-  { id: 'controls', label: 'Flight control', defaultClassName: 'absolute left-[124px] top-[420px] z-[1000]', defaultVisible: false, Component: FlightControlInstrument, variants: [
-    { id: 'compact', label: 'Compact', Component: () => <FlightControlInstrument variant="compact" /> },
-    { id: 'bar', label: 'Bar', Component: () => <FlightControlInstrument variant="bar" /> },
+  { id: 'controls', label: '飞行控制', defaultClassName: 'absolute left-[124px] top-[420px] z-[1000]', defaultVisible: false, Component: FlightControlInstrument, variants: [
+    { id: 'compact', label: '紧凑', Component: () => <FlightControlInstrument variant="compact" /> },
+    { id: 'bar', label: '条形', Component: () => <FlightControlInstrument variant="bar" /> },
   ] },
 ];

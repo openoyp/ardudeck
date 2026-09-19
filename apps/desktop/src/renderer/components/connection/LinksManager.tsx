@@ -18,7 +18,7 @@ type AddKind = 'udp' | 'tcp' | 'orchestration';
 const KINDS: { id: AddKind; label: string }[] = [
   { id: 'udp', label: 'UDP' },
   { id: 'tcp', label: 'TCP' },
-  { id: 'orchestration', label: 'Server' },
+  { id: 'orchestration', label: '服务器' },
 ];
 
 export function LinksManager() {
@@ -59,7 +59,7 @@ export function LinksManager() {
       }
       refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to add link');
+      setError(e instanceof Error ? e.message : '添加链路失败');
     } finally {
       setBusy(false);
     }
@@ -76,7 +76,7 @@ export function LinksManager() {
 
   return (
     <div>
-      <span className="text-[11px] uppercase tracking-wide text-content-secondary">Connection sources</span>
+      <span className="text-[11px] uppercase tracking-wide text-content-secondary">连接源</span>
 
       {/* Existing transports */}
       {transports.length > 0 && (
@@ -88,18 +88,18 @@ export function LinksManager() {
             >
               <span className="font-mono text-xs text-content truncate flex-1">{t.label}</span>
               <span className="text-[11px] text-content-tertiary shrink-0">
-                {t.vehicleCount} veh
+                {t.vehicleCount} 台
               </span>
               {t.isPrimary ? (
                 <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-raised text-content-tertiary shrink-0">
-                  Primary
+                  主链路
                 </span>
               ) : (
                 <button
                   onClick={() => remove(t.id)}
                   className="text-[11px] text-red-400 hover:text-red-300 transition-colors shrink-0"
                 >
-                  Remove
+                  移除
                 </button>
               )}
             </div>
@@ -109,7 +109,7 @@ export function LinksManager() {
 
       {/* Add a link */}
       <div className="mt-3 rounded-xl border border-subtle bg-surface p-3 space-y-3">
-        <div className="text-[11px] uppercase tracking-wide text-content-secondary">Add a source</div>
+        <div className="text-[11px] uppercase tracking-wide text-content-secondary">添加连接源</div>
 
         {/* Kind selector - segmented control matching the single-vehicle protocol toggle */}
         <div className="flex rounded-lg overflow-hidden border border-subtle">
@@ -131,7 +131,7 @@ export function LinksManager() {
         {kind === 'orchestration' ? (
           <>
             <div>
-              <label className="label">Server URL</label>
+              <label className="label">服务器 URL</label>
               <input
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -140,11 +140,11 @@ export function LinksManager() {
               />
             </div>
             <div>
-              <label className="label">Token (optional)</label>
+              <label className="label">令牌(可选)</label>
               <input
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                placeholder="Access token"
+                placeholder="访问令牌"
                 className="input"
               />
             </div>
@@ -153,7 +153,7 @@ export function LinksManager() {
           <div className="flex gap-2">
             {kind === 'tcp' && (
               <div className="flex-1">
-                <label className="label">Host</label>
+                <label className="label">主机</label>
                 <input
                   value={host}
                   onChange={(e) => setHost(e.target.value)}
@@ -163,7 +163,7 @@ export function LinksManager() {
               </div>
             )}
             <div className={kind === 'tcp' ? 'w-24' : 'flex-1'}>
-              <label className="label">Port</label>
+              <label className="label">端口</label>
               <input
                 value={port}
                 onChange={(e) => setPort(e.target.value)}
@@ -176,7 +176,7 @@ export function LinksManager() {
         )}
 
         <button onClick={add} disabled={busy} className="btn btn-primary w-full">
-          {busy ? 'Adding...' : 'Add source'}
+          {busy ? '添加中…' : '添加连接源'}
         </button>
 
         {error && <p className="text-[11px] text-red-400">{error}</p>}

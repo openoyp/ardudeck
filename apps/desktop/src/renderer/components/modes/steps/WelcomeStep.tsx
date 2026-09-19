@@ -41,7 +41,7 @@ const PresetCard: React.FC<PresetCardProps> = ({ preset, onSelect }) => {
                 key={idx}
                 className="px-2 py-0.5 text-xs bg-surface-overlay-subtle rounded-full text-content"
               >
-                {MODE_INFO[boxId]?.name ?? `Mode ${boxId}`}
+                {MODE_INFO[boxId]?.name ?? `模式 ${boxId}`}
               </span>
             ))}
           </div>
@@ -82,10 +82,9 @@ export const WelcomeStep: React.FC = () => {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-purple-500/20 mb-4">
           <Radio className="w-8 h-8 text-purple-400" />
         </div>
-        <h2 className="text-xl font-semibold text-content">Choose Your Flying Style</h2>
+        <h2 className="text-xl font-semibold text-content">选择你的飞行风格</h2>
         <p className="text-sm text-content-secondary mt-2 max-w-md mx-auto">
-          Select a preset to quickly configure the essential flight modes for your style,
-          or set up modes manually for full control.
+          选择预设可快速为你的飞行风格配置必备飞行模式,也可以手动逐项配置以获得完全控制。
         </p>
       </div>
 
@@ -111,8 +110,8 @@ export const WelcomeStep: React.FC = () => {
               <Settings className="w-5 h-5 text-content-secondary" />
             </div>
             <div>
-              <h3 className="font-medium text-content">Manual Setup</h3>
-              <p className="text-xs text-content-secondary">Configure modes one by one (advanced)</p>
+              <h3 className="font-medium text-content">手动配置</h3>
+              <p className="text-xs text-content-secondary">逐个配置模式(适合进阶用户)</p>
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-content-secondary" />
@@ -124,10 +123,9 @@ export const WelcomeStep: React.FC = () => {
         <div className="flex items-start gap-3">
           <Lightbulb className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-medium text-amber-200 text-sm">New to FPV?</h4>
+            <h4 className="font-medium text-amber-200 text-sm">刚接触 FPV?</h4>
             <p className="text-xs text-amber-100/70 mt-1">
-              Start with the <strong>Beginner</strong> preset. It enables ANGLE mode which
-              keeps your aircraft level automatically - perfect for learning!
+              建议从<strong>新手</strong>预设开始。它会启用 ANGLE 模式,自动保持飞行器水平——非常适合入门练习!
             </p>
           </div>
         </div>

@@ -42,7 +42,7 @@ export function SaveMissionModal({ onClose, onSaved, importedItems, importedHome
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError('Mission name is required');
+      setError('请填写任务名称');
       return;
     }
 
@@ -65,7 +65,7 @@ export function SaveMissionModal({ onClose, onSaved, importedItems, importedHome
       onSaved?.();
       onClose();
     } else {
-      setError(storeError || 'Failed to save mission. Check the console for details.');
+      setError(storeError || '任务保存失败。详情请查看控制台。');
     }
   };
 
@@ -81,7 +81,7 @@ export function SaveMissionModal({ onClose, onSaved, importedItems, importedHome
               </svg>
             </div>
             <h2 className="text-lg font-semibold text-content">
-              {isImport ? 'Import to Library' : 'Save to Library'}
+              {isImport ? '导入到任务库' : '保存到任务库'}
             </h2>
           </div>
         </div>
@@ -90,12 +90,12 @@ export function SaveMissionModal({ onClose, onSaved, importedItems, importedHome
         <div className="px-6 py-5 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-content mb-1">Name *</label>
+            <label className="block text-sm font-medium text-content mb-1">名称 *</label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="e.g., Survey Grid North Field"
+              placeholder="例如:北田勘测网格"
               className="w-full px-3 py-2 bg-surface-input border border-subtle rounded-lg text-content placeholder-content-tertiary text-sm focus:outline-none focus:border-blue-500/50"
               autoFocus
             />
@@ -103,11 +103,11 @@ export function SaveMissionModal({ onClose, onSaved, importedItems, importedHome
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-content mb-1">Description</label>
+            <label className="block text-sm font-medium text-content mb-1">描述</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="Optional notes about this mission..."
+              placeholder="关于此任务的备注(可选)..."
               rows={3}
               className="w-full px-3 py-2 bg-surface-input border border-subtle rounded-lg text-content placeholder-content-tertiary text-sm focus:outline-none focus:border-blue-500/50 resize-none"
             />
@@ -115,20 +115,20 @@ export function SaveMissionModal({ onClose, onSaved, importedItems, importedHome
 
           {/* Tags */}
           <div>
-            <label className="block text-sm font-medium text-content mb-1">Tags</label>
+            <label className="block text-sm font-medium text-content mb-1">标签</label>
             <TagInput
               tags={tags}
               onChange={setTags}
-              placeholder="survey, north-field, high-alt"
+              placeholder="勘测, 北田, 高海拔"
               suggestions={allTags}
             />
           </div>
 
           {/* Summary */}
           <div className="flex items-center gap-4 text-xs text-content-secondary bg-surface-raised rounded-lg px-3 py-2">
-            <span>{items.length} waypoints</span>
+            <span>{items.length} 个航点</span>
             <span>{formatDistanceFromMeters(distance, distanceUnit)}</span>
-            {homePosition && <span>Home set</span>}
+            {homePosition && <span>家已设置</span>}
           </div>
 
           {/* Error */}
@@ -145,7 +145,7 @@ export function SaveMissionModal({ onClose, onSaved, importedItems, importedHome
             onClick={onClose}
             className="flex-1 px-4 py-2.5 bg-surface-raised hover:bg-surface-raised text-content rounded-lg transition-colors"
           >
-            Cancel
+            取消
           </button>
           <button
             onClick={handleSave}
@@ -156,7 +156,7 @@ export function SaveMissionModal({ onClose, onSaved, importedItems, importedHome
                 : 'bg-blue-600 hover:bg-blue-500 text-white'
             }`}
           >
-            {saving ? 'Saving...' : isImport ? 'Import' : 'Save'}
+            {saving ? '保存中...' : isImport ? '导入' : '保存'}
           </button>
         </div>
       </div>

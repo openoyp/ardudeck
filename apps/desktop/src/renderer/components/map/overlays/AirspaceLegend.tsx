@@ -1,7 +1,7 @@
 const LEGEND_ITEMS = [
   { label: 'CTR', color: 'rgba(0, 100, 255, 0.45)' },
-  { label: 'Restricted', color: 'rgba(255, 0, 0, 0.45)' },
-  { label: 'Danger', color: 'rgba(255, 150, 0, 0.45)' },
+  { label: '限制区', color: 'rgba(255, 0, 0, 0.45)' },
+  { label: '危险区', color: 'rgba(255, 150, 0, 0.45)' },
   { label: 'TMA', color: 'rgba(160, 32, 240, 0.40)' },
 ];
 

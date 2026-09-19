@@ -45,7 +45,7 @@ export function ProfileManager<T>({
   currentData,
   onLoad,
   onReset,
-  label = 'My Profiles',
+  label = '我的配置',
   showReset = true,
 }: ProfileManagerProps<T>) {
   const [profiles, setProfiles] = useState<Record<string, { name: string; data: T }>>({});
@@ -105,10 +105,10 @@ export function ProfileManager<T>({
             <button
               onClick={onReset}
               className="px-2 py-1 text-xs rounded bg-surface-raised hover:bg-surface-raised text-content-secondary hover:text-content transition-colors flex items-center gap-1"
-              title="Reset to factory defaults"
+              title="重置为出厂默认"
             >
               <RotateCcw className="w-3 h-3" />
-              Reset
+              重置
             </button>
           )}
         </div>
@@ -138,7 +138,7 @@ export function ProfileManager<T>({
                 type="text"
                 value={profileName}
                 onChange={(e) => setProfileName(e.target.value)}
-                placeholder="Name..."
+                placeholder="名称…"
                 className="w-24 px-2 py-1.5 bg-transparent text-content text-sm focus:outline-none"
                 autoFocus
                 onKeyDown={(e) => {
@@ -164,9 +164,9 @@ export function ProfileManager<T>({
             <button
               onClick={() => setShowSaveDialog(true)}
               className="px-3 py-1.5 text-sm rounded-lg bg-surface-raised hover:bg-surface-raised text-content-secondary hover:text-content transition-colors flex items-center gap-1"
-              title="Save current settings as a profile"
+              title="将当前设置保存为配置"
             >
-              <span>+</span> Save
+              <span>+</span> 保存
             </button>
           )}
         </div>

@@ -4,11 +4,11 @@ import { extractLogEvents, fmtEventTime, type LogEventKind, type LogEventSeverit
 import { publishTimeJump, publishHoverTime } from './log-hover-bus';
 
 const KIND_FILTERS: { key: LogEventKind; label: string }[] = [
-  { key: 'ERR', label: 'Errors' },
-  { key: 'EV', label: 'Events' },
-  { key: 'MSG', label: 'Messages' },
-  { key: 'MODE', label: 'Modes' },
-  { key: 'CMD', label: 'Commands' },
+  { key: 'ERR', label: '错误' },
+  { key: 'EV', label: '事件' },
+  { key: 'MSG', label: '消息' },
+  { key: 'MODE', label: '模式' },
+  { key: 'CMD', label: '命令' },
 ];
 
 const SEVERITY_DOT: Record<LogEventSeverity, string> = {
@@ -72,7 +72,7 @@ export function EventsPanel() {
   };
 
   if (!currentLog) {
-    return <div className="h-full flex items-center justify-center text-content-tertiary text-xs">No log loaded</div>;
+    return <div className="h-full flex items-center justify-center text-content-tertiary text-xs">尚未加载日志</div>;
   }
 
   return (
@@ -100,22 +100,22 @@ export function EventsPanel() {
                 ? 'bg-red-500/15 text-red-400 border-red-500/30'
                 : 'bg-surface text-content-tertiary border-subtle hover:text-content-secondary'
             }`}
-            data-tip="Hide routine entries, keep warnings and errors"
+            data-tip="隐藏常规条目，仅保留警告和错误"
           >
-            Problems only
+            只看问题
           </button>
         </div>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Filter events..."
+          placeholder="筛选事件..."
           className="w-full text-[11px] px-2 py-1 rounded bg-input text-content border border-subtle placeholder:text-content-tertiary focus:outline-none focus:border-blue-500/50"
         />
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 && (
-          <div className="text-center text-content-tertiary text-[11px] py-6">No events match</div>
+          <div className="text-center text-content-tertiary text-[11px] py-6">没有匹配的事件</div>
         )}
         {filtered.map((e, i) => (
           <button
@@ -124,7 +124,7 @@ export function EventsPanel() {
             onMouseEnter={() => publishHoverTime(e.timeS)}
             onMouseLeave={() => publishHoverTime(null)}
             className="w-full text-left flex items-start gap-2 px-3 py-1 hover:bg-blue-500/10 transition-colors group"
-            data-tip="Click to jump the charts to this moment"
+            data-tip="点击将图表跳转到该时刻"
           >
             <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${SEVERITY_DOT[e.severity]}`} />
             <span className="text-[10px] tabular-nums text-content-tertiary mt-0.5 shrink-0 w-12 group-hover:text-blue-400">

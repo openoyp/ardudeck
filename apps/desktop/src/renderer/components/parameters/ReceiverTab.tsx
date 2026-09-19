@@ -43,9 +43,9 @@ import {
 // RX_MAP only covers the 4 stick channels: A(ileron), E(levator), R(udder), T(hrottle).
 // AUX channels are never remapped — the FC always returns exactly 4 bytes for MSP_RX_MAP.
 const RX_MAP_PRESETS = [
-  { label: 'AETR (Default)', desc: 'FrSky, Futaba, Hitec, ELRS, FlySky', map: [0, 1, 3, 2] },
+  { label: 'AETR（默认）', desc: 'FrSky, Futaba, Hitec, ELRS, FlySky', map: [0, 1, 3, 2] },
   { label: 'TAER', desc: 'Spektrum, JR, Graupner', map: [1, 2, 3, 0] },
-  { label: 'RETA', desc: 'Rare / legacy radios', map: [3, 1, 0, 2] },
+  { label: 'RETA', desc: '稀有 / 老式遥控器', map: [3, 1, 0, 2] },
 ];
 
 // =============================================================================
@@ -134,7 +134,7 @@ function InfoBanner({ children, color = 'blue' }: { children: React.ReactNode; c
     <div className={`flex items-start gap-2.5 px-4 py-3 rounded-xl ${s.bg} ${s.border} border`}>
       <HelpCircle className={`w-4 h-4 ${s.icon} shrink-0 mt-0.5`} />
       <p className="text-xs text-content leading-relaxed">
-        <span className={`font-semibold ${s.label}`}>How this works: </span>
+        <span className={`font-semibold ${s.label}`}>工作原理：</span>
         {children}
       </p>
     </div>
@@ -405,12 +405,12 @@ export default function ReceiverTab({ isInav, modified, setModified, onNavigateT
   const getSignalBadge = () => {
     switch (signalStatus) {
       case 'active':
-        return { text: 'Active', color: 'green' };
+        return { text: '有信号', color: 'green' };
       case 'stale':
-        return { text: 'Signal Lost', color: 'amber' };
+        return { text: '信号丢失', color: 'amber' };
       case 'none':
       default:
-        return { text: 'No Signal', color: 'red' };
+        return { text: '无信号', color: 'red' };
     }
   };
 
@@ -420,25 +420,25 @@ export default function ReceiverTab({ isInav, modified, setModified, onNavigateT
     <div className="max-w-full space-y-4">
       {/* Receiver Protocol */}
       <Section
-        title="Receiver Protocol"
+        title="接收机协议"
         icon={<Radio className="w-5 h-5 text-blue-400" />}
         color="blue"
         defaultOpen={true}
       >
         <div className="mt-4 space-y-4">
           <InfoBanner>
-            Your transmitter sends stick commands to a small receiver wired to your flight controller.
-            Select the protocol that matches your receiver. Check the label on your receiver if unsure.
+            遥控器将摇杆指令发送到连接在飞行控制器上的小型接收机。
+            请选择与你的接收机匹配的协议，不确定时请查看接收机上的标签。
           </InfoBanner>
           {isInav ? (
             <>
               {/* iNav: receiver_type */}
               <div>
-                <label className="text-xs text-content-secondary mb-2 block">Receiver Type</label>
+                <label className="text-xs text-content-secondary mb-2 block">接收机类型</label>
                 {receiverType === null && !receiverSettingsLoaded ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-raised border-subtle">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                    <span className="text-xs text-content-secondary">Reading from board...</span>
+                    <span className="text-xs text-content-secondary">正在从飞控读取...</span>
                   </div>
                 ) : (
                   <div className="flex gap-2 flex-wrap">
@@ -462,11 +462,11 @@ export default function ReceiverTab({ isInav, modified, setModified, onNavigateT
               {/* iNav: serialrx_provider quick select */}
               {receiverType === 'SERIAL' && (
                 <div>
-                  <label className="text-xs text-content-secondary mb-2 block">Serial RX Protocol</label>
+                  <label className="text-xs text-content-secondary mb-2 block">串口接收协议</label>
                   {inavSerialrxProvider === null && !receiverSettingsLoaded ? (
                     <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-raised border-subtle">
                       <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                      <span className="text-xs text-content-secondary">Reading from board...</span>
+                      <span className="text-xs text-content-secondary">正在从飞控读取...</span>
                     </div>
                   ) : (
                     <div className="flex gap-2 flex-wrap">
@@ -499,12 +499,12 @@ export default function ReceiverTab({ isInav, modified, setModified, onNavigateT
               {bfProvider === null && !receiverSettingsLoaded ? (
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-raised border-subtle">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                  <span className="text-xs text-content-secondary">Reading from board...</span>
+                  <span className="text-xs text-content-secondary">正在从飞控读取...</span>
                 </div>
               ) : (
                 <>
                   <div>
-                    <label className="text-xs text-content-secondary mb-2 block">Quick Select</label>
+                    <label className="text-xs text-content-secondary mb-2 block">快捷选择</label>
                     <div className="flex gap-2 flex-wrap">
                       {BF_QUICK_SELECT.map((p) => (
                         <button
@@ -523,13 +523,13 @@ export default function ReceiverTab({ isInav, modified, setModified, onNavigateT
                   </div>
 
                   <div>
-                    <label className="text-xs text-content-secondary mb-2 block">All Protocols</label>
+                    <label className="text-xs text-content-secondary mb-2 block">所有协议</label>
                     <select
                       value={bfProvider ?? ''}
                       onChange={(e) => setBfProvider(Number(e.target.value))}
                       className="w-full bg-surface-raised text-content rounded-lg px-3 py-2 text-sm border focus:border-blue-500 focus:outline-none"
                     >
-                      {bfProvider === null && <option value="">Select protocol...</option>}
+                      {bfProvider === null && <option value="">选择协议...</option>}
                       {BF_PROVIDERS.map((p) => (
                         <option key={p.value} value={p.value}>{p.label}</option>
                       ))}
@@ -550,7 +550,7 @@ export default function ReceiverTab({ isInav, modified, setModified, onNavigateT
 
       {/* Live RC Channels */}
       <Section
-        title="Live RC Channels"
+        title="实时 RC 通道"
         icon={
           signalStatus === 'active'
             ? <Signal className="w-5 h-5 text-green-400" />
@@ -598,19 +598,19 @@ export default function ReceiverTab({ isInav, modified, setModified, onNavigateT
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-amber-300">No RC signal detected</p>
-                  <p className="text-xs text-content-secondary mt-1">Check that:</p>
+                  <p className="text-sm font-medium text-amber-300">未检测到 RC 信号</p>
+                  <p className="text-xs text-content-secondary mt-1">请检查：</p>
                   <ul className="text-xs text-content-secondary mt-1 space-y-0.5 list-disc list-inside">
-                    <li>Receiver is powered and bound to transmitter</li>
-                    <li>Correct UART is configured for Serial RX</li>
-                    <li>Receiver protocol matches your hardware</li>
+                    <li>接收机已上电并与遥控器对频</li>
+                    <li>为串口接收配置了正确的 UART</li>
+                    <li>接收机协议与你的硬件匹配</li>
                   </ul>
                   {onNavigateToTab && (
                     <button
                       onClick={() => onNavigateToTab('ports')}
                       className="mt-2 text-xs text-blue-400 hover:text-blue-300 underline"
                     >
-                      Open Ports Configuration
+                      打开端口配置
                     </button>
                   )}
                 </div>
@@ -622,25 +622,25 @@ export default function ReceiverTab({ isInav, modified, setModified, onNavigateT
 
       {/* Channel Mapping */}
       <Section
-        title="Channel Mapping"
+        title="通道映射"
         icon={<Shuffle className="w-5 h-5 text-purple-400" />}
         color="purple"
       >
         <div className="mt-4 space-y-4">
           <InfoBanner color="purple">
-            This controls which stick axis maps to which channel. If moving your throttle stick shows the wrong bar in Live RC above, pick a different preset here.
-            Most receivers use AETR. JR/Spektrum radios use TAER.
+            此设置控制摇杆轴与通道的对应关系。如果上方实时 RC 中移动油门杆显示的是错误的通道条，请在此选择其他预设。
+            大多数接收机使用 AETR，JR/Spektrum 遥控器使用 TAER。
           </InfoBanner>
           <div>
             {/* Current mapping status */}
             <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-surface-raised border-subtle">
               {isLoading ? (
-                <span className="text-xs text-content-secondary">Loading mapping from FC...</span>
+                <span className="text-xs text-content-secondary">正在从飞控加载映射...</span>
               ) : (
                 <>
                   <span className={`w-1.5 h-1.5 rounded-full ${configLoaded ? 'bg-green-400' : 'bg-amber-400'}`} />
                   <span className="text-xs text-content-secondary">
-                    {configLoaded ? 'Board mapping:' : 'Default (not loaded):'}
+                    {configLoaded ? '飞控映射：' : '默认（未加载）：'}
                   </span>
                   <span className="text-xs font-medium text-content">
                     {(() => {
@@ -649,14 +649,14 @@ export default function ReceiverTab({ isInav, modified, setModified, onNavigateT
                         rxMap[0] === p.map[0] && rxMap[1] === p.map[1] &&
                         rxMap[2] === p.map[2] && rxMap[3] === p.map[3]
                       );
-                      return match ? match.label : `Custom [${rxMap.slice(0, 4).join(', ')}]`;
+                      return match ? match.label : `自定义 [${rxMap.slice(0, 4).join(', ')}]`;
                     })()}
                   </span>
                 </>
               )}
             </div>
 
-            <label className="text-xs text-content-secondary mb-2 block">Change to preset</label>
+            <label className="text-xs text-content-secondary mb-2 block">切换到预设</label>
             <div className="flex gap-2 flex-wrap">
               {RX_MAP_PRESETS.map((preset) => {
                 const isSelected = rxMap.length >= 4 &&
@@ -681,7 +681,7 @@ export default function ReceiverTab({ isInav, modified, setModified, onNavigateT
           </div>
 
           <div>
-            <label className="text-xs text-content-secondary mb-2 block">Custom Order (drag to reorder)</label>
+            <label className="text-xs text-content-secondary mb-2 block">自定义顺序（拖动排序）</label>
             <ChannelMapDragRow rxMap={rxMap} setRxMap={setRxMap} />
           </div>
         </div>
@@ -689,37 +689,37 @@ export default function ReceiverTab({ isInav, modified, setModified, onNavigateT
 
       {/* Deadband */}
       <Section
-        title="Deadband"
+        title="死区"
         icon={<CircleDot className="w-5 h-5 text-orange-400" />}
         color="orange"
       >
         <div className="mt-4 space-y-4">
           <InfoBanner color="orange">
-            A small zone around stick center where tiny movements are ignored. Increase if your drone drifts when sticks are centered. Default of 0 is fine for most setups.
+            摇杆中心附近忽略微小移动的小区域。如果摇杆回中时飞行器漂移，可增大此值。大多数设置保持默认 0 即可。
           </InfoBanner>
           <DraggableSlider
-            label="Stick Deadband"
+            label="摇杆死区"
             value={deadband}
             onChange={setDeadband}
             min={0}
             max={100}
           />
           <DraggableSlider
-            label="Yaw Deadband"
+            label="偏航死区"
             value={yawDeadband}
             onChange={setYawDeadband}
             min={0}
             max={100}
           />
           <DraggableSlider
-            label="Alt Hold Deadband"
+            label="定高死区"
             value={altHoldDeadband}
             onChange={setAltHoldDeadband}
             min={0}
             max={250}
           />
           <DraggableSlider
-            label="Throttle Deadband"
+            label="油门死区"
             value={deadbandThrottle}
             onChange={setDeadbandThrottle}
             min={0}

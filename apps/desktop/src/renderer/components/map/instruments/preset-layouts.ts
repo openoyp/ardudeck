@@ -266,9 +266,9 @@ const ROVER_COCKPIT: InstrumentLayoutSnapshot = {
 };
 
 export const PRESET_INSTRUMENT_LAYOUTS: PresetInstrumentLayout[] = [
-  { name: 'Pilot cockpit', description: 'Full cockpit: docked gauge rows around the ball.', accent: 'green', layout: PILOT_COCKPIT },
-  { name: 'Minimal', description: 'Just the ball, flight data and the status strips.', accent: 'blue', layout: MINIMAL },
-  { name: 'Strips only', description: 'Compact readout bands, maximum map.', accent: 'amber', layout: STRIPS_ONLY },
-  { name: 'Split cockpit', description: 'Slim set for the in-map split; applied automatically.', accent: 'violet', layout: SPLIT_COCKPIT },
-  { name: 'Rover', description: 'Ground set: tilt, steering and cross-track instead of the ball.', accent: 'amber', layout: ROVER_COCKPIT },
+  { name: '飞行员座舱', description: '完整座舱:姿态球两侧对接仪表面板。', accent: 'green', layout: PILOT_COCKPIT },
+  { name: '极简', description: '仅姿态球、飞行数据与状态条。', accent: 'blue', layout: MINIMAL },
+  { name: '仅状态条', description: '紧凑读数条,最大化地图视野。', accent: 'amber', layout: STRIPS_ONLY },
+  { name: '分屏座舱', description: '地图分屏的精简组合;自动应用。', accent: 'violet', layout: SPLIT_COCKPIT },
+  { name: '地面车', description: '地面组合:以倾角、转向与偏航距替代姿态球。', accent: 'amber', layout: ROVER_COCKPIT },
 ];

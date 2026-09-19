@@ -57,7 +57,7 @@ export function CameraFootprintOverlay() {
                 radius={4}
                 pathOptions={{ color, weight: 2, fillColor: color, fillOpacity: 0.9 }}
               >
-                <Tooltip direction="top" offset={[0, -4]}>{v.label} camera center</Tooltip>
+                <Tooltip direction="top" offset={[0, -4]}>{v.label} 相机中心</Tooltip>
               </CircleMarker>
             )}
           </span>

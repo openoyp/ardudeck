@@ -26,7 +26,7 @@ function formatFrameTime(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso);
   if (!m) return iso;
   const [, y, mo, d, hh, mm] = m;
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
   const dow = days[new Date(Date.UTC(Number(y), Number(mo) - 1, Number(d))).getUTCDay()] ?? '';
   return `${dow} ${hh}:${mm} UTC`;
 }
@@ -34,7 +34,7 @@ function formatFrameTime(iso: string): string {
 function shortDay(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   if (!m) return '';
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
   return days[new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))).getUTCDay()] ?? '';
 }
 
@@ -69,7 +69,7 @@ export function WindControls({ raised = false, dragKey = 'wind-bar' }: { raised?
     return () => window.clearInterval(id);
   }, [playing, frames.length]);
 
-  const status = loading ? 'Loading…' : field ? null : error ? 'Wind data unavailable' : null;
+  const status = loading ? '加载中…' : field ? null : error ? '风数据不可用' : null;
 
   return (
     <div
@@ -89,7 +89,7 @@ export function WindControls({ raised = false, dragKey = 'wind-bar' }: { raised?
               'px-1.5 py-1 rounded text-[11px] font-medium transition-colors ' +
               (a === altitudeM ? 'bg-blue-600 text-white' : 'text-content-secondary hover:text-content')
             }
-            data-tip={`Wind at ${formatAltitudeFromMeters(a, altitudeUnit)} AGL`}
+            data-tip={`${formatAltitudeFromMeters(a, altitudeUnit)} AGL 处风力`}
           >
             {formatAltitudeFromMeters(a, altitudeUnit)}
           </button>
@@ -103,7 +103,7 @@ export function WindControls({ raised = false, dragKey = 'wind-bar' }: { raised?
         type="button"
         onClick={() => setPlaying((v) => !v)}
         disabled={frames.length === 0}
-        data-tip={playing ? 'Pause' : 'Play forecast'}
+        data-tip={playing ? '暂停' : '播放预报'}
         className="w-7 h-7 shrink-0 flex items-center justify-center rounded bg-surface-raised text-content hover:brightness-125 disabled:opacity-40"
       >
         {playing ? (
@@ -129,21 +129,21 @@ export function WindControls({ raised = false, dragKey = 'wind-bar' }: { raised?
           onChange={(e) => setFrameIndex(Number(e.target.value))}
           disabled={frames.length === 0}
           className="w-full accent-blue-600"
-          aria-label="Forecast hour"
+          aria-label="预报时间"
         />
       </div>
 
       <div className="w-px h-6 bg-subtle shrink-0" />
 
       {/* Legend + unit toggle */}
-      <div className="shrink-0 flex flex-col gap-0.5" data-tip="Regional flow (~25 km model). Not valley/ridge detail, trust onboard sensors near terrain.">
+      <div className="shrink-0 flex flex-col gap-0.5" data-tip="区域风流(~25 km 模型),不含山谷/山脊细节,近地形时请以机载传感器为准。">
         <div className="w-20 h-2 rounded" style={{ background: legendGradient() }} />
         <div className="flex justify-between items-center text-[9px] text-content-tertiary leading-none tabular-nums">
           <span>0</span>
           <button
             type="button"
             onClick={cycleUnits}
-            data-tip="Cycle units (m/s · kt · mph · km/h)"
+            data-tip="切换单位(m/s · kt · mph · km/h)"
             className="px-1 rounded text-content-secondary hover:text-content hover:bg-surface-raised font-medium"
           >
             {unitLabel(units)}

@@ -129,17 +129,17 @@ Return 3-6 cards. Most important issues first.`;
         const parsed = JSON.parse(jsonStr) as HealthCheckResult[];
         store.setAiInsightCards(parsed);
       } catch {
-        store.setAiInsightError('Failed to parse AI response');
+        store.setAiInsightError('解析 AI 响应失败');
       }
     } else {
-      store.setAiInsightError(result?.error ?? 'AI analysis failed');
+      store.setAiInsightError(result?.error ?? 'AI 分析失败');
     }
   }, [aiProvider, altitudeUnit, currentLog, electricCapacityUnit, healthResults, speedUnit]);
 
   if (!healthResults || !currentLog) {
     return (
       <div className="h-full flex items-center justify-center text-content-secondary">
-        No log loaded. Download or open a .bin file first.
+        尚未加载日志。请先下载或打开 .bin 文件。
       </div>
     );
   }
@@ -185,12 +185,12 @@ Return 3-6 cards. Most important issues first.`;
           </div>
           <div>
             <h3 className="text-content font-semibold">
-              {meta.firmwareString || [meta.vehicleType, meta.firmwareVersion].filter(Boolean).join(' ').trim() || 'Flight Log'}
+              {meta.firmwareString || [meta.vehicleType, meta.firmwareVersion].filter(Boolean).join(' ').trim() || '飞行日志'}
             </h3>
             <p className="text-xs text-content-secondary">
-              {currentLogPath?.split('/').pop() ?? 'Unknown file'}
-              {durationMin > 0 && ` \u00b7 ${durationMin.toFixed(1)} min`}
-              {currentLog.messageTypes.length > 0 && ` \u00b7 ${currentLog.messageTypes.length} message types`}
+              {currentLogPath?.split('/').pop() ?? '未知文件'}
+              {durationMin > 0 && ` \u00b7 ${durationMin.toFixed(1)} 分钟`}
+              {currentLog.messageTypes.length > 0 && ` \u00b7 ${currentLog.messageTypes.length} 种消息类型`}
             </p>
           </div>
         </div>
@@ -199,17 +199,17 @@ Return 3-6 cards. Most important issues first.`;
         <div className="flex items-center gap-3 text-xs">
           {failCount > 0 && (
             <span className="px-2 py-1 rounded bg-red-500/20 text-red-400 border border-red-500/30">
-              {failCount} failed
+              {failCount} 项失败
             </span>
           )}
           {warnCount > 0 && (
             <span className="px-2 py-1 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
-              {warnCount} warning{warnCount > 1 ? 's' : ''}
+              {warnCount} 项警告
             </span>
           )}
           {passCount > 0 && (
             <span className="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              {passCount} passed
+              {passCount} 项通过
             </span>
           )}
         </div>
@@ -218,15 +218,15 @@ Return 3-6 cards. Most important issues first.`;
         {flightStats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-subtle">
             <div>
-              <div className="text-xs text-content-secondary">Max Altitude</div>
+              <div className="text-xs text-content-secondary">最大高度</div>
               <div className="text-sm text-content font-medium">{formatAltitudeFromMeters(flightStats.maxAlt, altitudeUnit)}</div>
             </div>
             <div>
-              <div className="text-xs text-content-secondary">Max Speed</div>
+              <div className="text-xs text-content-secondary">最大速度</div>
               <div className="text-sm text-content font-medium">{formatSpeedFromMetersPerSecond(flightStats.maxSpd, speedUnit)}</div>
             </div>
             <div>
-              <div className="text-xs text-content-secondary">Distance</div>
+              <div className="text-xs text-content-secondary">距离</div>
               <div className="text-sm text-content font-medium">
                 {flightStats.totalDist > 1000
                   ? `${(flightStats.totalDist / 1000).toFixed(2)} km`
@@ -234,7 +234,7 @@ Return 3-6 cards. Most important issues first.`;
               </div>
             </div>
             <div>
-              <div className="text-xs text-content-secondary">Battery Used</div>
+              <div className="text-xs text-content-secondary">电池消耗</div>
               <div className="text-sm text-content font-medium">{formatCapacityFromMah(flightStats.totalMah, electricCapacityUnit)}</div>
             </div>
           </div>
@@ -249,7 +249,7 @@ Return 3-6 cards. Most important issues first.`;
                 disabled={isAiInsightLoading}
                 className="text-xs px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 hover:text-purple-300 border border-purple-500/20 rounded-lg transition-colors disabled:opacity-50"
               >
-                {isAiInsightLoading ? 'Re-analyzing...' : 'Re-analyze with AI'}
+                {isAiInsightLoading ? '正在重新分析...' : 'AI 重新分析'}
               </button>
             ) : (
               <button
@@ -260,14 +260,14 @@ Return 3-6 cards. Most important issues first.`;
                 {isAiInsightLoading ? (
                   <>
                     <div className="w-3.5 h-3.5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm">Analyzing flight...</span>
+                    <span className="text-sm">正在分析飞行...</span>
                   </>
                 ) : (
                   <>
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                     </svg>
-                    <span className="text-sm">Analyze log with AI</span>
+                    <span className="text-sm">AI 分析日志</span>
                   </>
                 )}
               </button>
@@ -286,8 +286,8 @@ Return 3-6 cards. Most important issues first.`;
             <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
             </svg>
-            <h3 className="text-sm font-semibold text-purple-300">AI Insights</h3>
-            <span className="text-[10px] text-amber-400/60 ml-auto">Experimental - verify before applying</span>
+            <h3 className="text-sm font-semibold text-purple-300">AI 洞察</h3>
+            <span className="text-[10px] text-amber-400/60 ml-auto">实验性功能 — 应用前请自行核实</span>
           </div>
           {isAiInsightLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -305,7 +305,7 @@ Return 3-6 cards. Most important issues first.`;
                 <HealthCheckCard
                   key={card.id}
                   result={card}
-                  aiLabel="Ask AI"
+                  aiLabel="询问 AI"
                   onAskAi={aiEnabled
                     ? () => handleAskAi(`Regarding the "${card.name}" finding: ${card.summary}${card.details ? `\nDetails: ${card.details}` : ''}${card.recommendation ? `\nRecommendation was: ${card.recommendation}` : ''}\n\nCan you explain this further and suggest specific steps to address it?`)
                     : undefined}
@@ -319,7 +319,7 @@ Return 3-6 cards. Most important issues first.`;
       {/* Automated health check cards */}
       {aiEnabled && (aiInsightCards.length > 0 || isAiInsightLoading) && (
         <div className="flex items-center gap-2 mb-0">
-          <h3 className="text-sm font-semibold text-content-secondary">Automated Checks</h3>
+          <h3 className="text-sm font-semibold text-content-secondary">自动检查</h3>
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -353,7 +353,7 @@ Return 3-6 cards. Most important issues first.`;
       {skipCount > 0 && (
         <details className="text-sm text-content-secondary">
           <summary className="cursor-pointer hover:text-content-secondary">
-            {skipCount} check{skipCount > 1 ? 's' : ''} skipped (no data)
+            {skipCount} 项检查已跳过（无数据）
           </summary>
           <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
             {healthResults.filter((r) => r.status === 'skip').map((result) => (

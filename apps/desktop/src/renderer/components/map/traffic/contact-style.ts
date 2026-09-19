@@ -55,14 +55,14 @@ export function contactColor(c: TrafficContact, tier: ProximityTier, band: Altit
 /** Plain-language category names: shown in the contact popup so an operator
  *  does not have to decode ICAO type designators (B412, C172, ...). */
 export const CATEGORY_LABEL: Record<TrafficCategory, string> = {
-  powered: 'Aircraft',
-  jet: 'Jet',
-  helicopter: 'Helicopter',
-  glider: 'Glider',
-  balloon: 'Balloon',
-  uav: 'UAV',
-  ground: 'Ground vehicle',
-  unknown: 'Unknown type',
+  powered: '飞机',
+  jet: '喷气机',
+  helicopter: '直升机',
+  glider: '滑翔机',
+  balloon: '气球',
+  uav: '无人机',
+  ground: '地面车辆',
+  unknown: '未知类型',
 };
 
 /** SVG inner markup for a 20x20 viewBox, pointing "up" (north) before rotation. */

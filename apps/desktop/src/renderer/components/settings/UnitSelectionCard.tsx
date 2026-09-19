@@ -17,15 +17,15 @@ import { useSettingsStore } from '../../stores/settings-store';
 type UnitKind = keyof UserUnitPreferences;
 
 const UNIT_FIELDS = [
-  { kind: 'distance', label: 'Distance', options: DISTANCE_UNITS },
-  { kind: 'altitude', label: 'Altitude', options: ALTITUDE_UNITS },
-  { kind: 'speed', label: 'Speed', options: SPEED_UNITS },
-  { kind: 'verticalSpeed', label: 'Vertical speed', options: VERTICAL_SPEED_UNITS },
-  { kind: 'electricCapacity', label: 'E-Capacity', options: ELECTRIC_CAPACITY_UNITS },
-  { kind: 'weight', label: 'Weight', options: WEIGHT_UNITS },
-  { kind: 'dimensions', label: 'Dimensions', options: DIMENSION_UNITS },
-  { kind: 'area', label: 'Area', options: AREA_UNITS },
-  { kind: 'windSpeed', label: 'Wind speed', options: WIND_SPEED_UNITS },
+  { kind: 'distance', label: '距离', options: DISTANCE_UNITS },
+  { kind: 'altitude', label: '高度', options: ALTITUDE_UNITS },
+  { kind: 'speed', label: '速度', options: SPEED_UNITS },
+  { kind: 'verticalSpeed', label: '垂直速度', options: VERTICAL_SPEED_UNITS },
+  { kind: 'electricCapacity', label: '电池容量', options: ELECTRIC_CAPACITY_UNITS },
+  { kind: 'weight', label: '重量', options: WEIGHT_UNITS },
+  { kind: 'dimensions', label: '尺寸', options: DIMENSION_UNITS },
+  { kind: 'area', label: '面积', options: AREA_UNITS },
+  { kind: 'windSpeed', label: '风速', options: WIND_SPEED_UNITS },
 ] as const;
 
 function unitLabel(kind: UnitKind, unit: string): string {
@@ -45,7 +45,7 @@ export function UnitSelectionCard() {
     <div className="bg-gradient-to-br from-surface to-surface-base rounded-xl border border-subtle p-4 mb-4" data-tour="unit-preferences">
       <div className="flex items-center gap-3 mb-4">
         <Ruler className="w-4 h-4 text-blue-400" aria-hidden="true" />
-        <div className="text-sm font-medium text-content">Display Units</div>
+        <div className="text-sm font-medium text-content">显示单位</div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
