@@ -4,6 +4,7 @@ import { useLogStore } from '../../stores/log-store';
 import { useResolvedTheme } from '../../hooks/useTheme';
 import { SERIES_COLORS } from './log-chart-stats';
 import { computeSpectrum, estimateSampleRate, resampleUniform, peakIndex, type Spectrum } from './log-fft';
+import { numericFieldNames } from '../../utils/log-columns';
 
 // Sensible defaults per message type: what a tuner actually wants to see first.
 const TYPE_PREFERENCE: { type: string; field: string }[] = [
@@ -43,10 +44,9 @@ export function SpectrumPanel() {
   const numericTypes = useMemo(() => {
     if (!currentLog) return [];
     return currentLog.messageTypes.filter((t) => {
-      const msgs = currentLog.messages[t];
-      if (!msgs || msgs.length < 64) return false;
-      const f = msgs[0]!.fields;
-      return Object.keys(f).some((k) => k !== 'TimeUS' && k !== 'Instance' && k !== 'I' && typeof f[k] === 'number');
+      const cols = currentLog.messages[t];
+      if (!cols || cols.count < 64) return false;
+      return numericFieldNames(cols).some((k) => k !== 'TimeUS' && k !== 'Instance' && k !== 'I');
     });
   }, [currentLog]);
 
@@ -57,10 +57,9 @@ export function SpectrumPanel() {
 
   const fieldsForType = useMemo(() => {
     if (!currentLog || !effectiveType) return [];
-    const msgs = currentLog.messages[effectiveType];
-    if (!msgs || msgs.length === 0) return [];
-    const f = msgs[0]!.fields;
-    return Object.keys(f).filter((k) => k !== 'TimeUS' && k !== 'Instance' && k !== 'I' && typeof f[k] === 'number');
+    const cols = currentLog.messages[effectiveType];
+    if (!cols || cols.count === 0) return [];
+    return numericFieldNames(cols).filter((k) => k !== 'TimeUS' && k !== 'Instance' && k !== 'I');
   }, [currentLog, effectiveType]);
 
   const effectiveField = field && fieldsForType.includes(field)
@@ -71,24 +70,27 @@ export function SpectrumPanel() {
 
   const spectra = useMemo<InstanceSpectrum[]>(() => {
     if (!currentLog || !effectiveType || !effectiveField) return [];
-    const msgs = currentLog.messages[effectiveType];
-    if (!msgs || msgs.length === 0) return [];
+    const cols = currentLog.messages[effectiveType];
+    if (!cols || cols.count === 0) return [];
 
-    const instKey = ['Instance', 'I'].find((k) => typeof msgs[0]!.fields[k] === 'number') ?? null;
-    const instances: (number | null)[] = instKey
-      ? [...new Set(msgs.map((m) => m.fields[instKey]).filter((v): v is number => typeof v === 'number'))].sort((a, b) => a - b)
+    const instKey = ['Instance', 'I'].find((k) => cols.num[k] !== undefined) ?? null;
+    const instCol = instKey ? cols.num[instKey] : undefined;
+    const valueCol = cols.num[effectiveField];
+    if (!valueCol) return [];
+    const instances: (number | null)[] = instCol
+      ? [...new Set(Array.from(instCol))].sort((a, b) => a - b)
       : [null];
 
     const out: InstanceSpectrum[] = [];
     for (const inst of instances) {
       const times: number[] = [];
       const values: number[] = [];
-      for (const m of msgs) {
-        if (inst !== null && instKey && m.fields[instKey] !== inst) continue;
-        const t = m.timeUs / 1_000_000;
+      for (let i = 0; i < cols.count; i++) {
+        if (inst !== null && instCol && instCol[i] !== inst) continue;
+        const t = (cols.timeUs[i] ?? 0) / 1_000_000;
         if (xWindow && (t < xWindow.min || t > xWindow.max)) continue;
-        const v = m.fields[effectiveField];
-        if (typeof v !== 'number' || !Number.isFinite(v)) continue;
+        const v = valueCol[i];
+        if (v === undefined || !Number.isFinite(v)) continue;
         times.push(t);
         values.push(v);
       }

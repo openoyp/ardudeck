@@ -13,6 +13,7 @@ export { SafetyMonitorPanel } from './SafetyMonitorPanel';
 export { NtripPanel } from './NtripPanel';
 export { PreflightCheckCard } from '../prearm/PreflightCheckCard';
 export { CameraPanel } from '../camera/CameraPanel';
+export { JoystickPanel } from './JoystickPanel';
 
 // Re-export mission panels for use in telemetry dashboard
 // Note: MissionMapPanel not exported here - mission data now integrated into MapPanel
@@ -39,6 +40,7 @@ export const PANEL_COMPONENTS = {
   camera: { component: 'CameraPanel', title: 'Vision' },
   messages: { component: 'MessagesPanel', title: 'Messages' },
   safetyMonitor: { component: 'SafetyMonitorPanel', title: 'Safety Monitor' },
+  joystick: { component: 'JoystickPanel', title: 'Joystick' },
   rtk: { component: 'NtripPanel', title: 'RTK / NTRIP' },
   preflightCheck: { component: 'PreflightCheckCard', title: 'Pre-flight Checks' },
   // Mission panels (for monitoring during flight)
@@ -72,6 +74,7 @@ import { SafetyMonitorPanel as SafetyMonitorPanelC } from './SafetyMonitorPanel'
 import { NtripPanel as NtripPanelC } from './NtripPanel';
 import { PreflightCheckCard as PreflightCheckCardC } from '../prearm/PreflightCheckCard';
 import { CameraPanel as CameraPanelC } from '../camera/CameraPanel';
+import { JoystickPanel as JoystickPanelC } from './JoystickPanel';
 import { WaypointTablePanel as WaypointTablePanelC } from '../mission/WaypointTablePanel';
 import { AltitudeProfilePanel as AltitudeProfilePanelC } from '../mission/AltitudeProfilePanel';
 import { SitlEnvironmentDockPanel as SitlEnvironmentDockPanelC } from './SitlEnvironmentDockPanel';
@@ -90,6 +93,7 @@ export const PANEL_RENDERERS: Partial<Record<PanelId, ComponentType>> = {
   camera: CameraPanelC,
   messages: MessagesPanelC,
   safetyMonitor: SafetyMonitorPanelC,
+  joystick: JoystickPanelC,
   rtk: NtripPanelC,
   preflightCheck: PreflightCheckCardC,
   waypoints: WaypointTablePanelC,

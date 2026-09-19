@@ -34,6 +34,11 @@ function getBaseUrl(): string {
   return DEFAULT_BASE_URL;
 }
 
+/** Which Hangar this launch talks to, for messages that need to name it. */
+export function baseUrl(): string {
+  return getBaseUrl();
+}
+
 async function jsonPost<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const url = `${getBaseUrl()}${path}`;
   let res: Response;

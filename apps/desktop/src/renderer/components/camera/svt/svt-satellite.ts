@@ -35,12 +35,12 @@ export const MAX_OUTER_RING_TILES = 12;
 /**
  * Ring extents (metres per side); the last is clamped to the patch.
  *
- * The inner span is what sets near-field sharpness, because the tile budget
- * buys a higher zoom the smaller the area: 700 m fits inside the budget at the
- * imagery's native zoom, where 1.5 km does not. Low and slow, that is the
- * difference between reading a road and a smear.
+ * Each ring's budget is per side, so a ring buys a higher zoom the smaller it
+ * is. Without the 12 km step, everything past the 3.5 km ring came from one
+ * mosaic stretched over the whole 50 km patch, which is the band of hills a
+ * cockpit view is mostly looking at.
  */
-export const RING_SPANS_M = [1_000, 3_500, Infinity];
+export const RING_SPANS_M = [1_000, 3_500, 12_000, Infinity];
 
 /** Third-person spans: a chase or orbit camera sits hundreds of metres back,
  * so a nose-sized inner ring leaves the bottom of the frame on coarse imagery.
@@ -51,7 +51,9 @@ export const WIDE_RING_SPANS_M = [4_000, 12_000, Infinity];
  * from the inner span so a tighter (sharper) ring follows more closely; the
  * overlapping tiles are cache hits. */
 export function recenterDistanceM(spans: number[] = RING_SPANS_M): number {
-  return Math.min(1_200, Math.max(150, (spans[0] ?? 1_500) / 4));
+  // A fifth, not a quarter: the inner ring is trimmed to native zoom, so it is
+  // narrower than the span asked for and the sharp ground ahead runs out sooner.
+  return Math.min(1_200, Math.max(120, (spans[0] ?? 1_500) / 5));
 }
 
 export interface DrapeRing {
@@ -68,6 +70,26 @@ export interface Bounds {
   west: number;
   north: number;
   east: number;
+}
+
+/** Metres across one tile at this zoom and latitude. */
+function tileSpanM(z: number, lat: number): number {
+  return (metersPerDegLon(lat) * 360) / 2 ** z;
+}
+
+/** Widest inner ring that still lands on native-zoom imagery: a span two tiles
+ * too wide drops the whole mosaic a zoom and halves near-field resolution. */
+export function nativeZoomSpanM(lat: number, tiles: number): number {
+  // One tile of slack: the box is not aligned to the tile grid.
+  return Math.max(200, (tiles - 1) * tileSpanM(MAX_IMAGERY_ZOOM, lat));
+}
+
+/** Kilometre-wide inner rings (chase, top-down) are deliberate: leave them. */
+function innerSpanM(requested: number, lat: number, tiles: number): number {
+  if (requested > 2_000) return requested;
+  // Clamped to the memory cap: trimming to native zoom must not let a caller
+  // with a bigger tile budget build a mosaic past what the GPU can hold.
+  return Math.min(requested, nativeZoomSpanM(lat, Math.min(tiles, INNER_RING_TILES)));
 }
 
 /** Highest zoom whose tile count stays inside the budget for these bounds. */
@@ -189,7 +211,8 @@ export async function loadDrapeRings(
   const rings: DrapeRing[] = [];
   for (let i = 0; i < spans.length; i++) {
     const budget = i === 0 ? innerTiles : Math.min(outerTiles, MAX_OUTER_RING_TILES);
-    const mosaic = await loadRing(capSpan(patch, spans[i]!, grid.centerLat, at), budget);
+    const span = i === 0 ? innerSpanM(spans[i]!, grid.centerLat, budget) : spans[i]!;
+    const mosaic = await loadRing(capSpan(patch, span, grid.centerLat, at), budget);
     if (!mosaic) continue;
     const texture = new THREE.CanvasTexture(mosaic.canvas);
     texture.colorSpace = THREE.SRGBColorSpace;

@@ -15,6 +15,13 @@ export interface ImportedArea {
   holes: Array<Array<{ lat: number; lng: number }>>;
 }
 
+export interface ImportedLine {
+  /** Ordered path, normalized to {lat, lng}. Never closed. */
+  path: Array<{ lat: number; lng: number }>;
+  /** Placemark / feature name when the file carries one. */
+  name?: string;
+}
+
 export type GisFormat = 'kml' | 'geojson';
 
 /** Detect format from a file extension (lower-cased, no dot needed). */
@@ -63,6 +70,60 @@ function geoJsonPolygons(geometry: unknown): unknown[][] {
     return g.geometries.flatMap((sub) => geoJsonPolygons(sub));
   }
   return [];
+}
+
+/** Collect every LineString path from any GeoJSON geometry. */
+function geoJsonLines(geometry: unknown): unknown[] {
+  if (!geometry || typeof geometry !== 'object') return [];
+  const g = geometry as { type?: string; coordinates?: unknown; geometries?: unknown };
+  if (g.type === 'LineString' && Array.isArray(g.coordinates)) return [g.coordinates];
+  if (g.type === 'MultiLineString' && Array.isArray(g.coordinates)) return g.coordinates as unknown[];
+  if (g.type === 'GeometryCollection' && Array.isArray(g.geometries)) {
+    return g.geometries.flatMap((sub) => geoJsonLines(sub));
+  }
+  return [];
+}
+
+function geoJsonPath(coords: unknown): Array<{ lat: number; lng: number }> {
+  if (!Array.isArray(coords)) return [];
+  const out: Array<{ lat: number; lng: number }> = [];
+  for (const pt of coords) {
+    if (!Array.isArray(pt) || pt.length < 2) continue;
+    const lng = Number(pt[0]);
+    const lat = Number(pt[1]);
+    if (isValidLatLng(lat, lng)) out.push({ lat, lng });
+  }
+  return out;
+}
+
+function parseGeoJsonLines(content: string): ImportedLine[] {
+  const root = JSON.parse(content) as unknown;
+  const features: Array<{ geometry: unknown; name?: string }> = [];
+  const r = root as { type?: string; features?: unknown; geometry?: unknown };
+  const nameOf = (f: unknown): string | undefined => {
+    const props = (f as { properties?: Record<string, unknown> }).properties;
+    const n = props?.name ?? props?.Name ?? props?.NAME;
+    return typeof n === 'string' && n.trim() ? n.trim() : undefined;
+  };
+  if (r.type === 'FeatureCollection' && Array.isArray(r.features)) {
+    for (const f of r.features) {
+      const geom = (f as { geometry?: unknown }).geometry;
+      if (geom) features.push({ geometry: geom, name: nameOf(f) });
+    }
+  } else if (r.type === 'Feature' && r.geometry) {
+    features.push({ geometry: r.geometry, name: nameOf(root) });
+  } else {
+    features.push({ geometry: root });
+  }
+
+  const lines: ImportedLine[] = [];
+  for (const f of features) {
+    for (const coords of geoJsonLines(f.geometry)) {
+      const path = geoJsonPath(coords);
+      if (path.length >= 2) lines.push(f.name ? { path, name: f.name } : { path });
+    }
+  }
+  return lines;
 }
 
 function parseGeoJson(content: string): ImportedArea[] {
@@ -208,6 +269,51 @@ function parseKml(content: string): ImportedArea[] {
   return areas;
 }
 
+/** Nearest enclosing Placemark's <name>, so imported lines keep their labels. */
+function placemarkName(el: Element): string | undefined {
+  let node: Element | null = el;
+  while (node) {
+    if (node.localName === 'Placemark') {
+      const n = firstChildText(node, 'name');
+      return n && n.trim() ? n.trim() : undefined;
+    }
+    node = node.parentNode as Element | null;
+  }
+  return undefined;
+}
+
+function parseKmlLines(content: string): ImportedLine[] {
+  const parser = new DOMParser();
+  let doc: Document;
+  try {
+    doc = parser.parseFromString(content, 'application/xml');
+  } catch {
+    return [];
+  }
+  if (doc.getElementsByTagName('parsererror').length > 0) return [];
+
+  const lines: ImportedLine[] = [];
+  const els = doc.getElementsByTagName('LineString');
+  for (let i = 0; i < els.length; i++) {
+    const el = els[i];
+    if (!el) continue;
+    const coordText = firstChildText(el, 'coordinates');
+    if (!coordText) continue;
+    const path: Array<{ lat: number; lng: number }> = [];
+    for (const tuple of coordText.trim().split(/\s+/)) {
+      const parts = tuple.split(',');
+      if (parts.length < 2) continue;
+      const lng = Number(parts[0]);
+      const lat = Number(parts[1]);
+      if (isValidLatLng(lat, lng)) path.push({ lat, lng });
+    }
+    if (path.length < 2) continue;
+    const name = placemarkName(el);
+    lines.push(name ? { path, name } : { path });
+  }
+  return lines;
+}
+
 /**
  * Parse a GIS boundary file into one or more areas. Returns [] when nothing
  * usable is found (callers should surface a friendly error rather than crash).
@@ -215,6 +321,19 @@ function parseKml(content: string): ImportedArea[] {
 export function parseGisArea(content: string, format: GisFormat): ImportedArea[] {
   try {
     return format === 'geojson' ? parseGeoJson(content) : parseKml(content);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Parse line geometry (LineString / MultiLineString) out of the same file.
+ * Separate from `parseGisArea` so a mixed file yields both, and so an import
+ * can offer a road or power line as a corridor centerline.
+ */
+export function parseGisLines(content: string, format: GisFormat): ImportedLine[] {
+  try {
+    return format === 'geojson' ? parseGeoJsonLines(content) : parseKmlLines(content);
   } catch {
     return [];
   }

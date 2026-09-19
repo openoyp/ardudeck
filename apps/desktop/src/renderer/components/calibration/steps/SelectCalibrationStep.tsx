@@ -6,9 +6,11 @@
  */
 
 import { useMemo, useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { useCalibrationStore, getAvailableCalibrationTypes, isCalibrationTypeAvailable } from '../../../stores/calibration-store';
 import { useTelemetryStore } from '../../../stores/telemetry-store';
 import { useParameterStore } from '../../../stores/parameter-store';
+import { accelCalibrationState, accelCalibrationNote } from '../accel-calibration-state';
 import { useConnectionStore } from '../../../stores/connection-store';
 import { type CalibrationTypeId } from '../../../../shared/calibration-types';
 import { LargeVehicleMagCalDialog } from '../LargeVehicleMagCalDialog';
@@ -21,6 +23,7 @@ import { CalibrationHealthBanner } from '../shared/CalibrationHealthBanner';
 // Betaflight flags: 'Acc Calibration', 'No Gyro'
 const CALIBRATION_ARMING_FLAGS: Record<CalibrationTypeId, string[]> = {
   'accel-level': ['Accelerometer', 'Acc Calibration'],
+  'accel-quick': ['Accelerometer', 'Acc Calibration'],
   'accel-6point': ['Accelerometer', 'Acc Calibration'],
   compass: ['Compass'],
   gyro: ['No Gyro'],
@@ -57,6 +60,14 @@ const CalibrationThemes: Record<CalibrationTypeId, {
   bgPattern: string;
 }> = {
   'accel-level': {
+    gradient: 'from-emerald-500/5 via-transparent to-teal-500/5',
+    border: 'border-emerald-500/20',
+    hoverBorder: 'hover:border-emerald-400/50',
+    iconBg: 'from-emerald-500/20 to-teal-500/20',
+    iconColor: 'text-emerald-400',
+    bgPattern: 'text-emerald-500/10',
+  },
+  'accel-quick': {
     gradient: 'from-emerald-500/5 via-transparent to-teal-500/5',
     border: 'border-emerald-500/20',
     hoverBorder: 'hover:border-emerald-400/50',
@@ -105,6 +116,11 @@ const CalibrationIcons: Record<CalibrationTypeId, React.ReactNode> = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10M12 3v18M3 7h4M17 7h4M3 12h4M17 12h4" />
     </svg>
   ),
+  'accel-quick': (
+    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10M12 3v18M3 7h4M17 7h4M3 12h4M17 12h4" />
+    </svg>
+  ),
   'accel-6point': (
     <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
@@ -133,6 +149,16 @@ const CalibrationIcons: Record<CalibrationTypeId, React.ReactNode> = {
 // Background pattern SVGs for each calibration type - larger size for better visibility
 const BackgroundPatterns: Record<CalibrationTypeId, React.ReactNode> = {
   'accel-level': (
+    <svg className="absolute -right-6 -bottom-6 w-48 h-48" viewBox="0 0 100 100" fill="currentColor">
+      {/* Level/horizon lines */}
+      <line x1="10" y1="50" x2="90" y2="50" stroke="currentColor" strokeWidth="2" fill="none" />
+      <line x1="50" y1="20" x2="50" y2="80" stroke="currentColor" strokeWidth="2" fill="none" />
+      <circle cx="50" cy="50" r="8" fill="currentColor" />
+      <circle cx="50" cy="50" r="20" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <circle cx="50" cy="50" r="35" stroke="currentColor" strokeWidth="1" fill="none" />
+    </svg>
+  ),
+  'accel-quick': (
     <svg className="absolute -right-6 -bottom-6 w-48 h-48" viewBox="0 0 100 100" fill="currentColor">
       {/* Level/horizon lines */}
       <line x1="10" y1="50" x2="90" y2="50" stroke="currentColor" strokeWidth="2" fill="none" />
@@ -208,6 +234,10 @@ export function SelectCalibrationStep() {
   const { protocol, sensors, isSensorsLoading, selectCalibrationType, error, completedCalibrations } = useCalibrationStore();
   const flight = useTelemetryStore((s) => s.flight);
   const parameters = useParameterStore((s) => s.parameters);
+  const accelNote = useMemo(
+    () => accelCalibrationNote(accelCalibrationState((name) => parameters.get(name)?.value as number | undefined)),
+    [parameters],
+  );
   const firmware = useConnectionStore((s) => s.connectionState.firmware);
   // Large Vehicle MagCal and load-from-file rely on ArduPilot-specific params/
   // commands, so only offer them on ArduPilot (not PX4) MAVLink connections.
@@ -243,6 +273,23 @@ export function SelectCalibrationStep() {
           the picker because "the last calibration never made it onto the
           vehicle" has to be read before choosing what to do next. */}
       <CalibrationHealthBanner />
+
+      {/* The refusal people chase: ArduPilot's "3D Accel calibration needed"
+          reads the six-point offsets and scales, which the Level calibration
+          never writes, so running Level and rebooting changes nothing. */}
+      {accelNote && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 w-5 h-5 shrink-0 text-amber-400" />
+            <div>
+              <div className="text-sm font-medium text-amber-300">
+                This board has no 3D accelerometer calibration
+              </div>
+              <p className="mt-0.5 text-xs text-amber-200/90">{accelNote}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Introduction */}
       <div className="text-center max-w-2xl mx-auto">

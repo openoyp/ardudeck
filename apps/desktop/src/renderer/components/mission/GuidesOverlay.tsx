@@ -5,7 +5,7 @@
  * survey itself then uses whichever engine the panel has selected.
  */
 import { useEffect, useRef } from 'react';
-import { Marker, Polygon, Popup, useMap } from 'react-leaflet';
+import { Marker, Polygon, Polyline, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useGuideStore } from '../../stores/guide-store';
 
@@ -42,8 +42,11 @@ export function GuidesOverlay() {
   const toggleGuide = useGuideStore((s) => s.toggleGuide);
   const startSurveyFromGuide = useGuideStore((s) => s.startSurveyFromGuide);
 
-  const visible = guides.filter((g) => g.visible && g.kind !== 'points' && g.polygon.length >= 3);
+  const visible = guides.filter(
+    (g) => g.visible && g.kind !== 'points' && g.kind !== 'line' && g.polygon.length >= 3,
+  );
   const pointSets = guides.filter((g) => g.visible && g.kind === 'points' && g.polygon.length > 0);
+  const lines = guides.filter((g) => g.visible && g.kind === 'line' && g.polygon.length >= 2);
 
   return (
     <>
@@ -79,6 +82,34 @@ export function GuidesOverlay() {
           );
         }),
       )}
+      {lines.map((g) => (
+        <Polyline
+          key={g.id}
+          positions={g.polygon.map((p) => [p.lat, p.lng] as [number, number])}
+          pathOptions={{ color: g.color, weight: 3, dashArray: '10, 6', opacity: 0.85 }}
+        >
+          <Popup>
+            <div className="space-y-1.5 min-w-[10rem]">
+              <div className="text-xs font-medium">{g.name}</div>
+              <div className="text-[10px] text-gray-500">
+                {g.polygon.length} points · reference line
+              </div>
+              <button
+                onClick={() => startSurveyFromGuide(g.id)}
+                className="w-full px-2 py-1 rounded text-xs font-medium bg-purple-600 hover:bg-purple-500 text-white transition-colors"
+              >
+                Corridor survey along this line
+              </button>
+              <button
+                onClick={() => toggleGuide(g.id)}
+                className="w-full px-2 py-1 rounded text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 transition-colors"
+              >
+                Hide line
+              </button>
+            </div>
+          </Popup>
+        </Polyline>
+      ))}
       {visible.map((g) => {
         const positions = [
           g.polygon.map((p) => [p.lat, p.lng] as [number, number]),

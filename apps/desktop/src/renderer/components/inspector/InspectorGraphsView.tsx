@@ -25,6 +25,7 @@ import { useResolvedTheme } from '../../hooks/useTheme';
 import { FieldGraph } from './FieldGraph';
 import { useConnectionStore } from '../../stores/connection-store';
 import {
+  overlayBufferId,
   panelIdForGraph,
   seedSamples,
   useInspectorStore,
@@ -53,6 +54,7 @@ function EmptyWatermark(): JSX.Element {
 export function InspectorGraphsView(propsIn: Record<string, unknown>): JSX.Element {
   const initialGraphs = (propsIn.initialGraphs as GraphSpec[] | undefined) ?? [];
   const initialSamples = (propsIn.initialSamples as Record<string, GraphSample[]> | undefined) ?? {};
+  const initialOverlays = (propsIn.initialOverlays as Record<string, string[]> | undefined) ?? {};
   const apiRef = useRef<DockviewApi | null>(null);
   const resolvedTheme = useResolvedTheme();
   const isConnected = useConnectionStore((s) => s.connectionState.isConnected);
@@ -70,11 +72,19 @@ export function InspectorGraphsView(propsIn: Record<string, unknown>): JSX.Eleme
     // Seed sample buffers FIRST, then add the dockview panels. FieldGraph's
     // first render reads from sampleBuffers, so seeding before the panel
     // mounts means the popped graph appears with full history immediately.
+    if (Object.keys(initialOverlays).length > 0) {
+      useInspectorStore.setState({ overlays: initialOverlays });
+    }
     for (const g of initialGraphs) {
       const id = panelIdForGraph(g);
       const samples = initialSamples[id];
       if (samples && samples.length > 0) {
         seedSamples(id, samples);
+      }
+      for (const f of initialOverlays[id] ?? []) {
+        const oid = overlayBufferId(id, f);
+        const ov = initialSamples[oid];
+        if (ov && ov.length > 0) seedSamples(oid, ov);
       }
       if (event.api.getPanel(id)) continue;
       event.api.addPanel({

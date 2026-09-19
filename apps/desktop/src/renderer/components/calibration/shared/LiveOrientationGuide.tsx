@@ -9,6 +9,8 @@
  */
 
 import { useTelemetryStore } from '../../../stores/telemetry-store';
+import { useConnectionStore } from '../../../stores/connection-store';
+import { getVehicleClass } from '../../../../shared/telemetry-types';
 import { useTelemetryFresh } from '../../map/instruments/useTelemetryFresh';
 import {
   matchOrientation,
@@ -25,12 +27,18 @@ interface LiveOrientationGuideProps {
   size?: number;
 }
 
+const DEG2RAD = Math.PI / 180;
+
 export function LiveOrientationGuide({ position, size = 220 }: LiveOrientationGuideProps) {
-  const roll = useTelemetryStore((s) => s.attitude.roll);
-  const pitch = useTelemetryStore((s) => s.attitude.pitch);
+  // The telemetry store is degrees; calibration-orientation and the scene are
+  // radians. Convert here, at the boundary between the two.
+  const roll = useTelemetryStore((s) => s.attitude.roll) * DEG2RAD;
+  const pitch = useTelemetryStore((s) => s.attitude.pitch) * DEG2RAD;
   // Same freshness rule the instruments use: a stale stream must not be drawn
   // as a live aircraft, least of all while someone is holding the thing.
   const live = useTelemetryFresh('attitude');
+  const mavType = useConnectionStore((s) => s.connectionState.mavType);
+  const shape = getVehicleClass(mavType) === 'rover' ? 'rover' : 'copter';
 
   const target = targetForPosition(position);
   const match = matchOrientation({ roll, pitch }, target, ORIENTATION_TOLERANCE_DEG);
@@ -39,7 +47,7 @@ export function LiveOrientationGuide({ position, size = 220 }: LiveOrientationGu
   return (
     <div className="flex flex-col items-center gap-2 w-full">
       {live ? (
-        <OrientationScene position={position} roll={roll} pitch={pitch} live={live} size={size} />
+        <OrientationScene position={position} roll={roll} pitch={pitch} live={live} size={size} shape={shape} />
       ) : (
         <div className="flex flex-col items-center gap-2">
           <PositionDiagram position={position} isActive compact />

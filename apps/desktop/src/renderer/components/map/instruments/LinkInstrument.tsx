@@ -6,6 +6,7 @@ import { useTelemetryStore } from '../../../stores/telemetry-store';
 import { GAUGE_COLORS } from './RoundGauge';
 import { InstrumentStrip } from './InstrumentStrip';
 import { useLinkUp, useHeartbeatAgeMs, HEARTBEAT_STALE_MS, HEARTBEAT_LOST_MS } from './useLinkUp';
+import { rssiState, rssiHint } from '../../../utils/rssi-state';
 import {
   RADIO_UNKNOWN,
   formatDbm,
@@ -67,12 +68,15 @@ export function LinkInstrument(): JSX.Element {
       : age >= HEARTBEAT_STALE_MS
         ? GAUGE_COLORS.amber
         : GAUGE_COLORS.green;
-  // RC RSSI first (255 = unknown, chancount 0 = no RC), else the telemetry modem's.
-  const rcRssiKnown = connected && chancount > 0 && rssi !== 255;
-  const radioRssiKnown = connected && radioStatus !== null && radioStatus.rssi !== 255;
-  const rssiKnown = rcRssiKnown || radioRssiKnown;
-  const effectiveRssi = rcRssiKnown ? rssi : radioStatus?.rssi ?? 0;
-  const rssiPct = Math.round((Math.min(effectiveRssi, 254) / 254) * 100);
+  const state = rssiState({
+    connected,
+    rcRssi: rssi,
+    chancount,
+    modemRssi: radioStatus?.rssi ?? null,
+  });
+  const rssiKnown = state.kind === 'value';
+  const rssiPct = state.pct;
+  const rssiNote = rssiHint(state);
 
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top?: number; bottom?: number; left: number; maxHeight: number } | null>(null);
@@ -127,12 +131,15 @@ export function LinkInstrument(): JSX.Element {
           <span className="text-[8px] font-normal text-[var(--gauge-text-dim)] ml-0.5">%</span>
         </span>
         <span className="ml-auto text-[8px] leading-none text-[var(--gauge-text-dim)]">
-          {!rcRssiKnown && radioRssiKnown ? 'TLM RSSI' : 'RSSI'}
+          {state.kind === 'unconfigured' ? 'NOT SET UP' : state.fromModem ? 'TLM RSSI' : 'RSSI'}
         </span>
         <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: GAUGE_COLORS.textDim }}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
+      {rssiNote && state.kind !== 'no-link' && (
+        <div className="mt-1 text-[8px] leading-tight text-[var(--gauge-text-dim)]">{rssiNote}</div>
+      )}
 
       {open && pos &&
         createPortal(
@@ -183,8 +190,12 @@ export function LinkInstrument(): JSX.Element {
                       />
                     </div>
                   </div>
-                  {rcRssiKnown && (
-                    <Row label="RC RSSI" value={`${Math.round((Math.min(rssi, 254) / 254) * 100)}%`} tip="Separate RC receiver signal reported by the flight controller" />
+                  {chancount > 0 && rssi !== 255 && (
+                    <Row
+                      label="RC RSSI"
+                      value={rssi > 0 ? `${Math.round((Math.min(rssi, 254) / 254) * 100)}%` : 'not set up'}
+                      tip="Separate RC receiver signal reported by the flight controller"
+                    />
                   )}
                 </>
               ) : (

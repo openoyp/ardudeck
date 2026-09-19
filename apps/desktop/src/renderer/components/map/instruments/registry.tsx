@@ -32,6 +32,7 @@ import { haversineMeters, bearingDeg } from '../traffic/proximity';
 import { getModeCategory } from '../tactical-icon-pool';
 import { AttitudeIndicator } from '../../panels/AttitudePanel';
 import { RoundGauge, GAUGE_COLORS, gaugeArcPath, gaugePoint, valueToAngle, type GaugeScale } from './RoundGauge';
+import { InstrumentShell } from './InstrumentShell';
 import { InstrumentStrip } from './InstrumentStrip';
 import { FlightControlInstrument } from './FlightControlInstrument';
 import { CompactReadout, type ReadoutSource } from './CompactReadout';
@@ -51,6 +52,9 @@ export interface MapInstrumentVariant {
   Component: () => JSX.Element;
 }
 
+/** Which kind of vehicle an instrument is for. Untagged = both. */
+export type InstrumentProfile = 'air' | 'ground';
+
 export interface MapInstrumentDef {
   id: string;
   label: string;
@@ -68,6 +72,14 @@ export interface MapInstrumentDef {
   /** Fixed battery monitor this instrument watches (0-based MAVLink id).
    * The catalog offers it only while the vehicle streams that monitor. */
   monitorId?: number;
+  /** Vehicle profiles this instrument belongs to; absent means every one. The
+   * catalog hides the others, but one already placed stays placed. */
+  profiles?: InstrumentProfile[];
+}
+
+/** True when the instrument belongs on this kind of vehicle. */
+export function instrumentSuitsProfile(def: MapInstrumentDef, profile: InstrumentProfile): boolean {
+  return def.profiles === undefined || def.profiles.includes(profile);
 }
 
 /** Component for the persisted display mode; mirrors InstrumentSlot's pick. */
@@ -599,6 +611,140 @@ function VsiInstrument(): JSX.Element {
   );
 }
 
+/** Rollover awareness, not an artificial horizon: a driver needs to know how
+ * far the machine is leaning and how close that is to going over. */
+const TILT_LIMIT = 45;
+const TILT_CAUTION = 20;
+const TILT_SCALE: GaugeScale = {
+  min: -TILT_LIMIT,
+  max: TILT_LIMIT,
+  startAngle: -110,
+  endAngle: 110,
+  zones: [
+    { from: -TILT_LIMIT, to: -TILT_CAUTION, color: GAUGE_COLORS.amber },
+    { from: TILT_CAUTION, to: TILT_LIMIT, color: GAUGE_COLORS.amber },
+  ],
+  majorTicks: [-45, -30, -20, -10, 0, 10, 20, 30, 45],
+  minorTicks: [-40, -35, -25, -15, -5, 5, 15, 25, 35, 40],
+};
+
+function TiltInstrument(): JSX.Element {
+  const attitude = useTelemetryStore((s) => s.attitude);
+  const fresh = useTelemetryFresh('attitude');
+  const roll = attitude.roll;
+  const pitch = attitude.pitch;
+  const lean = Math.max(Math.abs(roll), Math.abs(pitch));
+  const color =
+    !fresh ? GAUGE_COLORS.textDim
+      : lean >= 30 ? GAUGE_COLORS.red
+        : lean >= TILT_CAUTION ? GAUGE_COLORS.amber
+          : GAUGE_COLORS.green;
+  const shown = fresh ? Math.max(-TILT_LIMIT, Math.min(TILT_LIMIT, roll)) : 0;
+
+  return (
+    <RoundGauge
+      label="TILT"
+      scale={TILT_SCALE}
+      needleValue={shown}
+      svgContent={
+        // A horizon, not a picture of a vehicle: it tips with roll, which is
+        // what this gauge measures. A side-on car reads as pitch, and the two
+        // are the one thing that must not be confused when the machine is on
+        // a slope.
+        <g opacity={fresh ? 1 : 0.35}>
+          <clipPath id="svt-tilt-face">
+            <circle cx="52" cy="52" r="30" />
+          </clipPath>
+          <g clipPath="url(#svt-tilt-face)">
+            <g transform={`rotate(${-shown} 52 46)`}>
+              <rect x="10" y="46" width="84" height="40" fill={color} opacity="0.18" />
+              <line x1="10" y1="46" x2="94" y2="46" stroke={color} strokeWidth="2" />
+            </g>
+          </g>
+          {/* Fixed reference: the vehicle stays level, the world tips. */}
+          <path d="M44 46 L50 46 L52 49 L54 46 L60 46" fill="none"
+            stroke={GAUGE_COLORS.text} strokeWidth="1.8" strokeLinejoin="round" />
+        </g>
+      }
+    >
+      {/* Pushed below the horizon so the needle and the numbers never overlap. */}
+      <span className="mt-[26px] text-[13px] font-semibold leading-none whitespace-nowrap" style={{ color }}>
+        {fresh ? `${roll > 0 ? 'R' : roll < 0 ? 'L' : ''} ${Math.abs(Math.round(roll))}\u00b0` : '--'}
+      </span>
+      <span className="mt-0.5 text-[8px] leading-none text-[var(--gauge-text-dim)]">
+        {fresh ? `PITCH ${Math.round(pitch)}\u00b0` : 'ROLL'}
+      </span>
+    </RoundGauge>
+  );
+}
+
+/** Steering demand, read from servo output 1 (ArduPilot Rover's ground-steering
+ * channel). Skid-steer frames drive the wheels instead, so this reads centred
+ * there and the instrument can simply be left off. */
+function steerPercent(pwm: number | undefined): number | null {
+  if (pwm === undefined || pwm < 800 || pwm > 2200) return null;
+  return Math.max(-100, Math.min(100, ((pwm - 1500) / 500) * 100));
+}
+
+function SteerInstrument(): JSX.Element {
+  const pwm = useTelemetryStore((s) => s.servoOutput?.outputs[0]);
+  const throttlePwm = useTelemetryStore((s) => s.servoOutput?.outputs[2]);
+  const steer = steerPercent(pwm);
+  const throttle = steerPercent(throttlePwm);
+  const magnitude = steer === null ? 0 : Math.abs(steer);
+
+  return (
+    <InstrumentShell
+      label="Steer"
+      value={steer === null ? '--' : magnitude < 1 ? 'CTR' : `${steer < 0 ? 'L' : 'R'} ${Math.round(magnitude)}`}
+      unit={steer === null || magnitude < 1 ? undefined : '%'}
+    >
+      <div className="relative h-1.5 w-full rounded-full bg-surface-raised">
+        <div className="absolute inset-y-0 left-1/2 w-px bg-content-tertiary/60" />
+        {steer !== null && (
+          <div
+            className="absolute inset-y-0 rounded-full bg-blue-500/70"
+            style={{
+              left: steer < 0 ? `${50 - magnitude / 2}%` : '50%',
+              width: `${magnitude / 2}%`,
+            }}
+          />
+        )}
+      </div>
+      {throttle !== null && (
+        <div className="text-[10px] text-content-tertiary">
+          THR {throttle > 0 ? '+' : ''}{Math.round(throttle)}%
+        </div>
+      )}
+    </InstrumentShell>
+  );
+}
+
+/** Cross-track error while following a mission: how far off the line the
+ * machine is, and which side, which is the number a driver steers back on. */
+function XtrackInstrument(): JSX.Element {
+  const nav = useTelemetryStore((s) => s.navController);
+  const distanceUnit = useSettingsStore((s) => s.unitPreferences.distance);
+  const xtrack = nav?.xtrackError;
+  const magnitude = xtrack === undefined ? null : Math.abs(xtrack);
+
+  return (
+    <InstrumentShell
+      label="Xtrack"
+      value={
+        xtrack === undefined || magnitude === null
+          ? '--'
+          : `${xtrack < 0 ? 'L' : 'R'} ${formatDistanceFromMeters(magnitude, distanceUnit)}`
+      }
+      valueClassName={magnitude !== null && magnitude > 5 ? 'text-amber-400' : undefined}
+    >
+      <div className="text-[10px] text-content-tertiary">
+        {nav?.wpDist === undefined ? 'No active leg' : `WP ${formatDistanceFromMeters(nav.wpDist, distanceUnit)}`}
+      </div>
+    </InstrumentShell>
+  );
+}
+
 function HomeInstrument(): JSX.Element {
   const connected = useTelemetryFresh('position');
   const home = useMapHomeStore((s) => s.home);
@@ -1053,7 +1199,7 @@ const BATTERY_INSTANCE_DEFAULT_POS = [
 ];
 
 export const MAP_INSTRUMENTS: MapInstrumentDef[] = [
-  { id: 'attitude', round: true, label: 'Attitude ball', defaultClassName: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000]', defaultVisible: true, Component: AttitudeBallInstrument },
+  { id: 'attitude', round: true, profiles: ['air'], label: 'Attitude ball', defaultClassName: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000]', defaultVisible: true, Component: AttitudeBallInstrument },
   { id: 'flight-data', label: 'Flight data', defaultClassName: 'absolute bottom-2 left-2 z-[1000]', defaultVisible: true, Component: FlightDataInstrument },
   { id: 'battery', round: true, label: 'Battery', defaultClassName: 'absolute left-3 top-16 z-[1000]', defaultVisible: false, Component: BatteryInstrument, NumericComponent: BatteryNumeric, variants: compactVariants('battery') },
   // Fixed-monitor gauges (#126), one per possible ArduPilot instance: show a
@@ -1070,10 +1216,13 @@ export const MAP_INSTRUMENTS: MapInstrumentDef[] = [
     NumericComponent: makeBatteryInstanceNumeric(k + 1),
   })),
   { id: 'gps', round: true, label: 'GPS', defaultClassName: 'absolute left-3 top-[176px] z-[1000]', defaultVisible: false, Component: GpsInstrument, NumericComponent: GpsNumeric, variants: compactVariants('gps') },
-  { id: 'altitude', round: true, label: 'Altitude', defaultClassName: 'absolute left-3 top-[288px] z-[1000]', defaultVisible: false, Component: AltitudeInstrument, NumericComponent: AltitudeNumeric, variants: compactVariants('altitude') },
+  { id: 'altitude', round: true, profiles: ['air'], label: 'Altitude', defaultClassName: 'absolute left-3 top-[288px] z-[1000]', defaultVisible: false, Component: AltitudeInstrument, NumericComponent: AltitudeNumeric, variants: compactVariants('altitude') },
   { id: 'speed', round: true, label: 'Speed', defaultClassName: 'absolute left-3 top-[400px] z-[1000]', defaultVisible: false, Component: SpeedInstrument, NumericComponent: SpeedNumeric, variants: compactVariants('speed') },
+  { id: 'tilt', round: true, profiles: ['ground'], label: 'Tilt', defaultClassName: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000]', defaultVisible: false, Component: TiltInstrument },
+  { id: 'steer', profiles: ['ground'], label: 'Steering', defaultClassName: 'absolute left-[124px] top-[344px] z-[1000]', defaultVisible: false, Component: SteerInstrument },
+  { id: 'xtrack', profiles: ['ground'], label: 'Cross-track', defaultClassName: 'absolute left-[124px] top-[420px] z-[1000]', defaultVisible: false, Component: XtrackInstrument },
   { id: 'heading', round: true, label: 'Compass (HDG)', defaultClassName: 'absolute bottom-3 left-[calc(50%+88px)] z-[1000]', defaultVisible: true, Component: HeadingInstrument, NumericComponent: HeadingNumeric, variants: compactVariants('heading') },
-  { id: 'vsi', round: true, label: 'VSI', defaultClassName: 'absolute left-3 top-[512px] z-[1000]', defaultVisible: false, Component: VsiInstrument, NumericComponent: VsiNumeric, variants: compactVariants('vsi') },
+  { id: 'vsi', round: true, profiles: ['air'], label: 'VSI', defaultClassName: 'absolute left-3 top-[512px] z-[1000]', defaultVisible: false, Component: VsiInstrument, NumericComponent: VsiNumeric, variants: compactVariants('vsi') },
   { id: 'home', round: true, label: 'Home', defaultClassName: 'absolute left-3 top-[624px] z-[1000]', defaultVisible: false, Component: HomeInstrument, NumericComponent: HomeNumeric, variants: compactVariants('home') },
   // Strips stack in a second column beside the left-edge gauges (gauge is
   // 104px wide at left-3, so 124px clears it) under the Instruments button.

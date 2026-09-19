@@ -31,7 +31,8 @@ import {
   INSTRUMENT_OPACITY_MIN,
   type InstrumentDisplayMode,
 } from '../../../stores/map-instruments-store';
-import { MAP_INSTRUMENTS, type MapInstrumentDef } from './registry';
+import { MAP_INSTRUMENTS, instrumentSuitsProfile, type MapInstrumentDef } from './registry';
+import { useDetectedProfile, useInstrumentProfile, useInstrumentProfileStore } from './useInstrumentProfile';
 import { PRESET_INSTRUMENT_LAYOUTS, type PresetAccent } from './preset-layouts';
 import { useTelemetryStore } from '../../../stores/telemetry-store';
 
@@ -72,6 +73,9 @@ const INSTRUMENT_ROLE: Record<string, InstrumentRole> = {
   speed: 'primaryFlight',
   heading: 'primaryFlight',
   vsi: 'primaryFlight',
+  tilt: 'primaryFlight',
+  steer: 'primaryFlight',
+  xtrack: 'navigation',
   battery: 'power',
   gps: 'navigation',
   rtk: 'navigation',
@@ -246,7 +250,11 @@ function InstrumentCard({ def, accent }: { def: MapInstrumentDef; accent: string
   // monitor; one already placed stays listed so it can be toggled off.
   const monitorStreams = useTelemetryStore((s) => def.monitorId === undefined || s.batteries[def.monitorId] !== undefined);
   const placed = useMapInstrumentsStore((s) => resolveInstrumentVisible(s.visible, def.id));
+  // An aircraft instrument is not offered on a rover and the other way round,
+  // but one already on the map stays listed so it can be taken off.
+  const profile = useInstrumentProfile();
   if (!monitorStreams && !placed) return null;
+  if (!instrumentSuitsProfile(def, profile) && !placed) return null;
   return <InstrumentCardBody def={def} accent={accent} />;
 }
 
@@ -456,6 +464,9 @@ function LayoutPane({ onClose }: { onClose: () => void }): JSX.Element {
   };
 
   const applyRow = 'w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded text-xs text-content-secondary hover:bg-surface-raised hover:text-content transition-colors';
+  const profileMode = useInstrumentProfileStore((s) => s.mode);
+  const setProfileMode = useInstrumentProfileStore((s) => s.setMode);
+  const detected = useDetectedProfile();
 
   return (
     <div className="p-4 space-y-5 max-w-[560px]">
@@ -490,6 +501,34 @@ function LayoutPane({ onClose }: { onClose: () => void }): JSX.Element {
               Restore previous layout
             </button>
           )}
+        </div>
+      </div>
+
+      <div>
+        <SectionHeading label="Vehicle profile" accent="var(--text-secondary)" />
+        <p className="mt-1.5 text-[11px] text-content-tertiary">
+          Which instruments this catalog offers. Auto follows what the vehicle reports, the same
+          way the HUD picks its air or ground layout.
+        </p>
+        <div className="mt-2 flex items-center gap-1 rounded-lg border border-subtle p-1 w-fit">
+          {([
+            ['auto', `Auto (${detected === 'ground' ? 'ground' : 'aircraft'})`],
+            ['air', 'Aircraft'],
+            ['ground', 'Ground'],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setProfileMode(value)}
+              className={`rounded px-2.5 py-1 text-[11px] transition-colors ${
+                profileMode === value
+                  ? 'bg-blue-500/15 text-blue-500'
+                  : 'text-content-secondary hover:bg-surface-raised hover:text-content'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 

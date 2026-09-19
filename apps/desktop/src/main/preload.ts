@@ -1142,8 +1142,8 @@ const api = {
   edgetxRemove: (volumePath: string, packageId: string): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke(IPC_CHANNELS.EDGETX_REMOVE, volumePath, packageId),
 
-  edgetxHudConfigGet: (volumePath: string): Promise<Record<string, string> | null> =>
-    ipcRenderer.invoke(IPC_CHANNELS.EDGETX_HUD_CONFIG_GET, volumePath),
+  edgetxHudConfigGet: (volumePath: string, modelName?: string): Promise<Record<string, string> | null> =>
+    ipcRenderer.invoke(IPC_CHANNELS.EDGETX_HUD_CONFIG_GET, volumePath, modelName),
 
   voiceGetWav: (name: string): Promise<Uint8Array | null> =>
     ipcRenderer.invoke(IPC_CHANNELS.VOICE_GET_WAV, name),
@@ -1154,8 +1154,11 @@ const api = {
   edgetxHudConfigSuggest: (): Promise<{ connected: boolean; cfg: Record<string, string | number> }> =>
     ipcRenderer.invoke(IPC_CHANNELS.EDGETX_HUD_CONFIG_SUGGEST),
 
-  edgetxHudConfigWrite: (volumePath: string, cfg: Record<string, string | number>): Promise<{ ok: boolean; cfg?: Record<string, string | number>; error?: string }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.EDGETX_HUD_CONFIG_WRITE, volumePath, cfg),
+  edgetxHudConfigWrite: (volumePath: string, cfg: Record<string, string | number>, modelName?: string): Promise<{ ok: boolean; cfg?: Record<string, string | number>; error?: string }> =>
+    ipcRenderer.invoke(IPC_CHANNELS.EDGETX_HUD_CONFIG_WRITE, volumePath, cfg, modelName),
+
+  edgetxModelsList: (volumePath: string): Promise<{ file: string; name: string; current: boolean; hasLayout: boolean }[]> =>
+    ipcRenderer.invoke(IPC_CHANNELS.EDGETX_MODELS_LIST, volumePath),
 
   edgetxEject: (volumePath: string): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke(IPC_CHANNELS.EDGETX_EJECT, volumePath),
@@ -2079,7 +2082,7 @@ const api = {
 
   /** Start calibration */
   calibrationStart: (options: {
-    type: 'accel-level' | 'accel-6point' | 'compass' | 'gyro' | 'opflow';
+    type: 'accel-level' | 'accel-quick' | 'accel-6point' | 'compass' | 'gyro' | 'opflow';
     position?: number;
     protocol?: 'msp' | 'mavlink';
     firmware?: 'ardupilot' | 'px4';

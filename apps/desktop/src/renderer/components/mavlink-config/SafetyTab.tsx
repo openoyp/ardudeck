@@ -21,6 +21,18 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import { useParameterStore } from '../../stores/parameter-store';
+import { useMessagesStore } from '../../stores/messages-store';
+import { currentPrearmFailures } from './prearm-status';
+import { PrearmPanel } from './PrearmPanel';
+import {
+  ARMING_CHECK_BITS,
+  allChecksValue,
+  detectArmingModel,
+  isAllChecks,
+  isCheckEnabled,
+  isNoChecks,
+  toggleCheck,
+} from './arming-checks';
 import { formatParamValue } from '../../../shared/parameter-types';
 import { useConnectionStore } from '../../stores/connection-store';
 import { DraggableSlider } from '../ui/DraggableSlider';
@@ -30,7 +42,6 @@ import { SigningSection } from '../settings/SigningSection';
 import {
   SAFETY_PRESETS,
   FENCE_TYPES,
-  ARMING_CHECKS,
   type SafetyPreset,
 } from './presets/mavlink-presets';
 
@@ -324,7 +335,12 @@ const Px4SafetyConfig: React.FC<{
   );
 };
 
-const SafetyTab: React.FC = () => {
+interface SafetyTabProps {
+  /** Lets the prearm panel send the pilot to the tab that fixes a refusal. */
+  onGoTo?: (tab: string) => void;
+}
+
+const SafetyTab: React.FC<SafetyTabProps> = ({ onGoTo }) => {
   const { parameters, setParameter, modifiedCount, fetchParameters, isLoading, downloadState } = useParameterStore();
   const getParameterMetadata = useParameterStore((s) => s.getParameterMetadata);
   const firmware = useConnectionStore((s) => s.connectionState.firmware);
@@ -384,32 +400,41 @@ const SafetyTab: React.FC = () => {
     }
   }, [setParameter, reportWriteError]);
 
-  // Individual arming check entries (exclude bit 1 "All" which is a special flag)
-  const armingCheckEntries = useMemo(() =>
-    Object.entries(ARMING_CHECKS)
-      .filter(([bit]) => Number(bit) !== 1)
-      .map(([bit, info]) => ({ bit: Number(bit), ...info }))
-      .sort((a, b) => a.bit - b.bit),
-    []
+  // 4.7 renamed this to ARMING_SKIPCHK and inverted it: bits are now checks to
+  // SKIP. Same bit positions, so everything below works off bit indexes and the
+  // model decides how to read and write them.
+  const armingModel = useMemo(
+    () => detectArmingModel((param) => parameters.has(param)),
+    [parameters],
   );
+  const armingValue = armingModel
+    ? ((parameters.get(armingModel.param)?.value as number) ?? allChecksValue(armingModel))
+    : 1;
 
-  // All individual bits OR'd together (65534 = all checks except the "All" flag)
-  const allBitsValue = useMemo(() =>
-    armingCheckEntries.reduce((acc, entry) => acc | entry.bit, 0),
-    [armingCheckEntries]
+
+
+  // Live refusals, so a red row says which check is in the way instead of
+  // leaving the pilot to match free text to a bitmask by hand.
+  const statusMessages = useMessagesStore((st) => st.messages);
+  const prearmFailures = useMemo(
+    () => currentPrearmFailures(statusMessages as Array<{ text: string; timestamp?: number }>),
+    [statusMessages],
   );
-
-  const isCustomMode = safetyValues.armingCheck !== 1 && safetyValues.armingCheck !== 0;
+  const failingBits = useMemo(
+    () => new Set(prearmFailures.map((f) => f.bit).filter((b): b is number => b !== null)),
+    [prearmFailures],
+  );
 
   const writeArmingCheck = useCallback(async (value: number) => {
-    const ok = await setParameter('ARMING_CHECK', value);
-    if (!ok) reportWriteError('Failed to set ARMING_CHECK');
-  }, [setParameter, reportWriteError]);
+    if (!armingModel) return;
+    const ok = await setParameter(armingModel.param, value);
+    if (!ok) reportWriteError(`Failed to set ${armingModel.param}`);
+  }, [armingModel, setParameter, reportWriteError]);
 
   const toggleArmingCheck = useCallback((bit: number) => {
-    const newValue = safetyValues.armingCheck ^ bit;
-    writeArmingCheck(newValue);
-  }, [safetyValues.armingCheck, writeArmingCheck]);
+    if (!armingModel) return;
+    writeArmingCheck(toggleCheck(armingModel, armingValue, bit));
+  }, [armingModel, armingValue, writeArmingCheck]);
 
   const modified = modifiedCount();
 
@@ -428,7 +453,7 @@ const SafetyTab: React.FC = () => {
               </div>
             </div>
             <button
-              onClick={() => fetchParameters()}
+              onClick={() => fetchParameters({ force: true })}
               disabled={isLoading}
               className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
             >
@@ -477,7 +502,7 @@ const SafetyTab: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => fetchParameters()}
+            onClick={() => fetchParameters({ force: true })}
             disabled={isLoading}
             className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
@@ -795,66 +820,7 @@ const SafetyTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Arming Checks */}
-      <div className="bg-surface rounded-xl border border-subtle p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-green-400" />
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-content">Arming Checks</h3>
-              <p className="text-xs text-content-secondary">What must pass before motors can arm</p>
-            </div>
-          </div>
-          <select
-            value={safetyValues.armingCheck === 1 ? 'all' : safetyValues.armingCheck === 0 ? 'none' : 'custom'}
-            onChange={(e) => {
-              if (e.target.value === 'all') writeArmingCheck(1);
-              else if (e.target.value === 'none') setConfirmAction({ type: 'no-checks' });
-              else if (e.target.value === 'custom') writeArmingCheck(allBitsValue);
-            }}
-            className="px-3 py-2 bg-surface-raised border rounded-lg text-sm text-content focus:outline-none focus:border-blue-500"
-          >
-            <option value="all">All Checks (Recommended)</option>
-            <option value="none">No Checks (Dangerous!)</option>
-            <option value="custom">Custom</option>
-          </select>
-        </div>
-
-        {safetyValues.armingCheck === 0 && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-center gap-2">
-            <XCircle className="w-4 h-4 text-red-400 shrink-0" />
-            <p className="text-xs text-red-400">
-              <span className="font-medium">Warning:</span> Disabling arming checks is dangerous!
-              Your aircraft could arm with faulty sensors or no GPS lock.
-            </p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-2">
-          {armingCheckEntries.map((check) => {
-            const isEnabled = safetyValues.armingCheck === 1 || (safetyValues.armingCheck & check.bit) !== 0;
-            return (
-              <button
-                key={check.bit}
-                onClick={() => isCustomMode && toggleArmingCheck(check.bit)}
-                title={isCustomMode ? check.description : 'Switch to Custom mode to toggle individual checks'}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-left transition-colors ${
-                  isEnabled ? 'bg-green-500/10 text-green-400' : 'bg-surface-raised text-content-secondary'
-                } ${isCustomMode ? 'cursor-pointer hover:bg-surface-overlay-subtle' : 'cursor-default'}`}
-              >
-                {isEnabled ? (
-                  <CheckCircle className="w-3 h-3 shrink-0" />
-                ) : (
-                  <XCircle className="w-3 h-3 shrink-0" />
-                )}
-                <span>{check.name}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* Arming checks moved to their own page: this tab is failsafes and fence. */}
 
       {/* MAVLink Signing */}
       <SigningSection />

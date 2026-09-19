@@ -79,6 +79,12 @@ export const CATEGORY_STYLE: Record<string, { accent: string; bg: string; text: 
     text: 'text-amber-400',
     badge: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
   },
+  RTK: {
+    accent: 'border-t-cyan-500/70',
+    bg: 'bg-cyan-500/10',
+    text: 'text-cyan-400',
+    badge: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/20',
+  },
 };
 
 export const FALLBACK_STYLE = {
@@ -129,6 +135,19 @@ export const COMPANION_TEMPLATES: CompanionTemplate[] = [
     features: ['WiFi AP mode', 'Serial-to-UDP bridge', 'Auto-baud detection', 'Minimal resource usage'],
     requirements: ['ESP32 dev board', 'UART connection to FC', '3.3V or 5V power'],
     projectName: 'mavesp8266 (ESP32 fork)',
+  },
+  {
+    id: 'esp32-xbee-ntrip',
+    name: 'RTK Corrections Bridge',
+    description: 'NTRIP server, client and caster on an ESP32. Puts a base receiver on the network, or pulls corrections down on the vehicle, with no laptop in the field.',
+    board: 'esp32',
+    boardVariants: ['ESP32', 'ESP32-S3'],
+    category: 'RTK',
+    flashMethod: 'serial',
+    features: ['NTRIP server, client and caster modes', 'WiFi AP + station mode', 'UART to TCP/UDP bridging', 'Web configuration UI', 'Same firmware for base or vehicle side'],
+    requirements: ['ESP32 dev board', '3.3V UART to the GNSS receiver (TX/RX/GND)', 'WiFi network or phone hotspot'],
+    projectUrl: 'https://github.com/nebkat/esp32-xbee',
+    projectName: 'ESP32 XBee',
   },
 
   // ── Raspberry Pi Templates ───────────────────────────────────
@@ -211,6 +230,34 @@ export const COMPANION_TEMPLATES: CompanionTemplate[] = [
     requirements: ['Raspberry Pi (air + ground)', 'Compatible WiFi adapter (RTL8812AU)', 'Pi Camera', 'MicroSD card (16GB+)'],
     projectUrl: 'https://github.com/OpenHD/OpenHD',
     projectName: 'OpenHD',
+  },
+  {
+    id: 'pi-str2str-base',
+    name: 'RTK Base Streamer',
+    description: 'Base side: reads RTCM3 off the receiver and pushes it to an NTRIP caster. Headless, reconnects on its own, no GUI anywhere.',
+    board: 'raspberry-pi',
+    boardVariants: ['Pi Zero 2 W', 'Pi 3B+', 'Pi 4', 'Pi 5'],
+    category: 'RTK',
+    flashMethod: 'script',
+    installCommand: 'sudo apt install -y build-essential git && git clone https://github.com/rtklibexplorer/RTKLIB && make -C RTKLIB/app/consapp/str2str/gcc',
+    features: ['str2str serial to NTRIP server', 'Feeds rtk2go or a private caster', 'Logs raw RTCM to disk', 'Reconnects after a dropout', 'Runs as a systemd unit'],
+    requirements: ['Raspberry Pi with network or LTE', 'Base receiver on USB or 3.3V UART', 'Caster mountpoint credentials'],
+    projectUrl: 'https://github.com/rtklibexplorer/RTKLIB',
+    projectName: 'RTKLIB demo5 (str2str)',
+  },
+  {
+    id: 'pi-mavproxy-ntrip',
+    name: 'RTK Injector',
+    description: 'Vehicle side: pulls corrections from a caster and injects them as GPS_RTCM_DATA straight into the flight controller. Nothing on the ground has to stay connected.',
+    board: 'raspberry-pi',
+    boardVariants: ['Pi Zero 2 W', 'Pi 3B+', 'Pi 4', 'Pi 5'],
+    category: 'RTK',
+    flashMethod: 'script',
+    installCommand: 'pip3 install MAVProxy',
+    features: ['Injects GPS_RTCM_DATA over MAVLink', 'Started with --load-module ntrip', 'Sends vehicle position upstream for VRS mountpoints', 'Works on LTE or a phone hotspot', 'Auto-start as a service'],
+    requirements: ['Raspberry Pi with LTE or WiFi', 'Serial or USB link to the FC', 'Caster mountpoint credentials'],
+    projectUrl: 'https://github.com/ArduPilot/MAVProxy',
+    projectName: 'MAVProxy ntrip module',
   },
 
   // ── Jetson Templates ─────────────────────────────────────────

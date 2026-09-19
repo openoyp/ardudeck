@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { extractLogParams, isNonDefault, fmtParamValue } from './log-params';
+import { columnsFromRows } from '../../utils/log-columns';
 
 function parm(timeUs: number, name: string, value: number, def?: number) {
   const fields: Record<string, number | string> = { Name: name, Value: value };
@@ -11,12 +12,12 @@ describe('extractLogParams', () => {
   it('captures first/last values and in-flight changes', () => {
     const params = extractLogParams({
       messages: {
-        PARM: [
+        PARM: columnsFromRows([
           parm(1_000_000, 'ATC_RAT_RLL_P', 0.135),
           parm(1_000_000, 'FLTMODE1', 5),
           parm(60_000_000, 'ATC_RAT_RLL_P', 0.15), // changed mid-flight
           parm(120_000_000, 'ATC_RAT_RLL_P', 0.16), // and again
-        ],
+        ]),
       },
     });
     const rll = params.find((p) => p.name === 'ATC_RAT_RLL_P')!;
@@ -32,14 +33,14 @@ describe('extractLogParams', () => {
 
   it('ignores re-logs of the same value', () => {
     const params = extractLogParams({
-      messages: { PARM: [parm(1, 'X', 5), parm(2, 'X', 5), parm(3, 'X', 5)] },
+      messages: { PARM: columnsFromRows([parm(1, 'X', 5), parm(2, 'X', 5), parm(3, 'X', 5)]) },
     });
     expect(params[0]!.changes).toHaveLength(0);
   });
 
   it('sorts by name and records defaults when present', () => {
     const params = extractLogParams({
-      messages: { PARM: [parm(1, 'ZZZ', 1, 1), parm(1, 'AAA', 2, 0)] },
+      messages: { PARM: columnsFromRows([parm(1, 'ZZZ', 1, 1), parm(1, 'AAA', 2, 0)]) },
     });
     expect(params.map((p) => p.name)).toEqual(['AAA', 'ZZZ']);
     expect(params[0]!.default).toBe(0);

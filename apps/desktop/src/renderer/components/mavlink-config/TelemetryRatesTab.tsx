@@ -68,6 +68,7 @@ export default function TelemetryRatesTab() {
   }, [tick]);
 
   const link = links.find((l) => l.channel === channel) ?? null;
+  const isMyLink = myLink !== null && channel === myLink;
   const scheme = channel === null ? null : rateScheme(get, channel);
   const cost = bandwidthCost(draft);
   const capacity = serialCapacity(link?.baud ?? null);
@@ -215,15 +216,29 @@ export default function TelemetryRatesTab() {
               {link?.label} rates
               <span className="ml-2 text-xs font-mono text-content-secondary">{scheme}{channel}_*</span>
             </h4>
-            <span className="text-xs text-content-secondary">requested / measured</span>
+            <span className="text-xs text-content-secondary">
+              {isMyLink ? 'requested / measured' : 'requested (not the link I am on)'}
+            </span>
           </div>
+
+          {isMyLink && (
+            <p className="mb-3 text-[11px] text-content-tertiary">
+              These parameters are the port's defaults at boot. A connected ground station can ask
+              for different rates for its own session, and ArduDeck does: that is why the measured
+              column can run well above the slider.
+            </p>
+          )}
 
           <div className="space-y-3">
             {RATE_GROUPS.map((group) => {
               const name = rateParamName(get, channel, group.suffix);
               if (name === null) return null;
               const hz = draft[group.id] ?? 0;
-              const live = group.messages.reduce((sum, m) => sum + (measured[m] ?? 0), 0);
+              // Counting happens on the link we are connected through, so it
+              // says nothing about any other port's parameters.
+              const live = isMyLink
+                ? group.messages.reduce((sum, m) => sum + (measured[m] ?? 0), 0)
+                : 0;
               const starved = hz > 0 && live > 0 && live < hz * 0.7;
               return (
                 <div key={group.id} className="flex items-center gap-3">
@@ -250,7 +265,11 @@ export default function TelemetryRatesTab() {
                   </span>
                   <span
                     className={`w-20 text-right text-xs tabular-nums ${starved ? 'text-amber-400' : 'text-content-secondary'}`}
-                    data-tip={starved ? 'Arriving slower than requested: the link is saturated' : 'Measured on the wire right now'}
+                    data-tip={!isMyLink
+                      ? 'Only the link ArduDeck is connected through can be measured'
+                      : starved
+                        ? 'Arriving slower than requested: the link is saturated'
+                        : 'Measured on the wire right now. A GCS can ask for more than the parameter says, and ArduDeck does.'}
                   >
                     {live > 0 ? `${live.toFixed(1)} Hz` : '-'}
                   </span>

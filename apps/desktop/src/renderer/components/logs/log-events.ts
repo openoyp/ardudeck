@@ -3,6 +3,7 @@
 // so it is unit-testable and shareable between the events panel and the chart.
 
 import { COPTER_MODE_NAMES, PLANE_MODE_NAMES, ROVER_MODE_NAMES } from '@ardudeck/dataflash-parser';
+import { logRows, type LogColumns } from '../../utils/log-columns';
 
 export const COPTER_MODES = COPTER_MODE_NAMES;
 
@@ -121,7 +122,7 @@ export interface LogEventEntry {
   detail?: string;
 }
 
-type LogMessages = Record<string, { type: string; timeUs: number; fields: Record<string, number | string> }[]>;
+type LogMessages = Record<string, LogColumns>;
 
 export function decodeErr(subsys: number, ecode: number, vehicleType?: string): { label: string; detail: string; severity: LogEventSeverity } {
   const label = ERR_SUBSYSTEMS[subsys] ?? `Subsystem ${subsys}`;
@@ -148,20 +149,20 @@ export function extractLogEvents(log: { messages: LogMessages; metadata?: { vehi
   const out: LogEventEntry[] = [];
   const vehicleType = log.metadata?.vehicleType;
 
-  for (const m of log.messages['ERR'] ?? []) {
+  for (const m of logRows(log, 'ERR')) {
     const subsys = typeof m.fields['Subsys'] === 'number' ? m.fields['Subsys'] : -1;
     const ecode = typeof m.fields['ECode'] === 'number' ? m.fields['ECode'] : -1;
     const d = decodeErr(subsys, ecode, vehicleType);
     out.push({ timeS: m.timeUs / 1_000_000, kind: 'ERR', severity: d.severity, label: d.label, detail: d.detail });
   }
 
-  for (const m of log.messages['EV'] ?? []) {
+  for (const m of logRows(log, 'EV')) {
     const id = typeof m.fields['Id'] === 'number' ? m.fields['Id'] : -1;
     const d = decodeEv(id);
     out.push({ timeS: m.timeUs / 1_000_000, kind: 'EV', severity: d.severity, label: d.label });
   }
 
-  for (const m of log.messages['MSG'] ?? []) {
+  for (const m of logRows(log, 'MSG')) {
     const text = typeof m.fields['Message'] === 'string' ? m.fields['Message'] : '';
     if (!text) continue;
     out.push({
@@ -172,7 +173,7 @@ export function extractLogEvents(log: { messages: LogMessages; metadata?: { vehi
     });
   }
 
-  for (const m of log.messages['MODE'] ?? []) {
+  for (const m of logRows(log, 'MODE')) {
     const modeNum = (typeof m.fields['ModeNum'] === 'number' ? m.fields['ModeNum'] : m.fields['Mode']);
     const name = typeof modeNum === 'number' ? getModeName(modeNum, vehicleType) : String(m.fields['Mode'] ?? '?');
     const rsn = m.fields['Rsn'];
@@ -185,7 +186,7 @@ export function extractLogEvents(log: { messages: LogMessages; metadata?: { vehi
     });
   }
 
-  for (const m of log.messages['CMD'] ?? []) {
+  for (const m of logRows(log, 'CMD')) {
     const num = m.fields['CNum'];
     const name = typeof m.fields['CName'] === 'string' ? m.fields['CName'] : `cmd ${m.fields['CId'] ?? '?'}`;
     out.push({

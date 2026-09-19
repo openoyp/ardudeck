@@ -1,3 +1,4 @@
+import { logRows, type LogColumns } from '../../utils/log-columns';
 /**
  * Flight track extraction for the log explorer's 3D path.
  *
@@ -35,7 +36,7 @@ export interface FlightTrack {
 
 export const EMPTY_TRACK: FlightTrack = { points: [], source: '', altitudeBasis: 'derived' };
 
-type LogMessages = Record<string, { type: string; timeUs: number; fields: Record<string, number | string> }[]>;
+type LogMessages = Record<string, LogColumns>;
 
 export function isValidLatLon(lat: number, lon: number): boolean {
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return false;
@@ -65,8 +66,8 @@ function groundDatum(alts: number[]): number {
  * that only starts recording once the vehicle is already airborne.
  */
 function ardupilotHomeAlt(messages: LogMessages): number | null {
-  const orgn = messages['ORGN'];
-  if (!orgn) return null;
+  const orgn = logRows({ messages }, 'ORGN');
+  if (orgn.length === 0) return null;
   for (const msg of orgn) {
     // Alt arrives in metres: the parser's 'e' format char already applied the
     // x0.01 that turns ArduPilot's stored centimetres into metres.
@@ -80,8 +81,8 @@ function ardupilotHomeAlt(messages: LogMessages): number | null {
 
 /** ArduPilot POS: EKF-fused position with height above home already in it. */
 function fromArduPilotPos(messages: LogMessages): FlightTrack | null {
-  const pos = messages['POS'];
-  if (!pos || pos.length < 2) return null;
+  const pos = logRows({ messages }, 'POS');
+  if (pos.length < 2) return null;
 
   const points: TrackPoint[] = [];
   let sawRelHome = false;
@@ -106,8 +107,8 @@ function fromArduPilotPos(messages: LogMessages): FlightTrack | null {
 
 /** ArduPilot GPS: AMSL only, so the ground reference has to be recovered. */
 function fromArduPilotGps(messages: LogMessages): FlightTrack | null {
-  const gps = messages['GPS'];
-  if (!gps || gps.length < 2) return null;
+  const gps = logRows({ messages }, 'GPS');
+  if (gps.length < 2) return null;
 
   const raw: { lat: number; lon: number; amsl: number; timeS: number; speed: number | null }[] = [];
   for (const msg of gps) {
@@ -150,8 +151,8 @@ function fromPx4(
   coordScale: number,
   altScale: number,
 ): FlightTrack | null {
-  const rows = messages[topic];
-  if (!rows || rows.length < 2) return null;
+  const rows = logRows({ messages }, topic);
+  if (rows.length < 2) return null;
 
   const raw: { lat: number; lon: number; amsl: number; timeS: number; speed: number | null }[] = [];
   for (const msg of rows) {
@@ -195,7 +196,7 @@ export function buildFlightTrack(log: { messages: LogMessages } | null | undefin
   if (!log) return EMPTY_TRACK;
   const m = log.messages;
 
-  return (
+  const track = (
     fromArduPilotPos(m) ??
     fromArduPilotGps(m) ??
     fromPx4(m, 'vehicle_global_position', 'lat', 'lon', 'alt', null, 1, 1) ??
@@ -203,6 +204,22 @@ export function buildFlightTrack(log: { messages: LogMessages } | null | undefin
     fromPx4(m, 'sensor_gps', 'lat', 'lon', 'alt', 'vel_m_s', 1e7, 1000) ??
     EMPTY_TRACK
   );
+  return { ...track, points: sortedByTime(track.points) };
+}
+
+/**
+ * Time order is not free: a .bin can hold several boots, and TimeUS restarts at
+ * each one. Left unsorted, the binary search that maps a chart hover to a track
+ * point lands anywhere, which is how the map marker ends up nowhere near the
+ * flight path.
+ */
+function sortedByTime(points: TrackPoint[]): TrackPoint[] {
+  for (let i = 1; i < points.length; i++) {
+    if (points[i]!.timeS < points[i - 1]!.timeS) {
+      return [...points].sort((a, b) => a.timeS - b.timeS);
+    }
+  }
+  return points;
 }
 
 /** Vertical extent of the track, used to size the drawn path against the flight. */
@@ -238,6 +255,23 @@ export function trackHorizontalSpanM(points: TrackPoint[]): number {
 }
 
 /** Index of the track point at or before `timeS`, or -1 when the track is empty. */
+/**
+ * Nearest point at or before `timeS`, or -1 when the track has nothing within
+ * `toleranceS`. The tolerance matters: a chart can plot a message type that
+ * covers a stretch the position log does not, and clamping to the nearest end
+ * would put the marker at the start or finish of the flight as if it were the
+ * hovered moment.
+ */
+export function trackIndexNearTime(points: TrackPoint[], timeS: number, toleranceS = 2): number {
+  const idx = trackIndexAtTime(points, timeS);
+  if (idx < 0) return -1;
+  const here = points[idx];
+  const next = points[idx + 1];
+  if (!here) return -1;
+  const bestIdx = next && Math.abs(next.timeS - timeS) < Math.abs(here.timeS - timeS) ? idx + 1 : idx;
+  return Math.abs(points[bestIdx]!.timeS - timeS) <= toleranceS ? bestIdx : -1;
+}
+
 export function trackIndexAtTime(points: TrackPoint[], timeS: number): number {
   if (points.length === 0) return -1;
   let lo = 0;

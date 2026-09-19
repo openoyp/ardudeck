@@ -1,6 +1,6 @@
 {
   "name": "ardudeck",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "private": true,
   "description": "ArduDeck - Modern Ground Control Station",
   "author": {
@@ -33,7 +33,7 @@
   "scripts": {
     "start": "pnpm --filter @ardudeck/desktop dev",
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --concurrency=20",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",

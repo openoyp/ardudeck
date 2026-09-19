@@ -36,11 +36,22 @@ local currentTheme = 'dark'
 -- runtime demo toggle from tapping the ladder banner (no menu diving);
 -- config/widget-option demo still force it on
 local demoTap = false
--- current layout page (swipe cycles; Page widget option pins an instance)
+-- one page flip per drag, cleared when the finger comes off
+local swipeLatched = false
+-- current layout page (PAGE keys or a swipe cycle it; the Page widget option
+-- pins an instance to one)
 local curPage = 1
 local pinnedPage = 0
 local pageFlashT = -1000
 local lastPageSw = nil
+local pageTurnT = -100000
+-- set the first time the pilot moves a page by hand, which releases the
+-- starting-page option
+local pageMoved = false
+local fullScreen = false
+local appMode = false
+local lastEvent = nil
+local lastTouch = nil
 
 -- Voice alerts: ElevenLabs-generated wavs under snd/ (see ArduDeck repo
 -- scripts/generate-hud-voice.mjs). Missing files are a silent no-op, the
@@ -50,6 +61,9 @@ local function playAlert(name, muted)
   playFile('/WIDGETS/ardudeck/snd/' .. name .. '.wav')
 end
 
+-- Copter numbers, used until ArduDeck writes this vehicle's own table into
+-- hud.cfg (modes=num:NAME,...). A rover in HOLD is mode 4, which reads as
+-- GUIDED here, so the cfg table is what makes the bar truthful off-copter.
 local MODES = {
   [0]='STABILIZE','ACRO','ALT HOLD','AUTO','GUIDED','LOITER','RTL','CIRCLE',
   [9]='LAND',[11]='DRIFT',[13]='SPORT',[14]='FLIP',[15]='AUTOTUNE',
@@ -61,10 +75,27 @@ local MODES = {
 local CFG = {
   name = '', cells = 0, capacity = 0, low_cell = 3.6, crit_cell = 3.4,
   demo = 0, tiles = nil, theme = 'dark',
+  -- Seconds each page is shown before the next one (0 = never rotate). The
+  -- only page control that works in a normal widget slot, where EdgeTX hands
+  -- the widget no keys and no touch.
+  pageSecs = 0,
+  -- 1 = print what the widget is actually being handed (event value, touch,
+  -- fullscreen, page count). The only way to tell "key never arrived" from
+  -- "key arrived and we ignored it".
+  debugInput = 0,
+  -- 'copter' until ArduDeck says otherwise; picks the ground wording and the
+  -- tiles that make sense off the ground.
+  vehicle = 'copter',
   -- pages[1..n] = tile arrays; page 1 uses plain tileN keys, page P>=2 uses
   -- pP_tileN. Swipe cycles pages; the Page widget option pins an instance.
   pages = nil,
 }
+
+-- A rover does not fly: the widget follows the vehicle ArduDeck wrote into
+-- the config rather than calling everything a flight.
+local function isGround()
+  return CFG.vehicle == 'rover' or CFG.vehicle == 'boat'
+end
 
 -- Layouts are authored on a reference canvas (hud.cfg screen=WxH, 480x320
 -- when absent). Widget chrome is fixed-height: header ends at y=48, the
@@ -126,7 +157,11 @@ local function activeLayout()
   local pages = CFG.pages
   if not pages or #pages == 0 then return CFG.tiles or DEFAULT_LAYOUT, 1, 1 end
   local n = #pages
-  local page = pinnedPage > 0 and math.min(pinnedPage, n) or math.min(curPage, n)
+  -- The Page option picks which page this instance opens on. It used to hold
+  -- the widget there, which killed every key, swipe and switch the moment
+  -- anyone used that field to change pages.
+  local page = (pinnedPage > 0 and not pageMoved) and math.min(pinnedPage, n)
+    or math.min(curPage, n)
   return pages[page], page, n
 end
 
@@ -187,11 +222,45 @@ end
 local CFG_RELOAD_TICKS = 300 -- 3s in 10ms ticks
 local lastCfgLoadT = -CFG_RELOAD_TICKS
 
-local function loadConfig()
-  local f = io.open('/WIDGETS/ardudeck/hud.cfg', 'r')
-  if not f then return end
-  local raw = io.read(f, 4096)
+-- Per-model config: one radio flies several machines, and a rover has no use
+-- for the plane's pages. models/<model name>.cfg wins when it exists; the
+-- global file stays the default so cloning a model never loses the HUD.
+local function cfgFileName()
+  local ok, info = pcall(function () return model.getInfo() end)
+  local name = ok and info and info.name or nil
+  if type(name) ~= 'string' or name == '' then return nil end
+  return '/WIDGETS/ardudeck/models/' .. string.gsub(name, '[^%w%-_ ]', '_') .. '.cfg'
+end
+
+local function readWhole(path)
+  local f = io.open(path, 'r')
+  if not f then return nil end
+  -- Headroom for the mode table ArduDeck writes on top of the layouts.
+  local raw = io.read(f, 8192)
   io.close(f)
+  if type(raw) ~= 'string' or raw == '' then return nil end
+  return raw
+end
+
+-- Shared config first, this model's on top: a per-model file overrides only the
+-- keys it carries, so a model can own its layout while still following the
+-- shared theme and battery setup.
+local function readCfgFile()
+  local shared = readWhole('/WIDGETS/ardudeck/hud.cfg')
+  local perModel = cfgFileName()
+  local own = perModel and readWhole(perModel) or nil
+  if not own then return shared end
+  if not shared then return own end
+  -- Page keys are a set, not a value: a model that defines its own pages
+  -- replaces them rather than inheriting stray tiles from the shared file.
+  if string.match(own, '[%w_]*tile%d+=') then
+    shared = string.gsub(shared, '[%w_]*tile%d+=[^\r\n]*', '')
+  end
+  return shared .. '\n' .. own
+end
+
+local function loadConfig()
+  local raw = readCfgFile()
   if type(raw) ~= 'string' then return end
   local pages = {}
   local authW, authH = 480, 320
@@ -212,6 +281,11 @@ local function loadConfig()
   for k, v in string.gmatch(raw, '([%w_]+)=([^\r\n]+)') do
     if k == 'name' then CFG.name = v
     elseif k == 'theme' then CFG.theme = v
+    elseif k == 'vehicle' then CFG.vehicle = v
+    elseif k == 'modes' then
+      local t = {}
+      for num, label in string.gmatch(v, '(%d+):([^,]+)') do t[tonumber(num)] = label end
+      if next(t) then MODES = t end
     elseif k == 'screen' then
       local sw, sh = string.match(v, '(%d+)x(%d+)')
       if sw then authW, authH = tonumber(sw), tonumber(sh) end
@@ -511,19 +585,25 @@ local function pump()
 end
 
 -- ======================= diagnostic ladder =============================
+-- Frames are the authority, RSSI is only a hint. getRSSI() reads a model
+-- sensor, and a model whose CRSF sensors were never discovered (or an ELRS
+-- link running MAVLink telemetry) answers 0 forever. Judging the link on that
+-- declared NO LINK while telemetry was streaming, which flipped the state back
+-- and forth and had the announcer calling the link lost and found on a loop.
 local function ladderState()
+  local t = now()
+  local framesFresh = V.everFrame and (t - V.lastFrameT <= 300)
+  if framesFresh then
+    if t - V.lastStreamT > 300 then
+      return 'STREAMS OFF', 'FC not streaming - connect ArduDeck to fix rates', T.WARN
+    end
+    return 'LIVE', nil, T.SUCCESS
+  end
   local rssi = getRSSI()
   if rssi == nil or rssi == 0 then
     return 'NO LINK', 'radio link down - check RX power / binding', T.DANGER
   end
-  local t = now()
-  if not V.everFrame or t - V.lastFrameT > 300 then
-    return 'NO MAVLINK', 'link up, no telemetry frames - ELRS MAVLink mode?', T.WARN
-  end
-  if t - V.lastStreamT > 300 then
-    return 'STREAMS OFF', 'FC not streaming - connect ArduDeck to fix rates', T.WARN
-  end
-  return 'LIVE', nil, T.SUCCESS
+  return 'NO MAVLINK', 'link up, no telemetry frames - ELRS MAVLink mode?', T.WARN
 end
 
 -- =========================== demo mode =================================
@@ -960,13 +1040,14 @@ TILE.spd = function (x, y, w, h)
 end
 
 TILE.timer = function (x, y, w, h)
-  tileFrame(x, y, w, h, 'FLIGHT TIME')
+  tileFrame(x, y, w, h, isGround() and 'RUN TIME' or 'FLIGHT TIME')
   local total = V.armedAccum + (V.armedAtT and (now() - V.armedAtT) or 0)
   local secs = math.floor(total / 100)
   lcd.drawText(x + 8, y + math.max(18, h / 2 - 18),
     string.format('%02d:%02d', math.floor(secs / 60), secs % 60), DBLSIZE + T.TEXT)
   if h >= 70 then
-    lcd.drawText(x + 8, y + h - 26, V.armed and 'flying' or 'total this session',
+    lcd.drawText(x + 8, y + h - 26,
+      V.armed and (isGround() and 'running' or 'flying') or 'total this session',
       SMLSIZE + (V.armed and T.SUCCESS or T.TEXT_3))
   end
   if V.armed then
@@ -1058,6 +1139,42 @@ local function pickMap()
   return #MAPS > 0 and #MAPS or nil
 end
 
+-- Lines that leave the map image are cut at its edge. EdgeTX 2.9+ clips for us;
+-- older firmware gets a Cohen-Sutherland trim so a route to a distant waypoint
+-- never paints over the tiles around it.
+local function clippedLine(x1, y1, x2, y2, cx, cy, cw, ch, pat, flags)
+  local xmax, ymax = cx + cw, cy + ch
+  if lcd.drawLineWithClipping then
+    lcd.drawLineWithClipping(x1, y1, x2, y2, cx, xmax, cy, ymax, pat, flags)
+    return
+  end
+  local function code(x, y)
+    local c = 0
+    if x < cx then c = c + 1 elseif x > xmax then c = c + 2 end
+    if y < cy then c = c + 4 elseif y > ymax then c = c + 8 end
+    return c
+  end
+  local c1, c2 = code(x1, y1), code(x2, y2)
+  for _ = 1, 8 do
+    if c1 == 0 and c2 == 0 then break end
+    if band(c1, c2) ~= 0 then return end
+    local c = c1 ~= 0 and c1 or c2
+    local nx, ny
+    if band(c, 8) ~= 0 then
+      nx, ny = x1 + (x2 - x1) * (ymax - y1) / (y2 - y1), ymax
+    elseif band(c, 4) ~= 0 then
+      nx, ny = x1 + (x2 - x1) * (cy - y1) / (y2 - y1), cy
+    elseif band(c, 2) ~= 0 then
+      nx, ny = xmax, y1 + (y2 - y1) * (xmax - x1) / (x2 - x1)
+    else
+      nx, ny = cx, y1 + (y2 - y1) * (cx - x1) / (x2 - x1)
+    end
+    if c == c1 then x1, y1, c1 = nx, ny, code(nx, ny)
+    else x2, y2, c2 = nx, ny, code(nx, ny) end
+  end
+  lcd.drawLine(x1, y1, x2, y2, pat, flags)
+end
+
 TILE.map = function (x, y, w, h)
   tileFrame(x, y, w, h, 'MAP')
   local idx = pickMap()
@@ -1078,15 +1195,17 @@ TILE.map = function (x, y, w, h)
   if mapBmp then
     lcd.drawBitmap(mapBmp, ox, oy, scale * 100)
   end
-  -- mission route: legs then markers; active waypoint highlighted
+  -- mission route: legs then markers; active waypoint highlighted.
+  -- A leg to a waypoint off the image must be cut at the image edge, not drawn
+  -- across the neighbouring tiles.
   if #WPS > 0 then
     local prevX, prevY = nil, nil
     for i = 1, #WPS do
       local px, py = mapProject(m, WPS[i].lat, WPS[i].lon)
       local inside = px >= 0 and px <= m.w and py >= 0 and py <= m.h
       local sx, sy = ox + px * scale, oy + py * scale
-      if prevX and (inside or (prevX >= ox and prevX <= ox + dw)) then
-        lcd.drawLine(prevX, prevY, sx, sy, DOTTED, T.TEXT_3)
+      if prevX then
+        clippedLine(prevX, prevY, sx, sy, ox, oy, dw, dh, DOTTED, T.TEXT_3)
       end
       prevX, prevY = sx, sy
       if inside then
@@ -1164,14 +1283,36 @@ TILE.link = function (x, y, w, h)
   -- LQ green >=70, amber >=40, red below. RSSI green > -85dBm, amber
   -- > -100, red beyond. TPWR amber at >=250mW (link is shouting).
   tileFrame(x, y, w, h, 'SIGNAL')
-  local lq = getValue('RQly') or 0
+  -- getValue reads the MODEL's sensor list, so a model that never discovered
+  -- its CRSF sensors returns nil for all of them. Printing that as a red 0%
+  -- says the link is dying when it is fine: no reading is not zero.
+  local lq = getValue('RQly')
+  local hasLq = type(lq) == 'number' and lq > 0
+  -- No RQly sensor (never discovered, or an ELRS link in MAVLink mode) but the
+  -- radio still has its own RSSI reading: better a real number than a dash.
+  local fromRadio = false
+  if not hasLq then
+    local r = getRSSI()
+    if type(r) == 'number' and r > 0 then
+      lq = r
+      hasLq = true
+      fromRadio = true
+    end
+  end
   local rssi = getValue('1RSS') or 0
   local tpwr = getValue('TPWR') or 0
-  local lqC = lq >= 70 and T.SUCCESS or (lq >= 40 and T.WARN_STRONG or T.DANGER)
-  lcd.drawText(x + 8, y + math.max(18, h / 2 - 18), string.format('%d%%', lq), DBLSIZE + lqC)
+  local lqC = not hasLq and T.TEXT_3
+    or (lq >= 70 and T.SUCCESS or (lq >= 40 and T.WARN_STRONG or T.DANGER))
+  lcd.drawText(x + 8, y + math.max(18, h / 2 - 18),
+    hasLq and string.format('%d%%', lq) or '--', DBLSIZE + lqC)
+  if not hasLq then
+    lcd.drawText(x + 8, y + h - 26, 'no link sensor', SMLSIZE + T.TEXT_3)
+  elseif fromRadio and h >= 70 then
+    lcd.drawText(x + 8, y + h - 26, 'radio RSSI', SMLSIZE + T.TEXT_3)
+  end
   -- ascending signal bars, phone-style: lit count by LQ, all in band color
   local bars = 5
-  local lit = math.floor(lq / 20 + 0.5)
+  local lit = hasLq and math.floor(lq / 20 + 0.5) or 0
   local bx = x + w - 8 - bars * 8
   local baseY = y + math.min(h - 30, 58)
   for i = 1, bars do
@@ -1184,7 +1325,7 @@ TILE.link = function (x, y, w, h)
       lcd.drawRectangle(bxi, baseY - bh2, 6, bh2, T.GAUGE_EDGE)
     end
   end
-  if h >= 70 then
+  if h >= 70 and hasLq and not fromRadio then
     local rssiC = rssi > -85 and T.SUCCESS or (rssi > -100 and T.WARN_STRONG or T.DANGER)
     lcd.drawText(x + 8, y + h - 26, string.format('%d dBm', rssi), SMLSIZE + rssiC)
     if tpwr > 0 then
@@ -1350,6 +1491,25 @@ local function drawLive()
         lcd.drawCircle(dx + (i - 1) * 10 + 4, 42, 2, T.TEXT_3)
       end
     end
+    -- Until the widget is full screen the radio keeps every key and touch, so
+    -- say so rather than leaving dots that nothing responds to. On an App mode
+    -- screen one tap does it; on any other layout it is a long press.
+    if not fullScreen and (CFG.pageSecs or 0) == 0 then
+      lcd.drawText(dx + dotsW + 10, 42,
+        appMode and 'long press = full screen' or 'hold, then tap = full screen',
+        SMLSIZE + VCENTER + T.TEXT_3)
+    end
+  end
+
+  if CFG.debugInput == 1 then
+    -- Bottom left, above the ticker: the top bar is where EdgeTX draws its own
+    -- logo button in app mode, and it covers anything put there.
+    lcd.drawText(6, LCD_H - 80, string.format(
+      'fs=%s app=%s evt=%s tch=%s pg=%d/%d pin=%d',
+      fullScreen and 'Y' or 'N',
+      appMode and 'Y' or 'N',
+      tostring(lastEvent), tostring(lastTouch), page, pageCount, pinnedPage),
+      SMLSIZE + T.WARN)
   end
 
   -- message ticker (brand invariant)
@@ -1397,6 +1557,25 @@ local function battBand()
   return 'crit'
 end
 
+-- A state has to hold before it is worth speaking: telemetry gaps of a frame
+-- or two are normal, and announcing each one is how an alert becomes noise.
+local SETTLE_TICKS = 200
+local pendingSince = {}
+local function settled(key, value, prev)
+  if value == prev then
+    pendingSince[key] = nil
+    return false
+  end
+  local since = pendingSince[key]
+  if not since then
+    pendingSince[key] = now()
+    return false
+  end
+  if now() - since < SETTLE_TICKS then return false end
+  pendingSince[key] = nil
+  return true
+end
+
 local function announceTransitions(live)
   if prevArmed ~= nil and V.armed ~= prevArmed then
     playAlert(V.armed and 'armed' or 'disarmed', V.muted)
@@ -1410,10 +1589,12 @@ local function announceTransitions(live)
   end
   prevArmed = V.armed
 
-  if prevLive ~= nil and live ~= prevLive then
+  if prevLive ~= nil and settled('live', live, prevLive) then
     playAlert(live and 'telemetry_ok' or 'telemetry_lost', V.muted)
+    prevLive = live
+  elseif prevLive == nil then
+    prevLive = live
   end
-  prevLive = live
 
   -- announce battery bands only as they worsen; recovery stays silent
   local band = battBand()
@@ -1465,10 +1646,12 @@ local function announceTransitions(live)
 
   -- 3D fix gained/lost
   local gpsGood = V.fix >= 3
-  if prevGpsGood ~= nil and gpsGood ~= prevGpsGood then
+  if prevGpsGood ~= nil and settled('gps', gpsGood, prevGpsGood) then
     playAlert(gpsGood and 'gps_ok' or 'gps_lost', V.muted)
+    prevGpsGood = gpsGood
+  elseif prevGpsGood == nil then
+    prevGpsGood = gpsGood
   end
-  prevGpsGood = gpsGood
 end
 
 -- ============================ widget api ===============================
@@ -1534,14 +1717,17 @@ local function updateSwitches(widget)
   pinnedPage = (opts and opts.Page) or 0
   -- PageSw: any position change of the assigned switch advances one page
   -- (works with 2- and 3-position switches; every throw rotates)
-  if pinnedPage == 0 then
+  do
     local pos = switchPos(opts and opts.PageSw)
     if pos ~= nil then
       if lastPageSw ~= nil and pos ~= lastPageSw then
         local _, _, pageCount = activeLayout()
         if pageCount > 1 then
+          if not pageMoved and pinnedPage > 0 then curPage = math.min(pinnedPage, pageCount) end
+          pageMoved = true
           curPage = curPage % pageCount + 1
           pageFlashT = now()
+          pageTurnT = now()
         end
       end
       lastPageSw = pos
@@ -1564,17 +1750,82 @@ end
 
 function M.refresh(widget, event, touchState)
   maybeReloadConfig()
-  -- swipe left/right cycles layout pages (unpinned instances only)
-  if touchState and pinnedPage == 0 then
-    local _, _, pageCount = activeLayout()
-    if pageCount > 1 then
-      if touchState.swipeRight then
-        curPage = (curPage - 2) % pageCount + 1
-        pageFlashT = now()
-      elseif touchState.swipeLeft then
-        curPage = curPage % pageCount + 1
-        pageFlashT = now()
+  -- EdgeTX passes `event` only to a FULL SCREEN widget; in a normal slot it is
+  -- nil, along with every key and touch. That is what tells us which we are.
+  -- `event` is nil outside fullscreen, but lvgl.isFullScreen() answers even
+  -- then, and lvgl.isAppMode() says whether this screen is an App mode layout.
+  if lvgl and lvgl.isFullScreen then
+    local ok, fs = pcall(lvgl.isFullScreen)
+    fullScreen = ok and fs or (event ~= nil)
+  else
+    fullScreen = event ~= nil
+  end
+  if lvgl and lvgl.isAppMode then
+    local ok, am = pcall(lvgl.isAppMode)
+    appMode = ok and am or false
+  end
+  if event ~= nil and event ~= 0 then lastEvent = event end
+  if touchState then
+    lastTouch = string.format('%d,%d%s', touchState.x or -1, touchState.y or -1,
+      touchState.startX and (' s' .. touchState.startX) or '')
+  end
+  -- Page navigation. EdgeTX only hands a widget events in FULL SCREEN, and
+  -- only there do the PAGE keys arrive at all.
+  local _, _, pageCount = activeLayout()
+  -- Timed rotation: the fallback for a widget in a slot, where nothing else
+  -- can reach it.
+  if pageCount > 1 and (CFG.pageSecs or 0) > 0 then
+    if now() - pageTurnT > CFG.pageSecs * 100 then
+      curPage = curPage % pageCount + 1
+      pageTurnT = now()
+      pageFlashT = now()
+    end
+  end
+  if pageCount > 1 then
+    local function flip(step)
+      if not pageMoved and pinnedPage > 0 then curPage = math.min(pinnedPage, pageCount) end
+      pageMoved = true
+      curPage = (curPage - 1 + step) % pageCount + 1
+      pageFlashT = now()
+      pageTurnT = now()
+    end
+    -- PAGE> / PAGE< (and the rotary or +/- on radios without them). These are
+    -- the buttons made for this: swiping is the alternative, not the only way.
+    if event and event ~= 0 then
+      if (EVT_VIRTUAL_NEXT_PAGE and event == EVT_VIRTUAL_NEXT_PAGE)
+        or (EVT_VIRTUAL_NEXT and event == EVT_VIRTUAL_NEXT) then
+        flip(1)
+      elseif (EVT_VIRTUAL_PREV_PAGE and event == EVT_VIRTUAL_PREV_PAGE)
+        or (EVT_VIRTUAL_PREV and event == EVT_VIRTUAL_PREV) then
+        flip(-1)
       end
+    end
+    if touchState then
+      -- EdgeTX's own swipeLeft/Right only fire on a fast flick (>60px in one
+      -- slide event), which is why a normal drag did nothing. Measure the
+      -- gesture ourselves from where the finger went down, and latch so one
+      -- drag turns one page.
+      -- Swiping left moves to the next page: the pages travel with the
+      -- finger, like every page dot UI on a phone.
+      if touchState.swipeRight then
+        flip(1)
+        swipeLatched = true
+      elseif touchState.swipeLeft then
+        flip(-1)
+        swipeLatched = true
+      elseif touchState.startX then
+        local dx = touchState.x - touchState.startX
+        local dy = (touchState.y or 0) - (touchState.startY or 0)
+        if dy < 0 then dy = -dy end
+        if not swipeLatched and dy < 60 and (dx > 50 or dx < -50) then
+          flip(dx > 0 and 1 or -1)
+          swipeLatched = true
+        end
+      else
+        swipeLatched = false
+      end
+    else
+      swipeLatched = false
     end
   end
   -- corner tap: flip light/dark. Banner tap: start demo. Badge tap: exit

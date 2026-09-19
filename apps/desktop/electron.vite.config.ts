@@ -13,6 +13,10 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/main/index.ts'),
+          // Log parsing runs in a worker thread: a 200 MB dataflash file takes
+          // many seconds to decode, and on the main thread that stalls IPC,
+          // every window AND the MAVLink link.
+          'log-worker': resolve(__dirname, 'src/main/log-worker.ts'),
         },
       },
     },

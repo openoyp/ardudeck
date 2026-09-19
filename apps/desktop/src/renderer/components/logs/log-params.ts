@@ -4,6 +4,8 @@
 // an in-flight change worth surfacing loudly. Newer firmwares also log the
 // firmware default per parameter, letting us flag user-modified values.
 
+import { logRows, type LogColumns } from '../../utils/log-columns';
+
 export interface LogParamEntry {
   name: string;
   /** Value at log start (first PARM record). */
@@ -16,12 +18,12 @@ export interface LogParamEntry {
   changes: { timeS: number; value: number }[];
 }
 
-type LogMessages = Record<string, { type: string; timeUs: number; fields: Record<string, number | string> }[]>;
+type LogMessages = Record<string, LogColumns>;
 
 export function extractLogParams(log: { messages: LogMessages }): LogParamEntry[] {
   const byName = new Map<string, LogParamEntry>();
 
-  for (const m of log.messages['PARM'] ?? []) {
+  for (const m of logRows(log, 'PARM')) {
     const name = typeof m.fields['Name'] === 'string' ? m.fields['Name'] : '';
     const value = m.fields['Value'];
     if (!name || typeof value !== 'number') continue;

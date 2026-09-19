@@ -76,6 +76,15 @@ const PidTuningTab: React.FC = () => {
 
   const isUnknown = scheme?.id === 'unknown';
 
+  // Aircraft wording unless the scheme names its own controllers, and no third
+  // card for a vehicle that has only two.
+  const axisInfo = scheme?.axisInfo ?? {
+    roll: { title: 'Roll', sub: 'Left/right tilt' },
+    pitch: { title: 'Pitch', sub: 'Forward/back tilt' },
+    yaw: { title: 'Yaw', sub: 'Rotation' },
+  };
+  const showYawAxis = scheme ? (!scheme.axisInfo || !!scheme.axisInfo.yaw) : true;
+
   // Get current PID values from parameters using the detected scheme
   const pidValues = useMemo(() => {
     if (!scheme) return null;
@@ -241,7 +250,7 @@ const PidTuningTab: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => fetchParameters()}
+            onClick={() => fetchParameters({ force: true })}
             disabled={isLoading}
             className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
@@ -343,50 +352,49 @@ const PidTuningTab: React.FC = () => {
         label="My Profiles"
       />
 
-      {/* PID Sliders - 3 column layout */}
+      {/* PID sliders: one card per controller this vehicle actually has */}
       {scheme && pidValues && (
-      <div className="grid grid-cols-3 gap-5">
-        {/* Roll */}
+      <div className={`grid gap-5 ${showYawAxis ? 'grid-cols-3' : 'grid-cols-2'}`}>
         <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-xl border-blue-500/20 p-5">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
               <MoveHorizontal className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h3 className="text-lg font-medium text-content">Roll</h3>
-              <p className="text-xs text-content-secondary">Left/right tilt</p>
+              <h3 className="text-lg font-medium text-content">{axisInfo.roll.title}</h3>
+              <p className="text-xs text-content-secondary">{axisInfo.roll.sub}</p>
             </div>
           </div>
           {renderAxisSliders(scheme.roll, scheme, pidValues.roll)}
         </div>
 
-        {/* Pitch */}
         <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 rounded-xl border-emerald-500/20 p-5">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
               <MoveVertical className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-lg font-medium text-content">Pitch</h3>
-              <p className="text-xs text-content-secondary">Forward/back tilt</p>
+              <h3 className="text-lg font-medium text-content">{axisInfo.pitch.title}</h3>
+              <p className="text-xs text-content-secondary">{axisInfo.pitch.sub}</p>
             </div>
           </div>
           {renderAxisSliders(scheme.pitch, scheme, pidValues.pitch)}
         </div>
 
-        {/* Yaw */}
+        {showYawAxis && (
         <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-xl border-orange-500/20 p-5">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
               <RefreshCw className="w-5 h-5 text-orange-400" />
             </div>
             <div>
-              <h3 className="text-lg font-medium text-content">Yaw</h3>
-              <p className="text-xs text-content-secondary">Rotation</p>
+              <h3 className="text-lg font-medium text-content">{axisInfo.yaw?.title ?? 'Yaw'}</h3>
+              <p className="text-xs text-content-secondary">{axisInfo.yaw?.sub ?? 'Rotation'}</p>
             </div>
           </div>
           {renderAxisSliders(scheme.yaw, scheme, pidValues.yaw)}
         </div>
+        )}
       </div>
       )}
 

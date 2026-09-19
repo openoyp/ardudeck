@@ -58,6 +58,11 @@ type Tab = 'console' | 'messages';
 
 export function DebugConsole() {
   const { logs, isExpanded, filter, toggleExpanded, clearLogs, setFilter } = useConsoleStore();
+  const dock = useConsoleStore((s) => s.dock);
+  const size = useConsoleStore((s) => s.size);
+  const setDock = useConsoleStore((s) => s.setDock);
+  const setSize = useConsoleStore((s) => s.setSize);
+  const side = dock !== 'bottom';
   const messages = useMessagesStore((s) => s.messages);
   const clearMessages = useMessagesStore((s) => s.clear);
   const protocol = useConnectionStore((s) => s.connectionState.protocol);
@@ -72,6 +77,38 @@ export function DebugConsole() {
   const [pinned, setPinned] = useState(true);
 
   const isMavlink = protocol === 'mavlink';
+
+  const startResize = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const startPos = side ? e.clientX : e.clientY;
+    const startSize = size;
+    const move = (ev: PointerEvent) => {
+      const delta = side ? ev.clientX - startPos : ev.clientY - startPos;
+      // Dragging away from the docked edge grows the panel.
+      setSize(startSize + (dock === 'left' ? delta : -delta));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  const dockButton = (target: 'left' | 'bottom' | 'right', title: string, path: JSX.Element) => (
+    <button
+      onClick={() => setDock(target)}
+      data-tip={title}
+      className={`p-1 rounded transition-colors ${
+        dock === target ? 'text-blue-400 bg-blue-500/15' : 'text-content-tertiary hover:text-content hover:bg-surface-raised'
+      }`}
+    >
+      <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.4}>
+        <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" />
+        {path}
+      </svg>
+    </button>
+  );
 
   const toggleExpand = (key: string) => {
     setExpandedMessages((prev) => {
@@ -127,11 +164,40 @@ export function DebugConsole() {
   const lastLog = logs[logs.length - 1];
 
   return (
-    <div className="border-t border-subtle bg-surface-overlay backdrop-blur-sm flex flex-col">
+    <div
+      className={
+        'bg-surface-overlay backdrop-blur-sm flex flex-col relative ' +
+        (side
+          ? `${dock === 'left' ? 'border-r' : 'border-l'} border-subtle h-full shrink-0`
+          : 'border-t border-subtle')
+      }
+      style={side ? { width: isExpanded ? size : 40 } : undefined}
+    >
+      {/* Resize handle on the edge that faces the content. */}
+      {isExpanded && (
+        <div
+          onPointerDown={startResize}
+          className={
+            'absolute z-10 ' +
+            (side
+              ? `top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-blue-500/40 ${dock === 'left' ? 'right-0' : 'left-0'}`
+              : 'left-0 right-0 top-0 h-1.5 cursor-row-resize hover:bg-blue-500/40')
+          }
+        />
+      )}
       {/* Collapsed bar - always visible */}
+      <div
+        className={
+          'flex shrink-0 ' +
+          (side && !isExpanded ? 'h-full w-10 flex-col items-center pt-2 gap-2' : 'h-8 items-center pr-1.5')
+        }
+      >
       <button
         onClick={toggleExpanded}
-        className="h-8 px-4 flex items-center gap-3 hover:bg-surface transition-colors cursor-pointer w-full text-left"
+        className={
+          'flex items-center gap-3 hover:bg-surface transition-colors cursor-pointer text-left min-w-0 ' +
+          (side && !isExpanded ? 'flex-col justify-start gap-2 flex-1 w-full' : 'h-8 px-3 flex-1')
+        }
       >
         {/* Expand/collapse icon */}
         <svg
@@ -143,10 +209,13 @@ export function DebugConsole() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
         </svg>
 
-        <span className="text-xs font-medium text-content-secondary uppercase tracking-wide">Console</span>
+        <span
+          className="text-xs font-medium text-content-secondary uppercase tracking-wide"
+          style={side && !isExpanded ? { writingMode: 'vertical-rl' } : undefined}
+        >Console</span>
 
         {/* Last log preview when collapsed */}
-        {!isExpanded && lastLog && (
+        {!isExpanded && !side && lastLog && (
           <span className={`text-xs truncate flex-1 ${LOG_COLORS[lastLog.level]}`}>
             <span className="text-content-tertiary mr-2">{formatTime(lastLog.timestamp)}</span>
             {lastLog.message}
@@ -154,23 +223,31 @@ export function DebugConsole() {
         )}
 
         {/* Log count badge */}
-        <span className="text-xs text-content-tertiary">
+        <span className={`text-xs text-content-tertiary ${side && !isExpanded ? 'hidden' : ''}`}>
           {logs.length} {logs.length === 1 ? 'entry' : 'entries'}
         </span>
 
         {/* Messages count badge - show when connected via MAVLink and have messages */}
-        {isMavlink && messages.length > 0 && (
+        {isMavlink && messages.length > 0 && !(side && !isExpanded) && (
           <span className="text-xs text-yellow-500/70">
             {messages.length} msg{messages.length !== 1 ? 's' : ''}
           </span>
         )}
       </button>
 
+        {/* Dock side: on the header so it is reachable collapsed too. */}
+        <div className={`flex items-center gap-0.5 ${side && !isExpanded ? 'flex-col pb-2' : ''}`}>
+          {dockButton('left', 'Dock left', <rect x="1.5" y="2.5" width="5" height="11" rx="1.5" fill="currentColor" opacity="0.5" />)}
+          {dockButton('bottom', 'Dock bottom', <rect x="1.5" y="9" width="13" height="4.5" rx="1.5" fill="currentColor" opacity="0.5" />)}
+          {dockButton('right', 'Dock right', <rect x="9.5" y="2.5" width="5" height="11" rx="1.5" fill="currentColor" opacity="0.5" />)}
+        </div>
+      </div>
+
       {/* Expanded panel */}
       {isExpanded && (
-        <div className="relative flex flex-col" style={{ height: '35vh' }}>
+        <div className="relative flex flex-col min-h-0" style={side ? { flex: 1 } : { height: size }}>
           {/* Toolbar */}
-          <div className="flex items-center gap-2 px-3 py-1.5 border-b border-subtle bg-surface-overlay-subtle">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-1.5 border-b border-subtle bg-surface-overlay-subtle">
             {/* Tab buttons */}
             <div className="flex gap-1 mr-2">
               <button
@@ -226,7 +303,7 @@ export function DebugConsole() {
               </div>
             )}
 
-            <div className="flex-1" />
+            <div className="flex-1 min-w-0" />
 
             {/* Clear button */}
             <button
@@ -235,6 +312,7 @@ export function DebugConsole() {
             >
               Clear
             </button>
+
           </div>
 
           {/* Console tab content */}

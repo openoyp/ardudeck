@@ -10,7 +10,8 @@
 // ============================================================================
 
 export type CalibrationTypeId =
-  | 'accel-level'    // Simple level calibration
+  | 'accel-level'    // Level trim only (AHRS_TRIM_*)
+  | 'accel-quick'    // One position, writes the offsets the arming check reads
   | 'accel-6point'   // Full 6-position calibration
   | 'compass'        // Magnetometer calibration
   | 'gyro'           // Gyroscope calibration
@@ -50,6 +51,15 @@ export const CALIBRATION_TYPES: CalibrationTypeInfo[] = [
     protocols: ['msp', 'mavlink'],
     variants: ['INAV', 'BTFL', 'ARDU', 'PX4'],
     estimatedDuration: 5,
+  },
+  {
+    id: 'accel-quick',
+    name: 'Accelerometer (Quick)',
+    description: 'One position, vehicle level and still. Writes the offsets ArduPilot wants before it will arm, without turning the vehicle over.',
+    icon: 'level',
+    protocols: ['mavlink'],
+    variants: ['ARDU'],
+    estimatedDuration: 15,
   },
   {
     id: 'accel-6point',
@@ -271,6 +281,13 @@ export const MAVLINK_CALIBRATION_PARAMS: Partial<Record<CalibrationTypeId, reado
     'AHRS_TRIM_Y',
     'AHRS_TRIM_Z',
   ],
+  // Same parameters as the six-point calibration: that is the point of it.
+  'accel-quick': [
+    'INS_ACCOFFS_X', 'INS_ACCOFFS_Y', 'INS_ACCOFFS_Z',
+    'INS_ACCSCAL_X', 'INS_ACCSCAL_Y', 'INS_ACCSCAL_Z',
+    'INS_ACC2OFFS_X', 'INS_ACC2OFFS_Y', 'INS_ACC2OFFS_Z',
+    'INS_ACC3OFFS_X', 'INS_ACC3OFFS_Y', 'INS_ACC3OFFS_Z',
+  ],
   'accel-6point': [
     'INS_ACCOFFS_X', 'INS_ACCOFFS_Y', 'INS_ACCOFFS_Z',
     'INS_ACCSCAL_X', 'INS_ACCSCAL_Y', 'INS_ACCSCAL_Z',
@@ -331,6 +348,7 @@ export const PX4_CALIBRATION_PARAMS: Partial<Record<CalibrationTypeId, readonly 
  */
 export const CALIBRATION_DIFF_EPSILON: Record<CalibrationTypeId, number> = {
   'accel-level': 1e-4,   // radians (trim is typically 0.001 - 0.1 rad)
+  'accel-quick': 1e-4,   // same offsets as the six-point calibration
   'accel-6point': 1e-4,  // m/s² for offsets, dimensionless ~1.0 for scale
   'gyro': 1e-5,          // rad/s
   'compass': 1.0,        // mGauss
@@ -345,6 +363,7 @@ export const CALIBRATION_DIFF_EPSILON: Record<CalibrationTypeId, number> = {
  */
 export const PX4_CALIBRATION_DIFF_EPSILON: Record<CalibrationTypeId, number> = {
   'accel-level': 1e-3,   // degrees
+  'accel-quick': 1e-4,   // ArduPilot only, listed for completeness
   'accel-6point': 1e-4,  // m/s² offsets, dimensionless scale
   'gyro': 1e-6,          // rad/s (PX4 gyro offsets are tiny but real)
   'compass': 1e-3,       // Gauss

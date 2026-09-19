@@ -49,6 +49,9 @@ export interface SvtPose {
       This, not AGL, is what the camera flies at, so rising ground rises in
       the view exactly as it does in the world. */
   eyeMsl: number;
+  /** Render floor above the terrain. A rover's camera sits under a metre, an
+      aircraft's is held clear of the surface so the ground never goes edge-on. */
+  eyeFloorM?: number;
   rollDeg: number;
   pitchDeg: number;
   /** True heading, degrees (0 = North, 90 = East). */
@@ -209,7 +212,7 @@ export function createSvtScene(canvas: HTMLCanvasElement): SvtScene {
       const local = grid ? lonLatToLocal(grid, pose.lat, pose.lon) : { x: 0, z: 0 };
       const groundElev = grid ? sampleElevation(grid, pose.lat, pose.lon) : 0;
       clearanceM = grid ? pose.eyeMsl - groundElev : NaN;
-      camera.position.set(local.x, Math.max(pose.eyeMsl, groundElev + MIN_EYE_M), local.z);
+      camera.position.set(local.x, Math.max(pose.eyeMsl, groundElev + (pose.eyeFloorM ?? MIN_EYE_M)), local.z);
       camera.rotation.set(pose.pitchDeg * DEG, -pose.headingDeg * DEG, -pose.rollDeg * DEG);
       // Keep the sky dome centred on the camera so it never crosses the far plane.
       sky.position.copy(camera.position);

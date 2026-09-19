@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { __test } from './model-telemetry.js';
+import { __test, isModelFile } from './model-telemetry.js';
 
-const { addToModel, removeFromModel } = __test;
+const { addToModel, removeFromModel, modelName } = __test;
 
 /** Shapes copied from model files a RadioMaster Pocket wrote itself. */
 const crlf = (lines: string[]) => lines.join('\r\n');
@@ -99,5 +99,43 @@ describe('telemetry screen writer', () => {
     const result = removeFromModel(VALUES_SCREEN, 'ArduDk');
     expect(result.status).toBe('absent');
     expect(result.raw).toBe(VALUES_SCREEN);
+  });
+});
+
+describe('telling models from the other yml files in MODELS', () => {
+  // labels.yml is a list of label names, and an older card carries a models.yml
+  // index. Both matched the plain ".yml" filter, so each one showed up in the
+  // model picker under whatever name it happened to hold first.
+  it('rejects the label list and the model index', () => {
+    expect(isModelFile('labels.yml')).toBe(false);
+    expect(isModelFile('models.yml')).toBe(false);
+    expect(isModelFile('._model1.yml')).toBe(false);
+    expect(isModelFile('README.txt')).toBe(false);
+  });
+
+  it('accepts model files whatever they are called', () => {
+    expect(isModelFile('model1.yml')).toBe(true);
+    expect(isModelFile('eugene-biene.yml')).toBe(true);
+  });
+
+  it('reads the name out of the header block only', () => {
+    expect(modelName(crlf([
+      'semver: 3.0.0',
+      'header: ',
+      '   name: "MODEL04"',
+      '   bitmap: ""',
+      'telemetryProtocol: 0',
+      'logicalSw:',
+      '   0:',
+      '      name: "not the model"',
+    ]))).toBe('MODEL04');
+  });
+
+  it('finds no name in a file that has no header block', () => {
+    expect(modelName(crlf([
+      'labels:',
+      '   0:',
+      '      name: "Racers"',
+    ]))).toBe('');
   });
 });

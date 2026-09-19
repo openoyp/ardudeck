@@ -30,9 +30,12 @@ function detectEol(raw: string): string {
   return raw.includes('\r\n') ? '\r\n' : '\n';
 }
 
-/** Model display name lives in the `header:` map at the top of the file. */
+/** Model display name, read from inside the file's `header:` map. Anchored to
+ * that block so a stray `name:` elsewhere (labels.yml is full of them) cannot
+ * pass for a model. */
 function modelName(raw: string): string {
-  return raw.match(/^\s+name:\s*"(.*)"/m)?.[1] ?? '';
+  const header = raw.match(/^header:\s*$([\s\S]*?)(?=^\S|\Z)/m)?.[1];
+  return header?.match(/^\s+name:\s*"(.*)"/m)?.[1] ?? '';
 }
 
 function screenEntry(slot: number, script: string): string[] {
@@ -128,13 +131,56 @@ function removeFromModel(raw: string, script: string): { raw: string; status: Mo
   return { raw, status: 'absent' };
 }
 
+/** MODELS/ also holds the label list and, on cards from older EdgeTX, a model
+ * index; both are .yml and neither is a model. macOS leaves `._name` sidecars
+ * on FAT cards too. */
+const NOT_MODELS = new Set(['labels.yml', 'models.yml', 'radio.yml']);
+
+export function isModelFile(name: string): boolean {
+  const lower = name.toLowerCase();
+  return lower.endsWith('.yml') && !NOT_MODELS.has(lower) && !name.startsWith('._');
+}
+
 async function modelFiles(volumePath: string): Promise<string[]> {
   try {
     const entries = await readdir(path.join(volumePath, 'MODELS'));
-    return entries.filter((e) => e.toLowerCase().endsWith('.yml')).sort();
+    return entries.filter(isModelFile).sort();
   } catch {
     return [];
   }
+}
+
+/** The file name of the model the radio has selected, from RADIO/radio.yml.
+ * Colour radios only: the field is inside EdgeTX's COLORLCD block. */
+async function currentModelFile(volumePath: string): Promise<string | null> {
+  try {
+    const raw = await readFile(path.join(volumePath, 'RADIO', 'radio.yml'), 'utf8');
+    return raw.match(/^currModelFilename:\s*"?([^"\r\n]+)"?/m)?.[1]?.trim() ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** The models on the card, with whether each already has a HUD layout of its
+ * own, so the UI can say which ones an apply would overwrite. */
+export async function listModels(
+  volumePath: string,
+): Promise<{ file: string; name: string; current: boolean; hasLayout: boolean }[]> {
+  const current = await currentModelFile(volumePath);
+  const out: { file: string; name: string; current: boolean; hasLayout: boolean }[] = [];
+  for (const file of await modelFiles(volumePath)) {
+    try {
+      const raw = await readFile(path.join(volumePath, 'MODELS', file), 'utf8');
+      const name = modelName(raw);
+      if (!name) continue;
+      const cfg = path.join(volumePath, 'WIDGETS', 'ardudeck', 'models', `${name.replace(/[^\w\-\s]/g, '_')}.cfg`);
+      const hasLayout = await readFile(cfg, 'utf8').then(() => true).catch(() => false);
+      out.push({ file, name, current: file === current, hasLayout });
+    } catch {
+      // unreadable model file: not ours to fix
+    }
+  }
+  return out;
 }
 
 /** Add the script to every model that has a free telemetry screen. */
@@ -171,4 +217,4 @@ export async function removeTelemetryScreen(volumePath: string, script: string):
   return out;
 }
 
-export const __test = { addToModel, removeFromModel };
+export const __test = { addToModel, removeFromModel, modelName };

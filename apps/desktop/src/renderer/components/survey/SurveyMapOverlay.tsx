@@ -13,6 +13,9 @@ import { useSurveyStore } from '../../stores/survey-store';
 import { useSettingsStore } from '../../stores/settings-store';
 import type { LatLng } from './survey-types';
 
+/** Preview cap: enough to read the coverage, few enough to stay smooth. */
+const MAX_FOOTPRINTS = 500;
+
 // Colors
 const SURVEY_POLYGON_COLOR = '#d946ef';     // Fuchsia - kept clearly off the sky-blue grid lines
 const SURVEY_LINE_COLOR = '#38bdf8';         // Sky blue
@@ -295,10 +298,17 @@ export function SurveyMapOverlay() {
     return photos.length > maxPhotoMarkers ? [] : photos;
   }, [result, maxPhotoMarkers]);
 
-  // Camera footprints (limit to first 500 to avoid perf issues)
+  // Camera footprints, capped for performance. Footprints come out strip by
+  // strip, so taking the first N covered only the first strips and read as a
+  // swath shifted off the flight path; stride instead so the preview spans the
+  // whole plan.
   const footprintPolygons = useMemo(() => {
     if (!showFootprints || !result) return [];
-    return result.footprints.slice(0, 500).map(fp => fp.map(toLf));
+    const all = result.footprints;
+    const step = Math.max(1, Math.ceil(all.length / MAX_FOOTPRINTS));
+    const out: L.LatLngExpression[][] = [];
+    for (let i = 0; i < all.length; i += step) out.push(all[i]!.map(toLf));
+    return out;
   }, [showFootprints, result]);
 
   const handleVertexDrag = useCallback((index: number, lat: number, lng: number) => {

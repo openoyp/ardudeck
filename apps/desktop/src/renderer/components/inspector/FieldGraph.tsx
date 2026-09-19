@@ -1,23 +1,29 @@
 /**
- * FieldGraph — single-field time-series plot, intended to be opened in a
- * detached window from the MAVLink Inspector. Each instance plots exactly one
- * (sysid, compid, msgid, fieldName) tuple. Keeps a rolling window of the most
- * recent samples and renders an SVG line — light, dependency-free, and fine
- * for any update rate the FC produces. Theme-aware: line/fill use accent
- * colors that hold up in both light and dark.
+ * FieldGraph — live time-series plot for one MAVLink message. It starts on one
+ * (sysid, compid, msgid, fieldName) tuple; the inspector tree adds and removes
+ * further fields of the same message as extra traces on the same axes.
+ *
+ * Drawn with uPlot and the log explorer's chart helpers (palette, cursor
+ * readout, CSV) so a live plot and a log plot behave identically: crosshair
+ * with values, real axes, drag to zoom, double click to reset.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import uPlot from 'uplot';
+import 'uplot/dist/uPlot.min.css';
 import {
   acquireInspectorFields,
   appendSample,
   getFieldValue,
   getMessageStats,
   getSamples,
+  overlayBufferId,
   panelIdForGraph,
   useInspectorStore,
-  type GraphSample,
 } from '../../stores/inspector-store';
+import { useResolvedTheme } from '../../hooks/useTheme';
+import { chartCsv, columnStats, fmtStat, seriesColor } from '../logs/log-chart-stats';
+import { createCursorReadout, type ChartCursorReadout } from '../logs/log-chart-cursor';
 
 interface FieldGraphProps {
   sysid: number;
@@ -25,9 +31,9 @@ interface FieldGraphProps {
   msgid: number;
   messageName: string;
   fieldName: string;
-  /** Optional override for how many points of history to keep. Default 600. */
-  historyPoints?: number;
 }
+
+const EMPTY_FIELDS: string[] = [];
 
 export function FieldGraph(propsIn: Record<string, unknown>): JSX.Element {
   const props = propsIn as unknown as FieldGraphProps;
@@ -39,198 +45,241 @@ export function FieldGraph(propsIn: Record<string, unknown>): JSX.Element {
 
   // Samples live at the module level (sampleBuffers in inspector-store) so
   // they survive component unmounts — view switches AND popout seeding both
-  // work without losing history. We trigger React re-renders with a version
-  // counter rather than reading the array via state.
-  const panelId = panelIdForGraph({
-    sysid, compid, msgid, messageName, fieldName,
-  });
-  const [, setVersion] = useState(0);
+  // work without losing history.
+  const panelId = panelIdForGraph({ sysid, compid, msgid, messageName, fieldName });
+  const overlayFields = useInspectorStore((s) => s.overlays[panelId]) ?? EMPTY_FIELDS;
+  const fields = [fieldName, ...overlayFields];
 
-  // Graphs read decoded fields, so hold the decode lease while mounted.
+  const isLight = useResolvedTheme() === 'light';
+  const hostRef = useRef<HTMLDivElement>(null);
+  const plotRef = useRef<uPlot | null>(null);
+  const readoutRef = useRef<ChartCursorReadout | null>(null);
+  const fieldsRef = useRef(fields);
+  fieldsRef.current = fields;
+  const [sampleCount, setSampleCount] = useState(0);
+
   useEffect(() => acquireInspectorFields(), []);
   const tick = useInspectorStore((s) => s.tick);
+
   useEffect(() => {
     const stats = getMessageStats(sysid, compid, msgid);
     if (!stats) return;
-    // Skip the tick if the underlying message hasn't advanced since the last
-    // sample we pushed. Compare against the most recent sample's timestamp
-    // (which lives in the shared buffer, so it's authoritative across re-
-    // mounts and seedings). This is what makes Pause freeze the graph and
-    // also handles a message that simply stops arriving.
+    // Skip the tick if the message hasn't advanced: this is what makes Pause
+    // freeze the plot, and handles a message that simply stops arriving.
     const existing = getSamples(panelId);
     const lastT = existing.length > 0 ? existing[existing.length - 1]!.t : 0;
     if (stats.lastRxtime <= lastT) return;
     const v = getFieldValue(sysid, compid, msgid, fieldName);
     if (v === null) return;
     appendSample(panelId, stats.lastRxtime, v);
-    setVersion((x) => x + 1);
-  }, [tick, sysid, compid, msgid, fieldName, panelId]);
+    for (const f of overlayFields) {
+      const ov = getFieldValue(sysid, compid, msgid, f);
+      if (ov !== null) appendSample(overlayBufferId(panelId, f), stats.lastRxtime, ov);
+    }
+    plotRef.current?.setData(buildData(panelId, fieldsRef.current));
+    setSampleCount(getSamples(panelId).length);
+  }, [tick, sysid, compid, msgid, fieldName, panelId, overlayFields]);
 
-  const samples: GraphSample[] = getSamples(panelId);
-  const latest = samples.length > 0 ? samples[samples.length - 1]!.v : null;
-  // Not memoized: the samples array is mutated in place (its identity is
-  // stable across pushes), so a useMemo keyed on it would never recompute.
-  // 600 samples × 3 reductions is well under a millisecond.
-  const stats = computeStats(samples);
+  useLayoutEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    // Canvas strokes are literal colours: a CSS variable here silently falls
+    // back to the last colour set, which is the series line.
+    const axisTheme = {
+      stroke: isLight ? '#4b5563' : '#9ca3af',
+      grid: { stroke: isLight ? '#e5e7eb' : '#1f2937', width: 1 },
+      ticks: { stroke: isLight ? '#d1d5db' : '#374151', width: 1 },
+      font: '11px system-ui',
+    };
+
+    const plot = new uPlot({
+      width: host.clientWidth || 600,
+      height: host.clientHeight || 300,
+      padding: [12, 12, 0, 0],
+      legend: { show: false },
+      cursor: { drag: { x: true, y: false }, focus: { prox: 24 } },
+      scales: { x: { time: false } },
+      axes: [
+        { label: 'Time (s)', ...axisTheme },
+        { ...axisTheme, size: 60 },
+      ],
+      series: [
+        {},
+        ...fieldsRef.current.map((f, i) => ({
+          label: f,
+          stroke: seriesColor(i),
+          width: 1.6,
+          points: { show: false },
+        })),
+      ],
+      hooks: {
+        ready: [(u) => { readoutRef.current = createCursorReadout(u.over); }],
+        setCursor: [(u) => {
+          const readout = readoutRef.current;
+          if (!readout) return;
+          const idx = u.cursor.idx;
+          if (idx === null || idx === undefined || u.cursor.left === undefined || u.cursor.left < 0) {
+            readout.update(null, 0, []);
+            return;
+          }
+          readout.update(
+            { left: u.cursor.left, top: u.cursor.top ?? 0 },
+            (u.data[0]![idx] as number) ?? 0,
+            fieldsRef.current.map((f, i) => ({
+              label: f,
+              color: seriesColor(i),
+              value: u.data[i + 1]?.[idx] as number | null | undefined,
+            })),
+          );
+        }],
+      },
+    }, buildData(panelId, fieldsRef.current), host);
+
+    plotRef.current = plot;
+
+    const ro = new ResizeObserver(() => {
+      plot.setSize({ width: host.clientWidth, height: host.clientHeight });
+    });
+    ro.observe(host);
+
+    return () => {
+      ro.disconnect();
+      readoutRef.current?.destroy();
+      readoutRef.current = null;
+      plot.destroy();
+      plotRef.current = null;
+    };
+    // Rebuilt whenever the set of plotted fields changes: uPlot series are
+    // fixed at construction.
+  }, [panelId, fields.join(','), isLight]);
+
+  const resetZoom = () => {
+    const plot = plotRef.current;
+    if (!plot) return;
+    const xs = plot.data[0];
+    if (!xs || xs.length === 0) return;
+    plot.setScale('x', { min: xs[0] as number, max: xs[xs.length - 1] as number });
+  };
 
   const handleClear = () => {
-    // Wipe just this graph's buffer (not every graph's). Mutating the array
-    // in place is fine — sampleBuffers stores the same reference.
-    const list = getSamples(panelId);
-    list.length = 0;
-    setVersion((x) => x + 1);
+    for (const f of fields) {
+      const list = f === fieldName ? getSamples(panelId) : getSamples(overlayBufferId(panelId, f));
+      list.length = 0;
+    }
+    plotRef.current?.setData(buildData(panelId, fields), true);
+    setSampleCount(0);
   };
+
+  const handleExport = () => {
+    const data = buildData(panelId, fields);
+    if (data[0]!.length === 0) return;
+    const csv = chartCsv(data as unknown as ArrayLike<number>[], fields, 0, data[0]!.length - 1);
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${messageName}-${fields.join('-')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const legend = fields.map((f, i) => {
+    const list = f === fieldName ? getSamples(panelId) : getSamples(overlayBufferId(panelId, f));
+    const col = list.map((s) => s.v);
+    return {
+      field: f,
+      color: seriesColor(i),
+      stats: columnStats(col, 0, col.length - 1),
+    };
+  });
 
   return (
     <div className="h-full flex flex-col bg-surface-base text-content">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-subtle bg-surface-nav flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
-          <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M7 12l3-3 3 3 4-4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-mono text-sm font-medium text-content truncate">
-            {messageName}<span className="text-content-tertiary">.</span>{fieldName}
-          </div>
-          <div className="text-xs text-content-secondary tabular-nums">
-            sysid {sysid} · compid {compid} · msgid {msgid}
-          </div>
-        </div>
-        <button
-          onClick={handleClear}
-          className="px-2.5 py-1.5 text-xs rounded-md bg-surface border border-subtle text-content-secondary hover:bg-surface-raised hover:text-content transition-colors"
-        >
-          Clear
-        </button>
-      </div>
+      <div className="px-3 pt-2 pb-1 flex items-center gap-2 text-[11px]">
+        <span className="font-mono font-semibold text-content uppercase tracking-wider">{messageName}</span>
+        <span className="text-[9px] text-content-tertiary tabular-nums shrink-0">
+          {fields.length} {fields.length === 1 ? 'series' : 'series'} · sysid {sysid} · msgid {msgid} · {sampleCount} samples
+        </span>
 
-      {/* Stats strip */}
-      <div className="grid grid-cols-5 gap-px bg-surface-inset/40 border-b border-subtle">
-        <Stat label="Current" value={latest !== null ? formatNumber(latest) : '-'} accent="text-blue-400" />
-        <Stat label="Min" value={stats.min !== null ? formatNumber(stats.min) : '-'} />
-        <Stat label="Max" value={stats.max !== null ? formatNumber(stats.max) : '-'} />
-        <Stat label="Avg" value={stats.avg !== null ? formatNumber(stats.avg) : '-'} />
-        <Stat label="Samples" value={samples.length.toString()} />
-      </div>
-
-      {/* Plot */}
-      <div className="flex-1 min-h-0 p-3">
-        <GraphSvg samples={samples} />
-      </div>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  accent = 'text-content',
-}: {
-  label: string;
-  value: string;
-  accent?: string;
-}): JSX.Element {
-  return (
-    <div className="bg-surface px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wider text-content-tertiary">{label}</div>
-      <div className={`text-sm font-mono tabular-nums ${accent}`}>{value}</div>
-    </div>
-  );
-}
-
-function GraphSvg({ samples }: { samples: GraphSample[] }): JSX.Element {
-  if (samples.length < 2) {
-    return (
-      <div className="h-full w-full flex items-center justify-center text-content-secondary text-sm border border-dashed border-subtle rounded-lg">
-        Waiting for samples…
-      </div>
-    );
-  }
-
-  const stats = computeStats(samples);
-  const min = stats.min ?? 0;
-  const max = stats.max ?? 1;
-  const range = max - min || 1;
-  const padded = range * 0.1;
-  const yMin = min - padded;
-  const yMax = max + padded;
-  const tMin = samples[0]!.t;
-  const tMax = samples[samples.length - 1]!.t;
-  const tRange = tMax - tMin || 1;
-
-  const W = 1000;
-  const H = 400;
-
-  const path = samples.map((s, i) => {
-    const x = ((s.t - tMin) / tRange) * W;
-    const y = H - ((s.v - yMin) / (yMax - yMin)) * H;
-    return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`;
-  }).join(' ');
-
-  const gridLines = [0, 0.25, 0.5, 0.75, 1].map((p) => {
-    const y = p * H;
-    const val = yMax - p * (yMax - yMin);
-    return { y, val };
-  });
-
-  // Use currentColor so the grid/labels follow the theme; the wrapping
-  // <g> sets `color: text-content-tertiary` via a CSS variable.
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full text-content-tertiary" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="fg-fill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="rgb(96, 165, 250)" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="rgb(96, 165, 250)" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {gridLines.map(({ y, val }, i) => (
-        <g key={i}>
-          <line
-            x1={0} x2={W} y1={y} y2={y}
-            stroke="currentColor" strokeOpacity="0.35" strokeWidth="1"
-            vectorEffect="non-scaling-stroke"
-          />
-          <text
-            x={4} y={y - 4}
-            fill="currentColor" fontSize="14" fontFamily="monospace"
+        <div className="ml-auto flex items-center gap-1 shrink-0">
+          <button
+            onClick={handleExport}
+            className="px-1.5 py-0.5 rounded border bg-surface hover:bg-surface-raised text-content-secondary hover:text-content border-subtle transition-colors"
+            data-tip="Export the plotted fields as CSV"
           >
-            {formatNumber(val)}
-          </text>
-        </g>
-      ))}
-      <path d={`${path} L${W} ${H} L0 ${H} Z`} fill="url(#fg-fill)" />
-      <path
-        d={path}
-        fill="none" stroke="rgb(96, 165, 250)" strokeWidth="2"
-        vectorEffect="non-scaling-stroke"
-      />
-    </svg>
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0 0l-4-4m4 4l4-4" />
+            </svg>
+          </button>
+          <button
+            onClick={handleClear}
+            className="text-[10px] px-1.5 py-0.5 rounded border bg-surface hover:bg-surface-raised text-content-secondary hover:text-content border-subtle transition-colors"
+            data-tip="Drop the samples collected so far"
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div className="px-3 pb-1.5 max-w-[560px]">
+        <div
+          className="grid items-center text-[9px] uppercase tracking-wider text-content-tertiary pb-0.5"
+          style={{ gridTemplateColumns: LEGEND_COLUMNS }}
+        >
+          <span>field · buffer</span>
+          <span className="text-right">min</span>
+          <span className="text-right">avg</span>
+          <span className="text-right">max</span>
+          <span className="text-right">now</span>
+        </div>
+        {legend.map((it) => (
+          <div
+            key={it.field}
+            className="grid items-center gap-x-1 text-[10px] leading-tight py-[1px]"
+            style={{ gridTemplateColumns: LEGEND_COLUMNS }}
+          >
+            <span className="inline-flex items-center gap-1.5 min-w-0">
+              <span className="w-3 h-[3px] rounded-full shrink-0" style={{ backgroundColor: it.color }} />
+              <span className="text-content-secondary truncate">{it.field}</span>
+            </span>
+            <span className="text-right tabular-nums text-content-tertiary">{it.stats ? fmtStat(it.stats.min) : '-'}</span>
+            <span className="text-right tabular-nums text-content">{it.stats ? fmtStat(it.stats.avg) : '-'}</span>
+            <span className="text-right tabular-nums text-content-tertiary">{it.stats ? fmtStat(it.stats.max) : '-'}</span>
+            <span className="text-right tabular-nums text-content">{it.stats ? fmtStat(it.stats.last) : '-'}</span>
+          </div>
+        ))}
+      </div>
+
+      <div
+        className="flex-1 min-h-0 px-2 pb-2"
+        onDoubleClick={resetZoom}
+      >
+        <div ref={hostRef} className="h-full w-full" />
+      </div>
+    </div>
   );
 }
 
-function computeStats(samples: GraphSample[]): {
-  min: number | null;
-  max: number | null;
-  avg: number | null;
-} {
-  if (samples.length === 0) return { min: null, max: null, avg: null };
-  let min = samples[0]!.v;
-  let max = samples[0]!.v;
-  let sum = 0;
-  for (const s of samples) {
-    if (s.v < min) min = s.v;
-    if (s.v > max) max = s.v;
-    sum += s.v;
-  }
-  return { min, max, avg: sum / samples.length };
-}
+const LEGEND_COLUMNS = 'minmax(0,1fr) 62px 62px 62px 62px';
 
-function formatNumber(v: number): string {
-  if (Number.isInteger(v)) return v.toString();
-  if (Math.abs(v) >= 1000) return v.toFixed(0);
-  if (Math.abs(v) >= 1) return v.toFixed(3);
-  return v.toFixed(5);
+/**
+ * uPlot columns for the plotted fields: x is seconds since the oldest sample
+ * still in the buffer, and every series is appended on the same tick from the
+ * same message, so the rows line up by index.
+ */
+function buildData(panelId: string, fields: string[]): uPlot.AlignedData {
+  const primary = getSamples(panelId);
+  const t0 = primary.length > 0 ? primary[0]!.t : 0;
+  const xs = primary.map((s) => (s.t - t0) / 1000);
+  const cols = fields.map((f, i) => {
+    if (i === 0) return primary.map((s) => s.v);
+    // A field added later has a shorter buffer, so match on the sample's own
+    // timestamp: by index its history would be drawn from the graph's start.
+    // null, not NaN: a NaN in any column makes uPlot's range calculation NaN
+    // and the whole plot renders blank with no axis labels.
+    const byTime = new Map<number, number>();
+    for (const s of getSamples(overlayBufferId(panelId, f))) byTime.set(s.t, s.v);
+    return primary.map((s) => byTime.get(s.t) ?? null);
+  });
+  return [xs, ...cols] as uPlot.AlignedData;
 }

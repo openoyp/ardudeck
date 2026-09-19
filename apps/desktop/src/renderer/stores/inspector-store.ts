@@ -149,6 +149,12 @@ export function panelIdForGraph(g: GraphSpec): string {
   return `g_${g.sysid}_${g.compid}_${g.msgid}_${g.fieldName}`;
 }
 
+/** Buffer key for a field overlaid on an existing graph panel. */
+export function overlayBufferId(panelId: string, fieldName: string): string {
+  return `${panelId}::${fieldName}`;
+}
+
+
 interface InspectorStore {
   /** Bumps every UI tick (250ms) so React re-renders. Increment-only counter. */
   tick: number;
@@ -167,6 +173,8 @@ interface InspectorStore {
    * because the store outlives the inspector component.
    */
   graphs: GraphSpec[];
+  /** Extra fields plotted on the same axes as a graph, keyed by panel id. */
+  overlays: Record<string, string[]>;
   /**
    * Tree node ids that are currently expanded. Stored as a sorted list (not
    * Set) so it's serializable and selectors can do shallow equality.
@@ -185,6 +193,8 @@ interface InspectorStore {
   removeGraph: (panelId: string) => void;
   /** Remove every graph — used when the user wipes the inspector. */
   clearGraphs: () => void;
+  /** Add or remove a field plotted on the same axes as an existing graph. */
+  toggleOverlay: (panelId: string, fieldName: string) => void;
   /** Toggle a tree node's expanded state. */
   toggleTreeExpanded: (key: string) => void;
 }
@@ -216,6 +226,7 @@ export const useInspectorStore = create<InspectorStore>((set) => ({
   sysidFilter: 0,
   compidFilter: 0,
   graphs: [],
+  overlays: {},
   expandedTreeKeys: [],
   /**
    * Clear stats here AND in every other window. We send the broadcast
@@ -247,12 +258,25 @@ export const useInspectorStore = create<InspectorStore>((set) => ({
     }),
   removeGraph: (panelId) => {
     clearSamples(panelId);
-    set((s) => ({ graphs: s.graphs.filter((g) => panelIdForGraph(g) !== panelId) }));
+    set((s) => {
+      for (const f of s.overlays[panelId] ?? []) clearSamples(overlayBufferId(panelId, f));
+      const { [panelId]: _gone, ...rest } = s.overlays;
+      return { graphs: s.graphs.filter((g) => panelIdForGraph(g) !== panelId), overlays: rest };
+    });
   },
   clearGraphs: () => {
     clearAllSamples();
-    set({ graphs: [] });
+    set({ graphs: [], overlays: {} });
   },
+  toggleOverlay: (panelId, fieldName) =>
+    set((s) => {
+      const current = s.overlays[panelId] ?? [];
+      const next = current.includes(fieldName)
+        ? current.filter((f) => f !== fieldName)
+        : [...current, fieldName];
+      if (current.includes(fieldName)) clearSamples(overlayBufferId(panelId, fieldName));
+      return { overlays: { ...s.overlays, [panelId]: next } };
+    }),
   toggleTreeExpanded: (key) =>
     set((s) => {
       if (s.expandedTreeKeys.includes(key)) {

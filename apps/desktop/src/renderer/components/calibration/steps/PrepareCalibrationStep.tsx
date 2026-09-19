@@ -27,6 +27,14 @@ const CalibrationThemes: Record<CalibrationTypeId, {
     accentColor: 'bg-emerald-500/20 text-emerald-400',
     bgPattern: 'text-emerald-500/10',
   },
+  'accel-quick': {
+    gradient: 'from-emerald-500/10 via-transparent to-teal-500/10',
+    border: 'border-emerald-500/30',
+    iconBg: 'from-emerald-500/20 to-teal-500/20',
+    iconColor: 'text-emerald-400',
+    accentColor: 'bg-emerald-500/20 text-emerald-400',
+    bgPattern: 'text-emerald-500/10',
+  },
   'accel-6point': {
     gradient: 'from-blue-500/10 via-transparent to-indigo-500/10',
     border: 'border-blue-500/30',
@@ -64,6 +72,15 @@ const CalibrationThemes: Record<CalibrationTypeId, {
 // Background patterns for each calibration type
 const BackgroundPatterns: Record<CalibrationTypeId, React.ReactNode> = {
   'accel-level': (
+    <svg className="absolute -right-8 -bottom-8 w-56 h-56 opacity-50" viewBox="0 0 100 100" fill="currentColor">
+      <line x1="10" y1="50" x2="90" y2="50" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <line x1="50" y1="20" x2="50" y2="80" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <circle cx="50" cy="50" r="6" fill="currentColor" />
+      <circle cx="50" cy="50" r="18" stroke="currentColor" strokeWidth="1" fill="none" />
+      <circle cx="50" cy="50" r="32" stroke="currentColor" strokeWidth="0.5" fill="none" />
+    </svg>
+  ),
+  'accel-quick': (
     <svg className="absolute -right-8 -bottom-8 w-56 h-56 opacity-50" viewBox="0 0 100 100" fill="currentColor">
       <line x1="10" y1="50" x2="90" y2="50" stroke="currentColor" strokeWidth="1.5" fill="none" />
       <line x1="50" y1="20" x2="50" y2="80" stroke="currentColor" strokeWidth="1.5" fill="none" />
@@ -125,6 +142,11 @@ const BackgroundPatterns: Record<CalibrationTypeId, React.ReactNode> = {
 // Icon components for each calibration type
 const CalibrationIcons: Record<CalibrationTypeId, React.ReactNode> = {
   'accel-level': (
+    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10M12 3v18M3 7h4M17 7h4M3 12h4M17 12h4" />
+    </svg>
+  ),
+  'accel-quick': (
     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10M12 3v18M3 7h4M17 7h4M3 12h4M17 12h4" />
     </svg>

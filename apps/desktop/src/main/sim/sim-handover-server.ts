@@ -309,6 +309,8 @@ export class SimHandoverServer {
     this.server = null;
     this._port = null;
     if (server) {
+      // close() waits for every open connection, and the Trainer holds one.
+      server.closeAllConnections();
       await new Promise<void>((resolve) => server.close(() => resolve()));
     }
     await unlink(this.discoveryPath).catch(() => {

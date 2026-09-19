@@ -87,6 +87,11 @@ interface SurveyStore {
    */
   loadDraftFromPolygon: (polygon: LatLng[], holes?: LatLng[][]) => void;
   /**
+   * Load an open path as a corridor centerline and switch the panel to the
+   * corridor pattern. Two points are enough: a corridor has no area.
+   */
+  loadDraftFromCenterline: (path: LatLng[]) => void;
+  /**
    * Link the survey panel to a previously-committed SurveyGroup so further
    * edits write through to it.
    */
@@ -965,6 +970,24 @@ export const useSurveyStore = create<SurveyStore>()(subscribeWithSelector((set, 
       drawingVertices: [],
       polygon: polygon.map((p) => ({ lat: p.lat, lng: p.lng })),
       config: { ...config, holes: (holes ?? []).filter((h) => h.length >= 3) },
+      result: null,
+      isActive: true,
+      editingGroupId: null,
+      generating: false,
+      generatorError: null,
+    });
+    get().requestRecompute({ immediate: true });
+  },
+
+  loadDraftFromCenterline: (path) => {
+    if (path.length < 2) return;
+    const { config } = get();
+    generationSeq += 1;
+    set({
+      drawMode: 'none',
+      drawingVertices: [],
+      polygon: path.map((p) => ({ lat: p.lat, lng: p.lng })),
+      config: { ...config, pattern: 'corridor', holes: [], corridorBranches: undefined },
       result: null,
       isActive: true,
       editingGroupId: null,

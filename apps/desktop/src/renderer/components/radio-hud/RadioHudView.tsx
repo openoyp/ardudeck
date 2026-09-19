@@ -2,6 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTelemetryStore } from '../../stores/telemetry-store';
 import { useConnectionStore } from '../../stores/connection-store';
 import { useMissionStore } from '../../stores/mission-store';
+import {
+  COPTER_MODES,
+  PLANE_MODES,
+  ROVER_MODES,
+  SUB_MODES,
+  getVehicleClass,
+  type ArduPilotVehicleClass,
+} from '../../../shared/telemetry-types';
 import type { EdgeTxScanResult } from '../../../shared/edgetx-types';
 import logoUrl from './hud-logo.png';
 import logoLightUrl from './hud-logo-light.png';
@@ -16,6 +24,15 @@ import 'leaflet/dist/leaflet.css';
 import { SmoothWheelZoom } from '../map/SmoothWheelZoom';
 import { MapSearchControl } from '../map/MapSearchControl';
 import { generateFieldMaps, FIELD_MAP_SPANS, type FieldMapImage } from './field-maps';
+import {
+  loadLayouts,
+  persistLayouts,
+  removeLayout,
+  renameLayout,
+  uniqueLayoutName,
+  upsertLayout,
+  type SavedHudLayout,
+} from './hud-layout-library';
 
 /**
  * Radio HUD studio: configure the ArduDeck EdgeTX widget, arrange its tiles
@@ -152,7 +169,7 @@ function gridLayout(screen: { w: number; h: number }): TileDef[] {
   return t;
 }
 
-interface TileDef {
+export interface TileDef {
   id: string;
   x: number;
   y: number;
@@ -260,9 +277,31 @@ interface HudCfg {
   capacity: number;
   demo: boolean;
   theme: 'dark' | 'light';
+  /** Seconds per page for the radio's own rotation; 0 = never. */
+  pageSecs: number;
+  /** Print what the radio hands the widget (event, touch, fullscreen). */
+  debugInput: boolean;
 }
 
-const DEFAULT_CFG: HudCfg = { name: '', cells: 0, low_cell: 3.6, crit_cell: 3.4, capacity: 0, demo: false, theme: 'dark' };
+
+/** Mode names the radio should print, from the table for the vehicle that is
+ * connected. Without this the widget shows copter names on every vehicle: a
+ * rover in HOLD (mode 4) reads as GUIDED. */
+const MODE_TABLES: Record<ArduPilotVehicleClass, Record<number, string>> = {
+  copter: COPTER_MODES,
+  plane: PLANE_MODES,
+  vtol: PLANE_MODES,
+  rover: ROVER_MODES,
+  sub: SUB_MODES,
+};
+
+export function modeTableCfg(vehicleClass: ArduPilotVehicleClass): string {
+  return Object.entries(MODE_TABLES[vehicleClass])
+    .map(([num, name]) => `${num}:${name.toUpperCase()}`)
+    .join(',');
+}
+
+const DEFAULT_CFG: HudCfg = { name: '', cells: 0, low_cell: 3.6, crit_cell: 3.4, capacity: 0, demo: false, theme: 'dark', pageSecs: 0, debugInput: false };
 
 interface PreviewData {
   armed: boolean;
@@ -355,6 +394,8 @@ function NumericBody({ t, value, sub, color }: { t: TileDef; value: string; sub?
 }
 
 function TileBody({ t, data, cfg }: { t: TileDef; data: PreviewData; cfg: HudCfg }) {
+  // Mirrors the widget's isGround(): the preview has to read like the radio.
+  const groundVehicle = getVehicleClass(useConnectionStore((s) => s.connectionState.mavType)) === 'rover';
   switch (t.id) {
     case 'batt': {
       // cells: config first, else what the radio would auto-detect from
@@ -601,8 +642,12 @@ function TileBody({ t, data, cfg }: { t: TileDef; data: PreviewData; cfg: HudCfg
       const mm = String(Math.floor(data.flightSecs / 60)).padStart(2, '0');
       const ss = String(data.flightSecs % 60).padStart(2, '0');
       return (
-        <TileFrame t={t} caption="FLIGHT TIME">
-          <NumericBody t={t} value={`${mm}:${ss}`} sub={data.armed ? 'flying' : 'total this session'} />
+        <TileFrame t={t} caption={groundVehicle ? 'RUN TIME' : 'FLIGHT TIME'}>
+          <NumericBody
+            t={t}
+            value={`${mm}:${ss}`}
+            sub={data.armed ? (groundVehicle ? 'running' : 'flying') : 'total this session'}
+          />
           {data.armed && <div style={{ position: 'absolute', right: 12, top: 20, width: 8, height: 8, borderRadius: 4, background: C.success }} />}
         </TileFrame>
       );
@@ -1500,7 +1545,14 @@ export function RadioHudView() {
     ...(persisted?.bwWslots ? { wslots: persisted.bwWslots } : {}),
   });
   // layout pages; the radio swipes between them (or pins via the Page option)
-  const [pages, setPages] = useState<TileDef[][]>(persisted?.pages ?? [DEFAULT_LAYOUT]);
+  // A first-run studio starts on the set that matches whatever is connected,
+  // so a rover owner never has to know the copter layout was the default.
+  const [pages, setPages] = useState<TileDef[][]>(
+    persisted?.pages
+      ?? [getVehicleClass(useConnectionStore.getState().connectionState.mavType) === 'rover'
+        ? (LAYOUT_PRESETS['Rover'] ?? DEFAULT_LAYOUT)
+        : DEFAULT_LAYOUT],
+  );
   // switching radio model rescales every page (same math as the widget);
   // B&W targets have a fixed script layout, so tiles pass through untouched
   // and are still there when the user switches back to a color model
@@ -1528,6 +1580,21 @@ export function RadioHudView() {
   const [scan, setScan] = useState<EdgeTxScanResult | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [applyState, setApplyState] = useState<string | null>(null);
+  // Models on the card: one radio flies several machines, so a layout can be
+  // written for all of them (hud.cfg) or for one (models/<name>.cfg).
+  const [models, setModels] = useState<{ file: string; name: string; current: boolean; hasLayout: boolean }[]>([]);
+  // Where the pages on screen came from, so applying them somewhere else is
+  // recognisably a copy and not a save.
+  const [pagesFrom, setPagesFrom] = useState<string | null>(null);
+  const [confirmApply, setConfirmApply] = useState(false);
+  const [layouts, setLayouts] = useState<SavedHudLayout[]>(() => loadLayouts());
+  const [layoutName, setLayoutName] = useState(() => loadLayouts()[0]?.name ?? 'My layout');
+  const [nameDraft, setNameDraft] = useState('');
+  const [applyTarget, setApplyTarget] = useState<string>('');
+  // Once the user picks a target themselves, a rescan must not move it back.
+  const targetTouched = useRef(false);
+  // Which file the last Load from radio actually read, for the status line.
+  const loadedSourceRef = useRef<'model' | 'shared'>('shared');
   const [applyError, setApplyError] = useState<string | null>(null);
 
   const { connectionState } = useConnectionStore();
@@ -1557,6 +1624,40 @@ export function RadioHudView() {
     }
   }, [telemetry.gps.lat, telemetry.gps.lon, mapCenter]);
 
+  // The editor IS the layout: every change writes through to the library, the
+  // way the map cockpit persists itself. Debounced so a drag is one write.
+  useEffect(() => {
+    const name = layoutName.trim();
+    if (isBw || !name) return;
+    const t = setTimeout(() => {
+      setLayouts((prev) => {
+        const next = upsertLayout(prev, { name, screen, pages, savedAt: new Date().toISOString() });
+        persistLayouts(next);
+        return next;
+      });
+    }, 600);
+    return () => clearTimeout(t);
+  }, [pages, screen, layoutName, isBw]);
+
+  useEffect(() => { setNameDraft(layoutName); }, [layoutName]);
+
+  const commitRename = () => {
+    const to = nameDraft.trim();
+    if (!to || to === layoutName) {
+      setNameDraft(layoutName);
+      return;
+    }
+    const result = renameLayout(layouts, layoutName, to);
+    if (!result.renamed) {
+      setNameDraft(layoutName);
+      setApplyState(`A layout called "${to}" already exists.`);
+      return;
+    }
+    persistLayouts(result.layouts);
+    setLayouts(result.layouts);
+    setLayoutName(to);
+  };
+
   const handleGenerateMaps = async () => {
     if (!mapCenter.lat && !mapCenter.lon) {
       setMapGenState('Set a field center first (connect the vehicle or type coordinates)');
@@ -1564,7 +1665,11 @@ export function RadioHudView() {
     }
     setMapGenState('Stitching satellite images…');
     try {
-      const { maps, missingTiles } = await generateFieldMaps(mapCenter.lat, mapCenter.lon,
+      // Match the placed map tile so the image fills it instead of
+      // letterboxing; the widget subtracts its own caption strip.
+      const mapTile = pages.flat().find((t) => t.id === 'map');
+      const size = mapTile ? { w: mapTile.w - 2, h: mapTile.h - 20 } : undefined;
+      const { maps, missingTiles } = await generateFieldMaps(mapCenter.lat, mapCenter.lon, size,
         (d, total) => setMapGenState(`Stitching satellite images… ${d}/${total}`));
       setFieldMaps(maps);
       setMapGenState(missingTiles > 0
@@ -1640,9 +1745,14 @@ export function RadioHudView() {
     return () => observer.disconnect();
   }, [screen]);
 
-  const loadFromCard = useCallback(async (volumePath: string) => {
-    const flat = await window.electronAPI.edgetxHudConfigGet(volumePath);
+  /** Returns which config was read: the model's own, the shared one, or none. */
+  const loadFromCard = useCallback(async (volumePath: string, modelName?: string) => {
+    // Reading has to follow the same file the radio would: a per-model layout
+    // is invisible from the global one.
+    const own = await window.electronAPI.edgetxHudConfigGet(volumePath, modelName);
+    const flat = own ?? (modelName ? await window.electronAPI.edgetxHudConfigGet(volumePath) : null);
     if (!flat) return false;
+    loadedSourceRef.current = own && modelName ? 'model' : 'shared';
     const parsedPages = new Map<number, TileDef[]>();
     for (const [k, v] of Object.entries(flat)) {
       const pageMatch = k.match(/^tile\d+$/) ? 1 : k.match(/^p(\d+)_tile\d+$/)?.[1];
@@ -1689,7 +1799,8 @@ export function RadioHudView() {
     return true;
   }, []);
 
-  const rescan = useCallback(async () => {
+  const rescan = useCallback(async (announce = false) => {
+    if (announce) setApplyState('Looking for the radio…');
     setIsScanning(true);
     try {
       const result = await window.electronAPI.edgetxScan();
@@ -1697,9 +1808,31 @@ export function RadioHudView() {
       // First sight of a card with our widget: adopt its config and layout
       // so the studio resumes where the radio actually is.
       const found = result.cards[0];
+      if (found) {
+        // An app running from before this IPC existed has no such method: a
+        // missing model picker must not take the whole scan down with it.
+        try {
+          const list = await window.electronAPI.edgetxModelsList?.(found.volumePath) ?? [];
+          setModels(list);
+          // Default to the model the radio has open. Applying to every model is
+          // still one click away, but it must be a choice: silently rewriting
+          // the layout of machines that are not even plugged in is not.
+          const current = list.find((m) => m.current);
+          if (current && !targetTouched.current) setApplyTarget(current.name);
+        } catch {
+          setModels([]);
+        }
+      } else {
+        setModels([]);
+      }
       if (found && !loadedFromCard.current && result.installed[found.volumePath]?.['ardudeck-hud']) {
         loadedFromCard.current = true;
         await loadFromCard(found.volumePath);
+      }
+      if (announce) {
+        setApplyState(found
+          ? null
+          : 'No radio yet. On the radio choose USB Storage (SD); still looking.');
       }
     } finally {
       setIsScanning(false);
@@ -1710,14 +1843,17 @@ export function RadioHudView() {
 
   // Poll for card arrival/removal while the view is open, so plugging the
   // radio in is enough - no manual Rescan. The scan is a handful of stats.
+  // With no card yet, look every second: the radio takes several seconds to
+  // enter USB storage and mount, and a four second gap on top of that reads as
+  // the app having missed it.
   useEffect(() => {
     const id = setInterval(() => {
       if (!isScanning && !(applyState?.endsWith('…'))) {
         rescan();
       }
-    }, 4000);
+    }, scan?.cards.length ? 4000 : 1000);
     return () => clearInterval(id);
-  }, [rescan, isScanning, applyState]);
+  }, [rescan, isScanning, applyState, scan]);
 
   // Only the vehicle NAME prefills automatically. Battery values stay on
   // auto (the widget self-configures from telemetry); "Load from vehicle"
@@ -1799,7 +1935,12 @@ export function RadioHudView() {
     }
     if (cfg.capacity > 0) cfgOut.capacity = cfg.capacity;
     cfgOut.demo = cfg.demo ? 1 : 0;
+    if (pages.length > 1) cfgOut.pageSecs = Math.max(0, Math.round(cfg.pageSecs || 0));
+    cfgOut.debugInput = cfg.debugInput ? 1 : 0;
     cfgOut.theme = cfg.theme;
+    const vehicleClass = getVehicleClass(connectionState.mavType);
+    cfgOut.vehicle = vehicleClass;
+    cfgOut.modes = modeTableCfg(vehicleClass);
     // authored canvas: the widget rescales tiles if its LCD differs (e.g.
     // the SD card later moves to another radio)
     cfgOut.screen = `${screen.w}x${screen.h}`;
@@ -1817,7 +1958,9 @@ export function RadioHudView() {
         cfgOut[`${prefix}${i + 1}`] = `${t.id},${t.x},${t.y},${t.w},${t.h},${t.variant}`;
       });
     });
-    const write = await window.electronAPI.edgetxHudConfigWrite(target.volumePath, cfgOut);
+    const write = await window.electronAPI.edgetxHudConfigWrite(
+      target.volumePath, cfgOut, applyTarget || undefined,
+    );
     if (!write.ok) {
       setApplyState(null);
       setApplyError(write.error ?? 'Config write failed');
@@ -1839,7 +1982,10 @@ export function RadioHudView() {
     }
     setApplyState(isBw
       ? `Applied. Telemetry screen set on ${(install.screens?.added ?? 0) + (install.screens?.already ?? 0)} model(s) - eject, unplug, press PAGE on the radio.`
-      : 'Applied. Eject before unplugging the radio.');
+      : applyTarget
+        ? `Applied to the model "${applyTarget}" only. Eject before unplugging the radio.`
+        : 'Applied to every model on this radio. Eject before unplugging.');
+    setPagesFrom(applyTarget);
     await rescan();
   };
 
@@ -1854,15 +2000,27 @@ export function RadioHudView() {
     await rescan();
   };
 
+  // Naming the target on the button is what stops a layout going to the wrong
+  // machine; the second click is only asked for when something would be lost.
+  const busyWithCard = isScanning || (applyState?.endsWith('…') ?? false);
+  const applyLabel = !isBw && models.length > 0
+    ? (applyTarget ? `Apply to ${applyTarget}` : 'Apply to every model')
+    : 'Apply to radio';
+  const targetOwnsLayout = models.some((m) => m.name === applyTarget && m.hasLayout);
+  const applyNeedsConfirm = !isBw && models.length > 0 && pagesFrom !== null && pagesFrom !== applyTarget
+    && (applyTarget === '' || targetOwnsLayout);
+
   const handleEject = async () => {
     const target = scan?.cards[0];
     if (!target) return;
     setApplyError(null);
+    setApplyState('Ejecting…');
     try {
       if (typeof window.electronAPI.edgetxEject !== 'function') {
         throw new Error('Eject needs an app restart to activate (new capability)');
       }
       const result = await window.electronAPI.edgetxEject(target.volumePath);
+      if (!result.ok) setApplyState(null);
       if (result.ok) {
         setApplyState('Ejected. Unplug the radio; the widget reloads its config within seconds.');
         await rescan();
@@ -1964,6 +2122,69 @@ export function RadioHudView() {
                   <BookOpen className="w-3.5 h-3.5 text-teal-400" />
                   Guide
                 </button>
+              )}
+              {!isBw && (
+                <>
+                  <select
+                    value={layoutName}
+                    onChange={(e) => {
+                      const saved = layouts.find((l) => l.name === e.target.value);
+                      if (!saved) return;
+                      setPages(saved.pages.map((p) => p.map((t) => fitTile(t, saved.screen, screen))));
+                      setActivePage(0);
+                      setLayoutName(saved.name);
+                      setPagesFrom(`the layout "${saved.name}"`);
+                    }}
+                    data-tip="Layouts live in ArduDeck and save as you edit. The radio only gets the one you apply."
+                    className="px-2 py-1 text-xs bg-surface-input border border-subtle rounded text-content-secondary"
+                  >
+                    {layouts.length === 0 && <option value="">Layout</option>}
+                    {layouts.map((l) => (
+                      <option key={l.name} value={l.name}>{l.name} ({l.pages.length}p)</option>
+                    ))}
+                  </select>
+                  <input
+                    value={nameDraft}
+                    onChange={(e) => setNameDraft(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                    onBlur={() => commitRename()}
+                    placeholder="Layout name"
+                    data-tip="Renames this layout. Saving is automatic."
+                    className="w-32 px-2 py-1 text-xs bg-surface-input border border-subtle rounded text-content placeholder:text-content-tertiary"
+                  />
+                  <button
+                    onClick={() => {
+                      const name = uniqueLayoutName(layouts, 'New layout');
+                      setLayoutName(name);
+                      setNameDraft(name);
+                      setPages([gridLayout(screen)]);
+                      setActivePage(0);
+                      setPagesFrom(`the layout "${name}"`);
+                    }}
+                    data-tip="Start a new layout in ArduDeck. The current one is already saved."
+                    className="px-3 py-1 text-xs rounded border bg-surface-input text-content-secondary border-subtle hover:text-content transition-colors"
+                  >
+                    New
+                  </button>
+                  {layouts.length > 1 && layouts.some((l) => l.name === layoutName) && (
+                    <button
+                      onClick={() => {
+                        const next = removeLayout(layouts, layoutName);
+                        persistLayouts(next);
+                        setLayouts(next);
+                        const fallback = next[0]!;
+                        setLayoutName(fallback.name);
+                        setNameDraft(fallback.name);
+                        setPages(fallback.pages.map((p) => p.map((t) => fitTile(t, fallback.screen, screen))));
+                        setActivePage(0);
+                      }}
+                      data-tip={`Delete "${layoutName}" from ArduDeck. Whatever is already on the radio stays there.`}
+                      className="px-2.5 py-1 text-xs rounded border border-subtle text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </>
               )}
               <button
                 onClick={() => setEditing(!editing)}
@@ -2213,6 +2434,37 @@ export function RadioHudView() {
                 {numField('Low (V/cell)', cfg.low_cell, 0.05, (v) => setCfg({ ...cfg, low_cell: v }), 'value turns amber')}
                 {numField('Critical (V/cell)', cfg.crit_cell, 0.05, (v) => setCfg({ ...cfg, crit_cell: v }), 'value turns red')}
               </div>
+              {pages.length > 1 && (
+                <label className="flex items-center gap-2 pt-1">
+                  <span className="text-xs text-content-secondary"
+                    data-tip="In a normal widget slot EdgeTX gives the widget no keys and no touch, so this is the only way to see every page there. Long-press the widget and choose Full screen to use PAGE and swipe instead.">
+                    Turn pages every
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={120}
+                    value={cfg.pageSecs}
+                    onChange={(e) => setCfg({ ...cfg, pageSecs: Math.max(0, Math.min(120, Number(e.target.value) || 0)) })}
+                    className="w-16 px-2 py-1 text-xs bg-surface-input border border-subtle rounded text-content"
+                  />
+                  <span className="text-xs text-content-tertiary">
+                    {cfg.pageSecs > 0 ? 'seconds' : 'seconds (0 = only by hand)'}
+                  </span>
+                </label>
+              )}
+              <label className="flex items-center gap-2 pt-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cfg.debugInput}
+                  onChange={(e) => setCfg({ ...cfg, debugInput: e.target.checked })}
+                  className="rounded border bg-surface-input"
+                />
+                <span className="text-xs text-content-secondary"
+                  data-tip="Prints what the radio hands the widget: fullscreen yes/no, the last key event value, the last touch, and which page is showing. For working out why a button does nothing.">
+                  Show input debug on the radio
+                </span>
+              </label>
               <label className="flex items-center gap-2 pt-1 cursor-pointer">
                 <input
                   type="checkbox"
@@ -2241,9 +2493,21 @@ export function RadioHudView() {
             <span className="text-content-secondary">
               <span className="text-emerald-400">{card.volumeName}</span>
               {hudInstalled ? ' - widget installed' : ' - widget will be installed on apply'}
+              {!isBw && models.length > 0 && (
+                <span className="text-content-tertiary">
+                  {pagesFrom !== null && pagesFrom !== applyTarget
+                    ? ` - these pages came from ${pagesFrom || 'the shared layout'}${applyTarget ? `, applying puts them on ${applyTarget}` : ''}`
+                    : applyTarget
+                      ? ` - only "${applyTarget}" uses this layout, the rest keep the shared one`
+                      : ' - every model uses this layout unless it has its own'}
+                </span>
+              )}
             </span>
           ) : (
-            <span className="text-content-secondary">No radio detected - plug in via USB, choose USB Storage (SD)</span>
+            <span className="flex items-center gap-2 text-content-secondary">
+              <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-content-tertiary/30 border-t-content-secondary" />
+              Looking for a radio. Plug in via USB and choose USB Storage (SD) on its screen; it takes a few seconds to appear.
+            </span>
           )}
         </div>
         {hudInstalled && (
@@ -2259,8 +2523,15 @@ export function RadioHudView() {
           onClick={async () => {
             if (!card) return;
             setApplyError(null);
-            const ok = await loadFromCard(card.volumePath);
-            setApplyState(ok ? 'Loaded config and layout from the radio.' : null);
+            const ok = await loadFromCard(card.volumePath, applyTarget || undefined);
+            if (ok) setPagesFrom(loadedSourceRef.current === 'model' ? applyTarget : '');
+            setApplyState(ok
+              ? loadedSourceRef.current === 'model'
+                ? `Loaded the layout "${applyTarget}" has of its own.`
+                : applyTarget
+                  ? `"${applyTarget}" has no layout of its own yet, so this is the shared one.`
+                  : 'Loaded the shared layout every model uses.'
+              : null);
             if (!ok) setApplyError('No ArduDeck config found on the card');
           }}
           disabled={!card}
@@ -2270,28 +2541,66 @@ export function RadioHudView() {
           Load from radio
         </button>
         <button
-          onClick={rescan}
-          disabled={isScanning}
+          onClick={() => { void rescan(true); }}
+          disabled={busyWithCard}
           className="px-3 py-1.5 text-xs whitespace-nowrap text-content-secondary hover:text-content bg-surface-raised border border-subtle rounded-lg transition-colors disabled:opacity-50"
         >
           {isScanning ? 'Scanning…' : 'Rescan'}
         </button>
         <button
           onClick={handleEject}
-          disabled={!card}
+          disabled={!card || busyWithCard}
           data-tip="Safely eject the SD volume so the radio can leave USB storage mode"
           className="px-3 py-1.5 text-xs whitespace-nowrap text-content-secondary hover:text-content bg-surface-raised border border-subtle rounded-lg transition-colors disabled:opacity-50"
         >
           Eject
         </button>
+        {!isBw && models.length > 0 && (
+          <label className="flex items-center gap-2 text-xs text-content-tertiary">
+            Layout for
+            <select
+              value={applyTarget}
+              onChange={(e) => {
+                targetTouched.current = true;
+                setConfirmApply(false);
+                setApplyTarget(e.target.value);
+              }}
+              data-tip="Which layout Apply writes and Load reads. Models share one layout unless you give a model its own; the radio then uses that one whenever the model is selected."
+              className="px-2 py-1.5 text-xs bg-surface-input border border-subtle rounded-lg text-content-secondary"
+            >
+              <option value="">Every model on this radio</option>
+              {/* The widget looks a layout up by model NAME, so two models
+                  sharing one name share one layout: list it once. */}
+              {models
+                .filter((m, i) => models.findIndex((o) => o.name === m.name) === i)
+                .map((m) => (
+                  <option key={m.file} value={m.name}>
+                    {m.name}
+                    {models.some((o) => o.name === m.name && o.current) ? ' - on the radio now' : ''}
+                    {m.hasLayout ? ' - has its own layout' : ' - shares the layout'}
+                  </option>
+                ))}
+            </select>
+          </label>
+        )}
         <button
-          onClick={handleApply}
+          onClick={() => {
+            if (applyNeedsConfirm && !confirmApply) {
+              setConfirmApply(true);
+              return;
+            }
+            setConfirmApply(false);
+            void handleApply();
+          }}
+          onBlur={() => setConfirmApply(false)}
           disabled={applyState !== null && applyState.endsWith('…')}
           data-tour="hud-apply"
-          data-tip="Install/refresh the widget and write this config to the SD card. Afterwards on the radio: App layout, full-screen widget, ArduDeck"
-          className="px-4 py-1.5 text-sm whitespace-nowrap bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white rounded-lg transition-colors"
+          data-tip="Install/refresh the widget and write this layout to the SD card. Afterwards on the radio: App layout, full-screen widget, ArduDeck"
+          className={`px-4 py-1.5 text-sm whitespace-nowrap disabled:opacity-60 text-white rounded-lg transition-colors ${
+            confirmApply ? 'bg-amber-600 hover:bg-amber-500' : 'bg-blue-600 hover:bg-blue-500'
+          }`}
         >
-          Apply to radio
+          {confirmApply ? `Overwrite ${applyTarget || 'every model'}?` : applyLabel}
         </button>
       </div>
       {guideOpen && <BwGuide onClose={() => setGuideOpen(false)} />}

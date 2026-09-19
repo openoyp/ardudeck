@@ -255,5 +255,290 @@ check('refresh @480x272 runs', ok272 and 1 or 0, 1)
 if not ok272 then print('  refresh error: ' .. tostring(err272)) end
 LCD_W, LCD_H = 480, 320
 
+-- ---- mode names come from hud.cfg, not the built-in copter table ----
+-- A rover in HOLD is mode 4, which the copter table calls GUIDED. ArduDeck
+-- writes the connected vehicle's own table, so the bar has to follow it.
+local cfgText = table.concat({
+  'name=rover',
+  'theme=dark',
+  'vehicle=rover',
+  'modes=0:MANUAL,1:ACRO,3:STEERING,4:HOLD,10:AUTO,11:RTL',
+}, '\n')
+io = {
+  open = function () return 1 end,
+  read = function () return cfgText end,
+  close = function () end,
+}
+local drawn = {}
+local realDrawText = lcd.drawText
+lcd.drawText = function (x, y, text, flags) drawn[#drawn + 1] = tostring(text) end
+-- Past the 3s cfg reload window, then a fresh frame so the HUD (not the
+-- diagnostic ladder) is what gets drawn: mode 4 = HOLD on a rover.
+stubTime = stubTime + 400
+feed(0x5006, att)
+feed(0x5005, vy)
+feed(0x5001, ((4 + 1) & 0x1F) | (1 << 7) | (1 << 8))
+M.refresh(w, nil, nil)
+local sawHold, sawGuided = 0, 0
+for _, t in ipairs(drawn) do
+  if t == 'HOLD' then sawHold = 1 end
+  if t == 'GUIDED' then sawGuided = 1 end
+end
+lcd.drawText = realDrawText
+check('mode name from cfg table', sawHold, 1)
+check('copter name not used',     sawGuided, 0)
+
+-- ---- a per-model config wins over the global one ----
+-- One radio, several machines: models/<name>.cfg is what makes the rover's
+-- pages stay the rover's. The name is sanitised the same way ArduDeck writes
+-- it, so a mismatch here means the radio silently reads the global file.
+model = { getInfo = function () return { name = 'Rover 1' } end }
+local opened = {}
+io = {
+  open = function (path)
+    opened[#opened + 1] = path
+    if path == '/WIDGETS/ardudeck/models/Rover 1.cfg' then return 2 end
+    return 1
+  end,
+  read = function (handle)
+    if handle == 2 then return 'name=per-model\nmodes=4:HOLD' end
+    return 'name=global\nmodes=4:GUIDED'
+  end,
+  close = function () end,
+}
+local drawn2 = {}
+local realDrawText2 = lcd.drawText
+lcd.drawText = function (x, y, text) drawn2[#drawn2 + 1] = tostring(text) end
+stubTime = stubTime + 400
+feed(0x5006, att)
+feed(0x5005, vy)
+feed(0x5001, ((4 + 1) & 0x1F) | (1 << 7) | (1 << 8))
+M.refresh(w, nil, nil)
+lcd.drawText = realDrawText2
+local sawPerModel = 0
+for _, t in ipairs(drawn2) do if t == 'HOLD' then sawPerModel = 1 end end
+check('per-model cfg preferred', sawPerModel, 1)
+
+-- ---- a missing RQly sensor is not a dead link ----
+-- getValue only sees sensors in the model's list, so a model whose CRSF
+-- sensors were never discovered returns nil. Printing 0% there tells the
+-- pilot their link is failing while it is perfectly healthy.
+local drawn3 = {}
+local realDrawText3 = lcd.drawText
+lcd.drawText = function (x, y, text) drawn3[#drawn3 + 1] = tostring(text) end
+function getValue() return nil end
+local realRssi = getRSSI
+function getRSSI() return 0 end   -- no sensor at all, not even the radio's own
+local okLink = pcall(function ()
+  -- TILE is an upvalue of whichever draw function the refresh chain closes
+  -- over; walk one level down to find it.
+  local linkTile = nil
+  local function scan(fn, depth)
+    if linkTile or depth > 2 or type(fn) ~= 'function' then return end
+    for i = 1, 200 do
+      local name, val = debug.getupvalue(fn, i)
+      if not name then break end
+      if name == 'TILE' and type(val) == 'table' and val.link then linkTile = val.link return end
+      if type(val) == 'function' then scan(val, depth + 1) end
+    end
+  end
+  scan(M.refresh, 0)
+  assert(linkTile, 'link tile not reachable')
+  linkTile(0, 48, 144, 96)
+end)
+lcd.drawText = realDrawText3
+local sawDash, sawZero = 0, 0
+for _, t in ipairs(drawn3) do
+  if t == '--' then sawDash = 1 end
+  if t == '0%' then sawZero = 1 end
+end
+check('no sensor renders as unknown', okLink and sawDash or 0, 1)
+check('no sensor is not 0%',          sawZero, 0)
+-- With no RQly but a working radio-side reading, show that instead of a dash.
+getRSSI = function () return 72 end
+local drawn4 = {}
+local realDrawText4 = lcd.drawText
+lcd.drawText = function (x, y, text) drawn4[#drawn4 + 1] = tostring(text) end
+pcall(function ()
+  local linkTile = nil
+  local function scan(fn, depth)
+    if linkTile or depth > 2 or type(fn) ~= 'function' then return end
+    for i = 1, 200 do
+      local name, val = debug.getupvalue(fn, i)
+      if not name then break end
+      if name == 'TILE' and type(val) == 'table' and val.link then linkTile = val.link return end
+      if type(val) == 'function' then scan(val, depth + 1) end
+    end
+  end
+  scan(M.refresh, 0)
+  if linkTile then linkTile(0, 48, 144, 96) end
+end)
+lcd.drawText = realDrawText4
+local sawRadio = 0
+for _, t in ipairs(drawn4) do if t == '72%' then sawRadio = 1 end end
+check('falls back to the radio reading', sawRadio, 1)
+getRSSI = realRssi
+
+-- ---- map route legs stay inside the map image ----
+-- A waypoint off the edge used to draw a line straight across the neighbouring
+-- tiles. Old firmware has no clipping call, so the trim has to hold on its own.
+local clip = nil
+do
+  local function scanFor(fn, want, depth, seen)
+    if depth > 3 or type(fn) ~= 'function' or seen[fn] then return nil end
+    seen[fn] = true
+    for i = 1, 200 do
+      local name, val = debug.getupvalue(fn, i)
+      if not name then break end
+      if name == want and type(val) == 'function' then return val end
+      if type(val) == 'function' then
+        local hit = scanFor(val, want, depth + 1, seen)
+        if hit then return hit end
+      elseif type(val) == 'table' then
+        for _, v in pairs(val) do
+          if type(v) == 'function' then
+            local hit = scanFor(v, want, depth + 1, seen)
+            if hit then return hit end
+          end
+        end
+      end
+    end
+    return nil
+  end
+  clip = scanFor(M.refresh, 'clippedLine', 0, {})
+end
+check('clipped line reachable', clip and 1 or 0, 1)
+if clip then
+  local segs = {}
+  local realLine = lcd.drawLine
+  -- the lcd stub answers every key with a no-op, which would hide the absence
+  -- of drawLineWithClipping: drop the catch-all so the fallback really runs
+  local realMeta = getmetatable(lcd)
+  setmetatable(lcd, nil)
+  lcd.drawLine = function (x1, y1, x2, y2) segs[#segs + 1] = { x1, y1, x2, y2 } end
+  -- rect x 10..110, y 10..110; a leg running well outside both ends
+  clip(-200, 60, 400, 60, 10, 10, 100, 100, 0, 0)
+  -- and one that misses the rect entirely
+  clip(-200, -200, -150, -150, 10, 10, 100, 100, 0, 0)
+  lcd.drawLine = realLine
+  setmetatable(lcd, realMeta)
+  local inside = 1
+  for _, sg in ipairs(segs) do
+    for i = 1, 4, 2 do
+      if sg[i] < 9 or sg[i] > 111 or sg[i + 1] < 9 or sg[i + 1] > 111 then inside = 0 end
+    end
+  end
+  check('leg trimmed to the image', inside, 1)
+  check('leg fully outside is dropped', #segs, 1)
+end
+
+-- ---- PAGE keys and drags turn the page ----
+-- EdgeTX hands a widget key events only in full screen, and its own swipe flags
+-- need a fast flick; neither was wired up, so the buttons made for this did
+-- nothing at all.
+EVT_VIRTUAL_NEXT_PAGE = 9001
+EVT_VIRTUAL_PREV_PAGE = 9002
+local pagedCfg = 'name=x\ntile1=batt,8,48,144,96,default\np2_tile1=gps,8,48,144,96,default'
+io = {
+  open = function () return 1 end,
+  read = function () return pagedCfg end,
+  close = function () end,
+}
+model = nil
+local function currentPage()
+  for i = 1, 200 do
+    local name, val = debug.getupvalue(M.refresh, i)
+    if not name then break end
+    if name == 'curPage' then return val end
+  end
+  return nil
+end
+stubTime = stubTime + 400
+M.refresh(w, nil, nil)          -- picks up the two-page config
+local startPage = currentPage()
+check('two-page config loaded', startPage ~= nil and 1 or 0, 1)
+M.refresh(w, EVT_VIRTUAL_NEXT_PAGE, nil)
+check('PAGE next moves on', currentPage() ~= startPage and 1 or 0, 1)
+M.refresh(w, EVT_VIRTUAL_PREV_PAGE, nil)
+check('PAGE prev comes back', currentPage(), startPage)
+-- a plain drag, well under EdgeTX's flick threshold per event
+M.refresh(w, 0, { x = 60, y = 150, startX = 260, startY = 150 })
+check('drag turns the page', currentPage() ~= startPage and 1 or 0, 1)
+-- still the same drag: one gesture must not run through every page
+M.refresh(w, 0, { x = 20, y = 150, startX = 260, startY = 150 })
+check('one page per drag', currentPage() ~= startPage and 1 or 0, 1)
+
+-- ---- pages turn on their own when nothing can reach the widget ----
+-- In a widget slot EdgeTX passes neither event nor touch, so a timed rotation
+-- is the only page control there.
+io = {
+  open = function () return 1 end,
+  read = function () return pagedCfg .. '\npageSecs=2' end,
+  close = function () end,
+}
+stubTime = stubTime + 400
+M.refresh(w, nil, nil)
+local rotStart = currentPage()
+stubTime = stubTime + 100   -- 1s: too soon
+M.refresh(w, nil, nil)
+check('page holds before the interval', currentPage(), rotStart)
+stubTime = stubTime + 150   -- past 2s
+M.refresh(w, nil, nil)
+check('page turns after the interval', currentPage() ~= rotStart and 1 or 0, 1)
+
+-- ---- the Page option must not disable navigation ----
+-- Anyone who used that field to change pages (the only way to do it from a
+-- widget zone) then found every key, swipe and switch dead.
+io = {
+  open = function () return 1 end,
+  read = function () return pagedCfg end,
+  close = function () end,
+}
+local pinned = { zone = { x = 0, y = 0, w = 480, h = 320 }, options = { Page = 2 } }
+stubTime = stubTime + 400
+M.background(pinned)
+M.refresh(pinned, nil, nil)
+local pinnedStart = currentPage()
+M.refresh(pinned, EVT_VIRTUAL_NEXT_PAGE, nil)
+check('PAGE works with a starting page set', currentPage() ~= pinnedStart and 1 or 0, 1)
+
+-- ---- a per-model config overrides only what it carries ----
+-- Giving a model its own layout must not silently strip the theme, battery
+-- setup and vehicle name it was inheriting from the shared file.
+model = { getInfo = function () return { name = 'Rover 1' } end }
+io = {
+  open = function (path) return path end,
+  read = function (handle)
+    if handle == '/WIDGETS/ardudeck/models/Rover 1.cfg' then
+      return 'theme=light\np2_tile1=gps,8,48,144,96,default\ntile1=batt,8,48,144,96,default'
+    end
+    return 'name=SharedCraft\ntheme=dark\ncells=6\ntile1=att,8,48,144,96,ball'
+  end,
+  close = function () end,
+}
+stubTime = stubTime + 400
+M.refresh(w, nil, nil)
+local cfgTable = nil
+do
+  local function scanFor(fn, want, depth, seen)
+    if depth > 3 or type(fn) ~= 'function' or seen[fn] then return nil end
+    seen[fn] = true
+    for i = 1, 200 do
+      local name, val = debug.getupvalue(fn, i)
+      if not name then break end
+      if name == want then return val end
+      if type(val) == 'function' then
+        local hit = scanFor(val, want, depth + 1, seen)
+        if hit then return hit end
+      end
+    end
+    return nil
+  end
+  cfgTable = scanFor(M.refresh, 'CFG', 0, {})
+end
+check('shared keys survive', cfgTable and cfgTable.cells or 0, 6)
+check('model keys win', (cfgTable and cfgTable.theme == 'light') and 1 or 0, 1)
+check('model pages replace shared ones', cfgTable and #(cfgTable.pages or {}) or 0, 2)
+
 print(failures == 0 and 'ALL PASS' or (failures .. ' FAILURES'))
 os.exit(failures == 0 and 0 or 1)

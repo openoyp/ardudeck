@@ -31,9 +31,11 @@ export function attachDrape(material: THREE.MeshStandardMaterial): DrapeHandle {
     uRingRect0: { value: new THREE.Vector4() },
     uRingRect1: { value: new THREE.Vector4() },
     uRingRect2: { value: new THREE.Vector4() },
+    uRingRect3: { value: new THREE.Vector4() },
     uRingTex0: { value: blank as THREE.Texture },
     uRingTex1: { value: blank as THREE.Texture },
     uRingTex2: { value: blank as THREE.Texture },
+    uRingTex3: { value: blank as THREE.Texture },
   };
   let rings: DrapeRing[] = [];
 
@@ -55,9 +57,11 @@ export function attachDrape(material: THREE.MeshStandardMaterial): DrapeHandle {
         uniform vec4 uRingRect0;
         uniform vec4 uRingRect1;
         uniform vec4 uRingRect2;
+        uniform vec4 uRingRect3;
         uniform sampler2D uRingTex0;
         uniform sampler2D uRingTex1;
         uniform sampler2D uRingTex2;
+        uniform sampler2D uRingTex3;
         // rect = (minX, minZ, maxX, maxZ). v flips because the mosaic's first
         // row is north while texture v = 0 is the image bottom.
         vec2 svtRingUv(vec4 rect, vec3 p) {
@@ -80,6 +84,8 @@ export function attachDrape(material: THREE.MeshStandardMaterial): DrapeHandle {
             diffuseColor.rgb = texture2D(uRingTex1, svtRingUv(uRingRect1, vSvtWorld)).rgb;
           } else if (uRingCount > 2 && svtInRing(uRingRect2, vSvtWorld)) {
             diffuseColor.rgb = texture2D(uRingTex2, svtRingUv(uRingRect2, vSvtWorld)).rgb;
+          } else if (uRingCount > 3 && svtInRing(uRingRect3, vSvtWorld)) {
+            diffuseColor.rgb = texture2D(uRingTex3, svtRingUv(uRingRect3, vSvtWorld)).rgb;
           }
         }`,
       );
@@ -94,8 +100,8 @@ export function attachDrape(material: THREE.MeshStandardMaterial): DrapeHandle {
         ring.texture.anisotropy = Math.min(ring.texture.anisotropy, maxAniso);
         ring.texture.needsUpdate = true;
       }
-      const rects = [uniforms.uRingRect0, uniforms.uRingRect1, uniforms.uRingRect2];
-      const texes = [uniforms.uRingTex0, uniforms.uRingTex1, uniforms.uRingTex2];
+      const rects = [uniforms.uRingRect0, uniforms.uRingRect1, uniforms.uRingRect2, uniforms.uRingRect3];
+      const texes = [uniforms.uRingTex0, uniforms.uRingTex1, uniforms.uRingTex2, uniforms.uRingTex3];
       for (let i = 0; i < rects.length; i++) {
         const ring = rings[i];
         texes[i]!.value = ring?.texture ?? blank;

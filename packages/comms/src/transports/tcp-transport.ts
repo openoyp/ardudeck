@@ -86,12 +86,22 @@ export class TcpTransport extends BaseTransport {
       return;
     }
 
+    const socket = this.socket;
     return new Promise((resolve) => {
-      this.socket!.end(() => {
+      // end() only calls back once the FIN is flushed, which never happens on a
+      // link whose peer is gone (a killed SITL). Destroy it after a grace period
+      // so a close can't hang the caller, which at shutdown is the whole app.
+      const done = (): void => {
+        clearTimeout(timer);
         this._isOpen = false;
         this.socket = null;
         resolve();
-      });
+      };
+      const timer = setTimeout(() => {
+        socket.destroy();
+        done();
+      }, 1000);
+      socket.end(done);
     });
   }
 

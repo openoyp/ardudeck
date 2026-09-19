@@ -333,11 +333,15 @@ export function AiAnalysisPanel() {
     let lastLat = 0, lastLng = 0, totalDist = 0, hasLastPos = false;
     const gps = currentLog.messages['GPS'];
     if (gps) {
-      for (const msg of gps) {
-        const alt = msg.fields['Alt'];
-        const spd = msg.fields['Spd'];
-        const lat = msg.fields['Lat'];
-        const lng = msg.fields['Lng'];
+      const altCol = gps.num['Alt'];
+      const spdCol = gps.num['Spd'];
+      const latCol = gps.num['Lat'];
+      const lngCol = gps.num['Lng'];
+      for (let i = 0; i < gps.count; i++) {
+        const alt = altCol?.[i];
+        const spd = spdCol?.[i];
+        const lat = latCol?.[i];
+        const lng = lngCol?.[i];
         if (typeof alt === 'number' && alt > maxAlt) maxAlt = alt;
         if (typeof spd === 'number' && spd > maxSpd) maxSpd = spd;
         if (typeof lat === 'number' && typeof lng === 'number' && lat !== 0 && lng !== 0) {
@@ -352,8 +356,8 @@ export function AiAnalysisPanel() {
       }
     }
     const bat = currentLog.messages['BAT'];
-    if (bat && bat.length > 0) {
-      const mah = bat[bat.length - 1]!.fields['CurrTot'];
+    if (bat && bat.count > 0) {
+      const mah = bat.num['CurrTot']?.[bat.count - 1];
       if (typeof mah === 'number') totalMah = mah;
     }
     return { maxAlt, maxSpd, totalDist, totalMah };

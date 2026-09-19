@@ -18,6 +18,7 @@ import { useEffectiveRc, usePseudoTxStore } from '../../stores/pseudo-tx-store';
 import { useSettingsStore } from '../../stores/settings-store';
 import { useConnectionStore } from '../../stores/connection-store';
 import Px4ReceiverConfig from './Px4ReceiverConfig';
+import { StickAssignmentCard } from './StickAssignmentCard';
 import { PRIMARY_CHANNEL_COUNT, getMavlinkChannelNames, reorderChannelsWithRcmap } from '../../utils/rc-channel-constants';
 
 // =============================================================================
@@ -423,6 +424,8 @@ const ReceiverTab: React.FC = () => {
           </div>
         )}
       </div>
+
+      <StickAssignmentCard />
 
       {/* RC Calibration Card */}
       <div className="bg-surface rounded-xl border border-subtle p-5">

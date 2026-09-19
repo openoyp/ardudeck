@@ -6,6 +6,7 @@ import { useNavigationStore } from '../../stores/navigation-store';
 import { useSettingsStore } from '../../stores/settings-store';
 import { useTheme } from '../../hooks/useTheme';
 import { DebugConsole } from '../debug/DebugConsole';
+import { useConsoleStore } from '../../stores/console-store';
 import { UpdateBanner } from './UpdateBanner';
 import { ArmDisarmButton } from './ArmDisarmButton';
 import { ScriptHealthBadge } from '../script-installer/ScriptHealthBadge';
@@ -18,6 +19,7 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const consoleDock = useConsoleStore((s) => s.dock);
   const { connectionState, disconnect } = useConnectionStore();
   const { currentVersion, status, fetchVersion } = useUpdateStore();
   const setView = useNavigationStore((s) => s.setView);
@@ -163,11 +165,12 @@ export function AppShell({ children }: AppShellProps) {
       {/* Update notification banner */}
       <UpdateBanner />
 
-      {/* Main content */}
-      <div className="flex-1 overflow-hidden">{children}</div>
-
-      {/* Debug console */}
-      <DebugConsole />
+      {/* Main content, with the console beside it when docked to an edge. */}
+      <div className={`flex-1 overflow-hidden flex min-h-0 ${consoleDock === 'left' ? 'flex-row' : consoleDock === 'right' ? 'flex-row-reverse' : 'flex-col'}`}>
+        {consoleDock !== 'bottom' && <DebugConsole />}
+        <div className="flex-1 min-w-0 min-h-0 overflow-hidden">{children}</div>
+        {consoleDock === 'bottom' && <DebugConsole />}
+      </div>
     </div>
   );
 }

@@ -305,38 +305,64 @@ app.on('window-all-closed', () => {
   app.quit();
 });
 
+// Cleanup runs with the quit cancelled, so anything in it that never settles
+// (a dead TCP link whose FIN is never flushed) leaves a running process with no
+// window. Quit anyway once the deadline passes.
+const SHUTDOWN_DEADLINE_MS = 4000;
+let shuttingDown = false;
+
+async function cleanupWithDeadline(): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      cleanupOnShutdown(),
+      new Promise<void>((resolve) => {
+        timer = setTimeout(() => {
+          console.warn(`[App] Cleanup did not finish in ${SHUTDOWN_DEADLINE_MS} ms, quitting anyway`);
+          resolve();
+        }, SHUTDOWN_DEADLINE_MS);
+      }),
+    ]);
+  } catch (err) {
+    console.error('[App] Cleanup error:', err);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 // BSOD Prevention: Clean up serial/USB connections before app quits
 // This is CRITICAL for Windows USB drivers (CH340, CP210x, FTDI)
 // Without proper cleanup, drivers may not release, causing issues on reconnect
 app.on('before-quit', async (event) => {
-  // Prevent immediate quit to allow async cleanup
+  // A second quit while the first is still cleaning up must not restart it.
+  if (shuttingDown) {
+    event.preventDefault();
+    return;
+  }
+  shuttingDown = true;
   event.preventDefault();
 
-  try {
-    await cleanupOnShutdown();
-  } catch (err) {
-    console.error('[App] Cleanup error:', err);
-  }
+  // Last resort: app.exit() still runs Chromium teardown, which a wedged
+  // native handle (a serial port mid-write, a stuck GPU process) can block
+  // forever. Nothing below this point is allowed to keep the process alive.
+  const hardKill = setTimeout(() => {
+    console.warn('[App] Exit did not complete, killing the process');
+    process.kill(process.pid, 'SIGKILL');
+  }, SHUTDOWN_DEADLINE_MS);
+  hardKill.unref();
 
-  // Now actually quit
+  await cleanupWithDeadline();
+
   app.exit(0);
 });
 
 // Also handle SIGINT/SIGTERM for graceful shutdown in dev mode
 process.on('SIGINT', async () => {
-  try {
-    await cleanupOnShutdown();
-  } catch (err) {
-    console.error('[App] Cleanup error:', err);
-  }
+  await cleanupWithDeadline();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  try {
-    await cleanupOnShutdown();
-  } catch (err) {
-    console.error('[App] Cleanup error:', err);
-  }
+  await cleanupWithDeadline();
   process.exit(0);
 });

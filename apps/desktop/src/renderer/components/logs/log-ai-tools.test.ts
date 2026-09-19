@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { ParsedLog } from '../../stores/log-store';
+import { columnsFromRows } from '../../utils/log-columns';
 import {
   listMessageTypes,
   getFieldStats,
@@ -23,16 +24,16 @@ function makeLog(): ParsedLog {
     format: 'dataflash',
     formats: {},
     messages: {
-      ATT: att,
-      VIBE: [
+      ATT: columnsFromRows(att),
+      VIBE: columnsFromRows([
         { type: 'VIBE', timeUs: startUs, fields: { VibeX: 10, VibeY: 20 } },
         { type: 'VIBE', timeUs: startUs + 1_000_000, fields: { VibeX: 30, VibeY: 40 } },
-      ],
-      PARM: [
+      ]),
+      PARM: columnsFromRows([
         { type: 'PARM', timeUs: startUs, fields: { Name: 'INS_ACCEL_FILTER', Value: 20 } },
         { type: 'PARM', timeUs: startUs, fields: { Name: 'INS_GYRO_FILTER', Value: 40 } },
         { type: 'PARM', timeUs: startUs, fields: { Name: 'ATC_RAT_RLL_P', Value: 0.135 } },
-      ],
+      ]),
     },
     metadata: { vehicleType: 'Copter', firmwareVersion: '4.5', firmwareString: 'Copter 4.5', boardType: '', gitHash: '' },
     timeRange: { startUs, endUs: startUs + 9 * 1_000_000 },

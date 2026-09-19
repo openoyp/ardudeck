@@ -4,6 +4,7 @@ import {
   capSpan,
   ringRect,
   recenterDistanceM,
+  nativeZoomSpanM,
   INNER_RING_TILES,
   MAX_OUTER_RING_TILES,
   RING_SPANS_M,
@@ -114,5 +115,29 @@ describe('ring spans', () => {
   it('follows more closely the tighter the inner ring', () => {
     expect(recenterDistanceM(RING_SPANS_M)).toBeLessThan(RING_SPANS_M[0]! / 2);
     expect(recenterDistanceM(WIDE_RING_SPANS_M)).toBeGreaterThan(recenterDistanceM(RING_SPANS_M));
+  });
+
+  // Hills a few kilometres out fill most of a cockpit view. With no step
+  // between 3.5 km and the 50 km patch they came off one stretched mosaic.
+  it('keeps a ring for the middle distance', () => {
+    const midIndex = RING_SPANS_M.findIndex((s) => s > 3_500 && Number.isFinite(s));
+    expect(midIndex).toBeGreaterThan(0);
+    const mid = bestZoom(boundsAround(RING_SPANS_M[midIndex]!), MAX_OUTER_RING_TILES);
+    const patch = bestZoom(boundsAround(50_000), MAX_OUTER_RING_TILES);
+    expect(mid).toBeGreaterThan(patch + 1);
+  });
+
+  // A 1 km ring misses the imagery's native zoom by a tile or two, and the
+  // whole mosaic then drops a level: half the resolution under the nose.
+  it('trims the inner ring to whatever still fits native-zoom imagery', () => {
+    for (const lat of [0, 30, 47, 60]) {
+      const span = Math.min(RING_SPANS_M[0]!, nativeZoomSpanM(lat, INNER_RING_TILES));
+      const halfLat = span / 2 / 111_320;
+      const halfLon = span / 2 / metersPerDegLon(lat);
+      expect(bestZoom({
+        south: lat - halfLat, north: lat + halfLat,
+        west: CENTER_LON - halfLon, east: CENTER_LON + halfLon,
+      }, INNER_RING_TILES)).toBe(19);
+    }
   });
 });

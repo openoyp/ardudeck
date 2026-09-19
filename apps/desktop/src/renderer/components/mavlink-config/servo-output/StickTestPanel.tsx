@@ -1,28 +1,33 @@
 /**
  * StickTestPanel - injects synthetic RC stick positions via RC_CHANNELS_OVERRIDE
- * so the ArduPlane mixer drives outputs the same way real sticks would. This
- * is the correct way to bench-test mixer-assigned outputs (Aileron/Elevator/
- * Throttle), since DO_SET_SERVO is overwritten by the mixer every cycle.
+ * so the mixer drives outputs the same way real sticks would, for bench-testing
+ * mixer-assigned outputs (DO_SET_SERVO gets overwritten by the mixer each cycle).
  *
- * "Start" handles the whole bench setup: switch to MANUAL, force-arm (bypassing
- * pre-arm checks - safe on a bench, props off), then stream override at 10Hz.
- * "Release" undoes it: stop override, force-disarm.
- *
- * ArduPlane gates outputs on armed state, so without arming the mixer computes
- * outputs internally but doesn't drive the pins. There's no plane equivalent
- * of MAV_CMD_DO_MOTOR_TEST, so a force-armed MANUAL mode is the cleanest
- * "test the mixer" path.
+ * Frame-aware: Plane shows Roll/Pitch/Throttle/Yaw and pins FLTMODE_CH to MANUAL;
+ * Rover shows Steering/Throttle on the RCMAP channels and pins MODE_CH. Copter is
+ * not supported here - force-arming a multirotor and injecting throttle spins the
+ * props, so it points to Motor Test (DO_MOTOR_TEST) instead.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Gamepad2, Square, AlertTriangle } from 'lucide-react';
 import { useParameterStore } from '../../../stores/parameter-store';
 import { useTelemetryStore } from '../../../stores/telemetry-store';
+import { useConnectionStore } from '../../../stores/connection-store';
 
 // 50 Hz so we can outpace ELRS-MAVLink's RC stream when the GCS connection is
 // over ELRS. At 10Hz we lose the race; at 50Hz our values dominate.
 const SEND_INTERVAL_MS = 20;
-const PLANE_MANUAL_MODE = 0;  // ArduPlane custom_mode for MANUAL
+// custom_mode for MANUAL is 0 on both ArduPlane and ArduRover.
+const MANUAL_MODE = 0;
+
+type VehicleCategory = 'rover' | 'plane' | 'copter';
+function categoryFromMavType(t: number | undefined): VehicleCategory {
+  if (t === undefined) return 'copter';
+  if (t === 10 || t === 11) return 'rover';           // GROUND_ROVER / SURFACE_BOAT
+  if (t === 1 || (t >= 19 && t <= 25)) return 'plane'; // FIXED_WING / VTOL
+  return 'copter';
+}
 
 interface SliderRowProps {
   label: string;
@@ -75,34 +80,55 @@ export const StickTestPanel: React.FC = () => {
 
   const parameters = useParameterStore((s) => s.parameters);
   const setParameter = useParameterStore((s) => s.setParameter);
+  const mavType = useConnectionStore((s) => s.connectionState.mavType);
+  const category = categoryFromMavType(mavType);
+  const isRover = category === 'rover';
+  // Rover throttle is bidirectional: 1500 = stop. Plane/copter rest at min.
+  const throttleNeutral = isRover ? 1500 : 1100;
 
   // Live RC values as the FC sees them (msg 65 RC_CHANNELS). Diagnostic for
   // whether our RC_CHANNELS_OVERRIDE is winning at the FC's input layer.
   const rcChannels = useTelemetryStore((s) => s.rcChannels);
   const fcCh = (idx: number) => rcChannels?.channels[idx] ?? 0;
 
-  // Look up FLTMODE_CH so we can pin it to FLTMODE1's PWM band during the
-  // test. Without this, ArduPlane keeps reading the unconnected RX as trim
-  // (1500us) and switches OUT of MANUAL into whatever FLTMODE4 is set to.
-  const fltmodeChannel = parameters.get('FLTMODE_CH')?.value;
+  // Mode channel pinned to the MANUAL band so a detached RX reading trim can't
+  // switch the FC out of MANUAL mid-test. Plane: FLTMODE_CH, Rover: MODE_CH.
+  const num = (name: string): number | undefined => parameters.get(name)?.value as number | undefined;
+  const modeChannel = isRover ? num('MODE_CH') : num('FLTMODE_CH');
+  const steerCh = num('RCMAP_ROLL') ?? 1;
+  const thrCh = num('RCMAP_THROTTLE') ?? 3;
 
   const valuesRef = useRef({ roll, pitch, throttle, yaw });
   valuesRef.current = { roll, pitch, throttle, yaw };
+
+  const sendOverride = useCallback((r: number, p: number, t: number, y: number) => {
+    if (isRover) {
+      const channels = new Array(18).fill(65535);
+      channels[steerCh - 1] = r; // steering
+      channels[thrCh - 1] = t;   // throttle
+      if (modeChannel && modeChannel >= 5 && modeChannel <= 18) channels[modeChannel - 1] = 1000;
+      void window.electronAPI?.rcOverrideSetChannels?.(channels);
+    } else {
+      void window.electronAPI?.rcOverrideSet?.(r, p, t, y, modeChannel, 1000);
+    }
+  }, [isRover, steerCh, thrCh, modeChannel]);
+
+  // Park the throttle slider at the frame's neutral when idle (Rover 1500 = stop).
+  useEffect(() => {
+    if (!active) setThrottle(throttleNeutral);
+  }, [throttleNeutral, active]);
 
   // Stream the override at 50Hz while active.
   useEffect(() => {
     if (!active) return;
     const tick = () => {
       const v = valuesRef.current;
-      // PWM 1000 falls in the FLTMODE1 band (<=1230) which the user has set
-      // to MANUAL. Sending it on the FLTMODE channel keeps the FC out of
-      // STABILIZE for the duration of the test.
-      void window.electronAPI?.rcOverrideSet?.(v.roll, v.pitch, v.throttle, v.yaw, fltmodeChannel, 1000);
+      sendOverride(v.roll, v.pitch, v.throttle, v.yaw);
     };
     tick();
     const id = setInterval(tick, SEND_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [active, fltmodeChannel]);
+  }, [active, sendOverride]);
 
   const start = useCallback(async () => {
     setBusy(true);
@@ -125,7 +151,7 @@ export const StickTestPanel: React.FC = () => {
 
       // 2. Set mode to MANUAL so the mixer just passes sticks through with no
       //    autopilot stabilization fighting our demands.
-      const modeOk = await window.electronAPI?.mavlinkSetMode?.(PLANE_MANUAL_MODE);
+      const modeOk = await window.electronAPI?.mavlinkSetMode?.(MANUAL_MODE);
       if (!modeOk) {
         setError('Failed to set MANUAL mode');
         setBusy(false);
@@ -133,11 +159,10 @@ export const StickTestPanel: React.FC = () => {
       }
 
       // 3. Stream centered RC override BEFORE arming so ArduPilot sees stable
-      //    "RC present" values. Throttle at 1100 (matches typical RC3_MIN) so
-      //    the 0-throttle arming check passes regardless of stick deadzone.
-      const sendCentered = () => {
-        void window.electronAPI?.rcOverrideSet?.(1500, 1500, 1100, 1500, fltmodeChannel, 1000);
-      };
+      //    "RC present" values. Throttle at its neutral (Rover 1500 = stop,
+      //    Plane 1100 = min) so it can't lurch on arm.
+      setThrottle(throttleNeutral);
+      const sendCentered = () => sendOverride(1500, 1500, throttleNeutral, 1500);
       sendCentered();
       preArmInterval = setInterval(sendCentered, SEND_INTERVAL_MS);
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -162,12 +187,12 @@ export const StickTestPanel: React.FC = () => {
     } finally {
       setBusy(false);
     }
-  }, [parameters, setParameter, fltmodeChannel]);
+  }, [parameters, setParameter, sendOverride, throttleNeutral]);
 
   const release = useCallback(async () => {
     setBusy(true);
     setActive(false);
-    setThrottle(1000);
+    setThrottle(isRover ? 1500 : 1000);
     setRoll(1500);
     setPitch(1500);
     setYaw(1500);
@@ -182,7 +207,7 @@ export const StickTestPanel: React.FC = () => {
     } finally {
       setBusy(false);
     }
-  }, [setParameter]);
+  }, [setParameter, isRover]);
 
   // Safety: release on unmount so we don't leave the FC armed with overrides
   // and ARMING_CHECK relaxed if the user navigates away or closes the app.
@@ -197,6 +222,24 @@ export const StickTestPanel: React.FC = () => {
       }
     };
   }, [setParameter]);
+
+  if (category === 'copter') {
+    return (
+      <div className="bg-surface rounded-xl border border-subtle p-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center">
+            <Gamepad2 className="w-5 h-5 text-pink-400" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-base font-semibold text-content">Stick Test</h3>
+            <p className="text-sm text-content-secondary">
+              Not available on multirotors. Injecting throttle into an armed copter spins the motors. Use <span className="text-pink-300 font-medium">Motor Test</span> to bench-check outputs one motor at a time.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-surface rounded-xl border border-subtle p-5">
@@ -235,20 +278,29 @@ export const StickTestPanel: React.FC = () => {
         <div className="mb-4 text-xs text-amber-400/80 bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           <div>
-            Start sets MANUAL mode and force-arms the vehicle (bypassing pre-arm checks). Bench use only - remove propellers before pressing Start.
+            Start sets MANUAL mode and force-arms the vehicle (bypassing pre-arm checks). Bench use only - {isRover ? 'lift the drive wheels off the bench' : 'remove propellers'} before pressing Start.
           </div>
         </div>
       )}
 
       <div className="space-y-2">
-        <SliderRow label="Roll"     value={roll}     min={1100} max={1900} center={1500} onChange={setRoll}     fcValue={fcCh(0)} />
-        <SliderRow label="Pitch"    value={pitch}    min={1100} max={1900} center={1500} onChange={setPitch}    fcValue={fcCh(1)} />
-        <SliderRow label="Throttle" value={throttle} min={1100} max={1900} center={1100} onChange={setThrottle} fcValue={fcCh(2)} />
-        <SliderRow label="Yaw"      value={yaw}      min={1100} max={1900} center={1500} onChange={setYaw}      fcValue={fcCh(3)} />
+        {isRover ? (
+          <>
+            <SliderRow label="Steering" value={roll}     min={1100} max={1900} center={1500} onChange={setRoll}     fcValue={fcCh(steerCh - 1)} />
+            <SliderRow label="Throttle" value={throttle} min={1100} max={1900} center={throttleNeutral} onChange={setThrottle} fcValue={fcCh(thrCh - 1)} />
+          </>
+        ) : (
+          <>
+            <SliderRow label="Roll"     value={roll}     min={1100} max={1900} center={1500} onChange={setRoll}     fcValue={fcCh(0)} />
+            <SliderRow label="Pitch"    value={pitch}    min={1100} max={1900} center={1500} onChange={setPitch}    fcValue={fcCh(1)} />
+            <SliderRow label="Throttle" value={throttle} min={1100} max={1900} center={1100} onChange={setThrottle} fcValue={fcCh(2)} />
+            <SliderRow label="Yaw"      value={yaw}      min={1100} max={1900} center={1500} onChange={setYaw}      fcValue={fcCh(3)} />
+          </>
+        )}
       </div>
 
       <div className="mt-2 text-[11px] text-content-tertiary">
-        FC column shows what the autopilot currently reads on RC1-4 (msg 65). Green = matches your slider (override winning). Amber = mismatch. Dash = FC isn't reporting RC at all.
+        FC column shows what the autopilot currently reads on {isRover ? `RC${steerCh}/RC${thrCh}` : 'RC1-4'} (msg 65). Green = matches your slider (override winning). Amber = mismatch. Dash = FC isn't reporting RC at all.
       </div>
 
       {active && (

@@ -30,6 +30,7 @@ import { formatAltitudeFromMeters, formatSpeedFromMetersPerSecond } from '../../
 const TELEMETRY_AUTOSAVE_NAME = '__telemetry_autosave';
 import {
   AttitudePanel,
+  JoystickPanel,
   AltitudePanel,
   SpeedPanel,
   BatteryPanel,
@@ -188,6 +189,7 @@ const components: Record<string, React.FC<IDockviewPanelProps>> = {
   CameraPanel: () => <PanelWrapper component={CameraPanel} />,
   MessagesPanel: () => <PanelWrapper component={MessagesPanel} />,
   SafetyMonitorPanel: () => <PanelWrapper component={SafetyMonitorPanel} />,
+  JoystickPanel: () => <PanelWrapper component={JoystickPanel} />,
   NtripPanel: () => <PanelWrapper component={NtripPanel} />,
   PreflightCheckCard: () => <PanelWrapper component={PreflightCheckCard} />,
   // Mission panels (for monitoring during flight) - readOnly mode
@@ -743,6 +745,7 @@ const PANEL_ICONS: Record<string, ReactNode> = {
   position: svg(<><path d="M12 21s7-6.3 7-11a7 7 0 10-14 0c0 4.7 7 11 7 11z" /><circle cx="12" cy="10" r="2.5" /></>),
   velocity: svg(<><path d="M3 12h11" /><path d="M10 7l5 5-5 5" /><path d="M19 6v12" /></>),
   flightMode: svg(<><path d="M6 21V4" /><path d="M6 4h11l-2 3.5L17 11H6" /></>),
+  joystick: svg(<><rect x="2" y="8" width="20" height="10" rx="5" /><path d="M7 11v4M5 13h4" /><circle cx="16" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="18.5" cy="14.5" r="1" fill="currentColor" stroke="none" /></>),
   flightControl: svg(<><circle cx="12" cy="8" r="3" /><path d="M12 11v7" /><path d="M8 21h8" /></>),
   map: svg(<><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z" /><path d="M9 4v14M15 6v14" /></>),
   camera: svg(<><rect x="3" y="6" width="12" height="12" rx="2" /><path d="M15 10l6-3v10l-6-3" /></>),
@@ -919,7 +922,7 @@ function WorkspaceDialog(props: WorkspaceProps & { onClose: () => void }): JSX.E
 const MISSION_PANEL_IDS = ['waypoints', 'altitudeProfile'];
 
 // MAVLink-only panel IDs (STATUSTEXT doesn't exist in MSP)
-const MAVLINK_PANEL_IDS = ['messages', 'preflightCheck', 'safetyMonitor', 'rtk'];
+const MAVLINK_PANEL_IDS = ['messages', 'preflightCheck', 'safetyMonitor', 'rtk', 'joystick'];
 
 // SITL-only panel IDs (only shown when ArduPilot SITL is running)
 const SITL_PANEL_IDS = ['sitlEnvironment', 'sitlFailures'];

@@ -1287,7 +1287,7 @@ export function ConnectionPanel() {
             {showForward && (
               <div className="px-3 pb-3 space-y-2.5 border-t border-subtle pt-2.5">
                 <p className="text-[11px] text-content-secondary">
-                  Mirrors this link's raw MAVLink to other devices over UDP and relays their commands back. A phone running ArduDeck on the same network connects with UDP, and it is picked up automatically once it sends a heartbeat; or enter its address below.
+                  Mirrors this link's raw MAVLink to other devices over UDP and relays their commands back. Any UDP peer that can reach this port is picked up automatically once it sends a heartbeat - a phone on the same WiFi, or one with no network at all, bridged in over USB - or enter its address below.
                 </p>
                 {!forwardStatus?.running && (
                   <input

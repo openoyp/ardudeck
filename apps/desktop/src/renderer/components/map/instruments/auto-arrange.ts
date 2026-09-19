@@ -203,6 +203,28 @@ export const INSTRUMENT_SEMANTICS: Record<string, InstrumentSemantics> = {
       strip: { x: 0.15, y: -0.93 },
     },
   },
+  tilt: {
+    role: 'primaryFlight',
+    priority: 90,
+    idealSectors: ['C4', 'D4', 'C3'],
+    group: 'basic-t',
+    idealAlign: { x: 0, y: 0.9 },
+  },
+  steer: {
+    role: 'primaryFlight',
+    priority: 75,
+    idealSectors: ['C4', 'B4'],
+    group: 'basic-t',
+    formationSide: 'left',
+    stripVariants: ['inline', 'strip'],
+  },
+  xtrack: {
+    role: 'navigation',
+    priority: 58,
+    idealSectors: ['E4', 'E3'],
+    group: 'basic-t',
+    formationSide: 'right2',
+  },
   vsi: {
     role: 'primaryFlight',
     priority: 60,

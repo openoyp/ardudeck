@@ -16,6 +16,7 @@ import React, { useMemo, useCallback } from 'react';
 import { MoveHorizontal, MoveVertical, RefreshCw, Link, Lightbulb, AlertTriangle, Info } from 'lucide-react';
 import { useParameterStore } from '../../stores/parameter-store';
 import { DraggableSlider } from '../ui/DraggableSlider';
+import { RateResponsePlot } from './RateResponsePlot';
 import { PresetSelector } from '../ui/PresetSelector';
 import { ProfileManager } from '../ui/ProfileManager';
 import { InfoCard } from '../ui/InfoCard';
@@ -104,7 +105,7 @@ const RatesTab: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => fetchParameters()}
+            onClick={() => fetchParameters({ force: true })}
             disabled={isLoading}
             className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
@@ -169,6 +170,32 @@ const RatesTab: React.FC = () => {
         onReset={resetToDefaults}
         label="My Profiles"
       />
+
+      {/* The two numbers as one picture, before the sliders that set them. */}
+      {scheme && rateValues && scheme.hasExpo && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-2">
+            <div className="text-xs text-content-secondary">Roll and pitch</div>
+            <RateResponsePlot
+              maxRate={rateValues.rpRate}
+              expo={rateValues.rpExpo}
+              unit={scheme.rateUnit}
+              axis="roll"
+              accent="#3B82F6"
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="text-xs text-content-secondary">Yaw</div>
+            <RateResponsePlot
+              maxRate={rateValues.yawRate}
+              expo={rateValues.yawExpo}
+              unit={scheme.rateUnit}
+              axis="yaw"
+              accent="#F97316"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Rate controls - 3 column layout */}
       {scheme && rateValues && (

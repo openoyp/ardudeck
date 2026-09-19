@@ -9,6 +9,10 @@ export const SERIES_COLORS = [
   '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
 ];
 
+export function seriesColor(index: number): string {
+  return SERIES_COLORS[index % SERIES_COLORS.length]!;
+}
+
 /** Largest index i where x[i] <= target, on an ascending array. -1 if none. */
 export function lowerBoundIdx(x: ArrayLike<number>, target: number): number {
   let lo = 0;

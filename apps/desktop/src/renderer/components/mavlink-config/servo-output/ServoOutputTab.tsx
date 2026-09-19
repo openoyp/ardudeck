@@ -11,7 +11,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { Move, Lightbulb } from 'lucide-react';
+import { Move, Lightbulb, AlertTriangle } from 'lucide-react';
 import { useParameterStore } from '../../../stores/parameter-store';
 import { useTelemetryStore } from '../../../stores/telemetry-store';
 import { useConnectionStore } from '../../../stores/connection-store';
@@ -24,6 +24,7 @@ const PWM_MAX = 2200;
 
 const ServoOutputTab: React.FC = () => {
   const parameters = useParameterStore((s) => s.parameters);
+  const getParameterMetadata = useParameterStore((s) => s.getParameterMetadata);
   const paramsLoaded = useParameterStore((s) => s.downloadState === 'complete');
   const metadata = useParameterStore((s) => s.metadata);
   const setParameter = useParameterStore((s) => s.setParameter);
@@ -33,6 +34,24 @@ const ServoOutputTab: React.FC = () => {
 
   // A completed download, not just whatever parameters happen to be present.
   const hasParameters = paramsLoaded && parameters.size > 0;
+
+  // Two outputs on one function is legitimate (twin ESCs, paired flaps) and
+  // also a classic mis-set: the second one silently shadows the first.
+  const duplicateFunctions = useMemo(() => {
+    const byFunction = new Map<number, number[]>();
+    for (let ch = 1; ch <= 16; ch++) {
+      const fn = parameters.get(`SERVO${ch}_FUNCTION`)?.value as number | undefined;
+      if (fn === undefined || fn === 0 || fn === 1) continue; // disabled and RC passthrough
+      byFunction.set(fn, [...(byFunction.get(fn) ?? []), ch]);
+    }
+    return [...byFunction.entries()]
+      .filter(([, channels]) => channels.length > 1)
+      .map(([fn, channels]) => ({
+        fn,
+        channels,
+        label: (getParameterMetadata('SERVO1_FUNCTION')?.values?.[fn]) ?? `Function ${fn}`,
+      }));
+  }, [parameters, getParameterMetadata]);
 
   // 32 channels if SERVO_32_ENABLE param is present and truthy, else 16.
   const channelCount = useMemo(() => {
@@ -73,6 +92,30 @@ const ServoOutputTab: React.FC = () => {
           <div>
             <p className="text-amber-300 font-medium">Parameters Not Loaded</p>
             <p className="text-sm text-amber-400/80">Connect to a flight controller to edit servo outputs.</p>
+          </div>
+        </div>
+      )}
+
+      {duplicateFunctions.length > 0 && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 w-5 h-5 shrink-0 text-amber-400" />
+            <div className="text-sm">
+              <p className="font-medium text-amber-300">
+                More than one output is doing the same job
+              </p>
+              <ul className="mt-1 space-y-0.5 text-xs text-amber-200/90">
+                {duplicateFunctions.map((d) => (
+                  <li key={d.fn}>
+                    {d.label} is on outputs {d.channels.join(' and ')}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1.5 text-xs text-amber-200/80">
+                That is right for a vehicle with two ESCs or paired servos, and wrong everywhere
+                else: a spare output driving nothing, or two devices fighting over one signal.
+              </p>
+            </div>
           </div>
         </div>
       )}

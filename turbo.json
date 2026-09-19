@@ -1,31 +1,54 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
+  "globalDependencies": [
+    "**/.env.*local"
+  ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**", "tsconfig.tsbuildinfo"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**",
+        "tsconfig.tsbuildinfo"
+      ]
     },
     "generate": {
       "cache": false,
-      "outputs": ["src/generated/**"]
+      "outputs": [
+        "src/generated/**"
+      ]
     },
     "lint": {
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build"
+      ]
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
     "test": {
-      "dependsOn": ["build"]
+      "dependsOn": [
+        "build"
+      ]
     },
     "test:coverage": {
-      "dependsOn": ["build"],
-      "outputs": ["coverage/**"]
+      "dependsOn": [
+        "build"
+      ],
+      "outputs": [
+        "coverage/**"
+      ]
     },
     "clean": {
       "cache": false
     }
-  }
+  },
+  "globalPassThroughEnv": [
+    "ARDUDECK_HOME",
+    "HANGAR_TOKEN",
+    "HANGAR_URL",
+    "MARKETPLACE_URL"
+  ]
 }

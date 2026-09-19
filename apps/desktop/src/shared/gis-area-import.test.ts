@@ -5,7 +5,7 @@
  */
 import { beforeAll, describe, it, expect } from 'vitest';
 import { DOMParser as XmldomParser } from '@xmldom/xmldom';
-import { parseGisArea, gisFormatForExtension } from './gis-area-import';
+import { parseGisArea, parseGisLines, gisFormatForExtension } from './gis-area-import';
 
 // Polyfill DOMParser for Node test environment.
 // @xmldom/xmldom is already installed as a transitive dep of the monorepo.
@@ -201,5 +201,86 @@ describe('parseGisArea - KML', () => {
     // parseGisArea catches the internal throw and returns []
     const bad = `<kml><Polygon><outerBoundaryIs><LinearRing><coordinates>0,0 1,0 1,1</coordinates></WRONG>`;
     expect(parseGisArea(bad, 'kml')).toEqual([]);
+  });
+});
+
+describe('parseGisLines', () => {
+  it('reads a GeoJSON LineString with its feature name', () => {
+    const geojson = JSON.stringify({
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        properties: { name: 'B73 north' },
+        geometry: { type: 'LineString', coordinates: [[9.7, 53.4], [9.8, 53.45], [9.9, 53.5]] },
+      }],
+    });
+    const lines = parseGisLines(geojson, 'geojson');
+    expect(lines).toHaveLength(1);
+    expect(lines[0]!.name).toBe('B73 north');
+    expect(lines[0]!.path).toHaveLength(3);
+    expect(lines[0]!.path[0]).toEqual({ lat: 53.4, lng: 9.7 });
+  });
+
+  it('splits a MultiLineString into one line per part', () => {
+    const geojson = JSON.stringify({
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'MultiLineString',
+        coordinates: [
+          [[9.7, 53.4], [9.8, 53.45]],
+          [[10.0, 53.6], [10.1, 53.65], [10.2, 53.7]],
+        ],
+      },
+    });
+    const lines = parseGisLines(geojson, 'geojson');
+    expect(lines.map((l) => l.path.length)).toEqual([2, 3]);
+  });
+
+  it('reads KML LineStrings and takes the Placemark name', () => {
+    const kml = `<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2"><Document>
+        <Placemark><name>Power line A</name><LineString><coordinates>
+          9.7,53.4,0 9.8,53.45,0 9.9,53.5,0
+        </coordinates></LineString></Placemark>
+      </Document></kml>`;
+    const lines = parseGisLines(kml, 'kml');
+    expect(lines).toHaveLength(1);
+    expect(lines[0]!.name).toBe('Power line A');
+    expect(lines[0]!.path).toHaveLength(3);
+  });
+
+  it('ignores polygons, and parseGisArea ignores lines', () => {
+    const kml = `<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2"><Document>
+        <Placemark><Polygon><outerBoundaryIs><LinearRing><coordinates>
+          9.7,53.4 9.8,53.4 9.8,53.5 9.7,53.4
+        </coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>
+        <Placemark><name>Rail</name><LineString><coordinates>
+          9.7,53.4 9.9,53.6
+        </coordinates></LineString></Placemark>
+      </Document></kml>`;
+    expect(parseGisArea(kml, 'kml')).toHaveLength(1);
+    const lines = parseGisLines(kml, 'kml');
+    expect(lines).toHaveLength(1);
+    expect(lines[0]!.name).toBe('Rail');
+  });
+
+  it('drops degenerate lines and bad coordinates', () => {
+    const geojson = JSON.stringify({
+      type: 'GeometryCollection',
+      geometries: [
+        { type: 'LineString', coordinates: [[9.7, 53.4]] },
+        { type: 'LineString', coordinates: [[9.7, 53.4], [999, 53.5], [9.9, 53.6]] },
+      ],
+    });
+    const lines = parseGisLines(geojson, 'geojson');
+    expect(lines).toHaveLength(1);
+    expect(lines[0]!.path).toHaveLength(2);
+  });
+
+  it('returns [] for unparseable input rather than throwing', () => {
+    expect(parseGisLines('not json', 'geojson')).toEqual([]);
+    expect(parseGisLines('<kml', 'kml')).toEqual([]);
   });
 });

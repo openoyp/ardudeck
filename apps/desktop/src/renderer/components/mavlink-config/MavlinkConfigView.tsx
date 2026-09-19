@@ -21,6 +21,7 @@ import {
   Activity,
   Settings,
   Shield,
+  ShieldCheck,
   Cpu,
   Sliders,
   Wrench,
@@ -57,6 +58,8 @@ import TuningTab from './TuningTab';
 import AutotuneTab from './AutotuneTab';
 import BatteryTab from './BatteryTab';
 import ParameterTable from './ParameterTable';
+import LoggingTab from './LoggingTab';
+import ArmingTab from './ArmingTab';
 import RoverTuningTab from './RoverTuningTab';
 import ReceiverTab from './ReceiverTab';
 import SerialPortsTab from './SerialPortsTab';
@@ -78,7 +81,7 @@ interface Toast {
   type: ToastType;
 }
 
-type TabId = 'pid' | 'rates' | 'modes' | 'receiver' | 'serial-ports' | 'telemetry-rates' | 'safety' | 'sensors' | 'tuning' | 'autotune' | 'battery' | 'parameters' | 'files' | 'rover-tuning' | 'rover-nav' | 'motor-test' | 'servo-output';
+type TabId = 'pid' | 'rates' | 'modes' | 'receiver' | 'serial-ports' | 'telemetry-rates' | 'safety' | 'sensors' | 'tuning' | 'autotune' | 'battery' | 'parameters' | 'files' | 'logging' | 'arming' | 'rover-tuning' | 'rover-nav' | 'motor-test' | 'servo-output';
 
 interface Tab {
   id: TabId;
@@ -195,6 +198,40 @@ const STORAGE_GROUP: TabGroup = {
   children: [
     { id: 'parameters', name: 'Parameters', Icon: Table,      color: 'text-content-secondary', description: 'Full parameter list for experts' },
     { id: 'files',      name: 'Files',      Icon: FolderOpen, color: 'text-content-secondary', description: 'Browse and download files from the FC via MAVLink-FTP' },
+    { id: 'logging',    name: 'Logging',    Icon: HardDrive,  color: 'text-sky-400', description: 'What the flight controller records, and whether it records at all' },
+  ],
+};
+
+// "Links" group: the serial ports data leaves the vehicle on, and how much
+// data each one carries. Two halves of the same question (a rate change is
+// usually the answer to a saturated port), and flat they cost two top-level
+// slots each vehicle type over.
+const LINKS_GROUP: TabGroup = {
+  kind: 'group',
+  id: 'links-group',
+  name: 'Links',
+  Icon: Radio,
+  color: 'text-sky-400',
+  description: 'Serial port protocols and what each link carries',
+  children: [
+    { id: 'serial-ports', name: 'Serial Ports', Icon: Cable, color: 'text-sky-400', description: 'Configure serial port protocols and baud rates' },
+    { id: 'telemetry-rates', name: 'Telemetry Rates', Icon: Gauge, color: 'text-teal-400', description: 'How often each kind of data is sent, and what it costs on the link' },
+  ],
+};
+
+// "Safety" group: the checks that stop the motors starting, and what happens
+// when something goes wrong in flight. Two sides of the same subject, and flat
+// they cost two top-level slots on every vehicle.
+const SAFETY_GROUP: TabGroup = {
+  kind: 'group',
+  id: 'safety-group',
+  name: 'Safety',
+  Icon: Shield,
+  color: 'text-amber-400',
+  description: 'Pre-arm checks, failsafes and geofence',
+  children: [
+    { id: 'arming', name: 'Arming', Icon: ShieldCheck, color: 'text-emerald-400', description: 'Pre-arm checks, why it will not arm, and how it arms' },
+    { id: 'safety', name: 'Failsafes & fence', Icon: Shield, color: 'text-amber-400', description: 'What happens on link loss, low battery and fence breach' },
   ],
 };
 
@@ -206,11 +243,10 @@ const COPTER_TABS: TabNode[] = [
   TUNING_GROUP,
   RC_GROUP,
   OUTPUTS_GROUP,
-  { kind: 'item', id: 'safety', name: 'Safety', Icon: Shield, color: 'text-amber-400', description: 'Failsafes, arming checks, geofence' },
+  SAFETY_GROUP,
   { kind: 'item', id: 'battery', name: 'Battery', Icon: Battery, color: 'text-orange-400', description: 'Battery monitor configuration' },
   { kind: 'item', id: 'sensors', name: 'Sensors', Icon: Cpu, color: 'text-cyan-400', description: 'Live telemetry and sensor health' },
-  { kind: 'item', id: 'serial-ports', name: 'Serial Ports', Icon: Cable, color: 'text-sky-400', description: 'Configure serial port protocols and baud rates' },
-  { kind: 'item', id: 'telemetry-rates', name: 'Telemetry Rates', Icon: Gauge, color: 'text-teal-400', description: 'How often each kind of data is sent, and what it costs on the link' },
+  LINKS_GROUP,
   STORAGE_GROUP,
 ];
 
@@ -221,27 +257,40 @@ const PLANE_TABS: TabNode[] = [
   TUNING_GROUP,
   { kind: 'item', id: 'servo-output', name: 'Servo Output', Icon: Move, color: 'text-pink-400', description: 'Per-channel servo function, range, and live output' },
   RC_GROUP,
-  { kind: 'item', id: 'safety', name: 'Safety', Icon: Shield, color: 'text-amber-400', description: 'Failsafes, arming checks, geofence' },
+  SAFETY_GROUP,
   { kind: 'item', id: 'battery', name: 'Battery', Icon: Battery, color: 'text-orange-400', description: 'Battery monitor configuration' },
   { kind: 'item', id: 'sensors', name: 'Sensors', Icon: Cpu, color: 'text-cyan-400', description: 'Live telemetry and sensor health' },
-  { kind: 'item', id: 'serial-ports', name: 'Serial Ports', Icon: Cable, color: 'text-sky-400', description: 'Configure serial port protocols and baud rates' },
-  { kind: 'item', id: 'telemetry-rates', name: 'Telemetry Rates', Icon: Gauge, color: 'text-teal-400', description: 'How often each kind of data is sent, and what it costs on the link' },
+  LINKS_GROUP,
   STORAGE_GROUP,
 ];
 
 // Rover/Boat tabs — same Servo-Output-flat treatment as plane (no Motor Test
 // for ground vehicles either). Uses the rover-specific RC group whose modes
 // tab is labelled "Drive Modes".
+// Rovers get the same Tuning group as the other vehicles: the PID tab speaks
+// ATC_STR_RAT_* and ATC_SPEED_* now, so there is no reason it was flat here.
+const ROVER_TUNING_GROUP: TabGroup = {
+  kind: 'group',
+  id: 'rover-tuning-group',
+  name: 'Tuning',
+  Icon: Gauge,
+  color: 'text-blue-400',
+  description: 'Steering and speed controllers, limits and behaviour',
+  children: [
+    { id: 'pid', name: 'PID', Icon: Activity, color: 'text-blue-400', description: 'Steering rate and speed controller gains' },
+    { id: 'rover-tuning', name: 'Speed & Steering', Icon: Car, color: 'text-blue-400', description: 'Configure speed limits and steering behavior' },
+    { id: 'rover-nav', name: 'Navigation', Icon: Navigation, color: 'text-purple-400', description: 'Waypoint following and loiter settings' },
+  ],
+};
+
 const ROVER_TABS: TabNode[] = [
-  { kind: 'item', id: 'rover-tuning', name: 'Speed & Steering', Icon: Car, color: 'text-blue-400', description: 'Configure speed limits and steering behavior' },
-  { kind: 'item', id: 'rover-nav', name: 'Navigation', Icon: Navigation, color: 'text-purple-400', description: 'Waypoint following and loiter settings' },
+  ROVER_TUNING_GROUP,
   ROVER_RC_GROUP,
   { kind: 'item', id: 'servo-output', name: 'Servo Output', Icon: Move, color: 'text-pink-400', description: 'Per-channel servo function, range, and live output' },
-  { kind: 'item', id: 'safety', name: 'Safety', Icon: Shield, color: 'text-amber-400', description: 'Failsafes, arming checks, geofence' },
+  SAFETY_GROUP,
   { kind: 'item', id: 'battery', name: 'Battery', Icon: Battery, color: 'text-orange-400', description: 'Battery monitor configuration' },
   { kind: 'item', id: 'sensors', name: 'Sensors', Icon: Cpu, color: 'text-cyan-400', description: 'Live telemetry and sensor health' },
-  { kind: 'item', id: 'serial-ports', name: 'Serial Ports', Icon: Cable, color: 'text-sky-400', description: 'Configure serial port protocols and baud rates' },
-  { kind: 'item', id: 'telemetry-rates', name: 'Telemetry Rates', Icon: Gauge, color: 'text-teal-400', description: 'How often each kind of data is sent, and what it costs on the link' },
+  LINKS_GROUP,
   STORAGE_GROUP,
 ];
 
@@ -455,7 +504,7 @@ export const MavlinkConfigView: React.FC = () => {
       // Re-download the full list: a reboot can CREATE parameters (enabling
       // BATT2_MONITOR/COMPASS/GPS backends allocates their families on boot),
       // so the pre-reboot set is not just stale values but the wrong set.
-      fetchParameters();
+      fetchParameters({ force: true });
       showToast('Reboot complete, refreshing parameters...', 'success');
     } else if (!connectionState.isConnected && !connectionState.isReconnecting) {
       // Auto-reconnect gave up (timed out or was cancelled): stop the spinner
@@ -494,7 +543,9 @@ export const MavlinkConfigView: React.FC = () => {
       case 'telemetry-rates':
         return <TelemetryRatesTab />;
       case 'safety':
-        return <SafetyTab />;
+        return <SafetyTab onGoTo={(tab) => {
+          if (collectTabIds(tabs).includes(tab as TabId)) setActiveTab(tab as TabId);
+        }} />;
       case 'sensors':
         return <SensorsTab />;
       case 'motor-test':
@@ -507,6 +558,12 @@ export const MavlinkConfigView: React.FC = () => {
         return <ParameterTable />;
       case 'files':
         return <FilesTab />;
+      case 'logging':
+        return <LoggingTab />;
+      case 'arming':
+        return <ArmingTab onGoTo={(tab) => {
+          if (collectTabIds(tabs).includes(tab as TabId)) setActiveTab(tab as TabId);
+        }} />;
       default:
         return null;
     }
@@ -559,7 +616,7 @@ export const MavlinkConfigView: React.FC = () => {
             )}
 
             <button
-              onClick={() => fetchParameters()}
+              onClick={() => fetchParameters({ force: true })}
               disabled={isLoading}
               className="px-4 py-2 text-sm rounded-lg bg-surface-raised hover:bg-surface text-content border border-subtle"
             >

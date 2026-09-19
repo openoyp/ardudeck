@@ -31,6 +31,7 @@ import { GAUGE_COLORS } from './RoundGauge';
 import { useInDock } from './dock-context';
 import { SegmentBar, SignalBars, FillBehind, gaugeTint } from './ReadoutPrimitives';
 import { useLinkUp } from './useLinkUp';
+import { rssiState } from '../../../utils/rssi-state';
 import { useMapHomeStore } from './registry';
 import { STRIP_HEIGHT } from './stripMetrics';
 
@@ -340,20 +341,20 @@ function LinkReadout({ treatment }: { treatment: ReadoutTreatment }): JSX.Elemen
   const chancount = useTelemetryStore((s) => s.rcChannels.chancount);
   const radioStatus = useTelemetryStore((s) => s.radioStatus);
 
-  // 255 = "unknown" per MAVLink; 0 chancount means no RC data at all. RC-side
-  // RSSI first, then the telemetry modem's RADIO_STATUS (SiK/RFD900/ELRS).
-  const rcRssiKnown = connected && chancount > 0 && rssi !== 255;
-  const radioRssiKnown = connected && radioStatus !== null && radioStatus.rssi !== 255;
-  const known = rcRssiKnown || radioRssiKnown;
-  const effectiveRssi = rcRssiKnown ? rssi : radioStatus?.rssi ?? 0;
-  const pct = Math.round((Math.min(effectiveRssi, 254) / 254) * 100);
+  const state = rssiState({
+    connected,
+    rcRssi: rssi,
+    chancount,
+    modemRssi: radioStatus?.rssi ?? null,
+  });
+  const known = state.kind === 'value';
   const r: Readout = {
     tag: 'LINK',
-    value: known ? `${pct}%` : '--',
-    detail: known ? 'RSSI' : 'no RSSI',
-    fraction: known ? pct / 100 : 0,
+    value: known ? `${state.pct}%` : '--',
+    detail: known ? (state.fromModem ? 'TLM RSSI' : 'RSSI') : state.kind === 'unconfigured' ? 'not set up' : 'no RSSI',
+    fraction: known ? state.pct / 100 : 0,
     known,
-    color: known ? bandColor(pct) : GAUGE_COLORS.tickMinor,
+    color: known ? bandColor(state.pct) : GAUGE_COLORS.tickMinor,
   };
   return <ReadoutView treatment={treatment} r={r} />;
 }

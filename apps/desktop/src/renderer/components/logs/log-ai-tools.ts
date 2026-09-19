@@ -10,6 +10,8 @@
 
 import type { ParsedLog } from '../../stores/log-store';
 
+import { fieldNames, logRows } from '../../utils/log-columns';
+
 type LogMsg = { type: string; timeUs: number; fields: Record<string, number | string> };
 
 /** Round to a compact-but-faithful precision so tool payloads stay small. */
@@ -35,10 +37,9 @@ function windowFilter(msgs: LogMsg[], log: ParsedLog, startS?: number, endS?: nu
 
 export function listMessageTypes(log: ParsedLog): Array<{ type: string; count: number; fields: string[] }> {
   const out: Array<{ type: string; count: number; fields: string[] }> = [];
-  for (const [type, msgs] of Object.entries(log.messages)) {
-    const first = msgs[0];
-    if (!first) continue;
-    out.push({ type, count: msgs.length, fields: Object.keys(first.fields) });
+  for (const [type, cols] of Object.entries(log.messages)) {
+    if (cols.count === 0) continue;
+    out.push({ type, count: cols.count, fields: fieldNames(cols) });
   }
   out.sort((a, b) => b.count - a.count);
   return out;
@@ -53,7 +54,7 @@ export function getFieldStats(
 ): unknown {
   const all = log.messages[type];
   if (!all) return { error: `No messages of type "${type}". Call list_message_types to see what's available.` };
-  const msgs = windowFilter(all, log, startS, endS);
+  const msgs = windowFilter(logRows(log, type), log, startS, endS);
   if (!msgs.length) return { type, note: 'No messages in the requested time window.' };
 
   const want = fields && fields.length ? fields : Object.keys(msgs[0]!.fields);
@@ -106,7 +107,7 @@ export function readSamples(
 ): unknown {
   const all = log.messages[type];
   if (!all) return { error: `No messages of type "${type}". Call list_message_types to see what's available.` };
-  const msgs = windowFilter(all, log, startS, endS);
+  const msgs = windowFilter(logRows(log, type), log, startS, endS);
   if (!msgs.length) return { type, note: 'No messages in the requested time window.' };
 
   const cap = Math.min(Math.max(Math.floor(maxPoints) || 200, 1), 500);
@@ -131,7 +132,7 @@ export function getParameters(log: ParsedLog, names?: string[], search?: string)
   const parm = log.messages['PARM'];
   const map = new Map<string, number>();
   if (parm) {
-    for (const m of parm) {
+    for (const m of logRows(log, 'PARM')) {
       const name = m.fields['Name'];
       const val = m.fields['Value'];
       if (typeof name === 'string' && typeof val === 'number') map.set(name, val);

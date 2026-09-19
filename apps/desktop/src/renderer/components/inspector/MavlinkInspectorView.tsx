@@ -10,7 +10,7 @@
  * store tick). Graph panels independently sample on the same tick.
  */
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   DockviewReact,
   type DockviewApi,
@@ -27,10 +27,12 @@ import {
   getSamples,
   useInspectorStore,
   panelIdForGraph,
+  overlayBufferId,
   type GraphSample,
   type MessageStats,
   type GraphSpec,
 } from '../../stores/inspector-store';
+import { seriesColor } from '../logs/log-chart-stats';
 import { useConnectionStore } from '../../stores/connection-store';
 import { useActiveVehicleIdentity } from '../../hooks/useFleet';
 import { useResolvedTheme } from '../../hooks/useTheme';
@@ -79,9 +81,19 @@ function GraphHeaderActions(props: IDockviewHeaderActionsProps): JSX.Element | n
     // flat-line "warmup" while it accumulates the first ~minute of samples
     // and the user sees their existing graph effectively destroyed.
     const initialSamples: Record<string, GraphSample[]> = {};
+    const storeOverlays = useInspectorStore.getState().overlays;
+    const initialOverlays: Record<string, string[]> = {};
     for (const spec of specs) {
       const id = panelIdForGraph(spec);
       initialSamples[id] = [...getSamples(id)];
+      const fields = storeOverlays[id];
+      if (fields && fields.length > 0) {
+        initialOverlays[id] = [...fields];
+        for (const f of fields) {
+          const oid = overlayBufferId(id, f);
+          initialSamples[oid] = [...getSamples(oid)];
+        }
+      }
     }
 
     // Popout COPIES — we don't remove tabs from the main inspector. That
@@ -92,7 +104,7 @@ function GraphHeaderActions(props: IDockviewHeaderActionsProps): JSX.Element | n
       componentId: 'inspector-graphs',
       title: `Inspector: ${specs.length} graph${specs.length === 1 ? '' : 's'}`,
       initialBounds: { width: 1000, height: 700 },
-      props: { initialGraphs: specs, initialSamples },
+      props: { initialGraphs: specs, initialSamples, initialOverlays },
     });
   };
 
@@ -158,6 +170,11 @@ export function MavlinkInspectorView(): JSX.Element {
   const removeGraph = useInspectorStore((s) => s.removeGraph);
   const expandedKeys = useInspectorStore((s) => s.expandedTreeKeys);
   const apiRef = useRef<DockviewApi | null>(null);
+  const [treeWidth, setTreeWidth] = useState(loadTreeWidth);
+
+  useEffect(() => {
+    try { localStorage.setItem(TREE_WIDTH_KEY, String(treeWidth)); } catch { /* ignore */ }
+  }, [treeWidth]);
 
   const onDockviewReady = (event: DockviewReadyEvent) => {
     apiRef.current = event.api;
@@ -188,6 +205,7 @@ export function MavlinkInspectorView(): JSX.Element {
   useEffect(() => {
     const api = apiRef.current;
     if (!api) return;
+    const wanted = new Set(graphs.map(panelIdForGraph));
     for (const g of graphs) {
       const id = panelIdForGraph(g);
       if (api.getPanel(id)) continue;
@@ -197,6 +215,9 @@ export function MavlinkInspectorView(): JSX.Element {
         title: `${g.messageName}.${g.fieldName}`,
         params: { ...g },
       });
+    }
+    for (const panel of api.panels) {
+      if (!wanted.has(panel.id)) panel.api.close();
     }
   }, [graphs]);
 
@@ -345,7 +366,11 @@ export function MavlinkInspectorView(): JSX.Element {
 
       {/* Body: tree (left) | graph workspace (right) */}
       <div className="flex-1 min-h-0 flex">
-        <div className="w-[520px] shrink-0 border-r border-subtle overflow-auto px-2 py-2" data-tour="inspector-tree">
+        <div
+          style={{ width: treeWidth }}
+          className="shrink-0 overflow-auto px-2 py-2"
+          data-tour="inspector-tree"
+        >
           {filteredMessages.length === 0 ? (
             <EmptyState isConnected={isConnected} hasFilter={!!filterText} />
           ) : (
@@ -371,6 +396,8 @@ export function MavlinkInspectorView(): JSX.Element {
             })
           )}
         </div>
+
+        <TreeResizeHandle onDrag={(dx) => setTreeWidth((w) => clampTreeWidth(w + dx))} />
 
         <div className="flex-1 min-w-0" data-tour="inspector-graph-workspace">
           <DockviewReact
@@ -440,6 +467,56 @@ function MessageRow({
   );
 }
 
+const TREE_MIN = 280;
+const TREE_MAX = 900;
+const TREE_WIDTH_KEY = 'ardudeck.inspector.treeW';
+
+const clampTreeWidth = (w: number) => Math.max(TREE_MIN, Math.min(TREE_MAX, w));
+
+function loadTreeWidth(): number {
+  try {
+    const v = localStorage.getItem(TREE_WIDTH_KEY);
+    return v ? clampTreeWidth(Number(v)) : 520;
+  } catch {
+    return 520;
+  }
+}
+
+function TreeResizeHandle({ onDrag }: { onDrag: (dx: number) => void }): JSX.Element {
+  const last = useRef(0);
+  const down = (e: React.PointerEvent) => {
+    e.preventDefault();
+    last.current = e.clientX;
+    const move = (ev: PointerEvent) => {
+      const dx = ev.clientX - last.current;
+      last.current = ev.clientX;
+      onDrag(dx);
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return (
+    <div
+      onPointerDown={down}
+      className="w-1.5 shrink-0 cursor-col-resize border-r border-subtle bg-transparent transition-colors hover:bg-blue-500/40 active:bg-blue-500/60"
+      title="Drag to resize"
+    />
+  );
+}
+
+/**
+ * One graph per message: the first field plotted opens the panel, the rest
+ * join it as extra traces on the same axes. Clicking the field that opened it
+ * closes the panel.
+ */
 function FieldRow({
   stats,
   fieldName,
@@ -452,17 +529,36 @@ function FieldRow({
   const display = formatFieldValue(value);
   const isGraphable = typeof value === 'number' || typeof value === 'bigint';
 
+  const graphs = useInspectorStore((s) => s.graphs);
+  const overlays = useInspectorStore((s) => s.overlays);
+
+  const owner = graphs.find(
+    (g) => g.sysid === stats.sysid && g.compid === stats.compid && g.msgid === stats.msgid,
+  );
+  const panelId = owner ? panelIdForGraph(owner) : null;
+  const overlayFields = panelId ? overlays[panelId] ?? [] : [];
+  const isPrimary = owner?.fieldName === fieldName;
+  const overlayIndex = overlayFields.indexOf(fieldName);
+  const plotted = isPrimary || overlayIndex >= 0;
+  const colour = isPrimary ? seriesColor(0) : overlayIndex >= 0 ? seriesColor(overlayIndex + 1) : null;
+
   const handleGraph = () => {
-    // Add to the store directly. The MavlinkInspectorView's useEffect will
-    // see the new spec and call dockview.addPanel — same result as before,
-    // but the store keeps the list across view switches.
-    useInspectorStore.getState().addGraph({
-      sysid: stats.sysid,
-      compid: stats.compid,
-      msgid: stats.msgid,
-      messageName: stats.name,
-      fieldName,
-    });
+    const store = useInspectorStore.getState();
+    if (!owner || !panelId) {
+      store.addGraph({
+        sysid: stats.sysid,
+        compid: stats.compid,
+        msgid: stats.msgid,
+        messageName: stats.name,
+        fieldName,
+      });
+      return;
+    }
+    if (isPrimary) {
+      store.removeGraph(panelId);
+      return;
+    }
+    store.toggleOverlay(panelId, fieldName);
   };
 
   return (
@@ -473,8 +569,19 @@ function FieldRow({
         {isGraphable && (
           <button
             onClick={handleGraph}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-content-tertiary hover:text-blue-400 hover:bg-blue-500/10"
-            title="Add graph tab for this field"
+            className={`p-1 rounded transition-opacity hover:bg-blue-500/10 ${
+              plotted ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 text-content-tertiary hover:text-blue-400'
+            }`}
+            style={colour ? { color: colour } : undefined}
+            title={
+              plotted
+                ? isPrimary
+                  ? `Close the ${stats.name} graph`
+                  : 'Remove this trace from the graph'
+                : owner
+                  ? `Plot on the ${stats.name} graph`
+                  : 'Graph this field'
+            }
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

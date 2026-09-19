@@ -118,7 +118,9 @@ export function GuidesButton({ showToast }: { showToast?: (msg: string, kind: 's
                   <span className="flex-1 min-w-0 truncate text-xs text-content" title={g.name}>
                     {g.name}
                   </span>
-                  <span className="text-[10px] text-content-tertiary shrink-0">{g.polygon.length} pts</span>
+                  <span className="text-[10px] text-content-tertiary shrink-0">
+                    {g.kind === 'line' ? 'line · ' : ''}{g.polygon.length} pts
+                  </span>
                   <button
                     onClick={() => focusGuide(g.id)}
                     className="shrink-0 text-content-tertiary hover:text-teal-300 transition-colors"
@@ -129,16 +131,18 @@ export function GuidesButton({ showToast }: { showToast?: (msg: string, kind: 's
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v3m0 14v3M2 12h3m14 0h3" />
                     </svg>
                   </button>
-                  {g.polygon.length >= 3 && (
+                  {(g.kind === 'line' ? g.polygon.length >= 2 : g.polygon.length >= 3) && g.kind !== 'points' && (
                     <button
                       onClick={() => {
                         startSurveyFromGuide(g.id);
                         setOpen(false);
                       }}
                       className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-600/80 hover:bg-purple-500 text-white transition-colors"
-                      data-tip="Load into the survey panel and plan with the selected engine"
+                      data-tip={g.kind === 'line'
+                        ? 'Use as a corridor centerline in the survey panel'
+                        : 'Load into the survey panel and plan with the selected engine'}
                     >
-                      Plan
+                      {g.kind === 'line' ? 'Corridor' : 'Plan'}
                     </button>
                   )}
                   <button

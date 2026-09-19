@@ -5,7 +5,7 @@
 
 import { ipcMain, BrowserWindow, dialog, app, shell, safeStorage } from 'electron';
 import { join, dirname, basename } from 'path';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, statSync } from 'fs';
 import { execFile as execFileCb } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
@@ -18,7 +18,6 @@ import {
   renderPostureReport,
   type SecureLinkPosture,
 } from './signing/signing-audit.js';
-import { extractFlightSummary, type LogLike, type HealthLike } from './logs/fleet-log-summary.js';
 import { recordFlight, getFleetHistory, clearFleetHistory } from './logs/fleet-log-history.js';
 import type { AuthoredObstacle, SimObstacleStoreSchema } from '../shared/sim-obstacle-types.js';
 import {
@@ -150,7 +149,7 @@ import { getBoardInfoFromVersion } from '../shared/board-ids.js';
 import { detectBoards, fetchFirmwareVersions, downloadFirmware, copyCustomFirmware, flashWithDfu, flashWithAvrdude, flashWithSerialBootloader, flashWithArduPilotBootloader, getArduPilotBoards, getArduPilotVersions, getBetaflightBoards, getBetaflightVersions, resolveBetaflightDownloadUrl, getInavBoards, getInavVersions, type BoardInfo, type VersionGroup } from './firmware/index.js';
 import { scanForEdgeTxCards, probeVolume as probeEdgeTxVolume } from './edgetx/sd-detector.js';
 import { getPackage as getEdgeTxPackage, catalogInfo as edgeTxCatalogInfo, ARDUDECK_BW_SCRIPT } from './edgetx/package-registry.js';
-import { addTelemetryScreen, removeTelemetryScreen } from './edgetx/model-telemetry.js';
+import { addTelemetryScreen, removeTelemetryScreen, listModels } from './edgetx/model-telemetry.js';
 import { installPackage as installEdgeTxPackage, removePackage as removeEdgeTxPackage, readManifest as readEdgeTxManifest } from './edgetx/package-installer.js';
 import type { EdgeTxScanResult, InstalledPackageRecord, TelemetryScreenSummary } from '../shared/edgetx-types.js';
 import { registerMspHandlers, tryMspDetection, startMspTelemetry, stopMspTelemetry, cleanupMspConnection, exitCliModeIfActive, autoConfigureSitlPlatform, getMspVehicleType, resetSitlAutoConfig } from './msp/index.js';
@@ -182,10 +181,8 @@ import { detectElrsModule, setElrsLinkMode, cancelElrsOperation } from './link-d
 import { wfbngReceiver } from './media/wfbng-receiver.js';
 import { decodeServoOutputRaw } from './servo-output-decode.js';
 import { decodePx4ParamValue, encodePx4ParamSetValue } from './px4-param-bytewise.js';
-import { writeFile, readFile } from 'node:fs/promises';
+import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import { networkInterfaces } from 'node:os';
-import { createDataFlashParser, runHealthChecks } from '@ardudeck/dataflash-parser';
-import { createUlogParser, runPx4HealthChecks } from '@ardudeck/ulog-parser';
 import { sitlProcess } from './sitl/sitl-process.js';
 import { simEngineProcess } from './sim/sim-engine-process.js';
 import { mediaEngine } from './media/media-engine.js';
@@ -4449,19 +4446,10 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
       const filePath = path.join(dir, `fleet-${label}-${stamp}.bin`);
       await fs.writeFile(filePath, bytes);
 
-      const parser = createDataFlashParser();
-      parser.feed(new Uint8Array(bytes));
-      const log = parser.finalize();
-      const healthResults = runHealthChecks(log);
-      const summary = extractFlightSummary({
-        log: log as unknown as LogLike,
-        health: healthResults as unknown as HealthLike[],
-        path: filePath,
-        fileName: path.basename(filePath),
-        fileMtimeMs: Date.now(),
-        flightId: jobId,
-      });
-      recordFlight(summary);
+      const parsed = await parseLogInWorker(filePath, path.basename(filePath));
+      const summary = parsed.summary as { vehicleKey: string; fileName: string } | null;
+      if (!summary) return;
+      recordFlight(summary as Parameters<typeof recordFlight>[0]);
       safeSend(mainWindow, IPC_CHANNELS.FLEET_LOG_JOB_EVENT, {
         type: 'log.ingested', id: jobId, vehicleKey: summary.vehicleKey, fileName: summary.fileName,
       });
@@ -7303,6 +7291,13 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     // Guard against concurrent requests (renderer may fire multiple times on connect)
     if (paramRequestInFlight) {
       return { success: true }; // Already in progress
+    }
+    // A UDP link that has not heard from the vehicle yet has nowhere to send.
+    // Attempting anyway throws inside FTP and again in the fallback, which is
+    // three log lines per try and nothing gained: say so once instead.
+    const transport = currentTransport as (typeof currentTransport & { canWrite?: boolean }) | null;
+    if (transport && transport.canWrite === false) {
+      return { success: false, error: 'Link is up but the vehicle has not been heard from yet' };
     }
     paramRequestInFlight = true;
 
@@ -10820,13 +10815,20 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     win: BrowserWindow,
     volumePath: string,
     cfg: Record<string, string | number>,
+    modelName?: string,
   ): Promise<{ ok: boolean; cfg?: Record<string, string | number>; error?: string }> {
     const lines = [`# generated by ArduDeck ${new Date().toISOString()}`];
     for (const [k, v] of Object.entries(cfg)) {
       if (v !== '' && v !== null && v !== undefined) lines.push(`${k}=${v}`);
     }
     try {
-      await writeFile(join(volumePath, 'WIDGETS', 'ardudeck', 'hud.cfg'), lines.join('\n') + '\n', 'utf8');
+      // Same sanitising as the widget's cfgFileName, or it looks for a name
+      // this never wrote.
+      const target = modelName
+        ? join(volumePath, 'WIDGETS', 'ardudeck', 'models', `${modelName.replace(/[^\w\-\s]/g, '_')}.cfg`)
+        : join(volumePath, 'WIDGETS', 'ardudeck', 'hud.cfg');
+      await mkdir(dirname(target), { recursive: true });
+      await writeFile(target, lines.join('\n') + '\n', 'utf8');
       sendLog(win, 'info', `ArduDeck HUD config written (${Object.keys(cfg).length} values)`);
       return { ok: true, cfg };
     } catch (err) {
@@ -10851,14 +10853,26 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     _,
     volumePath: string,
     cfg: Record<string, string | number>,
+    modelName?: string,
   ) => {
     if (!mainWindow) return { ok: false, error: 'no window' };
-    return writeHudCfgFile(mainWindow, volumePath, cfg);
+    return writeHudCfgFile(mainWindow, volumePath, cfg, modelName);
   });
 
-  ipcMain.handle(IPC_CHANNELS.EDGETX_HUD_CONFIG_GET, async (_, volumePath: string): Promise<Record<string, string> | null> => {
+  ipcMain.handle(IPC_CHANNELS.EDGETX_MODELS_LIST, async (_, volumePath: string) => {
+    return listModels(volumePath);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.EDGETX_HUD_CONFIG_GET, async (
+    _,
+    volumePath: string,
+    modelName?: string,
+  ): Promise<Record<string, string> | null> => {
     try {
-      const raw = await readFile(join(volumePath, 'WIDGETS', 'ardudeck', 'hud.cfg'), 'utf8');
+      const file = modelName
+        ? join(volumePath, 'WIDGETS', 'ardudeck', 'models', `${modelName.replace(/[^\w\-\s]/g, '_')}.cfg`)
+        : join(volumePath, 'WIDGETS', 'ardudeck', 'hud.cfg');
+      const raw = await readFile(file, 'utf8');
       const cfg: Record<string, string> = {};
       for (const line of raw.split('\n')) {
         const m = line.match(/^(\w+)=(.+)$/);
@@ -10976,10 +10990,15 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
         safeSend(mainWindow, IPC_CHANNELS.EDGETX_PROGRESS, { packageId, ...p });
       });
       // ArduDeck HUD: generate widget config from the connected vehicle so the
-      // radio side needs zero setup.
+      // radio side needs zero setup. First install only: every Apply reinstalls
+      // the widget files, and regenerating here would wipe the tile layout out
+      // of the shared config, which is the one every model without its own
+      // reads.
       let screens: TelemetryScreenSummary | undefined;
       if (packageId === 'ardudeck-hud') {
-        await generateHudConfig(mainWindow, volumePath);
+        const hudCfgPath = join(volumePath, 'WIDGETS', 'ardudeck', 'hud.cfg');
+        const hudCfgExists = await readFile(hudCfgPath, 'utf8').then(() => true).catch(() => false);
+        if (!hudCfgExists) await generateHudConfig(mainWindow, volumePath);
         // Monochrome radios have no widgets: point every model's telemetry
         // screen at the script here so nothing has to be set up on the radio.
         if (variantId.startsWith('bw')) {
@@ -12939,16 +12958,54 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   // model where the renderer received the file as `number[]` (100M JS Numbers
   // for a 100MB log) and then sent it back to main for parsing — that
   // double-IPC-marshal was the multi-minute "frozen UI" symptom users saw.
-  // Detect log format from the leading magic bytes. ULog files start with the
-  // ASCII bytes 'U','L','o','g' (0x55 0x4C 0x6F 0x67). Everything else defaults
-  // to dataflash so any non-ULog file behaves exactly as before (preserves
-  // ArduPilot logs and the All-Files-pick-anything behavior).
-  const detectLogFormat = (buf: Uint8Array): 'dataflash' | 'ulog' => {
-    if (buf.length >= 4 && buf[0] === 0x55 && buf[1] === 0x4c && buf[2] === 0x6f && buf[3] === 0x67) {
-      return 'ulog';
-    }
-    return 'dataflash';
-  };
+  /**
+   * Decode a log file in a worker thread. Parsing a 200 MB dataflash file takes
+   * many seconds; on the main thread that freezes every window, the IPC queue
+   * and the MAVLink link with it, so nothing in main decodes logs itself.
+   */
+  async function parseLogInWorker(
+    filePath: string,
+    fileName: string,
+    onProgress?: (bytesConsumed: number, totalBytes: number) => void,
+  ): Promise<{ log: unknown; healthResults: unknown; summary: unknown }> {
+    const { Worker } = await import('node:worker_threads');
+    const totalBytes = statSync(filePath).size;
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const worker = new Worker(join(__dirname, 'log-worker.js'), {
+        workerData: { type: 'parse', filePath, fileName },
+        // Headroom a big log needs; failing with a clear message beats an
+        // opaque worker crash.
+        resourceLimits: { maxOldGenerationSizeMb: 8192 },
+      });
+      const finish = (fn: () => void) => {
+        if (settled) return;
+        settled = true;
+        void worker.terminate();
+        fn();
+      };
+      worker.on('message', (msg: { type: string; [k: string]: unknown }) => {
+        if (msg.type === 'progress') {
+          onProgress?.((msg.bytesConsumed as number) ?? 0, (msg.totalBytes as number) || totalBytes);
+          return;
+        }
+        if (msg.type === 'complete') {
+          finish(() => resolve({ log: msg.log, healthResults: msg.healthResults, summary: msg.summary }));
+          return;
+        }
+        if (msg.type === 'error') finish(() => reject(new Error(String(msg.error))));
+      });
+      worker.on('error', (err) => finish(() => reject(new Error(`Log parse failed: ${err.message}`))));
+      worker.on('exit', (code) => {
+        // Code 1 with no message is how an out-of-memory worker dies.
+        finish(() => reject(new Error(
+          code === 0
+            ? 'Log parse ended without a result'
+            : `Log parse ran out of memory (${fileName} is ${Math.round(totalBytes / 1e6)} MB)`,
+        )));
+      });
+    });
+  }
 
   ipcMain.handle(IPC_CHANNELS.LOG_PARSE_FILE, async (_, filePath: string): Promise<unknown> => {
     if (!existsSync(filePath)) {
@@ -12958,91 +13015,21 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
       throw new Error(`File no longer exists: ${filePath}`);
     }
 
-    const buffer = await readFile(filePath);
-    const totalBytes = buffer.length;
-
-    // Add to recent logs up-front so the UI can refresh its list while parsing.
     const name = filePath.split(/[\\/]/).pop() ?? filePath;
+    const totalBytes = statSync(filePath).size;
     rememberRecentLog({ path: filePath, name, size: totalBytes, openedAt: Date.now() });
 
-    // Stream the file into the parser in 1 MB chunks so we can emit progress
-    // and yield the event loop between feeds. Without the yield, IPC events
-    // queued by sendLogParseProgress would not flush to the renderer until
-    // the entire parse completed, leaving the progress bar stuck at 0%.
-    const logFormat = detectLogFormat(buffer);
-    const parser = logFormat === 'ulog' ? createUlogParser() : createDataFlashParser();
-    const CHUNK = 1024 * 1024;
-    const yieldEventLoop = () => new Promise<void>((r) => setImmediate(r));
-    const sendProgress = (bytesConsumed: number) => {
-      mainWindow?.webContents.send(IPC_CHANNELS.LOG_PARSE_PROGRESS, {
-        bytesConsumed, totalBytes,
-      });
-    };
-
-    sendProgress(0);
-    for (let offset = 0; offset < totalBytes; offset += CHUNK) {
-      const end = Math.min(offset + CHUNK, totalBytes);
-      const slice = new Uint8Array(buffer.buffer, buffer.byteOffset + offset, end - offset);
-      parser.feed(slice);
-      sendProgress(end);
-      await yieldEventLoop();
+    const parsed = await parseLogInWorker(filePath, name, (bytesConsumed, total) => {
+      mainWindow?.webContents.send(IPC_CHANNELS.LOG_PARSE_PROGRESS, { bytesConsumed, totalBytes: total });
+    });
+    if (parsed.summary) {
+      try {
+        recordFlight(parsed.summary as Parameters<typeof recordFlight>[0]);
+      } catch (err) {
+        console.warn('[fleet-log] failed to record flight summary:', err);
+      }
     }
-    const log = parser.finalize();
-
-    const healthResults = logFormat === 'ulog' ? runPx4HealthChecks(log) : runHealthChecks(log);
-
-    // Fleet Forensics: persist a compact per-vehicle flight summary so health
-    // trends + maintenance flags can roll up across the fleet. Best-effort - a
-    // failure here must never break opening the log.
-    try {
-      const { statSync } = await import('node:fs');
-      const { randomUUID } = await import('node:crypto');
-      let mtimeMs = Date.now();
-      try { mtimeMs = statSync(filePath).mtimeMs; } catch { /* keep now */ }
-      const summary = extractFlightSummary({
-        log: log as unknown as LogLike,
-        health: healthResults as unknown as HealthLike[],
-        path: filePath,
-        fileName: name,
-        fileMtimeMs: mtimeMs,
-        flightId: randomUUID(),
-      });
-      recordFlight(summary);
-    } catch (err) {
-      console.warn('[fleet-log] failed to record flight summary:', err);
-    }
-
-    // Serialize Maps to plain objects for IPC transfer
-    const formats: Record<number, unknown> = {};
-    for (const [k, v] of log.formats) formats[k] = v;
-    const messages: Record<string, unknown> = {};
-    for (const [k, v] of log.messages) messages[k] = v;
-    // unitLabels / multValues were added to DataFlashLog after the package's
-    // dist was last built. Guard so a stale dist doesn't crash the IPC handler
-    // (and so older logs that simply have no UNIT/FMTU records also work).
-    const unitLabels: Record<string, string> = {};
-    if (log.unitLabels instanceof Map) {
-      for (const [k, v] of log.unitLabels) unitLabels[k] = v;
-    }
-    const multValues: Record<string, number> = {};
-    if (log.multValues instanceof Map) {
-      for (const [k, v] of log.multValues) multValues[k] = v;
-    }
-
-    return {
-      log: {
-        format: log.format,
-        formats,
-        messages,
-        metadata: log.metadata,
-        timeRange: log.timeRange,
-        messageTypes: log.messageTypes,
-        unitLabels,
-        multValues,
-      },
-      healthResults,
-      path: filePath,
-    };
+    return { log: parsed.log, healthResults: parsed.healthResults, path: filePath };
   });
 
   // ─── AI Flight Log Analysis ─────────────────────────────────────────────────
@@ -13823,13 +13810,6 @@ function parseRallyFile(content: string): RallyItem[] {
  */
 export async function cleanupOnShutdown(): Promise<void> {
   try {
-    // Shutdown unified logger (flushes remaining logs)
-    shutdownLogger();
-  } catch (err) {
-    console.warn('[Shutdown] Error shutting down logger:', err);
-  }
-
-  try {
     // Drop the NTRIP caster connection so it doesn't linger past the app
     cleanupNtrip();
   } catch (err) {
@@ -13839,6 +13819,7 @@ export async function cleanupOnShutdown(): Promise<void> {
   try {
     // Close the sim handover endpoint and remove its discovery file, so the
     // Trainer game never dials a port that died with this app.
+    console.log('[Shutdown] stopping sim handover endpoint');
     await stopSimHandoverServer();
   } catch (err) {
     console.warn('[Shutdown] Error stopping sim handover endpoint:', err);
@@ -13876,6 +13857,7 @@ export async function cleanupOnShutdown(): Promise<void> {
     // the only symptom is the Trainer refusing to launch while saying a flight controller is
     // already running - which is true, and useless, because the application it belongs to is
     // not on screen. Found after it blocked three separate launches in one session.
+    console.log('[Shutdown] stopping the sim engine');
     await simEngineProcess.stopAndWait();
   } catch (err) {
     console.warn('[Shutdown] Error stopping the sim engine:', err);
@@ -13913,6 +13895,7 @@ export async function cleanupOnShutdown(): Promise<void> {
   try {
     // Close transport if open
     if (currentTransport?.isOpen) {
+      console.log('[Shutdown] closing the vehicle link');
       await currentTransport.close();
     }
   } catch (err) {
@@ -13934,4 +13917,11 @@ export async function cleanupOnShutdown(): Promise<void> {
   // Reset state
   currentTransport = null;
   mavlinkParser = null;
+
+  try {
+    // Last, so a step that hangs is still on record in the session log.
+    shutdownLogger();
+  } catch (err) {
+    console.warn('[Shutdown] Error shutting down logger:', err);
+  }
 }

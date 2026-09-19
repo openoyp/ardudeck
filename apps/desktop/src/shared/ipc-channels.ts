@@ -298,6 +298,7 @@ export const IPC_CHANNELS = {
   EDGETX_HUD_CONFIG_WRITE: 'edgetx:hud-config-write',
   EDGETX_EJECT: 'edgetx:eject',
   EDGETX_HUD_MAPS_WRITE: 'edgetx:hud-maps-write',
+  EDGETX_MODELS_LIST: 'edgetx:models-list',
 
   // Voice announcer (desktop): pre-generated phrase wavs shared with the
   // EdgeTX widget bundle

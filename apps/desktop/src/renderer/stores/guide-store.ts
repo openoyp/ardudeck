@@ -10,7 +10,7 @@
  */
 import { create } from 'zustand';
 import type { LatLng } from '../components/survey/survey-types';
-import { parseGisArea } from '../../shared/gis-area-import';
+import { parseGisArea, parseGisLines } from '../../shared/gis-area-import';
 import { simplifyPolygon } from '../components/survey/geo-math';
 import { GROUP_COLOR_PALETTE } from '../../shared/mission-group-types';
 import { useSettingsStore } from './settings-store';
@@ -25,10 +25,11 @@ export interface MapGuide {
   color: string;
   /**
    * 'points' renders numbered markers (surveyed RTK points) instead of an
-   * outline; `polygon` then holds the points in measurement order. Absent =
-   * 'polygon' (guides that predate the field).
+   * outline, 'line' renders an open path (a road, a rail line, a power line)
+   * that can be used as a corridor centerline. In both cases `polygon` holds
+   * the ordered vertices. Absent = 'polygon' (guides that predate the field).
    */
-  kind?: 'polygon' | 'points';
+  kind?: 'polygon' | 'points' | 'line';
   /** Per-point labels for 'points' guides (parallel to `polygon`). */
   pointLabels?: (string | null)[];
 }
@@ -65,6 +66,11 @@ interface GuideStore {
   /** Pan/zoom the mission map to a guide (and unhide it if hidden). */
   focusGuide: (id: string) => void;
   /**
+   * Load a line guide as a corridor centerline and open the survey panel with
+   * the corridor pattern selected. The guide itself stays on the map.
+   */
+  startCorridorFromGuide: (id: string) => void;
+  /**
    * Load a guide into the survey draft (polygon + holes) and open the survey
    * panel. Generation then runs through the normal flow, so the currently
    * selected engine (grid, TOPAS, ...) applies and Insert commits as usual.
@@ -97,8 +103,9 @@ export const useGuideStore = create<GuideStore>((set, get) => ({
     }
     if (!res.content || !res.format) return { ok: false, count: 0, error: 'Empty file' };
     const areas = parseGisArea(res.content, res.format);
-    if (areas.length === 0) {
-      return { ok: false, count: 0, error: 'No polygon boundary found in the file' };
+    const lines = parseGisLines(res.content, res.format);
+    if (areas.length === 0 && lines.length === 0) {
+      return { ok: false, count: 0, error: 'No polygons or lines found in the file' };
     }
 
     // Same vertex thinning as the survey import: GIS boundaries are digitized
@@ -119,10 +126,21 @@ export const useGuideStore = create<GuideStore>((set, get) => ({
       color: GROUP_COLOR_PALETTE[(base + i) % GROUP_COLOR_PALETTE.length]!,
     }));
 
-    const guides = [...get().guides, ...added];
+    const lineBase = base + added.length;
+    const addedLines: MapGuide[] = lines.map((line, i) => ({
+      id: uuid(),
+      name: line.name || `Line ${lineBase + i + 1}`,
+      polygon: simplifyPolygon(line.path.map((p) => ({ lat: p.lat, lng: p.lng })), toleranceM),
+      holes: [],
+      visible: true,
+      color: GROUP_COLOR_PALETTE[(lineBase + i) % GROUP_COLOR_PALETTE.length]!,
+      kind: 'line',
+    }));
+
+    const guides = [...get().guides, ...added, ...addedLines];
     set({ guides });
     persist(guides);
-    return { ok: true, count: added.length };
+    return { ok: true, count: added.length + addedLines.length };
   },
 
   addGuidesFromAreas: (areas) => {
@@ -216,7 +234,17 @@ export const useGuideStore = create<GuideStore>((set, get) => ({
   startSurveyFromGuide: (id) => {
     const guide = get().guides.find((g) => g.id === id);
     if (!guide) return;
+    if (guide.kind === 'line') {
+      useSurveyStore.getState().loadDraftFromCenterline(guide.polygon);
+      return;
+    }
     useSurveyStore.getState().loadDraftFromPolygon(guide.polygon, guide.holes);
+  },
+
+  startCorridorFromGuide: (id) => {
+    const guide = get().guides.find((g) => g.id === id);
+    if (!guide) return;
+    useSurveyStore.getState().loadDraftFromCenterline(guide.polygon);
   },
 }));
 

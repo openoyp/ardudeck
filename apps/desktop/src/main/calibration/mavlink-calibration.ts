@@ -111,6 +111,7 @@ const PX4_CAL_TIMEOUT_MS: Record<string, number> = {
   'compass': 300_000,
   'accel-6point': 300_000,
   'accel-level': 60_000,
+  'accel-quick': 60_000,
   'gyro': 60_000,
 };
 
@@ -145,7 +146,8 @@ let activeFirmware: CalibrationFirmware = 'ardupilot';
 // insufficient rotation) instead of sitting at 95% forever. A healthy compass
 // finishes in 30-90s even rotating slowly.
 let compassCalTimeoutId: ReturnType<typeof setTimeout> | null = null;
-const COMPASS_CAL_TIMEOUT_MS = 150000;
+/** No progress for this long ends the run. Re-armed on every advance. */
+const COMPASS_CAL_STALL_MS = 150000;
 
 // PX4 whole-run watchdog (armed for every PX4 cal type) and 6-point side
 // bookkeeping driven by "[cal] <side> side done" messages.
@@ -340,6 +342,8 @@ export async function startMavlinkCalibration(
   switch (type) {
     case 'accel-level':
       return startAccelLevel();
+    case 'accel-quick':
+      return startAccelQuick();
     case 'accel-6point':
       return startAccel6Point();
     case 'gyro':
@@ -474,7 +478,7 @@ export function abortVehicleCalibration(): void {
  * ACKs nor emits a recognizable STATUSTEXT, we fail the cal so the UI
  * doesn't hang at "Calibrating..." forever.
  */
-function armOneShotTimeout(type: 'accel-level' | 'gyro'): void {
+function armOneShotTimeout(type: 'accel-level' | 'accel-quick' | 'gyro'): void {
   if (oneShotTimeoutId) clearTimeout(oneShotTimeoutId);
   oneShotTimeoutId = setTimeout(() => {
     oneShotTimeoutId = null;
@@ -791,6 +795,7 @@ async function startPx4Calibration(type: CalibrationTypeId): Promise<{ success: 
     case 'compass': params.param2 = 1; break;
     case 'accel-6point': params.param5 = 1; break;
     case 'accel-level': params.param5 = 2; break;
+    case 'accel-quick': params.param5 = 4; break;
     default:
       activeCalType = null;
       return { success: false, error: `Unsupported PX4 calibration type: ${type}` };
@@ -855,6 +860,7 @@ export function handleMagCalProgress(compassId: number, _calStatus: number, comp
   // Cap below 100 until MAG_CAL_REPORT confirms the fit — the pct hits 100
   // before the FC has judged fitness.
   const pct = Math.max(0, Math.min(completionPct, 99));
+  if (pct > (magCalPcts.get(compassId) ?? -1)) armCompassStallTimer();
   magCalPcts.set(compassId, pct);
 
   // Dense per-compass array for the UI (ids are contiguous from 0 in the mask
@@ -971,7 +977,7 @@ export function handleCalibrationCommandAck(command: number, result: number): vo
       //  MAV_RESULT_ACCEPTED only after the calibration completes; they emit
       //  no STATUSTEXT. Mission Planner's doCommand() relies on this same
       //  semantic — see ConfigAccelerometerCalibration.cs BUT_level_Click.)
-      if (activeCalType === 'accel-level' || activeCalType === 'gyro') {
+      if (activeCalType === 'accel-level' || activeCalType === 'accel-quick' || activeCalType === 'gyro') {
         deps.sendLog('info', `${activeCalType} calibration accepted by FC — completion confirmed`);
         deps.sendComplete({
           type: activeCalType,
@@ -996,8 +1002,11 @@ export function handleCalibrationCommandAck(command: number, result: number): vo
       // met — AP checks ins.calibrated() before accepting trim cal, which
       // requires a prior 6-point accel calibration.
       let userError: string;
-      if (result === 1 && activeCalType === 'accel-level') {
-        userError = 'Accelerometer not yet calibrated. Run a 6-point accelerometer calibration first, then try level calibration again.';
+      if (result === 1 && activeCalType === 'accel-quick') {
+        // AP refuses a second simple cal within 5 s of the last one.
+        userError = 'The flight controller is still busy with the last calibration. Wait a few seconds and try again.';
+      } else if (result === 1 && activeCalType === 'accel-level') {
+        userError = 'Accelerometer not yet calibrated. Run the Quick (one position) or 6-point accelerometer calibration first, then level again.';
       } else if (result === 1) {
         userError = 'Flight controller is not ready. Wait a few seconds after connecting and try again.';
       } else {
@@ -1135,6 +1144,48 @@ async function startAccelLevel(): Promise<{ success: boolean; error?: string }> 
   return { success: true };
 }
 
+/**
+ * One-position accelerometer calibration (param5=4). ArduPilot averages the
+ * accelerometers with the vehicle level and still, then saves INS_ACCOFFS_*
+ * and the existing scales, which is exactly what `accel_calibrated_ok_all()`
+ * wants. It clears "3D Accel calibration needed" without turning a rover, a
+ * boat or a large aircraft onto each of its faces.
+ */
+async function startAccelQuick(): Promise<{ success: boolean; error?: string }> {
+  if (!deps) return { success: false, error: 'Not initialized' };
+
+  deps.sendLog('info', 'Starting MAVLink quick accel calibration (MAV_CMD_PREFLIGHT_CALIBRATION param5=4)');
+  deps.sendProgress({
+    type: 'accel-quick',
+    progress: 0,
+    statusText: 'Sending quick calibration command...',
+  });
+
+  const sent = await deps.sendCommandLong(MAV_CMD_PREFLIGHT_CALIBRATION, {
+    param1: 0,
+    param2: 0,
+    param3: 0,
+    param4: 0,
+    param5: 4, // simple (single position) accel calibration
+    param6: 0,
+    param7: 0,
+  });
+
+  if (!sent) {
+    activeCalType = null;
+    return { success: false, error: 'Failed to send calibration command, ensure FC is connected' };
+  }
+
+  deps.sendProgress({
+    type: 'accel-quick',
+    progress: 0,
+    statusText: 'Calibrating... keep the vehicle level and completely still',
+  });
+  armOneShotTimeout('accel-quick');
+
+  return { success: true };
+}
+
 async function startAccel6Point(): Promise<{ success: boolean; error?: string }> {
   if (!deps) return { success: false, error: 'Not initialized' };
 
@@ -1216,7 +1267,7 @@ async function startCompass(): Promise<{ success: boolean; error?: string }> {
 
   const sent = await deps.sendCommandLong(MAV_CMD_DO_START_MAG_CAL, {
     param1: 0, // mag_mask: 0 = calibrate all enabled compasses
-    param2: 1, // retry on failure
+    param2: 0, // no retry: the firmware's retry has no attempt limit and hides the failure reason
     param3: 1, // autosave offsets when the fit succeeds
     param4: 0, // delay before start (s)
     param5: 0, // autoreboot
@@ -1232,18 +1283,7 @@ async function startCompass(): Promise<{ success: boolean; error?: string }> {
   // Convergence timeout: if no MAG_CAL_REPORT / "calibrated" STATUSTEXT arrives
   // in time, the fit isn't converging (unhealthy compass, interference, or too
   // little rotation). Fail with a clear message instead of hanging at 95%.
-  if (compassCalTimeoutId) clearTimeout(compassCalTimeoutId);
-  compassCalTimeoutId = setTimeout(() => {
-    compassCalTimeoutId = null;
-    if (!deps || activeCalType !== 'compass') return;
-    deps.sendLog('error', 'Compass calibration did not converge within the time limit');
-    deps.sendComplete({
-      type: 'compass',
-      success: false,
-      error: 'Compass calibration is not converging. Check the compass is healthy (prearm "Compass not healthy" means it is not), move away from metal/magnets/wiring, and rotate through all axes. If this FC has no working compass, disable it (COMPASS_ENABLE=0) — Stabilize does not need one.',
-    });
-    cancelMavlinkCalibration();
-  }, COMPASS_CAL_TIMEOUT_MS);
+  armCompassStallTimer();
 
   // The ONLY progress source from here on is the vehicle itself
   // (MAG_CAL_PROGRESS / STATUSTEXT percentages). No synthetic time-based
@@ -1256,4 +1296,19 @@ async function startCompass(): Promise<{ success: boolean; error?: string }> {
   });
 
   return { success: true };
+}
+
+function armCompassStallTimer(): void {
+  if (compassCalTimeoutId) clearTimeout(compassCalTimeoutId);
+  compassCalTimeoutId = setTimeout(() => {
+    compassCalTimeoutId = null;
+    if (!deps || activeCalType !== 'compass') return;
+    deps.sendLog('error', 'Compass calibration did not converge within the time limit');
+    deps.sendComplete({
+      type: 'compass',
+      success: false,
+      error: 'Compass calibration is not converging. Check the compass is healthy (prearm "Compass not healthy" means it is not), move away from metal/magnets/wiring, and rotate through all axes. If this FC has no working compass, disable it (COMPASS_ENABLE=0) — Stabilize does not need one.',
+    });
+    cancelMavlinkCalibration();
+  }, COMPASS_CAL_STALL_MS);
 }

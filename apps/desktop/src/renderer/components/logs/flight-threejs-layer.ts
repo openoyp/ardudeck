@@ -28,6 +28,13 @@ export interface FlightPathLayerData {
 export interface FlightPathThreeJsLayer {
   layer: CustomLayerInterface;
   updateData: (data: FlightPathLayerData) => void;
+  /** Highlight the point at `index`, or clear with null. Drawn in this scene,
+      not as a map marker: a DOM marker sits on the ground plane while the path
+      is drawn at altitude over terrain, so the two never line up. */
+  setHoverIndex: (index: number | null) => void;
+  /** Called each frame with the highlighted point's screen position (null when
+      nothing is highlighted), so a label can sit against the dot. */
+  onHoverScreen: (cb: ((pos: { x: number; y: number } | null) => void) | null) => void;
   dispose: () => void;
 }
 
@@ -44,6 +51,8 @@ const DROP_LINE_OPACITY = 0.55;
 const DROP_LINE_TARGET = 40;
 /** Drop lines start once the track is clear of the ground by this much. */
 const DROP_LINE_MIN_HEIGHT_M = 0.5;
+/** On-screen radius of the chart-hover dot, in CSS pixels. */
+const HOVER_DOT_PX = 6;
 
 export function createFlightPathThreeJsLayer(): FlightPathThreeJsLayer {
   let map: maplibregl.Map | null = null;
@@ -54,6 +63,10 @@ export function createFlightPathThreeJsLayer(): FlightPathThreeJsLayer {
   let modelTransform = { translateX: 0, translateY: 0, translateZ: 0, scale: 1 };
   const rotationX = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
 
+  let hoverDot: THREE.Mesh | null = null;
+  let hoverLocal: { x: number; y: number; z: number } | null = null;
+  let hoverScreenCb: ((pos: { x: number; y: number } | null) => void) | null = null;
+  let localPoints: Array<{ x: number; y: number; z: number }> = [];
   let pathLine: Line2 | null = null;
   let pathGeometry: LineGeometry | null = null;
   let pathMaterial: LineMaterial | null = null;
@@ -103,6 +116,15 @@ export function createFlightPathThreeJsLayer(): FlightPathThreeJsLayer {
         groundY: groundElevation,
       };
     });
+
+    localPoints = local;
+    hoverLocal = null;
+    if (hoverDot) {
+      scene.remove(hoverDot);
+      hoverDot.geometry.dispose();
+      (hoverDot.material as THREE.Material).dispose();
+      hoverDot = null;
+    }
 
     // One screen-space polyline through every point. Width is in pixels, so it
     // looks like a line at any zoom instead of a hairline or a solid tube.
@@ -218,6 +240,26 @@ export function createFlightPathThreeJsLayer(): FlightPathThreeJsLayer {
 
       renderer.resetState();
       renderer.render(scene, camera);
+
+      if (hoverLocal) {
+        const canvas = map.getCanvas();
+        const w = canvas.clientWidth || canvas.width;
+        const h = canvas.clientHeight || canvas.height;
+        const toScreen = (x: number, y: number, z: number) => {
+          const ndc = new THREE.Vector3(x, y, z).applyMatrix4(camera.projectionMatrix);
+          return { x: (ndc.x * 0.5 + 0.5) * w, y: (-ndc.y * 0.5 + 0.5) * h };
+        };
+        const at = toScreen(hoverLocal.x, hoverLocal.y, hoverLocal.z);
+        if (hoverDot?.visible) {
+          // Pixels per metre here and now, so the dot keeps its size at any zoom.
+          const oneMetre = toScreen(hoverLocal.x + 1, hoverLocal.y, hoverLocal.z);
+          const pxPerM = Math.hypot(oneMetre.x - at.x, oneMetre.y - at.y);
+          hoverDot.scale.setScalar(HOVER_DOT_PX / Math.max(pxPerM, 1e-4));
+        }
+        hoverScreenCb?.(at);
+      } else {
+        hoverScreenCb?.(null);
+      }
     },
   };
 
@@ -225,6 +267,35 @@ export function createFlightPathThreeJsLayer(): FlightPathThreeJsLayer {
     layer,
     updateData(data: FlightPathLayerData) {
       rebuildScene(data);
+      map?.triggerRepaint();
+    },
+
+    onHoverScreen(cb) {
+      hoverScreenCb = cb;
+    },
+
+    setHoverIndex(index: number | null) {
+      const p = index == null ? null : localPoints[index];
+      hoverLocal = p ?? null;
+      if (!p) {
+        hoverScreenCb?.(null);
+        if (hoverDot) hoverDot.visible = false;
+        map?.triggerRepaint();
+        return;
+      }
+      if (!hoverDot) {
+        // Unit sphere, rescaled every frame to a fixed pixel size: sized in
+        // metres it swamps a 30 m flight and disappears on a 3 km one, and
+        // either way changes with zoom.
+        hoverDot = new THREE.Mesh(
+          new THREE.SphereGeometry(1, 20, 14),
+          new THREE.MeshBasicMaterial({ color: 0x3b82f6, depthTest: false }),
+        );
+        hoverDot.renderOrder = 10;
+        scene.add(hoverDot);
+      }
+      hoverDot.visible = true;
+      hoverDot.position.set(p.x, p.y, p.z);
       map?.triggerRepaint();
     },
     dispose() {

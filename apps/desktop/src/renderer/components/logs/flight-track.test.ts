@@ -5,13 +5,19 @@ import {
   frameBounds,
   trackHorizontalSpanM,
   trackIndexAtTime,
+  trackIndexNearTime,
   trackAltitudeRange,
 } from './flight-track';
+import { columnsFromRows } from '../../utils/log-columns';
 
 type Msg = { type: string; timeUs: number; fields: Record<string, number | string> };
 
 function log(messages: Record<string, Msg[]>) {
-  return { messages };
+  return {
+    messages: Object.fromEntries(
+      Object.entries(messages).map(([type, rows]) => [type, columnsFromRows(rows)]),
+    ),
+  };
 }
 
 function gpsRows(alts: number[], opts: { lat?: number; lon?: number } = {}): Msg[] {
@@ -208,5 +214,46 @@ describe('track geometry helpers', () => {
     expect(trackIndexAtTime(track.points, 2)).toBe(2);
     expect(trackIndexAtTime(track.points, 99)).toBe(3);
     expect(trackIndexAtTime([], 1)).toBe(-1);
+  });
+});
+
+describe('hover lookup', () => {
+  const track = (times: number[]) => times.map((timeS, i) => ({
+    lat: 47.1 + i * 1e-4, lon: 8.5, altRel: i, altAmsl: 400 + i, timeS, speed: null,
+  }));
+
+  it('picks the nearest sample, before or after', () => {
+    const pts = track([0, 1, 2, 3]);
+    expect(trackIndexNearTime(pts, 1.1)).toBe(1);
+    expect(trackIndexNearTime(pts, 1.9)).toBe(2);
+  });
+
+  // Hovering a chart stretch the position log does not cover must show nothing
+  // rather than the first or last fix, which is nowhere near that moment.
+  it('gives up when nothing is close enough', () => {
+    const pts = track([0, 1, 2]);
+    expect(trackIndexNearTime(pts, 60)).toBe(-1);
+    expect(trackIndexNearTime(pts, -30)).toBe(-1);
+    expect(trackIndexNearTime(pts, 2.5)).toBe(2);
+  });
+
+  it('handles an empty track', () => {
+    expect(trackIndexNearTime([], 5)).toBe(-1);
+  });
+});
+
+describe('time ordering', () => {
+  // A .bin can hold several boots, and TimeUS restarts at each one; the hover
+  // lookup binary-searches, so the track has to come back sorted.
+  it('sorts points that arrive out of order', () => {
+    const t = buildFlightTrack(log({
+      GPS: [30, 31, 1, 2, 3].map((s, i) => ({
+        type: 'GPS',
+        timeUs: s * 1_000_000,
+        fields: { Lat: 47.1 + i * 1e-4, Lng: 8.5, Alt: 400 + i, Spd: 1, Status: 3 },
+      })),
+    }));
+    const times = t.points.map((p) => p.timeS);
+    expect(times).toEqual([...times].sort((a, b) => a - b));
   });
 });

@@ -622,3 +622,31 @@ describe('profile data includes both PID and accel params', () => {
     expect(Object.keys(profileData).every(k => !k.includes('ACCEL'))).toBe(true);
   });
 });
+
+describe('ArduRover', () => {
+  const rover = (extra: string[] = []) =>
+    new Map(['ATC_STR_RAT_P', 'ATC_SPEED_P', ...extra].map((n) => [n, { value: 0.2 }]));
+
+  it('is detected from the steering rate controller', () => {
+    expect(detectPidScheme(rover()).id).toBe('rover');
+  });
+
+  // A rover has no roll or pitch to tune; calling the cards that would be a
+  // straight lie about what the sliders do.
+  it('names its controllers steering and speed', () => {
+    const scheme = detectPidScheme(rover());
+    expect(scheme.axisInfo?.roll.title).toBe('Steering');
+    expect(scheme.axisInfo?.pitch.title).toBe('Speed');
+    expect(scheme.roll.p).toBe('ATC_STR_RAT_P');
+    expect(scheme.pitch.p).toBe('ATC_SPEED_P');
+  });
+
+  it('offers the third card only on a balance bot', () => {
+    expect(detectPidScheme(rover()).axisInfo?.yaw).toBeUndefined();
+    expect(detectPidScheme(rover(['ATC_BAL_P'])).axisInfo?.yaw?.title).toBe('Balance');
+  });
+
+  it('does not answer for a copter', () => {
+    expect(detectPidScheme(new Map([['ATC_RAT_RLL_P', { value: 0.135 }]])).id).toBe('modern-copter');
+  });
+});

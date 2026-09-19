@@ -27,6 +27,13 @@ export class UdpTransport extends BaseTransport {
     this.writeTimeout = options.writeTimeout ?? 5000;
   }
 
+  /** True once there is somewhere to send to: a UDP link that has not heard
+   * from the vehicle yet cannot write, and callers should wait rather than
+   * retry into an exception. */
+  get canWrite(): boolean {
+    return this.isOpen && !!this._remoteHost && !!this._remotePort;
+  }
+
   get isOpen(): boolean {
     return this._isOpen && this.socket !== null;
   }

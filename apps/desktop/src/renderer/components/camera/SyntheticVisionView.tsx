@@ -14,6 +14,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { OsdLayers } from '../../../shared/camera-types';
 import type { FleetVehicle } from '../../hooks/useFleet';
 import { useTelemetryStore } from '../../stores/telemetry-store';
+import { useConnectionStore } from '../../stores/connection-store';
+import { getVehicleClass } from '../../../shared/telemetry-types';
 import { useFleetTelemetryStore } from '../../stores/fleet-telemetry-store';
 import { useCameraStore } from '../../stores/camera-store';
 import { CameraOverlays } from './CameraOverlays';
@@ -76,6 +78,10 @@ const SNAP_DIST_M = 250;
 /** Terrain clearance below this raises the caution chip, the order of
  * magnitude general-aviation synthetic vision annunciates at. */
 const TERRAIN_CAUTION_M = 30;
+
+/** Render floor above the DEM: a rover's camera mast, an aircraft's clearance. */
+const ROVER_EYE_M = 1;
+const AIR_EYE_M = 2;
 
 interface PosSample {
   lat: number;
@@ -212,6 +218,14 @@ export function SyntheticVisionView({ vehicle, isPrimary, osd, onActivate }: Syn
   // Quality the live mesh was built at: changing the level has to rebuild it
   // even though the vehicle has not moved.
   const terrainQualityRef = useRef<SvtQuality | null>(null);
+
+  const mavType = useConnectionStore((s) => s.connectionState.mavType);
+  // A rover sits on the surface: terrain clearance is zero by definition, so
+  // the CFIT caution is an aircraft idea and would latch red for a whole drive.
+  const onSurface = getVehicleClass(mavType) === 'rover';
+  // Read by the render loop, which never re-closes over props.
+  const eyeFloorRef = useRef(ROVER_EYE_M);
+  eyeFloorRef.current = onSurface ? ROVER_EYE_M : AIR_EYE_M;
 
   const flatArmed = useTelemetryStore((s) => s.flight.armed);
   const flatClimb = useTelemetryStore((s) => s.vfrHud.climb);
@@ -408,7 +422,7 @@ export function SyntheticVisionView({ vehicle, isPrimary, osd, onActivate }: Syn
         shownAttRef.current = null;
       }
       const shown: SvtPose | null = pos && att
-        ? { ...pos, ...att, eyeMsl: pos.altMsl + datumOffsetRef.current }
+        ? { ...pos, ...att, eyeMsl: pos.altMsl + datumOffsetRef.current, eyeFloorM: eyeFloorRef.current }
         : null;
       const was = shownRef.current;
       const moved =
@@ -574,7 +588,7 @@ export function SyntheticVisionView({ vehicle, isPrimary, osd, onActivate }: Syn
         </Center>
       )}
 
-      {position && armed && Number.isFinite(clearanceM) && clearanceM < TERRAIN_CAUTION_M && (
+      {position && armed && !onSurface && Number.isFinite(clearanceM) && clearanceM < TERRAIN_CAUTION_M && (
         <div
           className={
             'absolute left-1/2 top-2 -translate-x-1/2 rounded px-2 py-1 text-[11px] font-semibold tracking-wide ' +

@@ -20,7 +20,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 // packaged builds (see ObjectEditorMap.tsx), breaking the MapLibre worker.
 maplibregl.setWorkerUrl(new URL('maplibre-worker.js', document.baseURI).href);
 import { createFlightPathThreeJsLayer } from './flight-threejs-layer';
-import { buildFlightTrack, frameBounds, groundAmsl, trackAltitudeRange, trackIndexAtTime, trackSpeeds } from './flight-track';
+import { buildFlightTrack, frameBounds, groundAmsl, trackAltitudeRange, trackIndexNearTime, trackSpeeds } from './flight-track';
 import { useLogStore } from '../../stores/log-store';
 import { lowerBoundIdx, upperBoundIdx, columnStats, fmtStat, padRange, parseAxisRange, chartCsv, SERIES_COLORS, type FieldStats } from './log-chart-stats';
 import { getModeName, MODE_COLORS } from './log-events';
@@ -32,6 +32,7 @@ import { EventsPanel } from './EventsPanel';
 import { LogParamsPanel } from './LogParamsPanel';
 import { SpectrumPanel } from './SpectrumPanel';
 import { px4ModeName } from '@ardudeck/ulog-parser';
+import { fieldNames, logCount, logRows } from '../../utils/log-columns';
 
 // All chart panels share one uPlot cursor-sync group, keyed by x VALUE (time
 // in seconds), so moving the mouse over any chart draws the crosshair at the
@@ -109,8 +110,8 @@ const EVENT_FIELDS_BY_TYPE: Record<string, string[]> = {
 
 function getModeTimeline(log: ReturnType<typeof useLogStore.getState>['currentLog']) {
   if (!log) return [];
-  const modes = log.messages['MODE'];
-  if (!modes || modes.length === 0) return [];
+  const modes = logRows(log, 'MODE');
+  if (modes.length === 0) return [];
   const endTimeS = log.timeRange.endUs / 1_000_000;
   const segments: { startS: number; endS: number; name: string; color: string }[] = [];
   for (let i = 0; i < modes.length; i++) {
@@ -163,8 +164,8 @@ function makeUnitLookup(log: ReturnType<typeof useLogStore.getState>['currentLog
  */
 function getPx4ModeTimeline(log: ReturnType<typeof useLogStore.getState>['currentLog']) {
   if (!log) return [];
-  const status = log.messages['vehicle_status'];
-  if (!status || status.length === 0) return [];
+  const status = logRows(log, 'vehicle_status');
+  if (status.length === 0) return [];
   const endTimeS = log.timeRange.endUs / 1_000_000;
   const segments: { startS: number; endS: number; name: string; color: string }[] = [];
   let lastNav: number | null = null;
@@ -313,8 +314,8 @@ function ChartPanel({ chartId }: { chartId: string }) {
     const perType: { time: number[]; label: string; values: number[] }[][] = [];
     for (const type of activeTypes) {
       const fields = selectedFields.get(type)!;
-      const msgs = currentLog.messages[type];
-      if (!msgs || msgs.length === 0) continue;
+      const cols = currentLog.messages[type];
+      if (!cols || cols.count === 0) continue;
 
       // Multi-instance message detection: ArduPilot dumps every ESC/IMU/MAG/
       // BARO/GPS/etc. into a single message bucket and identifies the source
@@ -322,24 +323,24 @@ function ChartPanel({ chartId }: { chartId: string }) {
       // without splitting by instance produces a single zigzag line that
       // hops between motor 0..3 — useless. Split into one series per
       // instance so a quad shows 4 RPM lines.
-      const sample = msgs[0]!;
       const instanceKey =
-        sample.fields['Instance'] !== undefined ? 'Instance'
-        : sample.fields['I'] !== undefined ? 'I'
+        cols.num['Instance'] !== undefined ? 'Instance'
+        : cols.num['I'] !== undefined ? 'I'
         : null;
+      const instCol = instanceKey ? cols.num[instanceKey] : undefined;
       const distinctInstances = new Set<number>();
-      if (instanceKey) {
+      if (instCol) {
         // Cap the scan: 1024 messages is plenty to detect the typical 1-8
         // range and avoids walking million-row series for the check.
-        const limit = Math.min(msgs.length, 1024);
+        const limit = Math.min(cols.count, 1024);
         for (let i = 0; i < limit; i++) {
-          const v = msgs[i]!.fields[instanceKey];
-          if (typeof v === 'number') distinctInstances.add(v);
+          const v = instCol[i];
+          if (v !== undefined) distinctInstances.add(v);
         }
       }
       const splitByInstance = instanceKey != null && distinctInstances.size > 1;
 
-      const time = msgs.map((m) => m.timeUs / 1_000_000);
+      const time = Array.from({ length: cols.count }, (_, i) => (cols.timeUs[i] ?? 0) / 1_000_000);
       const typeSeries: { time: number[]; label: string; values: number[] }[] = [];
       const eventAllow = EVENT_FIELDS_BY_TYPE[type];
       for (const field of fields) {
@@ -353,41 +354,40 @@ function ChartPanel({ chartId }: { chartId: string }) {
         // Event-marker fields are extracted as discrete (timeS, label) tuples
         // and drawn separately. We dedupe consecutive identical labels so a
         // chatty MSG stream doesn't render thousands of identical markers.
-        if (eventAllow?.includes(baseField) && typeof sample.fields[baseField] !== 'number') {
+        if (eventAllow?.includes(baseField) && cols.num[baseField] === undefined) {
+          const textCol = cols.txt[baseField];
           let lastLabel: string | null = null;
           const color = EVENT_TYPE_COLORS[type] ?? '#9ca3af';
-          for (const m of msgs) {
-            const raw = m.fields[baseField];
-            const label = typeof raw === 'string' ? raw : String(raw ?? '');
+          for (let i = 0; i < cols.count; i++) {
+            const label = textCol?.[i] ?? '';
             if (!label || label === lastLabel) continue;
-            eventMarkers.push({ timeS: m.timeUs / 1_000_000, label: `${type}: ${label}`, color });
+            eventMarkers.push({ timeS: (cols.timeUs[i] ?? 0) / 1_000_000, label: `${type}: ${label}`, color });
             lastLabel = label;
           }
           continue;
         }
-        if (targetInst !== null && instanceKey) {
+        const valueCol = cols.num[baseField];
+        if (targetInst !== null && instCol) {
           // Single instance pick — emit one series for just this instance.
           const ti: number[] = [];
           const vi: number[] = [];
-          for (const m of msgs) {
-            if (m.fields[instanceKey] !== targetInst) continue;
-            ti.push(m.timeUs / 1_000_000);
-            const v = m.fields[baseField];
-            vi.push(typeof v === 'number' ? v : NaN);
+          for (let i = 0; i < cols.count; i++) {
+            if (instCol[i] !== targetInst) continue;
+            ti.push((cols.timeUs[i] ?? 0) / 1_000_000);
+            vi.push(valueCol?.[i] ?? NaN);
           }
           typeSeries.push({ time: ti, label: labelWithUnit(`${type}[${targetInst}].${baseField}`, type, baseField), values: vi });
         } else if (splitByInstance) {
           // Bucket messages by instance value, preserving per-instance time
           // axes (different sample rates per sensor are common).
           const byInst = new Map<number, { time: number[]; values: number[] }>();
-          for (const m of msgs) {
-            const inst = m.fields[instanceKey!];
-            if (typeof inst !== 'number') continue;
+          for (let i = 0; i < cols.count; i++) {
+            const inst = instCol?.[i];
+            if (inst === undefined) continue;
             let bucket = byInst.get(inst);
             if (!bucket) { bucket = { time: [], values: [] }; byInst.set(inst, bucket); }
-            bucket.time.push(m.timeUs / 1_000_000);
-            const v = m.fields[baseField];
-            bucket.values.push(typeof v === 'number' ? v : NaN);
+            bucket.time.push((cols.timeUs[i] ?? 0) / 1_000_000);
+            bucket.values.push(valueCol?.[i] ?? NaN);
           }
           for (const [inst, bucket] of [...byInst.entries()].sort((a, b) => a[0] - b[0])) {
             typeSeries.push({
@@ -397,10 +397,7 @@ function ChartPanel({ chartId }: { chartId: string }) {
             });
           }
         } else {
-          const values = msgs.map((m) => {
-            const v = m.fields[baseField];
-            return typeof v === 'number' ? v : NaN;
-          });
+          const values = valueCol ? Array.from(valueCol) : new Array<number>(cols.count).fill(NaN);
           typeSeries.push({ time, label: labelWithUnit(`${type}.${baseField}`, type, baseField), values });
         }
       }
@@ -1672,6 +1669,7 @@ function FlightPathPanel() {
       // 3D flight path
       const threeLayer = createFlightPathThreeJsLayer();
       threeLayerRef.current = threeLayer;
+      threeLayer.onHoverScreen(reportHoverScreen);
       map.addLayer(threeLayer.layer);
 
       pointsRef.current = points.map((p) => ({ lon: p.lon, lat: p.lat, alt: p.altRel }));
@@ -1740,49 +1738,53 @@ function FlightPathPanel() {
       terrainListenersRef.current = () => { map.off('data', adoptTerrainGround); };
     });
 
-    // Chart-hover position marker: hovering any chart walks this dot along
-    // the trajectory at the hovered instant, tying "what happened at t" to
-    // "where the aircraft was". DOM mutations only - no React state per move.
-    const hoverEl = document.createElement('div');
-    hoverEl.style.cssText = 'position:relative;pointer-events:none';
-    const hoverDot = document.createElement('div');
-    hoverDot.style.cssText = [
-      'width:14px', 'height:14px', 'border-radius:50%',
-      'background:#3b82f6', 'border:2.5px solid #fff',
-      'box-shadow:0 0 8px rgba(59,130,246,0.9)',
-    ].join(';');
+    // Chart-hover position marker: the dot is drawn INSIDE the path's own 3D
+    // scene, because a map marker lives on the ground plane while the path is
+    // drawn at altitude over terrain, and the two land in different places.
     const hoverLabel = document.createElement('div');
     hoverLabel.style.cssText = [
-      'position:absolute', 'left:18px', 'top:-4px', 'white-space:pre',
-      'font:11px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace',
-      'padding:3px 6px', 'border-radius:4px',
-      'background:rgba(17,24,39,0.88)', 'color:#e5e7eb',
-      'border:1px solid rgba(255,255,255,0.15)',
+      'position:absolute', 'z-index:2', 'pointer-events:none', 'display:none',
+      'white-space:pre', 'transform:translate(14px,-130%)',
+      'font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace',
+      'padding:4px 7px', 'border-radius:6px',
+      'background:rgba(17,24,39,0.82)', 'color:#e5e7eb',
+      'border:1px solid rgba(255,255,255,0.12)',
     ].join(';');
-    hoverEl.append(hoverDot, hoverLabel);
-    const hoverMarker = new maplibregl.Marker({ element: hoverEl, anchor: 'center' });
-    let hoverShown = false;
+    mapContainerRef.current.appendChild(hoverLabel);
+
     const hoverSpeeds = trackSpeeds(points);
-    const unsubHover = subscribeHoverTime((timeS) => {
-      if (timeS == null || points.length === 0) {
-        if (hoverShown) { hoverMarker.remove(); hoverShown = false; }
+    let hoverIdx: number | null = null;
+
+    // The layer reports where it actually drew the dot, so the label rides the
+    // same projection instead of guessing at one.
+    const reportHoverScreen = (pos: { x: number; y: number } | null) => {
+      const p = hoverIdx == null ? null : points[hoverIdx];
+      if (!pos || !p) {
+        hoverLabel.style.display = 'none';
         return;
       }
-      const idx = trackIndexAtTime(points, timeS);
-      const p = points[idx];
-      if (!p) return;
-      hoverMarker.setLngLat([p.lon, p.lat]);
+      hoverLabel.style.display = 'block';
+      hoverLabel.style.left = `${pos.x}px`;
+      hoverLabel.style.top = `${pos.y}px`;
       hoverLabel.textContent =
-        `${p.altRel.toFixed(1)} m  ${(hoverSpeeds[idx] ?? 0).toFixed(1)} m/s\n${p.timeS.toFixed(2)} s`;
-      if (!hoverShown) { hoverMarker.addTo(map); hoverShown = true; }
+        `${p.timeS.toFixed(2)} s   ${p.altRel.toFixed(1)} m   ${(hoverSpeeds[hoverIdx!] ?? 0).toFixed(1)} m/s`;
+    };
+    threeLayerRef.current?.onHoverScreen(reportHoverScreen);
+
+    const unsubHover = subscribeHoverTime((timeS) => {
+      hoverIdx = timeS == null || points.length === 0 ? null : trackIndexNearTime(points, timeS);
+      if (hoverIdx != null && hoverIdx < 0) hoverIdx = null;
+      threeLayerRef.current?.setHoverIndex(hoverIdx);
+      if (hoverIdx == null) hoverLabel.style.display = 'none';
     });
 
     mapRef.current = map;
     return () => {
       unsubHover();
+      threeLayerRef.current?.onHoverScreen(null);
+      hoverLabel.remove();
       terrainListenersRef.current?.();
       terrainListenersRef.current = null;
-      hoverMarker.remove();
       threeLayerRef.current?.dispose();
       threeLayerRef.current = null;
       map.remove();
@@ -1931,13 +1933,12 @@ function FieldPickerPanel() {
     if (!currentLog) return {};
     const result: Record<string, string[]> = {};
     for (const type of messageTypes) {
-      const msgs = currentLog.messages[type];
-      if (msgs && msgs.length > 0) {
-        const firstMsg = msgs[0]!;
+      const cols = currentLog.messages[type];
+      if (cols && cols.count > 0) {
         const eventAllow = new Set(EVENT_FIELDS_BY_TYPE[type] ?? []);
-        result[type] = Object.keys(firstMsg.fields).filter(
+        result[type] = fieldNames(cols).filter(
           (f) => f !== 'TimeUS' && f !== 'Instance' && f !== 'I'
-            && (typeof firstMsg.fields[f] === 'number' || eventAllow.has(f)),
+            && (cols.num[f] !== undefined || eventAllow.has(f)),
         );
       }
     }
@@ -1949,9 +1950,9 @@ function FieldPickerPanel() {
     (type: string, field: string): boolean => {
       const allow = EVENT_FIELDS_BY_TYPE[type];
       if (!allow || !allow.includes(field)) return false;
-      const msgs = currentLog?.messages[type];
-      if (!msgs || msgs.length === 0) return false;
-      return typeof msgs[0]!.fields[field] !== 'number';
+      const cols = currentLog?.messages[type];
+      if (!cols || cols.count === 0) return false;
+      return cols.num[field] === undefined;
     },
     [currentLog],
   );
@@ -1963,17 +1964,15 @@ function FieldPickerPanel() {
     if (!currentLog) return new Map<string, number[]>();
     const out = new Map<string, number[]>();
     for (const type of messageTypes) {
-      const msgs = currentLog.messages[type];
-      if (!msgs || msgs.length === 0) continue;
-      const sample = msgs[0]!;
-      const key = sample.fields['Instance'] !== undefined ? 'Instance'
-        : sample.fields['I'] !== undefined ? 'I' : null;
-      if (!key) continue;
+      const cols = currentLog.messages[type];
+      if (!cols || cols.count === 0) continue;
+      const instCol = cols.num['Instance'] ?? cols.num['I'];
+      if (!instCol) continue;
       const distinct = new Set<number>();
-      const limit = Math.min(msgs.length, 1024);
+      const limit = Math.min(cols.count, 1024);
       for (let i = 0; i < limit; i++) {
-        const v = msgs[i]!.fields[key];
-        if (typeof v === 'number') distinct.add(v);
+        const v = instCol[i];
+        if (v !== undefined) distinct.add(v);
       }
       if (distinct.size > 1) out.set(type, [...distinct].sort((a, b) => a - b));
     }
@@ -2159,7 +2158,7 @@ function FieldPickerPanel() {
                     {activeFieldCount}
                   </span>
                 )}
-                <span className="text-[10px] text-content-tertiary ml-auto tabular-nums">{currentLog?.messages[type]?.length ?? 0}</span>
+                <span className="text-[10px] text-content-tertiary ml-auto tabular-nums">{logCount(currentLog, type)}</span>
                 <svg className={`w-3 h-3 text-content-secondary transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>

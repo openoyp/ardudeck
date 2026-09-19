@@ -209,9 +209,66 @@ export const SPLIT_COCKPIT: InstrumentLayoutSnapshot = {
   },
 };
 
+/** Ground vehicles: no attitude ball, no VSI, no altitude. The bottom row is
+ * the driving scan (flight control, tilt, steering, speed, battery), with
+ * cross-track and mission on the navigation rail. */
+const ROVER_COCKPIT: InstrumentLayoutSnapshot = {
+  visible: {
+    attitude: false,
+    altitude: false,
+    vsi: false,
+    tilt: true,
+    steer: true,
+    xtrack: true,
+    'flight-data': true,
+    battery: true,
+    gps: true,
+    speed: true,
+    heading: true,
+    home: true,
+    'flight-mode': true,
+    link: true,
+    mission: true,
+    annunciator: true,
+    rtk: false,
+    controls: true,
+  },
+  scale: {},
+  opacity: 1,
+  instrumentOpacity: {},
+  displayMode: {},
+  groups: {
+    d1: { members: ['controls', 'home', 'heading', 'gps'], orientation: 'row' },
+    d2: { members: ['flight-data', 'annunciator', 'xtrack'], orientation: 'col' },
+    d3: { members: ['flight-mode', 'mission', 'link'], orientation: 'row' },
+    d4: { members: ['steer', 'speed', 'battery'], orientation: 'row' },
+  },
+  positions: {
+    'instrument:tilt': { ax: 'center', ay: 'bottom', dx: 0, dy: 4, v: 4 },
+    'instrument:home': { ax: 'center', ay: 'bottom', dx: -356, dy: 19, v: 4 },
+    'instrument:heading': { ax: 'center', ay: 'bottom', dx: -252, dy: 18, v: 4 },
+    'instrument:gps': { ax: 'center', ay: 'bottom', dx: -156, dy: 19, v: 4 },
+    'instrument:steer': { ax: 'center', ay: 'bottom', dx: 148, dy: 19, v: 4 },
+    'instrument:speed': { ax: 'center', ay: 'bottom', dx: 252, dy: 18, v: 4 },
+    'instrument:battery': { ax: 'center', ay: 'bottom', dx: 364, dy: 19, v: 4 },
+    'instrument:xtrack': { ax: 'left', ay: 'middle', dx: 8, dy: 100, v: 4 },
+    'instrument:flight-mode': { ax: 'center', ay: 'top', dx: -200, dy: 8, v: 4 },
+    'instrument:mission': { ax: 'center', ay: 'top', dx: 0, dy: 10, v: 4 },
+    'instrument:link': { ax: 'center', ay: 'top', dx: 216, dy: 8, v: 4 },
+    'instrument:flight-data': { ax: 'left', ay: 'middle', dx: 10, dy: -110, v: 4 },
+    'instrument:annunciator': { ax: 'left', ay: 'middle', dx: 8, dy: 45.5, v: 4 },
+    'instrument:controls': { ax: 'left', ay: 'bottom', dx: 16, dy: 4, v: 4 },
+    'instrument:group:d1': { ax: 'left', ay: 'bottom', dx: 16, dy: 7, v: 4 },
+    'instrument:group:d2': { ax: 'left', ay: 'top', dx: 0, dy: 64, v: 4 },
+    'instrument:group:d3': { ax: 'center', ay: 'top', dx: -13.5, dy: 0, v: 4 },
+    'instrument:group:d4': { ax: 'center', ay: 'bottom', dx: 256, dy: 7, v: 4 },
+  },
+};
+
 export const PRESET_INSTRUMENT_LAYOUTS: PresetInstrumentLayout[] = [
   { name: 'Pilot cockpit', description: 'Full cockpit: docked gauge rows around the ball.', accent: 'green', layout: PILOT_COCKPIT },
   { name: 'Minimal', description: 'Just the ball, flight data and the status strips.', accent: 'blue', layout: MINIMAL },
   { name: 'Strips only', description: 'Compact readout bands, maximum map.', accent: 'amber', layout: STRIPS_ONLY },
   { name: 'Split cockpit', description: 'Slim set for the in-map split; applied automatically.', accent: 'violet', layout: SPLIT_COCKPIT },
+  { name: 'Rover', description: 'Ground set: tilt, steering and cross-track instead of the ball.', accent: 'amber', layout: ROVER_COCKPIT },
 ];

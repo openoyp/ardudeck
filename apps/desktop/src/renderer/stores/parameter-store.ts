@@ -117,7 +117,7 @@ interface ParameterStore {
   isFavourite: (paramId: string) => boolean;
 
   // Actions
-  fetchParameters: () => Promise<void>;
+  fetchParameters: (options?: { force?: boolean }) => Promise<void>;
   fetchMetadata: (mavType: number) => Promise<void>;
   setMetadata: (metadata: ParameterMetadataStore) => void;
   setParameter: (paramId: string, value: number) => Promise<boolean>;
@@ -194,6 +194,16 @@ const userModifiedParams = new Set<string>();
 // Write Parameters to Flash dialog (PX4 persists PARAM_SET immediately, so the
 // ArduPilot write-now/flash-later flow would skip the review step).
 const stagedParams = new Set<string>();
+
+/** Backoff for automatic parameter fetches: doubles per failure to 30 s, and
+ * resets the moment a request is accepted. A manual retry passes force. */
+let paramFetchFailures = 0;
+let paramFetchCooldownUntil = 0;
+
+export function resetParameterFetchBackoff(): void {
+  paramFetchFailures = 0;
+  paramFetchCooldownUntil = 0;
+}
 
 export const useParameterStore = create<ParameterStore>((set, get) => ({
   parameters: new Map(),
@@ -408,17 +418,29 @@ export const useParameterStore = create<ParameterStore>((set, get) => ({
     return state === 'idle' || state === 'failed';
   },
 
-  fetchParameters: async () => {
+  fetchParameters: async (options) => {
+    // A failed fetch leaves the store in 'failed', which is what the auto-fetch
+    // effect watches, so without a cooldown a link that answers instantly with
+    // an error (a rebooting FC behind a backpack, where the transport has no
+    // remote endpoint yet) turns into a retry storm at IPC speed.
+    const now = Date.now();
+    if (!options?.force && now < paramFetchCooldownUntil) return;
+
     set({ isLoading: true, downloadState: 'loading', error: null, progress: null });
 
     const result = await window.electronAPI?.requestAllParameters();
 
     if (!result?.success) {
+      paramFetchFailures += 1;
+      paramFetchCooldownUntil = now + Math.min(30_000, 1_000 * 2 ** (paramFetchFailures - 1));
       set({
         isLoading: false,
         downloadState: 'failed',
         error: result?.error ?? 'Failed to request parameters'
       });
+    } else {
+      paramFetchFailures = 0;
+      paramFetchCooldownUntil = 0;
     }
     // Actual loading continues via IPC events
   },

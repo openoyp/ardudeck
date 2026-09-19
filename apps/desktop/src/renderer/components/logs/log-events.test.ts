@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { extractLogEvents, decodeErr, decodeEv, fmtEventTime, getModeName } from './log-events';
+import { columnsFromRows } from '../../utils/log-columns';
 
 function msg(type: string, timeUs: number, fields: Record<string, number | string>) {
   return { type, timeUs, fields };
@@ -47,11 +48,11 @@ describe('extractLogEvents', () => {
   it('merges ERR/EV/MSG/MODE/CMD chronologically with severities', () => {
     const events = extractLogEvents({
       messages: {
-        ERR: [msg('ERR', 30_000_000, { Subsys: 12, ECode: 1 })],
-        EV: [msg('EV', 10_000_000, { Id: 10 })],
-        MSG: [msg('MSG', 20_000_000, { Message: 'PreArm: Compass not calibrated' })],
-        MODE: [msg('MODE', 5_000_000, { ModeNum: 5, Rsn: 1 })],
-        CMD: [msg('CMD', 25_000_000, { CNum: 2, CId: 16 })],
+        ERR: columnsFromRows([msg('ERR', 30_000_000, { Subsys: 12, ECode: 1 })]),
+        EV: columnsFromRows([msg('EV', 10_000_000, { Id: 10 })]),
+        MSG: columnsFromRows([msg('MSG', 20_000_000, { Message: 'PreArm: Compass not calibrated' })]),
+        MODE: columnsFromRows([msg('MODE', 5_000_000, { ModeNum: 5, Rsn: 1 })]),
+        CMD: columnsFromRows([msg('CMD', 25_000_000, { CNum: 2, CId: 16 })]),
       },
     });
     expect(events.map((e) => e.kind)).toEqual(['MODE', 'EV', 'MSG', 'CMD', 'ERR']);
@@ -93,7 +94,7 @@ describe('helpers', () => {
   it('uses the log vehicle type for MODE events', () => {
     const events = extractLogEvents({
       metadata: { vehicleType: 'plane' },
-      messages: { MODE: [msg('MODE', 1_000_000, { ModeNum: 10 })] },
+      messages: { MODE: columnsFromRows([msg('MODE', 1_000_000, { ModeNum: 10 })]) },
     });
     expect(events[0]!.label).toBe('Mode: AUTO');
   });

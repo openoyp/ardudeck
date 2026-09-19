@@ -63,7 +63,7 @@ const TuningTab: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => fetchParameters()}
+            onClick={() => fetchParameters({ force: true })}
             disabled={isLoading}
             className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >

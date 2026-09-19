@@ -408,13 +408,17 @@ export async function heartbeatAll(): Promise<void> {
   for (const key of keys) {
     try {
       const result = await hangar.heartbeat(key, deviceId);
-      if (!result.valid) {
-        console.warn(`[ModuleManager] License ${key.slice(0, 20)}... is no longer valid (revoked=${result.revoked})`);
-        // Remove the license and its modules
+      // Only an explicit revocation removes anything: `valid: false` also means
+      // "this Hangar has never seen the key", which a dev build pointed at the
+      // local Hangar answers for every production key.
+      if (result.revoked === true) {
+        console.warn(`[ModuleManager] License ${key.slice(0, 20)}... was revoked, removing its modules`);
         const currentModules = store.get('modules');
         store.set('modules', currentModules.filter((m) => m.licenseKey !== key));
         const currentKeys = store.get('licenseKeys');
         store.set('licenseKeys', currentKeys.filter((k) => k !== key));
+      } else if (!result.valid) {
+        console.warn(`[ModuleManager] License ${key.slice(0, 20)}... not recognised by ${hangar.baseUrl()}, keeping it installed`);
       }
     } catch (err) {
       // Network error - don't remove anything, try again next time

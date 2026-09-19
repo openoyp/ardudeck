@@ -20,6 +20,7 @@
 // ---------------------------------------------------------------------------
 
 export type PidSchemeId =
+  | 'rover'
   | 'modern-copter'
   | 'legacy-copter'
   | 'plane'
@@ -39,6 +40,14 @@ export interface AccelParams {
   roll: string;
   pitch: string;
   yaw: string;
+}
+
+/** What a controller is called on this vehicle. A rover has no roll or pitch
+ * to tune: the same three slots carry steering, speed and (on a balance bot)
+ * balance, and the cards have to say so. */
+export interface AxisInfo {
+  title: string;
+  sub: string;
 }
 
 export interface PidScheme {
@@ -65,6 +74,9 @@ export interface PidScheme {
     pitch: { p: number; i: number; d: number; ff?: number };
     yaw: { p: number; i: number; d: number; ff?: number };
   };
+  /** Card headings; absent means the aircraft wording (Roll/Pitch/Yaw). A
+   * scheme that omits `yaw` here has no third controller and hides that card. */
+  axisInfo?: { roll: AxisInfo; pitch: AxisInfo; yaw?: AxisInfo };
   /** Optional acceleration limit parameter names (copter-type schemes only) */
   accel?: AccelParams;
   /** Default acceleration limit values in cdeg/s² */
@@ -271,9 +283,43 @@ export function hasDualPx4Controllers(parameters: Map<string, { value: number }>
   return parameters.has('MC_ROLLRATE_P') && parameters.has('FW_RR_P');
 }
 
+/**
+ * ArduRover. Two controllers, three on a balance bot:
+ *   ATC_STR_RAT_*  steering rate (turn rate demand to steering output)
+ *   ATC_SPEED_*    throttle to hold a target speed
+ *   ATC_BAL_*      pitch balance, only on balance bots
+ * Defaults are ArduPilot's own; the balance card appears only when the board
+ * actually carries the balance controller.
+ */
+function buildRoverScheme(parameters: Map<string, { value: number }>): PidScheme {
+  const balance = parameters.has('ATC_BAL_P');
+  return {
+    id: 'rover',
+    label: 'ArduRover',
+    description: balance ? 'Steering, speed and balance controllers' : 'Steering and speed controllers',
+    hasFF: true,
+    roll: { p: 'ATC_STR_RAT_P', i: 'ATC_STR_RAT_I', d: 'ATC_STR_RAT_D', ff: 'ATC_STR_RAT_FF' },
+    pitch: { p: 'ATC_SPEED_P', i: 'ATC_SPEED_I', d: 'ATC_SPEED_D', ff: 'ATC_SPEED_FF' },
+    yaw: { p: 'ATC_BAL_P', i: 'ATC_BAL_I', d: 'ATC_BAL_D', ff: 'ATC_BAL_FF' },
+    pScale: 1000, iScale: 1000, dScale: 10000, ffScale: 1000,
+    pMax: 2000, iMax: 2000, dMax: 500, ffMax: 2000,
+    defaults: {
+      roll: { p: 0.2, i: 0.2, d: 0, ff: 0 },
+      pitch: { p: 0.2, i: 0.2, d: 0, ff: 0 },
+      yaw: { p: 1.0, i: 1.0, d: 0, ff: 0 },
+    },
+    axisInfo: {
+      roll: { title: 'Steering', sub: 'Turn rate to steering output' },
+      pitch: { title: 'Speed', sub: 'Throttle to hold target speed' },
+      ...(balance ? { yaw: { title: 'Balance', sub: 'Pitch control on a balance bot' } } : {}),
+    },
+  };
+}
+
 export function detectPidScheme(parameters: Map<string, { value: number }>): PidScheme {
   // ArduPilot schemes first (ArduPilot and PX4 param names never coexist).
   if (parameters.has('Q_A_RAT_RLL_P')) return QUADPLANE_SCHEME;
+  if (parameters.has('ATC_STR_RAT_P')) return buildRoverScheme(parameters);
   if (parameters.has('ATC_RAT_RLL_P')) return MODERN_COPTER_SCHEME;
   if (parameters.has('RATE_RLL_P')) return LEGACY_COPTER_SCHEME;
   if (parameters.has('RLL_RATE_P') || parameters.has('RLL2SRV_P')) return buildPlaneScheme(parameters);

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import type { HealthCheckResult } from '@ardudeck/dataflash-parser';
+import { columnsFromRows, type LogColumns } from '../utils/log-columns';
 
 export interface AiChatMessage {
   role: 'user' | 'assistant';
@@ -20,7 +21,8 @@ export interface ParsedLog {
   /** Which parser produced this log: 'dataflash' (ArduPilot .bin) or 'ulog' (PX4 .ulg). */
   format: 'dataflash' | 'ulog';
   formats: Record<number, { id: number; name: string; length: number; format: string; fields: string[]; unitChars?: string[]; multChars?: string[] }>;
-  messages: Record<string, { type: string; timeUs: number; fields: Record<string, number | string> }[]>;
+  /** Column storage: one typed array per field. See utils/log-columns. */
+  messages: Record<string, LogColumns>;
   metadata: { vehicleType: string; firmwareVersion: string; firmwareString: string; boardType: string; gitHash: string };
   timeRange: { startUs: number; endUs: number };
   messageTypes: string[];
@@ -28,6 +30,17 @@ export interface ParsedLog {
   unitLabels: Record<string, string>;
   /** Multiplier char → numeric multiplier. Empty when log has no MULT records. */
   multValues: Record<string, number>;
+}
+
+/** Accepts either columns or the old row arrays. */
+function asColumns(messages: Record<string, unknown>): Record<string, LogColumns> {
+  const out: Record<string, LogColumns> = {};
+  for (const [type, value] of Object.entries(messages ?? {})) {
+    out[type] = Array.isArray(value)
+      ? columnsFromRows(value as Array<{ timeUs: number; fields: Record<string, number | string> }>)
+      : (value as LogColumns);
+  }
+  return out;
 }
 
 interface LogStore {
@@ -142,7 +155,10 @@ export const useLogStore = create<LogStore>()(subscribeWithSelector((set) => ({
 
   setAvailableLogs: (logs) => set({ availableLogs: logs }),
   setIsListLoading: (loading) => set({ isListLoading: loading }),
-  setCurrentLog: (log, path) => {
+  setCurrentLog: (rawLog, path) => {
+    // A main process built before the columnar change still sends row arrays;
+    // normalise here so a stale build cannot crash every log panel.
+    const log = rawLog ? { ...rawLog, messages: asColumns(rawLog.messages) } : rawLog;
     chatLoadInProgress = true;
     // Reset sync zoom: a previous log's time window doesn't apply to the new
     // log and would either show empty space or look identical to no-zoom.
