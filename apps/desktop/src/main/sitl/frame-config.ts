@@ -21,6 +21,7 @@
 import { app } from 'electron';
 import { mkdir, readFile, writeFile, stat, readdir, unlink } from 'node:fs/promises';
 import path from 'node:path';
+import { robustGetText } from '../utils/robust-get.js';
 import type { ArduPilotVehicleType } from '../../shared/ipc-channels.js';
 
 // Upstream moved the vehicle/frame catalog from a Python dict literal in
@@ -104,9 +105,11 @@ function paramsCacheDir(): string {
  */
 async function downloadTo(url: string, dest: string): Promise<boolean> {
   try {
-    const res = await fetch(url);
-    if (!res.ok) return false;
-    const text = await res.text();
+    // Node-stack GET: Electron's net-backed fetch can throw uncatchable
+    // ERR_CONNECTION_CLOSED from internal callbacks on flaky links, which
+    // kills the main process. robustGetText failures resolve to null here.
+    const text = await robustGetText(url);
+    if (text === null) return false;
     await mkdir(path.dirname(dest), { recursive: true });
     await writeFile(dest, text, 'utf-8');
     return true;
