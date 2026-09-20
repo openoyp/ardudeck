@@ -49,10 +49,10 @@ export function LogParamsPanel() {
   };
 
   if (!currentLog) {
-    return <div className="h-full flex items-center justify-center text-content-tertiary text-xs">No log loaded</div>;
+    return <div className="h-full flex items-center justify-center text-content-tertiary text-xs">尚未加载日志</div>;
   }
   if (params.length === 0) {
-    return <div className="h-full flex items-center justify-center text-content-tertiary text-xs">Log contains no PARM records</div>;
+    return <div className="h-full flex items-center justify-center text-content-tertiary text-xs">日志中不含 PARM 记录</div>;
   }
 
   return (
@@ -60,9 +60,9 @@ export function LogParamsPanel() {
       <div className="flex-shrink-0 px-3 pt-2 pb-1.5 border-b border-subtle space-y-1.5">
         <div className="flex items-center gap-1.5 flex-wrap">
           {([
-            ['all', `All ${params.length}`],
-            ['changed', `Changed in flight ${changedCount}`],
-            ...(hasDefaults ? [['nondefault', `Non-default ${nonDefaultCount}`] as [Filter, string]] : []),
+            ['all', `全部 ${params.length}`],
+            ['changed', `飞行中更改 ${changedCount}`],
+            ...(hasDefaults ? [['nondefault', `非默认 ${nonDefaultCount}`] as [Filter, string]] : []),
           ] as [Filter, string][]).map(([key, label]) => (
             <button
               key={key}
@@ -82,14 +82,14 @@ export function LogParamsPanel() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Filter parameters..."
+          placeholder="筛选参数..."
           className="w-full text-[11px] px-2 py-1 rounded bg-input text-content border border-subtle placeholder:text-content-tertiary focus:outline-none focus:border-blue-500/50 font-mono"
         />
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 && (
-          <div className="text-center text-content-tertiary text-[11px] py-6">No parameters match</div>
+          <div className="text-center text-content-tertiary text-[11px] py-6">没有匹配的参数</div>
         )}
         {filtered.map((p) => {
           const changed = p.changes.length > 0;
@@ -105,12 +105,12 @@ export function LogParamsPanel() {
                 {nonDef && (
                   <span
                     className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"
-                    data-tip={`Differs from firmware default (${fmtParamValue(p.default!)})`}
+                    data-tip={`与固件默认值不同（${fmtParamValue(p.default!)}）`}
                   />
                 )}
                 {changed && (
                   <span className="text-[9px] px-1.5 py-px rounded bg-amber-500/15 text-amber-500 shrink-0 font-medium">
-                    {p.changes.length} change{p.changes.length > 1 ? 's' : ''}
+                    {p.changes.length} 次更改
                   </span>
                 )}
                 <span className={`text-[11px] font-mono tabular-nums shrink-0 ${changed ? 'text-amber-500 font-medium' : 'text-content'}`}>
@@ -119,13 +119,13 @@ export function LogParamsPanel() {
               </button>
               {isOpen && changed && (
                 <div className="px-3 pb-1.5 pl-8 space-y-0.5">
-                  <div className="text-[10px] text-content-tertiary font-mono">start: {fmtParamValue(p.first)}</div>
+                  <div className="text-[10px] text-content-tertiary font-mono">初始值: {fmtParamValue(p.first)}</div>
                   {p.changes.map((c, i) => (
                     <button
                       key={i}
                       onClick={() => jumpTo(c.timeS)}
                       className="flex items-center gap-2 text-[10px] font-mono text-content-secondary hover:text-blue-400 transition-colors"
-                      data-tip="Jump the charts to this change"
+                      data-tip="将图表跳转到此次更改"
                     >
                       <span className="tabular-nums text-content-tertiary">{fmtEventTime(c.timeS)}</span>
                       <span>-&gt; {fmtParamValue(c.value)}</span>

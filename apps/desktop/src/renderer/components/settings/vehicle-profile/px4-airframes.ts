@@ -22,31 +22,31 @@ export interface Px4Airframe {
 }
 
 export const PX4_AIRFRAME_CATEGORIES: Array<{ id: Px4AirframeCategory; label: string }> = [
-  { id: 'multirotor', label: 'Multirotor' },
-  { id: 'fixed-wing', label: 'Fixed Wing' },
+  { id: 'multirotor', label: '多旋翼' },
+  { id: 'fixed-wing', label: '固定翼' },
   { id: 'vtol', label: 'VTOL' },
-  { id: 'rover', label: 'Rover' },
+  { id: 'rover', label: '漫游车' },
 ];
 
 export const PX4_AIRFRAMES: Px4Airframe[] = [
   // Multirotor (well-known generic ids)
-  { id: 4001, name: 'Generic Quadcopter (X)', category: 'multirotor', description: 'Standard quad in X layout.' },
-  { id: 4002, name: 'Generic Quadcopter (+)', category: 'multirotor', description: 'Standard quad in + layout.' },
-  { id: 4008, name: 'Generic Quadcopter (Wide)', category: 'multirotor', description: 'Quad X with widened arm geometry.' },
-  { id: 6001, name: 'Generic Hexarotor (X)', category: 'multirotor', description: 'Standard hexa in X layout.' },
-  { id: 6002, name: 'Generic Hexarotor (+)', category: 'multirotor', description: 'Standard hexa in + layout.' },
-  { id: 8001, name: 'Generic Octorotor (X)', category: 'multirotor', description: 'Standard octo in X layout.' },
-  { id: 8002, name: 'Generic Octorotor (+)', category: 'multirotor', description: 'Standard octo in + layout.' },
+  { id: 4001, name: '通用四旋翼（X）', category: 'multirotor', description: '标准 X 布局四旋翼。' },
+  { id: 4002, name: '通用四旋翼（+）', category: 'multirotor', description: '标准 + 布局四旋翼。' },
+  { id: 4008, name: '通用四旋翼（宽轴距）', category: 'multirotor', description: '加宽机臂几何的 X 布局四旋翼。' },
+  { id: 6001, name: '通用六旋翼（X）', category: 'multirotor', description: '标准 X 布局六旋翼。' },
+  { id: 6002, name: '通用六旋翼（+）', category: 'multirotor', description: '标准 + 布局六旋翼。' },
+  { id: 8001, name: '通用八旋翼（X）', category: 'multirotor', description: '标准 X 布局八旋翼。' },
+  { id: 8002, name: '通用八旋翼（+）', category: 'multirotor', description: '标准 + 布局八旋翼。' },
 
   // Fixed wing
-  { id: 2100, name: 'Generic Standard Plane', category: 'fixed-wing', description: 'Conventional fixed-wing aircraft.' },
-  { id: 3000, name: 'Generic Flying Wing', category: 'fixed-wing', description: 'Tailless flying wing / delta.' },
+  { id: 2100, name: '通用常规固定翼', category: 'fixed-wing', description: '常规布局固定翼飞机。' },
+  { id: 3000, name: '通用飞翼', category: 'fixed-wing', description: '无尾飞翼 / 三角翼。' },
 
   // VTOL (use generic ids; confirm against the PX4 reference)
-  { id: 13000, name: 'Generic Standard VTOL', category: 'vtol', description: 'Quad + pusher standard VTOL.' },
-  { id: 13200, name: 'Generic Quad Tailsitter VTOL', category: 'vtol', description: 'Quad-motor tailsitter VTOL.' },
-  { id: 14001, name: 'Generic Tiltrotor VTOL', category: 'vtol', description: 'Tiltrotor VTOL.' },
+  { id: 13000, name: '通用标准 VTOL', category: 'vtol', description: '四旋翼 + 推进电机的标准 VTOL。' },
+  { id: 13200, name: '通用四旋翼尾座式 VTOL', category: 'vtol', description: '四电机尾座式 VTOL。' },
+  { id: 14001, name: '通用倾转旋翼 VTOL', category: 'vtol', description: '倾转旋翼 VTOL。' },
 
   // Rover
-  { id: 50000, name: 'Generic Ground Vehicle', category: 'rover', description: 'Differential / Ackermann ground rover.' },
+  { id: 50000, name: '通用地面车辆', category: 'rover', description: '差速 / 阿克曼地面漫游车。' },
 ];

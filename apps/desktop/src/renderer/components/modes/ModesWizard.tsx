@@ -21,10 +21,10 @@ interface ModesWizardProps {
 
 // Step info for progress display
 const STEPS: { id: string; label: string; Icon: LucideIcon }[] = [
-  { id: 'welcome', label: 'Style', Icon: Radio },
-  { id: 'transmitter', label: 'Check', Icon: Satellite },
-  { id: 'mode-config', label: 'Configure', Icon: Settings },
-  { id: 'review', label: 'Save', Icon: Save },
+  { id: 'welcome', label: '风格', Icon: Radio },
+  { id: 'transmitter', label: '检查', Icon: Satellite },
+  { id: 'mode-config', label: '配置', Icon: Settings },
+  { id: 'review', label: '保存', Icon: Save },
 ];
 
 export const ModesWizard: React.FC<ModesWizardProps> = ({ isOpen, onClose }) => {
@@ -88,13 +88,13 @@ export const ModesWizard: React.FC<ModesWizardProps> = ({ isOpen, onClose }) => 
               <Radio className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-content">Modes Setup Wizard</h2>
-              <p className="text-xs text-content-secondary">Configure your flight modes</p>
+              <h2 className="text-lg font-semibold text-content">模式设置向导</h2>
+              <p className="text-xs text-content-secondary">配置你的飞行模式</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {confirmClose && (
-              <span className="text-xs text-amber-400">Press again to discard setup</span>
+              <span className="text-xs text-amber-400">再按一次将放弃本次设置</span>
             )}
             <button
               onClick={handleClose}

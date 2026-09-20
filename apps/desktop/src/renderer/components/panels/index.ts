@@ -27,29 +27,29 @@ export { SitlFailureDockPanel } from './SitlFailureDockPanel';
 // Panel registry for dockview
 export const PANEL_COMPONENTS = {
   // Telemetry panels
-  attitude: { component: 'AttitudePanel', title: 'Attitude' },
-  altitude: { component: 'AltitudePanel', title: 'Altitude' },
-  speed: { component: 'SpeedPanel', title: 'Speed' },
-  battery: { component: 'BatteryPanel', title: 'Battery' },
+  attitude: { component: 'AttitudePanel', title: '姿态' },
+  altitude: { component: 'AltitudePanel', title: '高度' },
+  speed: { component: 'SpeedPanel', title: '速度' },
+  battery: { component: 'BatteryPanel', title: '电池' },
   gps: { component: 'GpsPanel', title: 'GPS' },
-  position: { component: 'PositionPanel', title: 'Position' },
-  velocity: { component: 'VelocityPanel', title: 'Velocity' },
-  flightMode: { component: 'FlightModePanel', title: 'Flight Mode' },
-  flightControl: { component: 'FlightControlPanel', title: 'Flight Control' },
-  map: { component: 'MapPanel', title: 'Map' }, // Unified map with mission overlays
-  camera: { component: 'CameraPanel', title: 'Vision' },
-  messages: { component: 'MessagesPanel', title: 'Messages' },
-  safetyMonitor: { component: 'SafetyMonitorPanel', title: 'Safety Monitor' },
-  joystick: { component: 'JoystickPanel', title: 'Joystick' },
+  position: { component: 'PositionPanel', title: '位置' },
+  velocity: { component: 'VelocityPanel', title: '速度矢量' },
+  flightMode: { component: 'FlightModePanel', title: '飞行模式' },
+  flightControl: { component: 'FlightControlPanel', title: '飞行控制' },
+  map: { component: 'MapPanel', title: '地图' }, // Unified map with mission overlays
+  camera: { component: 'CameraPanel', title: '视觉' },
+  messages: { component: 'MessagesPanel', title: '消息' },
+  safetyMonitor: { component: 'SafetyMonitorPanel', title: '安全监视' },
+  joystick: { component: 'JoystickPanel', title: '摇杆' },
   rtk: { component: 'NtripPanel', title: 'RTK / NTRIP' },
-  preflightCheck: { component: 'PreflightCheckCard', title: 'Pre-flight Checks' },
+  preflightCheck: { component: 'PreflightCheckCard', title: '起飞前检查' },
   // Mission panels (for monitoring during flight)
   // Note: missionMap removed - mission data now integrated into unified MapPanel
-  waypoints: { component: 'WaypointTablePanel', title: 'Waypoints' },
-  altitudeProfile: { component: 'AltitudeProfilePanel', title: 'Altitude Profile' },
+  waypoints: { component: 'WaypointTablePanel', title: '航点' },
+  altitudeProfile: { component: 'AltitudeProfilePanel', title: '高度剖面' },
   // SITL simulation panels (only shown when SITL is running)
-  sitlEnvironment: { component: 'SitlEnvironmentDockPanel', title: 'SITL Environment' },
-  sitlFailures: { component: 'SitlFailureDockPanel', title: 'SITL Failures' },
+  sitlEnvironment: { component: 'SitlEnvironmentDockPanel', title: 'SITL 环境' },
+  sitlFailures: { component: 'SitlFailureDockPanel', title: 'SITL 故障' },
 } as const;
 
 export type PanelId = keyof typeof PANEL_COMPONENTS;

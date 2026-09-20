@@ -151,10 +151,10 @@ export const QUICK_SETUP_PRESETS: Record<string, QuickSetupPreset> = {
   // ==========================================================================
   beginner: {
     id: 'beginner',
-    name: 'Beginner',
+    name: '新手',
     icon: Egg,
-    description: 'Safe & stable for learning',
-    tip: 'Self-leveling keeps you in control. Slow rates prevent overcorrection. Perfect for your first flights!',
+    description: '安全稳定,适合学习',
+    tip: '自稳模式让你始终掌控。低速率防止过度修正。首次飞行的完美选择!',
     gradient: 'from-green-500/20 to-emerald-500/10 border-green-500/30',
     category: 'multirotor',
     tags: ['safe', 'stable', 'learning', 'first-flight'],
@@ -205,10 +205,10 @@ export const QUICK_SETUP_PRESETS: Record<string, QuickSetupPreset> = {
   // ==========================================================================
   freestyle: {
     id: 'freestyle',
-    name: 'Freestyle',
+    name: '花式',
     icon: Drama,
-    description: 'Balanced for tricks & flow',
-    tip: 'Three-position switch gives ANGLE/HORIZON/ACRO. AIRMODE keeps control at zero throttle for flips!',
+    description: '均衡配置,适合技巧与流畅飞行',
+    tip: '三段开关切换 ANGLE/HORIZON/ACRO。AIRMODE 让你在零油门时仍能保持控制,畅快翻滚!',
     gradient: 'from-purple-500/20 to-violet-500/10 border-purple-500/30',
     category: 'multirotor',
     tags: ['freestyle', 'tricks', 'acro', 'balanced'],
@@ -263,10 +263,10 @@ export const QUICK_SETUP_PRESETS: Record<string, QuickSetupPreset> = {
   // ==========================================================================
   racing: {
     id: 'racing',
-    name: 'Racing',
+    name: '竞速',
     icon: Gauge,
-    description: 'Fast & responsive for speed',
-    tip: 'Pure ACRO for maximum control. High rates for quick corrections. Beeper helps find crashes!',
+    description: '快速响应,专为速度而生',
+    tip: '纯 ACRO 模式带来最大控制力。高速率实现快速修正。蜂鸣器帮你找到坠机点!',
     gradient: 'from-red-500/20 to-orange-500/10 border-red-500/30',
     category: 'multirotor',
     tags: ['racing', 'fast', 'competitive', 'acro'],
@@ -319,10 +319,10 @@ export const QUICK_SETUP_PRESETS: Record<string, QuickSetupPreset> = {
   // ==========================================================================
   cinematic: {
     id: 'cinematic',
-    name: 'Cinematic',
+    name: '影视',
     icon: Film,
-    description: 'Ultra-smooth for filming',
-    tip: 'Low rates + high expo = buttery smooth movements. GPS position hold for stable shots. RTH for safety.',
+    description: '极致顺滑,专为拍摄',
+    tip: '低速率 + 高 Expo = 黄油般顺滑的动作。GPS 定点悬停确保画面稳定。RTH 保障安全。',
     gradient: 'from-blue-500/20 to-cyan-500/10 border-blue-500/30',
     category: 'multirotor',
     tags: ['cinematic', 'smooth', 'filming', 'video', 'gps'],
@@ -377,10 +377,10 @@ export const QUICK_SETUP_PRESETS: Record<string, QuickSetupPreset> = {
   // ==========================================================================
   flyingWing: {
     id: 'flyingWing',
-    name: 'Flying Wing',
+    name: '飞翼',
     icon: Triangle,
-    description: 'Delta wings & flying wings with elevon mixing',
-    tip: 'Elevon mixing configured (left/right servos on CH3/CH4). Auto-launch, RTH, and waypoint navigation ready.',
+    description: '带升降舵混控的三角翼与飞翼',
+    tip: '已配置升降舵混控(左右舵机在 CH3/CH4)。自动起飞、RTH 和航点导航即刻可用。',
     gradient: 'from-amber-500/20 to-orange-500/10 border-amber-500/30',
     category: 'fixed_wing',
     tags: ['flying-wing', 'delta', 'elevon', 'navigation'],
@@ -435,10 +435,10 @@ export const QUICK_SETUP_PRESETS: Record<string, QuickSetupPreset> = {
   // ==========================================================================
   fwTrainer: {
     id: 'fwTrainer',
-    name: 'Trainer Plane',
+    name: '练习机',
     icon: PlaneTakeoff,
-    description: 'Traditional airplane for beginners',
-    tip: 'Classic aileron/elevator/rudder setup. Auto-level keeps wings stable. Perfect for learning fixed-wing flying.',
+    description: '适合初学者的传统布局飞机',
+    tip: '经典副翼/升降舵/方向舵布局。自动定平保持机翼平稳。学习固定翼飞行的完美选择。',
     gradient: 'from-green-500/20 to-emerald-500/10 border-green-500/30',
     category: 'fixed_wing',
     tags: ['airplane', 'trainer', 'beginner', 'traditional'],
@@ -493,10 +493,10 @@ export const QUICK_SETUP_PRESETS: Record<string, QuickSetupPreset> = {
   // ==========================================================================
   fwSport: {
     id: 'fwSport',
-    name: 'Sport Plane',
+    name: '运动机',
     icon: Plane,
-    description: 'Agile traditional airplane for experienced pilots',
-    tip: 'Higher rates for aerobatics. Aileron/elevator/rudder setup. Switch between stabilized and acro modes.',
+    description: '为有经验飞行员打造的敏捷传统飞机',
+    tip: '更高速率胜任特技飞行。副翼/升降舵/方向舵布局。可在增稳与 ACRO 模式间切换。',
     gradient: 'from-red-500/20 to-orange-500/10 border-red-500/30',
     category: 'fixed_wing',
     tags: ['airplane', 'sport', 'aerobatic', 'traditional'],
@@ -551,10 +551,10 @@ export const QUICK_SETUP_PRESETS: Record<string, QuickSetupPreset> = {
   // ==========================================================================
   fwGlider: {
     id: 'fwGlider',
-    name: 'Glider',
+    name: '滑翔机',
     icon: Wind,
-    description: 'Efficient soaring & thermal hunting',
-    tip: 'Optimized for glide efficiency. Low rates for precision. Soaring mode for thermals. Flying wing servo setup.',
+    description: '高效翱翔,探寻热气流',
+    tip: '为滑翔效率优化。低速率保证精准。翱翔模式专为热气流而生。飞翼舵机配置。',
     gradient: 'from-cyan-500/20 to-sky-500/10 border-cyan-500/30',
     category: 'fixed_wing',
     tags: ['glider', 'soaring', 'efficient', 'flying-wing'],
@@ -609,10 +609,10 @@ export const QUICK_SETUP_PRESETS: Record<string, QuickSetupPreset> = {
   // ==========================================================================
   fwLongRange: {
     id: 'fwLongRange',
-    name: 'Long Range FPV',
+    name: '远程 FPV',
     icon: Globe,
-    description: 'Extended range for FPV missions',
-    tip: 'Flying wing setup optimized for efficiency. Full navigation suite with waypoints, cruise, and RTH.',
+    description: '为 FPV 任务扩展航程',
+    tip: '为效率优化的飞翼配置。完整导航套件:航点、巡航和 RTH。',
     gradient: 'from-indigo-500/20 to-purple-500/10 border-indigo-500/30',
     category: 'fixed_wing',
     tags: ['long-range', 'fpv', 'flying-wing', 'navigation'],
@@ -669,10 +669,10 @@ export const QUICK_SETUP_PRESETS: Record<string, QuickSetupPreset> = {
   // ==========================================================================
   longRange: {
     id: 'longRange',
-    name: 'Long Range',
+    name: '远航',
     icon: Satellite,
-    description: 'Extended range with GPS safety',
-    tip: 'Conservative PIDs for efficiency. GPS cruise and RTH for safety. ANGLE mode for easy recovery.',
+    description: '扩展航程,GPS 保障安全',
+    tip: '保守 PID 提升续航。GPS 巡航与 RTH 保障安全。ANGLE 模式轻松救机。',
     gradient: 'from-emerald-500/20 to-teal-500/10 border-emerald-500/30',
     category: 'multirotor',
     tags: ['long-range', 'gps', 'endurance', 'safe'],
@@ -849,53 +849,53 @@ export function getPresetSummary(preset: QuickSetupPreset): {
            preset.aircraft.servoMixerRules.some(r2 => r2.servoIndex === r.servoIndex && r2.inputSource === SERVO_INPUT_SOURCE.STABILIZED_PITCH)
   );
   const servoConfig = hasElevonMixing
-    ? ['Flying wing elevon mixing (2 servos)', 'Single motor']
+    ? ['飞翼升降舵混控(2 个舵机)', '单电机']
     : preset.aircraft.platformType === PLATFORM_TYPE.AIRPLANE
-      ? ['Traditional setup: Aileron/Elevator/Rudder', 'Single motor']
-      : ['Quad X motor layout'];
+      ? ['传统布局:副翼/升降舵/方向舵', '单电机']
+      : ['Quad X 电机布局'];
 
   return {
     sections: [
       {
-        name: 'Aircraft Type',
-        description: preset.category === 'fixed_wing' ? 'Fixed Wing' : 'Multirotor',
+        name: '机型',
+        description: preset.category === 'fixed_wing' ? '固定翼' : '多旋翼',
         items: servoConfig,
       },
       {
-        name: 'PID Tuning',
-        description: `${preset.name} response`,
+        name: 'PID 调参',
+        description: `${preset.name} 响应特性`,
         items: [
-          `Roll P: ${preset.pids.roll.p}, I: ${preset.pids.roll.i}, D: ${preset.pids.roll.d}`,
-          `Pitch P: ${preset.pids.pitch.p}, I: ${preset.pids.pitch.i}, D: ${preset.pids.pitch.d}`,
-          `Yaw P: ${preset.pids.yaw.p}, I: ${preset.pids.yaw.i}`,
+          `横滚 P: ${preset.pids.roll.p}, I: ${preset.pids.roll.i}, D: ${preset.pids.roll.d}`,
+          `俯仰 P: ${preset.pids.pitch.p}, I: ${preset.pids.pitch.i}, D: ${preset.pids.pitch.d}`,
+          `偏航 P: ${preset.pids.yaw.p}, I: ${preset.pids.yaw.i}`,
         ],
       },
       {
-        name: 'Rates',
-        description: `${preset.rates.rollRate}% max rotation`,
+        name: '速率',
+        description: `最大转速 ${preset.rates.rollRate}%`,
         items: [
-          `RC Rate: ${preset.rates.rcRate}`,
+          `RC 速率: ${preset.rates.rcRate}`,
           `Expo: ${preset.rates.rcExpo}%`,
-          `Roll/Pitch Rate: ${preset.rates.rollRate}`,
-          `Yaw Rate: ${preset.rates.yawRate}`,
+          `横滚/俯仰速率: ${preset.rates.rollRate}`,
+          `偏航速率: ${preset.rates.yawRate}`,
         ],
       },
       {
-        name: 'Flight Modes',
-        description: `${preset.modes.length} modes configured`,
+        name: '飞行模式',
+        description: `已配置 ${preset.modes.length} 个模式`,
         items: preset.wizardModes.map((boxId) => {
           const mode = preset.modes.find((m) => m.boxId === boxId);
           if (!mode) return '';
           const channelName = `AUX${mode.auxChannel + 1}`;
-          return `${getModeName(boxId)} on ${channelName}`;
+          return `${getModeName(boxId)} 于 ${channelName}`;
         }).filter(Boolean),
       },
       {
-        name: 'Failsafe',
+        name: '失控保护',
         description: preset.failsafe.procedure,
         items: [
-          `Action: ${preset.failsafe.procedure}`,
-          `Delay: ${preset.failsafe.delay}s`,
+          `动作: ${preset.failsafe.procedure}`,
+          `延迟: ${preset.failsafe.delay} 秒`,
         ],
       },
     ],
@@ -926,5 +926,5 @@ function getModeName(boxId: number): string {
     [BOX_ID.TURTLE]: 'TURTLE',
     [BOX_ID.NAV_COURSE_HOLD]: 'NAV COURSE HOLD',
   };
-  return names[boxId] || `Mode ${boxId}`;
+  return names[boxId] || `模式 ${boxId}`;
 }

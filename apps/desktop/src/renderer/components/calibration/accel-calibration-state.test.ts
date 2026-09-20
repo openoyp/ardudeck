@@ -27,7 +27,7 @@ describe('does the board have a 3D accel calibration', () => {
     }));
     expect(state.calibrated).toBe(false);
     expect(state.missing).toEqual([1]);
-    expect(accelCalibrationNote(state)).toContain('6-point');
+    expect(accelCalibrationNote(state)).toContain('六面校准');
   });
 
   it('names every instance that is missing it', () => {
@@ -38,7 +38,7 @@ describe('does the board have a 3D accel calibration', () => {
       INS_ACC2SCAL_X: 1, INS_ACC2SCAL_Y: 1, INS_ACC2SCAL_Z: 1,
     }));
     expect(state.missing).toEqual([2]);
-    expect(accelCalibrationNote(state)).toContain('Accelerometer 2');
+    expect(accelCalibrationNote(state)).toContain('加速度计 2');
   });
 
   it('ignores instances the board does not have', () => {

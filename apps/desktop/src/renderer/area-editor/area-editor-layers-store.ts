@@ -14,23 +14,23 @@ import type { LayerKey } from '../../shared/map-layers';
 
 /** Base layers offered in the editor — the planning-relevant subset of MAP_LAYERS. */
 export const AREA_EDITOR_BASE_LAYERS: { key: LayerKey; label: string }[] = [
-  { key: 'googleSat', label: 'Satellite' },
-  { key: 'googleHybrid', label: 'Hybrid' },
-  { key: 'bingSat', label: 'Bing Sat' },
-  { key: 'bingHybrid', label: 'Bing Hybrid' },
-  { key: 'osm', label: 'Street' },
-  { key: 'terrain', label: 'Terrain' },
-  { key: 'dark', label: 'Dark' },
+  { key: 'googleSat', label: '卫星' },
+  { key: 'googleHybrid', label: '混合' },
+  { key: 'bingSat', label: 'Bing 卫星' },
+  { key: 'bingHybrid', label: 'Bing 混合' },
+  { key: 'osm', label: '街道' },
+  { key: 'terrain', label: '地形' },
+  { key: 'dark', label: '深色' },
 ];
 
 export type AreaEditorOverlayId = 'aviation' | 'zones' | 'wind' | 'traffic' | 'gliders';
 
 export const AREA_EDITOR_OVERLAYS: { id: AreaEditorOverlayId; label: string; hint: string }[] = [
-  { id: 'aviation', label: 'Aviation', hint: 'OpenAIP airfields, navaids and airspace (needs an OpenAIP key)' },
-  { id: 'zones', label: 'Zones', hint: 'DIPUL German UAS geo-zones (Germany only)' },
-  { id: 'wind', label: 'Wind', hint: 'Animated forecast wind (Open-Meteo)' },
-  { id: 'traffic', label: 'Traffic', hint: 'Live ADS-B aircraft' },
-  { id: 'gliders', label: 'Gliders', hint: 'Live OGN/FLARM gliders' },
+  { id: 'aviation', label: '航空', hint: 'OpenAIP 机场、导航台与空域(需要 OpenAIP 密钥)' },
+  { id: 'zones', label: '空域', hint: 'DIPUL 德国无人机地理围栏(仅限德国)' },
+  { id: 'wind', label: '风', hint: '动态预报风场(Open-Meteo)' },
+  { id: 'traffic', label: '交通', hint: '实时 ADS-B 飞机' },
+  { id: 'gliders', label: '滑翔机', hint: '实时 OGN/FLARM 滑翔机' },
 ];
 
 interface LayersState {

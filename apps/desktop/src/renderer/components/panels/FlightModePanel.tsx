@@ -22,19 +22,19 @@ export const FlightModePanel = React.memo(function FlightModePanel() {
           <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wide ${
             flight.armed ? 'bg-red-500 text-white' : 'bg-surface-raised text-content-secondary'
           }`}>
-            {flight.armed ? 'Armed' : 'Disarmed'}
+            {flight.armed ? '已解锁' : '已上锁'}
           </span>
           <span className="text-lg font-medium text-content">{flight.mode}</span>
         </div>
 
         {/* Key stats */}
         <div className="space-y-1">
-          <StatRow label="Heading" value={formatNumber(vfrHud.heading, 0)} unit="°" />
-          <StatRow label="Altitude" value={formatAltitudeFromMeters(vfrHud.alt, altitudeUnit)} />
-          <StatRow label="Speed" value={formatNumber(speedValueFromMetersPerSecond(vfrHud.groundspeed, speedUnit), 1)} unit={UNIT_LABELS.speed[speedUnit]} />
-          <StatRow label="Throttle" value={vfrHud.throttle} unit="%" />
+          <StatRow label="航向" value={formatNumber(vfrHud.heading, 0)} unit="°" />
+          <StatRow label="高度" value={formatAltitudeFromMeters(vfrHud.alt, altitudeUnit)} />
+          <StatRow label="速度" value={formatNumber(speedValueFromMetersPerSecond(vfrHud.groundspeed, speedUnit), 1)} unit={UNIT_LABELS.speed[speedUnit]} />
+          <StatRow label="油门" value={vfrHud.throttle} unit="%" />
           <div className="flex justify-between items-baseline py-0.5">
-            <span className="text-content-secondary text-xs">Battery</span>
+            <span className="text-content-secondary text-xs">电池</span>
             <span className={`font-mono text-sm ${batteryColor}`}>
               {formatNumber(battery.voltage, 1)}
               <span className="text-content-tertiary text-[10px] ml-0.5">V</span>

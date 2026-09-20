@@ -96,26 +96,26 @@ function deriveButtonState(args: {
   disabled: boolean;
 } {
   if (args.inFlight) {
-    const label = args.applyStatus === 'writing' ? 'Writing…' : 'Reviewing…';
-    return { label, subLabel: 'Apply in progress, review the Parameters tab', variant: 'primary', disabled: true };
+    const label = args.applyStatus === 'writing' ? '正在写入…' : '正在审阅…';
+    return { label, subLabel: '应用进行中，可在参数页查看', variant: 'primary', disabled: true };
   }
   if (args.globallyBusy) {
-    return { label: 'Busy', subLabel: 'Another profile apply is in progress', variant: 'muted', disabled: true };
+    return { label: '忙', subLabel: '另一个配置正在应用中', variant: 'muted', disabled: true };
   }
   if (args.fleetOnly) {
-    return { label: 'Direct link to apply', subLabel: 'Vehicle profiles write parameters over a direct connection. Connect to one vehicle directly to apply this profile (not over the fleet link).', variant: 'muted', disabled: true };
+    return { label: '需直连才能应用', subLabel: '飞行器配置通过直连写入参数。请直接连接单个飞行器（而非通过机队链路）来应用此配置。', variant: 'muted', disabled: true };
   }
   if (!args.isConnected) {
-    return { label: 'Connect first', subLabel: 'Connect to a vehicle to apply this profile', variant: 'muted', disabled: true };
+    return { label: '请先连接', subLabel: '连接飞行器后才能应用此配置', variant: 'muted', disabled: true };
   }
   if (args.paramCount === 0) {
-    return { label: 'Loading params…', subLabel: 'Waiting for parameter list from vehicle', variant: 'muted', disabled: true };
+    return { label: '正在加载参数…', subLabel: '正在等待飞行器的参数列表', variant: 'muted', disabled: true };
   }
   if (args.armed) {
-    return { label: 'Disarm first', subLabel: 'Cannot change parameters while armed', variant: 'danger', disabled: true };
+    return { label: '请先解锁锁定', subLabel: '解锁状态下无法更改参数', variant: 'danger', disabled: true };
   }
   if (args.isSitl) {
-    return { label: 'Apply to SITL', subLabel: 'Write profile params to the running simulator', variant: 'primary', disabled: false };
+    return { label: '应用到 SITL', subLabel: '将配置参数写入运行中的仿真', variant: 'primary', disabled: false };
   }
-  return { label: 'Apply to vehicle', subLabel: 'Write profile params to the connected FC (real hardware)', variant: 'warning', disabled: false };
+  return { label: '应用到飞行器', subLabel: '将配置参数写入所连接的飞控（真实硬件）', variant: 'warning', disabled: false };
 }

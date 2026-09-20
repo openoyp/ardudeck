@@ -93,183 +93,183 @@ export const MODE_INFO: Record<
   [BOX_ID.ARM]: {
     name: 'ARM',
     icon: Power,
-    description: 'Enable motors',
+    description: '启用电机',
     color: 'bg-red-500',
     beginner:
-      'SAFETY SWITCH - Arms/disarms your aircraft. ALWAYS put this on a dedicated switch! When armed, propellers can spin at any moment.',
+      '安全开关 —— 解锁/上锁飞行器。务必使用一个专用开关!解锁后,螺旋桨随时可能转动。',
     essential: true,
   },
   [BOX_ID.ANGLE]: {
     name: 'ANGLE',
     icon: Square,
-    description: 'Self-level',
+    description: '自稳',
     color: 'bg-blue-500',
     beginner:
-      'BEGINNER MODE - Your aircraft will automatically level itself when you release the sticks. Maximum tilt angle is limited. Perfect for learning to fly!',
+      '新手模式 —— 松杆后飞行器会自动回平,最大倾斜角受限。非常适合学习飞行!',
     essential: true,
   },
   [BOX_ID.HORIZON]: {
     name: 'HORIZON',
     icon: Sunrise,
-    description: 'Self-level + acro',
+    description: '自稳 + 特技',
     color: 'bg-purple-500',
     beginner:
-      'INTERMEDIATE MODE - Self-levels near center stick like ANGLE, but allows flips and rolls at full stick. A bridge between ANGLE and ACRO.',
+      '进阶模式 —— 摇杆居中时如 ANGLE 般自稳,满杆时允许翻滚。是 ANGLE 与 ACRO 之间的过渡。',
   },
   [BOX_ID.AIRMODE]: {
     name: 'AIRMODE',
     icon: Wind,
-    description: 'Full control at zero throttle',
+    description: '零油门下仍保持完整控制',
     color: 'bg-cyan-500',
     beginner:
-      'ADVANCED - Keeps full stick authority even at zero throttle. Essential for freestyle tricks and flips. Usually kept on all the time.',
+      '高级 —— 即使油门为零也保持完整的摇杆控制权限。自由式动作与翻滚必备,通常保持常开。',
   },
   [BOX_ID.NAV_ALTHOLD]: {
     name: 'NAV ALTHOLD',
     icon: ArrowUpFromLine,
-    description: 'Hold altitude',
+    description: '锁定高度',
     color: 'bg-teal-500',
-    beginner: 'Holds current altitude using barometer/GPS. Throttle controls climb/descent rate.',
+    beginner: '利用气压计/GPS 锁定当前高度。油门控制爬升/下降率。',
   },
   [BOX_ID.NAV_RTH]: {
     name: 'NAV RTH',
     icon: Home,
-    description: 'Return to home',
+    description: '返航',
     color: 'bg-green-500',
-    beginner: 'Return To Home - Aircraft will climb to safe altitude and fly back to launch point. Essential safety feature!',
+    beginner: '返航 —— 飞行器将爬升至安全高度并飞回起飞点。必备安全功能!',
     essential: true,
   },
   [BOX_ID.NAV_POSHOLD]: {
     name: 'NAV POSHOLD',
     icon: MapPin,
-    description: 'Hold position',
+    description: '定点悬停',
     color: 'bg-cyan-500',
-    beginner: 'GPS position hold - Aircraft will stay in place. Great for aerial photography or when you need to stop.',
+    beginner: 'GPS 定点 —— 飞行器将保持位置不动。航拍或需要停下时非常有用。',
   },
   [BOX_ID.NAV_WP]: {
     name: 'NAV WP',
     icon: Map,
-    description: 'Waypoint mission',
+    description: '航点任务',
     color: 'bg-indigo-500',
-    beginner: 'Execute uploaded waypoint mission. Aircraft will fly to each waypoint automatically.',
+    beginner: '执行已上传的航点任务。飞行器将自动飞向每个航点。',
     essential: true,
   },
   [BOX_ID.NAV_COURSE_HOLD]: {
     name: 'NAV COURSE HOLD',
     icon: Compass,
-    description: 'Hold course',
+    description: '锁定航迹',
     color: 'bg-violet-500',
-    beginner: 'Maintains current heading while allowing altitude control. Good for flying in a straight line.',
+    beginner: '保持当前航迹,同时可控制高度。适合直线飞行。',
   },
   [BOX_ID.NAV_CRUISE]: {
     name: 'NAV CRUISE',
     icon: Plane,
-    description: 'Cruise control',
+    description: '巡航',
     color: 'bg-sky-500',
-    beginner: 'Fixed-wing cruise mode - Maintains heading and altitude. Perfect for long-range flights.',
+    beginner: '固定翼巡航模式 —— 保持航向和高度。远距离飞行的理想选择。',
   },
   [BOX_ID.NAV_LAUNCH]: {
     name: 'NAV LAUNCH',
     icon: Rocket,
-    description: 'Auto launch',
+    description: '自动起飞',
     color: 'bg-orange-500',
-    beginner: 'Automatic launch sequence for fixed-wing. Throw the plane and it will climb to safe altitude.',
+    beginner: '固定翼自动起飞程序。抛出飞机后它会自动爬升至安全高度。',
     configureTab: 'auto-launch',
   },
   [BOX_ID.GCS_NAV]: {
     name: 'GCS NAV',
     icon: Gamepad2,
-    description: 'Ground control',
+    description: '地面站控制',
     color: 'bg-purple-500',
-    beginner: 'Allow ground control station to send navigation commands (fly-to-here, etc).',
+    beginner: '允许地面站发送导航指令(飞往指定点等)。',
   },
   [BOX_ID.BEEPER]: {
     name: 'BEEPER',
     icon: Volume2,
-    description: 'Find aircraft',
+    description: '寻找飞行器',
     color: 'bg-yellow-500',
     beginner:
-      'FINDER - Makes your aircraft beep loudly to help you find it after a crash. Very useful when it lands in tall grass!',
+      '寻机 —— 让飞行器大声鸣响,炸机后帮你找到它。落进深草时特别有用!',
   },
   [BOX_ID.FAILSAFE]: {
     name: 'FAILSAFE',
     icon: ShieldAlert,
-    description: 'Emergency landing',
+    description: '紧急降落',
     color: 'bg-orange-500',
     beginner:
-      'EMERGENCY - Triggers failsafe behavior (usually landing or disarm). Normally activated automatically when signal is lost.',
+      '紧急 —— 触发失控保护行为(通常为降落或上锁)。一般在信号丢失时自动触发。',
   },
   [BOX_ID.BLACKBOX]: {
     name: 'BLACKBOX',
     icon: Package,
-    description: 'Flight logging',
+    description: '飞行记录',
     color: 'bg-gray-500',
     beginner:
-      'LOGGING - Records flight data to the SD card for analysis. Useful for tuning PIDs and reviewing crashes.',
+      '记录 —— 将飞行数据记录到 SD 卡以便分析。调 PID 和复盘炸机很有用。',
   },
   [BOX_ID.GIMBAL_LEVEL_TILT]: {
     name: 'GIMBAL LEVEL TILT',
     icon: Satellite,
-    description: 'Gimbal tilt leveling',
+    description: '云台俯仰自动水平',
     color: 'bg-indigo-500',
     beginner:
-      'Keeps gimbal tilt axis level regardless of aircraft attitude. Useful for camera stabilization.',
+      '无论飞行器姿态如何,都保持云台俯仰轴水平。用于相机稳定。',
   },
   [BOX_ID.MANUAL]: {
     name: 'MANUAL',
     icon: Joystick,
-    description: 'Direct control',
+    description: '直接控制',
     color: 'bg-rose-500',
-    beginner: 'Direct servo/motor control without stabilization. For experienced pilots only!',
+    beginner: '绕过增稳直接控制舵机/电机。仅限经验丰富的飞手!',
   },
   [BOX_ID.FLAPERON]: {
     name: 'FLAPERON',
     icon: PlaneTakeoff,
-    description: 'Flaps mode',
+    description: '襟翼模式',
     color: 'bg-amber-500',
-    beginner: 'Activates flaperons for slower landing approach. Ailerons droop down to act as flaps.',
+    beginner: '启用襟副翼,降低进近速度。副翼下偏充当襟翼。',
   },
   [BOX_ID.TURN_ASSIST]: {
     name: 'TURN ASSIST',
     icon: RotateCw,
-    description: 'Coordinated turns',
+    description: '协调转弯',
     color: 'bg-lime-500',
-    beginner: 'Auto-coordinates rudder with ailerons for smooth turns. Great for fixed-wing beginners.',
+    beginner: '自动协调方向舵与副翼,转弯更顺畅。固定翼新手的福音。',
   },
   [BOX_ID.HOME_RESET]: {
     name: 'HOME RESET',
     icon: RotateCcw,
-    description: 'Reset home position',
+    description: '重置 Home 点',
     color: 'bg-red-400',
-    beginner: 'Sets current position as new home point. Use when you relocate during a session.',
+    beginner: '将当前位置设为新的 Home 点。更换飞行位置时使用。',
   },
   [BOX_ID.WP_PLANNER]: {
     name: 'WP PLANNER',
     icon: Waypoints,
-    description: 'Mission planner',
+    description: '任务规划器',
     color: 'bg-fuchsia-500',
-    beginner: 'Enable in-flight waypoint planning via stick commands.',
+    beginner: '通过摇杆指令进行空中航点规划。',
   },
   [BOX_ID.HEADING_HOLD]: {
     name: 'HEADING HOLD',
     icon: Navigation,
-    description: 'Hold heading',
+    description: '锁定航向',
     color: 'bg-emerald-500',
-    beginner: 'Maintains current magnetic heading. Useful for flying straight lines.',
+    beginner: '保持当前磁航向。适合直线飞行。',
   },
   [BOX_ID.PREARM]: {
     name: 'PREARM',
     icon: KeyRound,
-    description: 'Pre-arm check',
+    description: '预解锁检查',
     color: 'bg-yellow-600',
-    beginner: 'Safety switch - must be enabled before arming. Prevents accidental arm.',
+    beginner: '安全开关 —— 解锁前必须先启用,防止误解锁。',
   },
   [BOX_ID.TURTLE]: {
     name: 'TURTLE',
     icon: Turtle,
-    description: 'Flip over',
+    description: '翻机扶正',
     color: 'bg-stone-500',
-    beginner: 'Flip crashed aircraft back over using motor spin. For multirotors only.',
+    beginner: '电机反转将炸机翻正。仅适用于多旋翼。',
   },
 };
 
@@ -289,10 +289,10 @@ export interface ModePreset {
 export const PRESETS: Record<string, ModePreset> = {
   beginner: {
     id: 'beginner',
-    name: 'Beginner',
+    name: '新手',
     icon: 'baby',
-    description: 'Safe & simple - great for learning',
-    tip: 'Your aircraft will always stay level. Perfect for learning to hover and basic movements!',
+    description: '安全简单,适合学习',
+    tip: '飞行器始终保持水平。非常适合练习悬停和基本动作!',
     gradient: 'from-green-500/20 to-emerald-500/10 border-green-500/30',
     modes: [
       // ARM on AUX1 high (1800-2100)
@@ -305,10 +305,10 @@ export const PRESETS: Record<string, ModePreset> = {
 
   freestyle: {
     id: 'freestyle',
-    name: 'Freestyle',
+    name: '自由式',
     icon: 'sparkles',
-    description: 'Balanced for tricks & flow',
-    tip: 'Three-position switch on AUX2 gives you ANGLE/HORIZON/ACRO. Flip a switch to change your flying style!',
+    description: '兼顾技巧与流畅',
+    tip: 'AUX2 三段开关可在 ANGLE/HORIZON/ACRO 之间切换。拨动开关即可改变飞行风格!',
     gradient: 'from-purple-500/20 to-violet-500/10 border-purple-500/30',
     modes: [
       // ARM on AUX1 high
@@ -325,10 +325,10 @@ export const PRESETS: Record<string, ModePreset> = {
 
   racing: {
     id: 'racing',
-    name: 'Racing',
+    name: '竞速',
     icon: 'trophy',
-    description: 'Fast & responsive for speed',
-    tip: 'Pure ACRO mode for maximum control. Beeper on AUX3 helps find your aircraft after a crash!',
+    description: '快速响应,为速度而生',
+    tip: '纯 ACRO 模式,控制感最强。AUX3 上的蜂鸣器帮你在炸机后找到飞行器!',
     gradient: 'from-red-500/20 to-orange-500/10 border-red-500/30',
     modes: [
       // ARM on AUX1 high
@@ -343,10 +343,10 @@ export const PRESETS: Record<string, ModePreset> = {
 
   cinematic: {
     id: 'cinematic',
-    name: 'Cinematic',
+    name: '影视',
     icon: 'video',
-    description: 'Ultra-smooth for filming',
-    tip: 'NAV RTH brings your aircraft home if signal is lost (requires GPS!). Perfect for long-range filming.',
+    description: '极致顺滑,专为拍摄',
+    tip: '信号丢失时 NAV RTH 自动返航(需要 GPS!)。远距离拍摄的理想选择。',
     gradient: 'from-blue-500/20 to-cyan-500/10 border-blue-500/30',
     modes: [
       // ARM on AUX1 high
@@ -361,10 +361,10 @@ export const PRESETS: Record<string, ModePreset> = {
 
   fixedWing: {
     id: 'fixedWing',
-    name: 'Fixed Wing',
+    name: '固定翼',
     icon: 'plane',
-    description: 'For airplanes with navigation',
-    tip: 'Complete setup for fixed-wing with launch assist, RTH, and waypoint navigation.',
+    description: '带导航功能的固定翼',
+    tip: '固定翼完整配置:自动起飞、返航与航点导航。',
     gradient: 'from-sky-500/20 to-blue-500/10 border-sky-500/30',
     modes: [
       // ARM on AUX1 high
@@ -400,18 +400,18 @@ export const ESSENTIAL_MODES = ALL_MODES.filter((m) => m.essential);
 
 // AUX channel names (iNav/Betaflight support up to 12 AUX channels)
 export const AUX_CHANNELS = [
-  { index: 0, name: 'AUX 1', description: 'Usually a 2-position switch' },
-  { index: 1, name: 'AUX 2', description: 'Often a 3-position switch' },
-  { index: 2, name: 'AUX 3', description: 'Additional switch' },
-  { index: 3, name: 'AUX 4', description: 'Additional switch' },
-  { index: 4, name: 'AUX 5', description: 'Additional channel (knob/slider)' },
-  { index: 5, name: 'AUX 6', description: 'Additional channel (knob/slider)' },
-  { index: 6, name: 'AUX 7', description: 'Additional channel' },
-  { index: 7, name: 'AUX 8', description: 'Additional channel' },
-  { index: 8, name: 'AUX 9', description: 'Additional channel' },
-  { index: 9, name: 'AUX 10', description: 'Additional channel' },
-  { index: 10, name: 'AUX 11', description: 'Additional channel' },
-  { index: 11, name: 'AUX 12', description: 'Additional channel' },
+  { index: 0, name: 'AUX 1', description: '通常为两段开关' },
+  { index: 1, name: 'AUX 2', description: '常为三段开关' },
+  { index: 2, name: 'AUX 3', description: '附加开关' },
+  { index: 3, name: 'AUX 4', description: '附加开关' },
+  { index: 4, name: 'AUX 5', description: '附加通道(旋钮/滑块)' },
+  { index: 5, name: 'AUX 6', description: '附加通道(旋钮/滑块)' },
+  { index: 6, name: 'AUX 7', description: '附加通道' },
+  { index: 7, name: 'AUX 8', description: '附加通道' },
+  { index: 8, name: 'AUX 9', description: '附加通道' },
+  { index: 9, name: 'AUX 10', description: '附加通道' },
+  { index: 10, name: 'AUX 11', description: '附加通道' },
+  { index: 11, name: 'AUX 12', description: '附加通道' },
 ] as const;
 
 // PWM range constants

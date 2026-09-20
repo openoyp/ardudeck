@@ -17,10 +17,10 @@ function GpsReadout({ gps, label }: { gps: GpsData; label?: string }) {
       </div>
 
       <div className="space-y-1">
-        <StatRow label="Satellites" value={gps.satellites} />
+        <StatRow label="卫星数" value={gps.satellites} />
         <StatRow label="HDOP" value={formatNumber(gps.hdop, 1)} />
         <StatRow label="VDOP" value={formatNumber(gps.vdop, 1)} />
-        <StatRow label="Altitude" value={formatAltitudeFromMeters(gps.alt, altitudeUnit)} />
+        <StatRow label="高度" value={formatAltitudeFromMeters(gps.alt, altitudeUnit)} />
       </div>
     </div>
   );

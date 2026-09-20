@@ -1356,7 +1356,7 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
             {/* Hint for Shift+click - show when NOT in add mode (as a shortcut hint) */}
             {!readOnly && !isAddingWaypoint && !isSettingHome && (
               <span className="text-xs text-content-secondary bg-surface-solid border border-subtle shadow-sm px-2.5 py-1.5 rounded">
-                <kbd className="bg-surface-raised px-1 rounded text-content-secondary">Shift</kbd>+click to add
+                <kbd className="bg-surface-raised px-1 rounded text-content-secondary">Shift</kbd>+点击添加
               </span>
             )}
 
@@ -1364,12 +1364,12 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
               <button
                 onClick={() => setFitTrigger(t => t + 1)}
                 className="px-2.5 py-1.5 rounded text-xs font-medium bg-surface border border-subtle text-content hover:bg-surface-raised shadow-sm transition-colors flex items-center gap-1.5"
-                title="Fit map to show all waypoints"
+                title="缩放地图以显示所有航点"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                 </svg>
-                Fit
+                适配
               </button>
             )}
 
@@ -1377,13 +1377,13 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
             <button
               onClick={() => setCenterOnVehicleTrigger(t => t + 1)}
               className="px-2.5 py-1.5 rounded text-xs font-medium bg-surface border border-subtle text-content hover:bg-surface-raised shadow-sm transition-colors flex items-center gap-1.5"
-              title="Center map on vehicle GPS position"
+              title="将地图居中到无人机 GPS 位置"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              Vehicle
+              无人机
             </button>
 
             {/* Set Home button - hidden in readOnly mode */}
@@ -1397,12 +1397,12 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
                       ? 'bg-emerald-600/80 text-white'
                       : 'bg-surface border border-subtle text-content hover:bg-surface-raised shadow-sm'
                 }`}
-                title={isSettingHome ? 'Click on map to set home position' : homePosition ? 'Click to change home position' : 'Set home position by clicking on map'}
+                title={isSettingHome ? '点击地图设置家位置' : homePosition ? '点击更改家位置' : '点击地图设置家位置'}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-                {isSettingHome ? 'Click map' : homePosition ? 'Home Set' : 'Set Home'}
+                {isSettingHome ? '点击地图' : homePosition ? '家已设置' : '设置家'}
               </button>
             )}
 
@@ -1414,18 +1414,18 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
                 else fp.open();
               }}
               className="px-2.5 py-1.5 rounded text-xs font-medium bg-surface border border-subtle text-content hover:bg-surface-raised shadow-sm transition-colors flex items-center gap-1.5"
-              data-tip="Preview the flight: a gizmo flies the plan at mission speed, showing where the camera points"
+              data-tip="预览飞行:以任务速度飞行整个计划,并显示相机指向"
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5v14l11-7z" />
               </svg>
-              Preview
+              预览
             </button>
 
             {/* Hint for Set Home mode */}
             {!readOnly && isSettingHome && (
               <span className="text-xs text-emerald-400 bg-surface-solid border border-subtle shadow-sm px-2.5 py-1.5 rounded">
-                Click on map to set home
+                点击地图设置家位置
               </span>
             )}
 
@@ -1443,31 +1443,31 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
                     {surveyDrawMode === 'polygon' && (
                       <span className="text-xs text-purple-400 bg-surface-solid border border-subtle shadow-sm px-2.5 py-1.5 rounded">
                         {surveyPattern === 'corridor'
-                          ? 'Click to add centerline points, double-click to finish'
-                          : 'Click to add boundary points, double-click to finish'}
+                          ? '点击添加中心线点,双击结束'
+                          : '点击添加边界点,双击结束'}
                       </span>
                     )}
                     {surveyDrawMode === 'none' && !surveyPolygon && (
                       <button
                         onClick={startSurveyDrawing}
                         className="px-2.5 py-1.5 rounded text-xs font-medium bg-purple-600/80 text-white transition-colors flex items-center gap-1.5"
-                        title={surveyPattern === 'corridor' ? 'Draw corridor centerline' : 'Draw survey boundary'}
+                        title={surveyPattern === 'corridor' ? '绘制走廊中心线' : '绘制勘测边界'}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
-                        {surveyPattern === 'corridor' ? 'Draw Centerline' : 'Draw Boundary'}
+                        {surveyPattern === 'corridor' ? '绘制中心线' : '绘制边界'}
                       </button>
                     )}
                     <button
                       onClick={deactivateSurvey}
                       className="px-2.5 py-1.5 rounded text-xs font-medium bg-surface-solid border border-red-400 shadow-sm text-red-400 hover:bg-red-600 hover:text-white transition-colors flex items-center gap-1.5"
-                      title="Exit survey mode"
+                      title="退出勘测模式"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
-                      Exit Survey
+                      退出勘测
                     </button>
                   </>
                 )}
@@ -1488,9 +1488,9 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
                     ? 'bg-green-600 text-white'
                     : 'text-content-secondary hover:text-content'
                 }`}
-                title="Draw inclusion zones (vehicle must stay inside)"
+                title="绘制包含区(无人机必须保持在区内)"
               >
-                Include
+                包含
               </button>
               <button
                 onClick={() => setFenceInclusionMode(false)}
@@ -1499,9 +1499,9 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
                     ? 'bg-red-600 text-white'
                     : 'text-content-secondary hover:text-content'
                 }`}
-                title="Draw exclusion zones (vehicle must stay outside)"
+                title="绘制排除区(无人机必须保持在区外)"
               >
-                Exclude
+                排除
               </button>
             </div>
 
@@ -1518,12 +1518,12 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
                       ? `${activeColor} text-white`
                       : 'bg-surface border border-subtle text-content hover:bg-surface-raised shadow-sm'
                   }`}
-                  title={`Draw ${fenceInclusionMode ? 'inclusion' : 'exclusion'} polygon`}
+                  title={`绘制${fenceInclusionMode ? '包含' : '排除'}多边形`}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h16l-2 14H6L4 5z" />
                   </svg>
-                  {isPolygonActive ? 'Drawing...' : 'Polygon'}
+                  {isPolygonActive ? '绘制中...' : '多边形'}
                 </button>
               );
             })()}
@@ -1541,12 +1541,12 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
                       ? `${activeColor} text-white`
                       : 'bg-surface border border-subtle text-content hover:bg-surface-raised shadow-sm'
                   }`}
-                  title={`Draw ${fenceInclusionMode ? 'inclusion' : 'exclusion'} circle`}
+                  title={`绘制${fenceInclusionMode ? '包含' : '排除'}圆形`}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <circle cx="12" cy="12" r="9" strokeWidth={2} />
                   </svg>
-                  {isCircleActive ? 'Drawing...' : 'Circle'}
+                  {isCircleActive ? '绘制中...' : '圆形'}
                 </button>
               );
             })()}
@@ -1559,13 +1559,13 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
                   ? 'bg-amber-600 text-white'
                   : 'bg-surface border border-subtle text-content hover:bg-surface-raised shadow-sm'
               }`}
-              title="Set fence return point (where vehicle flies on breach)"
+              title="设置围栏返航点(越界时无人机飞往此处)"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              {fenceDrawMode === 'return-point' ? 'Click map' : 'Return Pt'}
+              {fenceDrawMode === 'return-point' ? '点击地图' : '返航点'}
             </button>
 
             {/* Drawing hint */}
@@ -1574,9 +1574,9 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
                 fenceDrawMode === 'return-point' ? 'text-amber-400' :
                 fenceInclusionMode ? 'text-green-400' : 'text-red-400'
               }`}>
-                {fenceDrawMode.startsWith('polygon-') ? 'Click to add points, double-click to finish' :
-                 fenceDrawMode.startsWith('circle-') ? 'Click center, then click edge for radius' :
-                 'Click to set return point'}
+                {fenceDrawMode.startsWith('polygon-') ? '点击添加点,双击结束' :
+                 fenceDrawMode.startsWith('circle-') ? '点击圆心,再点击边缘确定半径' :
+                 '点击设置返航点'}
               </span>
             )}
           </>
@@ -1592,18 +1592,18 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
                   ? 'bg-orange-600 text-white'
                   : 'bg-surface border border-subtle text-content hover:bg-surface-raised shadow-sm'
               }`}
-              title="Add rally points by clicking on map"
+              title="点击地图添加集合点"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              {rallyAddMode ? 'Click map' : 'Add Rally'}
+              {rallyAddMode ? '点击地图' : '添加集合点'}
             </button>
 
             {/* Adding hint */}
             {rallyAddMode && (
               <span className="text-xs text-orange-400 bg-surface-solid border border-subtle shadow-sm px-2.5 py-1.5 rounded">
-                Click on map to add rally point (ESC to cancel)
+                点击地图添加集合点(按 ESC 取消)
               </span>
             )}
           </>
@@ -1618,8 +1618,8 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
       {activeMode === 'mission' && isSettingHome && !readOnly && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[500]">
           <div className="bg-surface-solid border border-subtle shadow-lg px-6 py-4 rounded-xl text-center">
-            <div className="text-emerald-400 text-sm mb-2">Click anywhere on the map</div>
-            <div className="text-content-secondary text-xs">to set your Home position</div>
+            <div className="text-emerald-400 text-sm mb-2">点击地图任意位置</div>
+            <div className="text-content-secondary text-xs">以设置家位置</div>
           </div>
         </div>
       )}
@@ -1628,7 +1628,7 @@ function MissionMapPanel2D({ readOnly = false }: MissionMapPanelProps) {
       {waypoints.length === 0 && readOnly && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[500]">
           <div className="bg-surface-solid border border-subtle shadow-lg px-6 py-4 rounded-xl text-center">
-            <div className="text-content-secondary text-sm">No mission loaded</div>
+            <div className="text-content-secondary text-sm">未加载任务</div>
           </div>
         </div>
       )}

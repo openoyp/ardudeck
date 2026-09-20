@@ -202,15 +202,15 @@ export const AttitudePanel = React.memo(function AttitudePanel() {
 
       <div className="flex gap-6 mt-4 text-sm">
         <div className="text-center">
-          <div className="text-content-secondary text-xs mb-0.5">Roll</div>
+          <div className="text-content-secondary text-xs mb-0.5">横滚</div>
           <div className="font-mono text-content">{formatNumber(throttled.roll, 1)}°</div>
         </div>
         <div className="text-center">
-          <div className="text-content-secondary text-xs mb-0.5">Pitch</div>
+          <div className="text-content-secondary text-xs mb-0.5">俯仰</div>
           <div className="font-mono text-content">{formatNumber(throttled.pitch, 1)}°</div>
         </div>
         <div className="text-center">
-          <div className="text-content-secondary text-xs mb-0.5">Yaw</div>
+          <div className="text-content-secondary text-xs mb-0.5">偏航</div>
           <div className="font-mono text-content">{formatNumber(throttled.yaw, 1)}°</div>
         </div>
       </div>

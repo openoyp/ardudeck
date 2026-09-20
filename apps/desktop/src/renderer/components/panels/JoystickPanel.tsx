@@ -19,14 +19,14 @@ import { preflightForControl, channelPwm } from '../../utils/joystick-safety';
 import type { ChannelSource } from '../../utils/pseudo-tx';
 
 /** The four a pilot must bind before anything else is worth showing. */
-const PRIMARY = ['Roll', 'Pitch', 'Throttle', 'Yaw'];
+const PRIMARY = ['横滚', '俯仰', '油门', '偏航'];
 
 function sourceLabel(src: ChannelSource): string {
   switch (src.kind) {
-    case 'none': return 'not assigned';
-    case 'axis': return `axis ${src.index}`;
-    case 'button': return `button ${src.index}`;
-    case 'button3': return `buttons ${src.low}/${src.high}`;
+    case 'none': return '未分配';
+    case 'axis': return `轴 ${src.index}`;
+    case 'button': return `按钮 ${src.index}`;
+    case 'button3': return `按钮 ${src.low}/${src.high}`;
   }
 }
 
@@ -51,7 +51,7 @@ function ChannelRow({ index }: { index: number }): JSX.Element {
   return (
     <div className="flex items-center gap-2 py-1">
       <div className="w-16 shrink-0 text-[11px] text-content-secondary">
-        {PRIMARY[index] ?? `Ch ${index + 1}`}
+        {PRIMARY[index] ?? `通道 ${index + 1}`}
       </div>
       <div className="relative h-4 flex-1 rounded bg-surface-raised overflow-hidden">
         <div
@@ -69,12 +69,12 @@ function ChannelRow({ index }: { index: number }): JSX.Element {
           teaching ? 'bg-amber-500/20 text-amber-300' : 'bg-surface-raised text-content-secondary hover:text-content'
         }`}
       >
-        {teaching ? 'Move it…' : assigned ? sourceLabel(map.source) : 'Assign'}
+        {teaching ? '移动它…' : assigned ? sourceLabel(map.source) : '分配'}
       </button>
       <button
         onClick={() => updateMap(index, { reverse: !map.reverse })}
         disabled={!assigned}
-        data-tip="Reverse this channel"
+        data-tip="反转此通道"
         className={`w-8 shrink-0 rounded px-1 py-1 text-[11px] disabled:opacity-30 ${
           map.reverse ? 'bg-blue-500/20 text-blue-300' : 'bg-surface-raised text-content-secondary'
         }`}
@@ -84,7 +84,7 @@ function ChannelRow({ index }: { index: number }): JSX.Element {
       <button
         onClick={() => setSource(index, { kind: 'none' })}
         disabled={!assigned}
-        data-tip="Clear this assignment"
+        data-tip="清除该分配"
         className="w-8 shrink-0 rounded px-1 py-1 text-[11px] text-content-tertiary hover:text-content disabled:opacity-30"
       >
         ✕
@@ -122,7 +122,7 @@ export function JoystickPanel(): JSX.Element {
   useEffect(() => {
     if (vehicleControl && !connected) {
       disableVehicleControl();
-      setRefused('Controller disconnected, sticks released');
+      setRefused('手柄已断开,已释放摇杆');
     }
   }, [vehicleControl, connected, disableVehicleControl]);
 
@@ -133,7 +133,7 @@ export function JoystickPanel(): JSX.Element {
       return;
     }
     const r = enableVehicleControl();
-    if (!r.ok) setRefused(r.reason ?? 'Could not take the sticks');
+    if (!r.ok) setRefused(r.reason ?? '无法接管摇杆');
   };
 
   return (
@@ -144,10 +144,10 @@ export function JoystickPanel(): JSX.Element {
           <Gamepad2 className={`w-4 h-4 ${connected ? 'text-emerald-400' : 'text-content-tertiary'}`} />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm text-content">
-              {connected ? deviceName || 'Controller' : enabled ? 'Waiting for a controller…' : 'Controller off'}
+              {connected ? deviceName || '手柄' : enabled ? '等待手柄连接…' : '手柄已关闭'}
             </div>
             <div className="text-[11px] text-content-tertiary">
-              {connected ? `${raw.axes.length} axes · ${raw.buttons.length} buttons` : 'Plug in a gamepad or a handset in USB Joystick mode'}
+              {connected ? `${raw.axes.length} 个轴 · ${raw.buttons.length} 个按钮` : '请插入游戏手柄,或处于 USB 摇杆模式的遥控器'}
             </div>
           </div>
           <button
@@ -156,15 +156,14 @@ export function JoystickPanel(): JSX.Element {
               enabled ? 'bg-emerald-500/20 text-emerald-300' : 'bg-surface-raised text-content-secondary hover:text-content'
             }`}
           >
-            {enabled ? 'On' : 'Off'}
+            {enabled ? '开' : '关'}
           </button>
         </div>
         {enabled && connected && mappingMode === 'standard' && (
           <div className="mt-2 flex items-start gap-2 rounded-lg bg-amber-500/10 p-2 text-[11px] text-amber-300">
             <AlertTriangle className="mt-0.5 w-3.5 h-3.5 shrink-0" />
             <span>
-              The browser forced this device into the console-pad layout, which hides every axis past
-              the first four. Switches will not be assignable.
+              浏览器将该设备强制识别为游戏手柄布局,第 4 个之后的轴都会被隐藏,开关将无法分配。
             </span>
           </div>
         )}
@@ -174,12 +173,12 @@ export function JoystickPanel(): JSX.Element {
       {enabled && (
         <div className="rounded-xl border border-subtle bg-surface p-3">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-medium text-content">Channels</span>
+            <span className="text-xs font-medium text-content">通道</span>
             <button
               onClick={resetMapping}
               className="flex items-center gap-1 text-[11px] text-content-tertiary hover:text-content"
             >
-              <RotateCcw className="w-3 h-3" /> Reset
+              <RotateCcw className="w-3 h-3" /> 重置
             </button>
           </div>
           {[0, 1, 2, 3].map((i) => <ChannelRow key={i} index={i} />)}
@@ -188,7 +187,7 @@ export function JoystickPanel(): JSX.Element {
             onClick={() => setShowAll((v) => !v)}
             className="mt-1 text-[11px] text-content-tertiary hover:text-content"
           >
-            {showAll ? 'Hide channels 5-16' : 'Channels 5-16'}
+            {showAll ? '收起通道 5-16' : '通道 5-16'}
           </button>
         </div>
       )}
@@ -199,12 +198,12 @@ export function JoystickPanel(): JSX.Element {
           <Hand className={`w-4 h-4 ${vehicleControl ? 'text-blue-400' : 'text-content-tertiary'}`} />
           <div className="min-w-0 flex-1">
             <div className="text-sm text-content">
-              {vehicleControl ? 'Joystick has the sticks' : 'Vehicle flies on its own receiver'}
+              {vehicleControl ? '摇杆已接管' : '飞行器使用自带接收机飞行'}
             </div>
             <div className="text-[11px] text-content-tertiary">
               {vehicleControl
-                ? `${vehicleFps} frames/s · stop sending and the vehicle returns to its receiver within a second`
-                : 'Only the channels you assigned are sent; everything else stays with the receiver'}
+                ? `${vehicleFps} 帧/秒 · 停止发送后约 1 秒内飞行器即回到接收机控制`
+                : '仅发送你分配的通道,其余通道仍由接收机控制'}
             </div>
           </div>
           <button
@@ -216,7 +215,7 @@ export function JoystickPanel(): JSX.Element {
                 : 'bg-blue-600 text-white hover:bg-blue-500'
             }`}
           >
-            {vehicleControl ? 'Release' : 'Take control'}
+            {vehicleControl ? '释放' : '接管控制'}
           </button>
         </div>
 
@@ -233,8 +232,7 @@ export function JoystickPanel(): JSX.Element {
           <div className="mt-2 flex items-start gap-2 rounded-lg bg-amber-500/10 p-2 text-[11px] text-amber-300">
             <AlertTriangle className="mt-0.5 w-3.5 h-3.5 shrink-0" />
             <span>
-              Armed. The sticks are live: this window must keep focus, because a browser stops
-              reporting the controller when it does not have it.
+              已解锁,摇杆已生效:请保持本窗口焦点,浏览器在失去焦点时会停止上报手柄输入。
             </span>
           </div>
         )}

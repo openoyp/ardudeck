@@ -43,7 +43,7 @@ const VTX_FREQUENCY_TABLE: Record<number, Record<number, number>> = {
 
 // VTX device types
 const VTX_TYPE_NAMES: Record<number, string> = {
-  0: 'Unknown',
+  0: '未知',
   1: 'Tramp',
   2: 'SmartAudio',
   3: 'RTC6705',
@@ -52,9 +52,9 @@ const VTX_TYPE_NAMES: Record<number, string> = {
 
 // Low power disarm modes
 const LOW_POWER_DISARM_OPTIONS = [
-  { value: 0, label: 'Off', description: 'Always use configured power' },
-  { value: 1, label: 'On', description: 'Low power when disarmed' },
-  { value: 2, label: 'Until First Arm', description: 'Low power until first arm' },
+  { value: 0, label: '关闭', description: '始终使用配置的功率' },
+  { value: 1, label: '开启', description: '未解锁时低功率' },
+  { value: 2, label: '直到首次解锁', description: '首次解锁前保持低功率' },
 ];
 
 // Default power levels (mW) - actual values depend on VTX table
@@ -107,11 +107,11 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
       if (data) {
         setConfig(data as VtxConfig);
       } else {
-        setError('VTX configuration not available');
+        setError('VTX 配置不可用');
       }
     } catch (err) {
       console.error('[VtxConfig] Load error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load VTX config');
+      setError(err instanceof Error ? err.message : '加载 VTX 配置失败');
     } finally {
       setLoading(false);
     }
@@ -148,22 +148,22 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
     try {
       const saveSuccess = await window.electronAPI.mspSetVtxConfig(config);
       if (!saveSuccess) {
-        setError('Failed to send VTX config');
+        setError('发送 VTX 配置失败');
         return;
       }
 
       // Save to EEPROM
       const eepromSuccess = await window.electronAPI.mspSaveEeprom();
       if (!eepromSuccess) {
-        setError('Config sent but EEPROM save failed - changes may not persist');
+        setError('配置已发送但 EEPROM 保存失败 — 更改可能不会保留');
         return;
       }
 
-      setSuccess('VTX configuration saved');
+      setSuccess('VTX 配置已保存');
       setModified(false);
     } catch (err) {
       console.error('[VtxConfig] Save error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      setError(err instanceof Error ? err.message : '保存失败');
     } finally {
       setSaving(false);
     }
@@ -180,7 +180,7 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
     if (!config) return DEFAULT_POWER_LEVELS;
     if (config.vtxTableAvailable && config.vtxTablePowerLevels > 0) {
       // Return indices if we have a VTX table
-      return Array.from({ length: config.vtxTablePowerLevels }, (_, i) => `Level ${i + 1}`);
+      return Array.from({ length: config.vtxTablePowerLevels }, (_, i) => `等级 ${i + 1}`);
     }
     return DEFAULT_POWER_LEVELS;
   }, [config?.vtxTableAvailable, config?.vtxTablePowerLevels]);
@@ -190,7 +190,7 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full mb-2 mx-auto" />
-          <p className="text-content-secondary">Loading VTX configuration...</p>
+          <p className="text-content-secondary">正在加载 VTX 配置...</p>
         </div>
       </div>
     );
@@ -204,28 +204,28 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
           <div className="flex items-start gap-4">
             <Radio className="w-10 h-10 text-purple-400 shrink-0" />
             <div>
-              <h3 className="text-lg font-semibold text-purple-300">What is a VTX?</h3>
+              <h3 className="text-lg font-semibold text-purple-300">什么是 VTX？</h3>
               <p className="text-sm text-content-secondary mt-2">
-                <strong>VTX (Video Transmitter)</strong> is the component that sends live video from your
-                drone's camera to your FPV goggles or monitor. It broadcasts on specific radio frequencies
-                that your goggles tune into.
+                <strong>VTX（图传发射器）</strong>是将无人机相机的实时画面发送到
+                FPV 眼镜或显示器的部件。它在特定无线电频率上广播，
+                由你的眼镜调谐接收。
               </p>
               <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-content-secondary">
                 <div className="flex items-center gap-2">
                   <Radio className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Frequency: 5.8GHz band</span>
+                  <span>频率：5.8GHz 频段</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Zap className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Power: 25mW - 800mW</span>
+                  <span>功率：25mW - 800mW</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Monitor className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Bands: A, B, E, F, Raceband</span>
+                  <span>频段：A、B、E、F、Raceband</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Hash className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Channels: 1-8 per band</span>
+                  <span>信道：每频段 1-8</span>
                 </div>
               </div>
             </div>
@@ -235,18 +235,18 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
         {/* Not detected message */}
         <div className="bg-surface rounded-xl border p-5 text-center">
           <XCircle className="w-12 h-12 text-amber-400 mx-auto mb-3" />
-          <h4 className="text-content font-medium">VTX Not Detected</h4>
+          <h4 className="text-content font-medium">未检测到 VTX</h4>
           <p className="text-sm text-content-secondary mt-2 max-w-md mx-auto">
-            Your flight controller couldn't communicate with a video transmitter.
+            你的飞行控制器无法与图传发射器通信。
           </p>
 
           <div className="mt-4 p-4 bg-surface-raised rounded-lg text-left">
-            <p className="text-xs font-medium text-content-secondary mb-2">Common reasons:</p>
+            <p className="text-xs font-medium text-content-secondary mb-2">常见原因：</p>
             <ul className="text-xs text-content-secondary space-y-1">
-              <li>• VTX not connected or powered</li>
-              <li>• SmartAudio/Tramp wire not connected to FC</li>
-              <li>• VTX protocol not configured in Ports tab</li>
-              <li>• VTX doesn't support remote configuration</li>
+              <li>• VTX 未连接或未上电</li>
+              <li>• SmartAudio/Tramp 线未连接到飞控</li>
+              <li>• 未在端口页签配置 VTX 协议</li>
+              <li>• VTX 不支持远程配置</li>
             </ul>
           </div>
 
@@ -255,13 +255,13 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
             className="mt-4 px-4 py-2 text-sm bg-purple-600 hover:bg-purple-500 text-white rounded-lg flex items-center gap-2 mx-auto"
           >
             <RefreshCw className="w-4 h-4" />
-            Retry Detection
+            重新检测
           </button>
         </div>
 
         {/* Skip message */}
         <p className="text-center text-xs text-content-tertiary">
-          Don't have a VTX? You can skip this tab - it's only for FPV video configuration.
+          没有 VTX？可以跳过此页签 — 它仅用于 FPV 图像配置。
         </p>
       </div>
     );
@@ -278,23 +278,23 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-purple-300">Video Transmitter (VTX)</h2>
+                <h2 className="text-lg font-semibold text-purple-300">图传发射器（VTX）</h2>
                 <p className="text-sm text-content-secondary mt-1">
-                  Configure the frequency and power of your FPV video signal
+                  配置 FPV 图像信号的频率与功率
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 {config.deviceReady ? (
                   <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-green-500/20 text-xs text-green-400">
-                    <CheckCircle className="w-3.5 h-3.5" /> Connected
+                    <CheckCircle className="w-3.5 h-3.5" /> 已连接
                   </span>
                 ) : (
                   <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-yellow-500/20 text-xs text-yellow-400">
-                    <AlertTriangle className="w-3.5 h-3.5" /> Not Ready
+                    <AlertTriangle className="w-3.5 h-3.5" /> 未就绪
                   </span>
                 )}
                 <span className="text-xs px-2 py-1 rounded-lg bg-surface-raised text-content">
-                  {VTX_TYPE_NAMES[config.vtxType] || 'Unknown'}
+                  {VTX_TYPE_NAMES[config.vtxType] || '未知'}
                 </span>
               </div>
             </div>
@@ -331,8 +331,8 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
             <Radio className="w-5 h-5 text-purple-400" />
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-medium text-content">Band & Channel</h3>
-            <p className="text-xs text-content-secondary">Select your VTX frequency</p>
+            <h3 className="text-sm font-medium text-content">频段与信道</h3>
+            <p className="text-xs text-content-secondary">选择你的 VTX 频率</p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-mono text-purple-400">{frequencyDisplay}</div>
@@ -344,7 +344,7 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
 
         {/* Band Selection */}
         <div>
-          <label className="text-xs text-content-secondary block mb-2">Band</label>
+          <label className="text-xs text-content-secondary block mb-2">频段</label>
           <div className="grid grid-cols-5 gap-2">
             {VTX_BANDS.map((band) => (
               <button
@@ -365,7 +365,7 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
 
         {/* Channel Selection */}
         <div>
-          <label className="text-xs text-content-secondary block mb-2">Channel</label>
+          <label className="text-xs text-content-secondary block mb-2">信道</label>
           <div className="grid grid-cols-8 gap-2">
             {VTX_CHANNELS.map((channel) => {
               const freq = getFrequency(config.band, channel);
@@ -389,7 +389,7 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
 
         {/* Frequency Chart - Visual representation */}
         <div className="mt-4 p-3 bg-surface-raised rounded-lg">
-          <div className="text-xs text-content-secondary mb-2">Frequency Band Overview</div>
+          <div className="text-xs text-content-secondary mb-2">频段总览</div>
           <div className="relative h-8">
             {/* Background scale */}
             <div className="absolute inset-0 flex items-center">
@@ -418,15 +418,15 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
             <Zap className="w-5 h-5 text-orange-400" />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-content">Power & Safety</h3>
-            <p className="text-xs text-content-secondary">Configure transmit power and pit mode</p>
+            <h3 className="text-sm font-medium text-content">功率与安全</h3>
+            <p className="text-xs text-content-secondary">配置发射功率与 PIT 模式</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-6">
           {/* Power Level */}
           <div>
-            <label className="text-xs text-content-secondary block mb-2">Power Level</label>
+            <label className="text-xs text-content-secondary block mb-2">功率等级</label>
             <select
               value={config.power}
               onChange={(e) => updateConfig({ power: parseInt(e.target.value, 10) })}
@@ -439,13 +439,13 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
               ))}
             </select>
             <p className="text-[10px] text-content-tertiary mt-1">
-              Higher power = longer range but more heat
+              功率越高距离越远但发热越大
             </p>
           </div>
 
           {/* Low Power Disarm */}
           <div>
-            <label className="text-xs text-content-secondary block mb-2">Low Power When Disarmed</label>
+            <label className="text-xs text-content-secondary block mb-2">未解锁时低功率</label>
             <select
               value={config.lowPowerDisarm}
               onChange={(e) => updateConfig({ lowPowerDisarm: parseInt(e.target.value, 10) })}
@@ -469,9 +469,9 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
             <div className="flex items-center gap-3">
               <Volume2 className={`w-5 h-5 ${config.pitMode ? 'text-yellow-400' : 'text-content-secondary'}`} />
               <div>
-                <span className="text-sm text-content">Pit Mode</span>
+                <span className="text-sm text-content">PIT 模式</span>
                 <p className="text-[10px] text-content-tertiary">
-                  Reduces power for bench testing or pit area use
+                  降低功率，用于台架测试或场地内使用
                 </p>
               </div>
             </div>
@@ -492,7 +492,7 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
 
         {config.pitModeFrequency > 0 && (
           <div className="text-xs text-content-secondary">
-            Pit mode frequency: {config.pitModeFrequency} MHz
+            PIT 模式频率：{config.pitModeFrequency} MHz
           </div>
         )}
       </div>
@@ -502,9 +502,9 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
         <div className="bg-blue-500/10 rounded-xl border-blue-500/30 p-4 flex items-start gap-4">
           <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-blue-400 font-medium text-sm">VTX Table Configured</p>
+            <p className="text-blue-400 font-medium text-sm">VTX 表已配置</p>
             <p className="text-xs text-content-secondary mt-1">
-              {config.vtxTableBands} bands × {config.vtxTableChannels} channels, {config.vtxTablePowerLevels} power levels
+              {config.vtxTableBands} 个频段 × {config.vtxTableChannels} 个信道，{config.vtxTablePowerLevels} 个功率等级
             </p>
           </div>
         </div>
@@ -514,11 +514,11 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
       <div className="bg-amber-500/10 rounded-xl border-amber-500/30 p-4 flex items-start gap-4">
         <AlertTriangle className="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-amber-400 font-medium">Important</p>
+          <p className="text-amber-400 font-medium">重要提示</p>
           <ul className="text-sm text-content-secondary mt-1 space-y-1 list-disc list-inside">
-            <li>Check local regulations for legal power levels and frequencies</li>
-            <li>Use pit mode when not flying to avoid interference</li>
-            <li>Coordinate frequencies with other pilots at the field</li>
+            <li>查看当地法规允许的功率等级与频率</li>
+            <li>不飞行时使用 PIT 模式以避免干扰</li>
+            <li>与场地其他飞手协调频率</li>
           </ul>
         </div>
       </div>
@@ -531,7 +531,7 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
           className="px-4 py-2 text-sm bg-surface-raised text-content rounded-lg hover:bg-surface-raised flex items-center gap-2"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          刷新
         </button>
         <button
           onClick={saveConfig}
@@ -543,7 +543,7 @@ export default function VtxConfigTab({ modified, setModified }: Props) {
           }`}
         >
           <Save className={`w-4 h-4 ${saving ? 'animate-pulse' : ''}`} />
-          {saving ? 'Saving...' : 'Save VTX Config'}
+          {saving ? '保存中...' : '保存 VTX 配置'}
         </button>
       </div>
     </div>

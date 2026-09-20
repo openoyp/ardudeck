@@ -140,7 +140,7 @@ export function useProfileApply(profile: VehicleProfile) {
       applyStore.getState().clear();
       applyStore.getState().setToast({
         kind: 'info',
-        message: 'Apply cancelled, no parameters were changed',
+        message: '应用已取消，未更改任何参数',
         createdAt: Date.now(),
       });
       return;
@@ -181,15 +181,15 @@ export function useProfileApply(profile: VehicleProfile) {
       });
     }
 
-    const failMsg = failedCount > 0 ? ` (${failedCount} failed)` : '';
+    const failMsg = failedCount > 0 ? `（${failedCount} 项失败）` : '';
     const flashNote =
-      flashed ? ' and saved to flash'
-      : gate.target.isSitl ? ' (SITL, flash not required)'
-      : ' (not saved to flash, will reset on reboot)';
+      flashed ? '并已保存到闪存'
+      : gate.target.isSitl ? '（SITL，无需写闪存）'
+      : '（未保存到闪存，重启后会复位）';
     applyStore.getState().setStatus('done', profile.id);
     applyStore.getState().setToast({
       kind: 'success',
-      message: `Applied ${appliedCount} param${appliedCount === 1 ? '' : 's'} to ${gate.target.isSitl ? 'SITL' : 'vehicle'}${flashNote}${failMsg}`,
+      message: `已将 ${appliedCount} 个参数应用到${gate.target.isSitl ? 'SITL' : '飞行器'}，${flashNote}${failMsg}`,
       snapshotId: gate.pendingSnapshot.id,
       profileId: profile.id,
       rebootRequired: rebootRequired.length,
@@ -211,7 +211,7 @@ export function useProfileApply(profile: VehicleProfile) {
         applyStore.getState().clear();
         applyStore.getState().setToast({
           kind: 'error',
-          message: 'Backup failed, apply aborted',
+          message: '备份失败，应用已中止',
           createdAt: Date.now(),
         });
         return;
@@ -232,7 +232,7 @@ export function useProfileApply(profile: VehicleProfile) {
     applyStore.getState().clear();
     applyStore.getState().setToast({
       kind: 'info',
-      message: 'Apply cancelled',
+      message: '应用已取消',
       createdAt: Date.now(),
     });
   }, [applyStore]);

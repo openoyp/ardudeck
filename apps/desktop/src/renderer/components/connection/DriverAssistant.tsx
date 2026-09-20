@@ -11,8 +11,8 @@ interface DriverInfo {
 const DRIVER_INFO: Record<string, DriverInfo[]> = {
   darwin: [
     {
-      name: 'CH340/CH341 Driver (if needed)',
-      description: 'macOS 10.14+ has built-in support. Only install if device not detected.',
+      name: 'CH340/CH341 驱动(如有需要)',
+      description: 'macOS 10.14+ 已内置支持。仅在设备未被检测到时安装。',
       url: 'https://www.wch-ic.com/downloads/CH341SER_MAC_ZIP.html',
       bundledFile: 'CH34xVCPDriver.dmg',
       chips: ['CH340', 'CH341', 'QinHeng', 'WCH'],
@@ -20,15 +20,15 @@ const DRIVER_INFO: Record<string, DriverInfo[]> = {
   ],
   win32: [
     {
-      name: 'CH340/CH341 Driver',
-      description: 'Required for budget flight controllers and Arduino clones',
+      name: 'CH340/CH341 驱动',
+      description: '入门级飞控和 Arduino 兼容板所需',
       url: 'https://www.wch-ic.com/downloads/CH341SER_EXE.html',
       // No bundled file for Windows yet - download required JavaScript
       chips: ['CH340', 'CH341', 'QinHeng', 'WCH'],
     },
     {
-      name: 'CP210x Driver',
-      description: 'For Silicon Labs USB-UART bridges (most Pixhawk boards)',
+      name: 'CP210x 驱动',
+      description: '适用于 Silicon Labs USB-UART 桥接芯片(大多数 Pixhawk 板)',
       url: 'https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers',
       chips: ['CP210x', 'Silicon Labs'],
     },
@@ -37,10 +37,10 @@ const DRIVER_INFO: Record<string, DriverInfo[]> = {
 };
 
 const TROUBLESHOOTING_TIPS = [
-  'Try a different USB cable (some are charge-only)',
-  'Try a different USB port (avoid USB hubs)',
-  'Unplug and replug the device',
-  'Restart the application after installing drivers',
+  '更换 USB 线试试(有些仅支持充电)',
+  '更换 USB 端口试试(避免使用 USB 集线器)',
+  '拔下设备后重新插入',
+  '安装驱动后重启应用',
 ];
 
 function getOS(): 'darwin' | 'win32' | 'linux' {
@@ -96,8 +96,8 @@ export function DriverAssistant() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
         <div className="flex-1 text-left">
-          <p className="text-sm font-medium text-amber-300">Connection failed</p>
-          <p className="text-xs text-content-secondary">You may need to install USB drivers</p>
+          <p className="text-sm font-medium text-amber-300">连接失败</p>
+          <p className="text-xs text-content-secondary">可能需要安装 USB 驱动</p>
         </div>
         <svg
           className={`w-4 h-4 text-content-secondary transition-transform ${expanded ? 'rotate-180' : ''}`}
@@ -112,7 +112,7 @@ export function DriverAssistant() {
           {drivers.length > 0 ? (
             <div>
               <h4 className="text-xs font-medium text-content-secondary uppercase tracking-wide mb-2">
-                Recommended Drivers for {getOSName()}
+                {getOSName()} 推荐驱动
               </h4>
               <div className="space-y-2">
                 {drivers.map((driver) => (
@@ -128,7 +128,7 @@ export function DriverAssistant() {
                           {driver.name}
                           {driver.bundledFile && (
                             <span className="ml-2 text-xs px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded">
-                              Bundled
+                              内置
                             </span>
                           )}
                         </p>
@@ -155,14 +155,14 @@ export function DriverAssistant() {
             </div>
           ) : (
             <p className="text-sm text-content-secondary">
-              Linux includes built-in drivers for most USB-serial chips. If your device isn't detected,
-              check that you have permission to access serial ports (add your user to the <code className="text-amber-400">dialout</code> group).
+              Linux 已内置大多数 USB 串口芯片的驱动。如果你的设备未被检测到,
+              请检查你是否有串口访问权限(将你的用户加入 <code className="text-amber-400">dialout</code> 组)。
             </p>
           )}
 
           <div>
             <h4 className="text-xs font-medium text-content-secondary uppercase tracking-wide mb-2">
-              Troubleshooting
+              故障排除
             </h4>
             <ul className="space-y-1">
               {TROUBLESHOOTING_TIPS.map((tip, i) => (
@@ -174,7 +174,7 @@ export function DriverAssistant() {
               {os === 'darwin' && (
                 <li className="text-xs text-content-secondary flex items-start gap-2">
                   <span className="text-amber-500 mt-0.5">•</span>
-                  After installing, allow the extension in System Settings → Privacy & Security
+                  安装后,请在系统设置 → 隐私与安全性中允许该扩展
                 </li>
               )}
             </ul>

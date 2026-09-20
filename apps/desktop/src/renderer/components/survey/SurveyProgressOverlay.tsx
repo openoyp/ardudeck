@@ -171,13 +171,13 @@ export const SurveyProgressOverlay = React.memo(function SurveyProgressOverlay()
 });
 
 function formatEta(seconds: number): string {
-  if (seconds < 60) return 'ETA <1 min';
-  return `ETA ${Math.round(seconds / 60)} min`;
+  if (seconds < 60) return '预计 <1 分钟';
+  return `预计 ${Math.round(seconds / 60)} 分钟`;
 }
 
 function formatRemaining(meters: number): string {
-  if (meters < 1000) return `${Math.round(meters)} m remaining`;
-  return `${(meters / 1000).toFixed(1)} km remaining`;
+  if (meters < 1000) return `剩余 ${Math.round(meters)} m`;
+  return `剩余 ${(meters / 1000).toFixed(1)} km`;
 }
 
 /**
@@ -201,8 +201,8 @@ export const SurveyProgressCard = React.memo(function SurveyProgressCard({
         const pct = Math.round(e.progress.completedFraction * 100);
         const cellSummary = summarizeCells(e.cellStates);
         const parts = [`${pct}%`];
-        if (cellSummary) parts.push(`cell ${cellSummary.activeNumber}/${cellSummary.total}`);
-        if (e.progress.finished) parts.push('done');
+        if (cellSummary) parts.push(`分区 ${cellSummary.activeNumber}/${cellSummary.total}`);
+        if (e.progress.finished) parts.push('完成');
         else if (e.progress.etaSeconds !== null) parts.push(formatEta(e.progress.etaSeconds));
         return (
           <div key={e.groupId} data-tip={formatRemaining(e.progress.remainingMeters)}>

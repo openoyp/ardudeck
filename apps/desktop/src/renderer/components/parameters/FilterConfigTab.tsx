@@ -87,10 +87,10 @@ const DEFAULT_CONFIG: FilterConfig = {
 
 // Filter type options
 const FILTER_TYPES = [
-  { value: 0, label: 'PT1', description: 'First order, gentle slope' },
-  { value: 1, label: 'Biquad', description: 'Second order, steeper' },
-  { value: 2, label: 'PT2', description: 'Second order PT' },
-  { value: 3, label: 'PT3', description: 'Third order PT' },
+  { value: 0, label: 'PT1', description: '一阶，平缓斜率' },
+  { value: 1, label: 'Biquad', description: '二阶，更陡' },
+  { value: 2, label: 'PT2', description: '二阶 PT' },
+  { value: 3, label: 'PT3', description: '三阶 PT' },
 ];
 
 interface Props {
@@ -125,7 +125,7 @@ export default function FilterConfigTab({ setModified }: Props) {
       }
     } catch (err) {
       console.error('[FilterConfigTab] Failed to load config:', err);
-      setError('Failed to load filter configuration');
+      setError('加载滤波器配置失败');
     } finally {
       setLoading(false);
     }
@@ -140,7 +140,7 @@ export default function FilterConfigTab({ setModified }: Props) {
     try {
       const result = await window.electronAPI.mspSetFilterConfig(config);
       if (!result) {
-        setError('Failed to save filter settings');
+        setError('保存滤波器设置失败');
         setSaving(false);
         return;
       }
@@ -149,11 +149,11 @@ export default function FilterConfigTab({ setModified }: Props) {
       await window.electronAPI.mspSaveEeprom();
 
       setOriginalConfig({ ...config });
-      setSuccess('Filter settings saved!');
+      setSuccess('滤波器设置已保存！');
       setModified?.(false);
     } catch (err) {
       console.error('[FilterConfigTab] Failed to save:', err);
-      setError('Failed to save filter settings');
+      setError('保存滤波器设置失败');
     } finally {
       setSaving(false);
     }
@@ -192,9 +192,9 @@ export default function FilterConfigTab({ setModified }: Props) {
               <Waves className="w-6 h-6 text-purple-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-purple-300">Filter Configuration</h2>
+              <h2 className="text-lg font-semibold text-purple-300">滤波器配置</h2>
               <p className="text-sm text-content-secondary">
-                Configure noise filtering for smooth and clean flight
+                配置噪声滤波，飞行更顺滑干净
               </p>
             </div>
           </div>
@@ -205,7 +205,7 @@ export default function FilterConfigTab({ setModified }: Props) {
               className="px-3 py-2 bg-surface-raised hover:bg-surface-raised text-content rounded-lg text-sm flex items-center gap-2 transition-colors"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
+              刷新
             </button>
             <button
               onClick={saveConfig}
@@ -217,7 +217,7 @@ export default function FilterConfigTab({ setModified }: Props) {
               }`}
             >
               <Save className="w-4 h-4" />
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? '保存中...' : '保存'}
             </button>
           </div>
         </div>
@@ -243,21 +243,21 @@ export default function FilterConfigTab({ setModified }: Props) {
         <div className="bg-surface border-subtle rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <Activity className="w-5 h-5 text-blue-400" />
-            <h3 className="text-content font-medium">Gyro Filters</h3>
+            <h3 className="text-content font-medium">陀螺仪滤波器</h3>
           </div>
           <div className="space-y-4">
             <DraggableSlider
-              label="Lowpass 1 (Hz)"
+              label="低通 1（Hz）"
               value={config.gyroLowpassHz}
               onChange={(v) => updateConfig('gyroLowpassHz', v)}
               min={0}
               max={500}
               step={5}
               color="#3B82F6"
-              hint="Primary noise filter (0 = off)"
+              hint="主噪声滤波器（0 = 关闭）"
             />
             <div className="flex items-center gap-4">
-              <label className="text-sm text-content-secondary min-w-[100px]">Type</label>
+              <label className="text-sm text-content-secondary min-w-[100px]">类型</label>
               <select
                 value={config.gyroLowpassType}
                 onChange={(e) => updateConfig('gyroLowpassType', parseInt(e.target.value, 10))}
@@ -271,24 +271,24 @@ export default function FilterConfigTab({ setModified }: Props) {
               </select>
             </div>
             <DraggableSlider
-              label="Lowpass 2 (Hz)"
+              label="低通 2（Hz）"
               value={config.gyroLowpass2Hz}
               onChange={(v) => updateConfig('gyroLowpass2Hz', v)}
               min={0}
               max={500}
               step={5}
               color="#60A5FA"
-              hint="Secondary filter (0 = off)"
+              hint="副滤波器（0 = 关闭）"
             />
             <DraggableSlider
-              label="Yaw Lowpass (Hz)"
+              label="偏航低通（Hz）"
               value={config.yawLowpassHz}
               onChange={(v) => updateConfig('yawLowpassHz', v)}
               min={0}
               max={500}
               step={5}
               color="#93C5FD"
-              hint="Yaw-specific filtering"
+              hint="偏航专用滤波"
             />
           </div>
         </div>
@@ -297,21 +297,21 @@ export default function FilterConfigTab({ setModified }: Props) {
         <div className="bg-surface border-subtle rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <Zap className="w-5 h-5 text-orange-400" />
-            <h3 className="text-content font-medium">D-Term Filters</h3>
+            <h3 className="text-content font-medium">D 项滤波器</h3>
           </div>
           <div className="space-y-4">
             <DraggableSlider
-              label="Lowpass 1 (Hz)"
+              label="低通 1（Hz）"
               value={config.dTermLowpassHz}
               onChange={(v) => updateConfig('dTermLowpassHz', v)}
               min={0}
               max={500}
               step={5}
               color="#F97316"
-              hint="Primary D-term filter (0 = off)"
+              hint="D 项主滤波器（0 = 关闭）"
             />
             <div className="flex items-center gap-4">
-              <label className="text-sm text-content-secondary min-w-[100px]">Type</label>
+              <label className="text-sm text-content-secondary min-w-[100px]">类型</label>
               <select
                 value={config.dTermLowpassType}
                 onChange={(e) => updateConfig('dTermLowpassType', parseInt(e.target.value, 10))}
@@ -325,14 +325,14 @@ export default function FilterConfigTab({ setModified }: Props) {
               </select>
             </div>
             <DraggableSlider
-              label="Lowpass 2 (Hz)"
+              label="低通 2（Hz）"
               value={config.dTermLowpass2Hz}
               onChange={(v) => updateConfig('dTermLowpass2Hz', v)}
               min={0}
               max={500}
               step={5}
               color="#FB923C"
-              hint="Secondary D-term filter (0 = off)"
+              hint="D 项副滤波器（0 = 关闭）"
             />
           </div>
         </div>
@@ -342,64 +342,64 @@ export default function FilterConfigTab({ setModified }: Props) {
       <div className="bg-surface border-subtle rounded-xl p-5">
         <div className="flex items-center gap-2 mb-4">
           <FilterIcon className="w-5 h-5 text-cyan-400" />
-          <h3 className="text-content font-medium">Dynamic Notch Filter</h3>
-          <span className="text-xs text-content-secondary">Tracks and removes motor noise</span>
+          <h3 className="text-content font-medium">动态陷波滤波器</h3>
+          <span className="text-xs text-content-secondary">跟踪并消除电机噪声</span>
         </div>
         <div className="grid grid-cols-3 gap-6">
           <div className="space-y-4">
             <DraggableSlider
-              label="Min Frequency (Hz)"
+              label="最低频率（Hz）"
               value={config.dynNotchMinHz}
               onChange={(v) => updateConfig('dynNotchMinHz', v)}
               min={30}
               max={500}
               step={5}
               color="#06B6D4"
-              hint="Lower frequency bound"
+              hint="频率下限"
             />
             <DraggableSlider
-              label="Max Frequency (Hz)"
+              label="最高频率（Hz）"
               value={config.dynNotchMaxHz}
               onChange={(v) => updateConfig('dynNotchMaxHz', v)}
               min={100}
               max={1000}
               step={10}
               color="#22D3EE"
-              hint="Upper frequency bound"
+              hint="频率上限"
             />
           </div>
           <div className="space-y-4">
             <DraggableSlider
-              label="Notch Count"
+              label="陷波数量"
               value={config.dynNotchCount}
               onChange={(v) => updateConfig('dynNotchCount', v)}
               min={0}
               max={8}
               step={1}
               color="#67E8F9"
-              hint="Number of notches (0 = off)"
+              hint="陷波个数（0 = 关闭）"
             />
             <DraggableSlider
-              label="Q Factor"
+              label="Q 系数"
               value={config.dynNotchQ}
               onChange={(v) => updateConfig('dynNotchQ', v)}
               min={50}
               max={1000}
               step={10}
               color="#A5F3FC"
-              hint="Notch width (higher = narrower)"
+              hint="陷波宽度（越高越窄）"
             />
           </div>
           <div className="space-y-4">
             <DraggableSlider
-              label="Width Percent"
+              label="宽度百分比"
               value={config.dynNotchWidthPercent}
               onChange={(v) => updateConfig('dynNotchWidthPercent', v)}
               min={0}
               max={20}
               step={1}
               color="#0EA5E9"
-              hint="Notch width adjustment"
+              hint="陷波宽度调节"
             />
           </div>
         </div>
@@ -413,8 +413,8 @@ export default function FilterConfigTab({ setModified }: Props) {
         >
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5 text-content-secondary" />
-            <h3 className="text-content font-medium">Advanced Settings</h3>
-            <span className="text-xs text-content-secondary">(Notch Filters, RPM Filter & Dynamic Lowpass)</span>
+            <h3 className="text-content font-medium">高级设置</h3>
+            <span className="text-xs text-content-secondary">（陷波滤波器、RPM 滤波器与动态低通）</span>
           </div>
           <svg
             className={`w-5 h-5 text-content-secondary transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
@@ -431,19 +431,19 @@ export default function FilterConfigTab({ setModified }: Props) {
             <div className="grid grid-cols-2 gap-6 mt-4">
               {/* Static Notch Filters */}
               <div className="space-y-4">
-                <h4 className="text-sm font-medium text-purple-400">Gyro Notch 1</h4>
+                <h4 className="text-sm font-medium text-purple-400">陀螺仪陷波 1</h4>
                 <DraggableSlider
-                  label="Center (Hz)"
+                  label="中心（Hz）"
                   value={config.gyroNotchHz}
                   onChange={(v) => updateConfig('gyroNotchHz', v)}
                   min={0}
                   max={500}
                   step={5}
                   color="#A855F7"
-                  hint="0 = disabled"
+                  hint="0 = 禁用"
                 />
                 <DraggableSlider
-                  label="Cutoff (Hz)"
+                  label="截止（Hz）"
                   value={config.gyroNotchCutoff}
                   onChange={(v) => updateConfig('gyroNotchCutoff', v)}
                   min={0}
@@ -451,19 +451,19 @@ export default function FilterConfigTab({ setModified }: Props) {
                   step={5}
                   color="#C084FC"
                 />
-                <h4 className="text-sm font-medium text-purple-400 mt-4">Gyro Notch 2</h4>
+                <h4 className="text-sm font-medium text-purple-400 mt-4">陀螺仪陷波 2</h4>
                 <DraggableSlider
-                  label="Center (Hz)"
+                  label="中心（Hz）"
                   value={config.gyroNotch2Hz}
                   onChange={(v) => updateConfig('gyroNotch2Hz', v)}
                   min={0}
                   max={500}
                   step={5}
                   color="#D8B4FE"
-                  hint="0 = disabled"
+                  hint="0 = 禁用"
                 />
                 <DraggableSlider
-                  label="Cutoff (Hz)"
+                  label="截止（Hz）"
                   value={config.gyroNotch2Cutoff}
                   onChange={(v) => updateConfig('gyroNotch2Cutoff', v)}
                   min={0}
@@ -475,19 +475,19 @@ export default function FilterConfigTab({ setModified }: Props) {
 
               {/* D-Term Notch & RPM Filter */}
               <div className="space-y-4">
-                <h4 className="text-sm font-medium text-orange-400">D-Term Notch</h4>
+                <h4 className="text-sm font-medium text-orange-400">D 项陷波</h4>
                 <DraggableSlider
-                  label="Center (Hz)"
+                  label="中心（Hz）"
                   value={config.dTermNotchHz}
                   onChange={(v) => updateConfig('dTermNotchHz', v)}
                   min={0}
                   max={500}
                   step={5}
                   color="#F97316"
-                  hint="0 = disabled"
+                  hint="0 = 禁用"
                 />
                 <DraggableSlider
-                  label="Cutoff (Hz)"
+                  label="截止（Hz）"
                   value={config.dTermNotchCutoff}
                   onChange={(v) => updateConfig('dTermNotchCutoff', v)}
                   min={0}
@@ -495,26 +495,26 @@ export default function FilterConfigTab({ setModified }: Props) {
                   step={5}
                   color="#FB923C"
                 />
-                <h4 className="text-sm font-medium text-green-400 mt-4">RPM Notch Filter</h4>
+                <h4 className="text-sm font-medium text-green-400 mt-4">RPM 陷波滤波器</h4>
                 <DraggableSlider
-                  label="Harmonics"
+                  label="谐波数"
                   value={config.gyroRpmNotchHarmonics}
                   onChange={(v) => updateConfig('gyroRpmNotchHarmonics', v)}
                   min={0}
                   max={3}
                   step={1}
                   color="#22C55E"
-                  hint="Number of harmonics (0 = off)"
+                  hint="谐波个数（0 = 关闭）"
                 />
                 <DraggableSlider
-                  label="Min Frequency (Hz)"
+                  label="最低频率（Hz）"
                   value={config.gyroRpmNotchMinHz}
                   onChange={(v) => updateConfig('gyroRpmNotchMinHz', v)}
                   min={50}
                   max={255}
                   step={5}
                   color="#4ADE80"
-                  hint="Minimum frequency for RPM filter"
+                  hint="RPM 滤波器的最低频率"
                 />
               </div>
             </div>
@@ -522,19 +522,19 @@ export default function FilterConfigTab({ setModified }: Props) {
             {/* Dynamic Lowpass Section */}
             <div className="grid grid-cols-2 gap-6 mt-6">
               <div className="space-y-4">
-                <h4 className="text-sm font-medium text-teal-400">Gyro Dynamic Lowpass</h4>
+                <h4 className="text-sm font-medium text-teal-400">陀螺仪动态低通</h4>
                 <DraggableSlider
-                  label="Min Frequency (Hz)"
+                  label="最低频率（Hz）"
                   value={config.gyroLowpassDynMinHz}
                   onChange={(v) => updateConfig('gyroLowpassDynMinHz', v)}
                   min={0}
                   max={500}
                   step={5}
                   color="#2DD4BF"
-                  hint="0 = disabled"
+                  hint="0 = 禁用"
                 />
                 <DraggableSlider
-                  label="Max Frequency (Hz)"
+                  label="最高频率（Hz）"
                   value={config.gyroLowpassDynMaxHz}
                   onChange={(v) => updateConfig('gyroLowpassDynMaxHz', v)}
                   min={0}
@@ -544,19 +544,19 @@ export default function FilterConfigTab({ setModified }: Props) {
                 />
               </div>
               <div className="space-y-4">
-                <h4 className="text-sm font-medium text-teal-400">D-Term Dynamic Lowpass</h4>
+                <h4 className="text-sm font-medium text-teal-400">D 项动态低通</h4>
                 <DraggableSlider
-                  label="Min Frequency (Hz)"
+                  label="最低频率（Hz）"
                   value={config.dTermLowpassDynMinHz}
                   onChange={(v) => updateConfig('dTermLowpassDynMinHz', v)}
                   min={0}
                   max={500}
                   step={5}
                   color="#14B8A6"
-                  hint="0 = disabled"
+                  hint="0 = 禁用"
                 />
                 <DraggableSlider
-                  label="Max Frequency (Hz)"
+                  label="最高频率（Hz）"
                   value={config.dTermLowpassDynMaxHz}
                   onChange={(v) => updateConfig('dTermLowpassDynMaxHz', v)}
                   min={0}
@@ -565,14 +565,14 @@ export default function FilterConfigTab({ setModified }: Props) {
                   color="#2DD4BF"
                 />
                 <DraggableSlider
-                  label="LPF Curve Expo"
+                  label="低通曲线指数"
                   value={config.dynLpfCurveExpo}
                   onChange={(v) => updateConfig('dynLpfCurveExpo', v)}
                   min={0}
                   max={10}
                   step={1}
                   color="#99F6E4"
-                  hint="Dynamic lowpass curve exponent"
+                  hint="动态低通曲线指数"
                 />
               </div>
             </div>
@@ -585,12 +585,12 @@ export default function FilterConfigTab({ setModified }: Props) {
         <div className="flex items-start gap-3">
           <Activity className="w-5 h-5 text-blue-400 mt-0.5" />
           <div>
-            <h4 className="font-medium text-blue-300">Filter Tuning Tips</h4>
+            <h4 className="font-medium text-blue-300">滤波调参技巧</h4>
             <ul className="text-sm text-content-secondary mt-2 space-y-1">
-              <li><strong>Lowpass:</strong> Lower values = more filtering, less noise, but more delay. Start at 150Hz.</li>
-              <li><strong>Dynamic Notch:</strong> Automatically tracks motor noise. Set min/max to bracket your motor frequencies.</li>
-              <li><strong>D-Term:</strong> More aggressive filtering here reduces motor heat and oscillations.</li>
-              <li><strong>Set to 0:</strong> Disables that filter completely.</li>
+              <li><strong>低通：</strong>数值越低滤波越强、噪声越少，但延迟越大。从 150Hz 开始。</li>
+              <li><strong>动态陷波：</strong>自动跟踪电机噪声。将最低/最高频率设为覆盖你电机的频率范围。</li>
+              <li><strong>D 项：</strong>此处滤波更激进可减少电机发热和震荡。</li>
+              <li><strong>设为 0：</strong>完全禁用该滤波器。</li>
             </ul>
           </div>
         </div>

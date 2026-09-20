@@ -6,35 +6,35 @@ interface ConfigSelectorsProps {
 }
 
 const WING_SHAPES: Array<{ value: WingShape; label: string; hint: string }> = [
-  { value: 'standard',     label: 'Standard',      hint: 'Traditional fuselage with separate elevator/rudder/ailerons' },
-  { value: 'delta',        label: 'Delta',         hint: 'Triangular wing, elevons combine pitch+roll' },
-  { value: 'flying-wing',  label: 'Flying Wing',   hint: 'No tail, wing-only: elevons for control' },
-  { value: 'v-tail',       label: 'V-Tail',        hint: 'Two surfaces mix pitch and yaw' },
-  { value: 'biplane',      label: 'Biplane',       hint: 'Two wings stacked: rare, nostalgic' },
-  { value: 'inverted-v',   label: 'Inverted V',    hint: 'Inverted-V tail' },
+  { value: 'standard',     label: '常规布局',      hint: '传统机身，升降舵/方向舵/副翼独立' },
+  { value: 'delta',        label: '三角翼',         hint: '三角形机翼，升降副翼兼顾俯仰与横滚' },
+  { value: 'flying-wing',  label: '飞翼',   hint: '无尾翼，仅机翼：用升降副翼控制' },
+  { value: 'v-tail',       label: 'V 尾',        hint: '两个翼面混合控制俯仰与偏航' },
+  { value: 'biplane',      label: '双翼机',       hint: '上下双层机翼：少见、复古' },
+  { value: 'inverted-v',   label: '倒 V 尾',    hint: '倒 V 形尾翼' },
 ];
 
 const VTOL_STYLES: Array<{ value: VtolStyle; label: string; hint: string }> = [
-  { value: 'quadplane',   label: 'Quadplane',    hint: 'Plane + separate vertical lift motors' },
-  { value: 'tailsitter',  label: 'Tailsitter',   hint: 'Sits on its tail, tilts to fly forward' },
-  { value: 'tiltrotor',   label: 'Tiltrotor',    hint: 'Motors tilt from vertical to horizontal' },
-  { value: 'tiltwing',    label: 'Tiltwing',     hint: 'Whole wing tilts with the motors' },
+  { value: 'quadplane',   label: '四旋翼复合翼',    hint: '固定翼 + 独立垂直升力电机' },
+  { value: 'tailsitter',  label: '尾座式',   hint: '以尾着地，倾转进入前飞' },
+  { value: 'tiltrotor',   label: '倾转旋翼',    hint: '电机从垂直倾转到水平' },
+  { value: 'tiltwing',    label: '倾转机翼',     hint: '整个机翼随电机一起倾转' },
 ];
 
 const MOTOR_ARRANGEMENTS: Array<{ value: MotorArrangement; label: string; hint: string }> = [
-  { value: 'quad-x',       label: 'Quad X',       hint: '4 motors in X pattern' },
-  { value: 'quad-plus',    label: 'Quad +',       hint: '4 motors in + pattern' },
-  { value: 'quad-h',       label: 'Quad H',       hint: '4 motors in H pattern' },
-  { value: 'hex-x',        label: 'Hex X',        hint: '6 motors in X pattern' },
-  { value: 'hex-plus',     label: 'Hex +',        hint: '6 motors in + pattern' },
-  { value: 'octo-x',       label: 'Octo X',       hint: '8 motors in X pattern' },
-  { value: 'octo-plus',    label: 'Octo +',       hint: '8 motors in + pattern' },
-  { value: 'y6',           label: 'Y6',           hint: '3 arms, 2 coaxial motors each' },
-  { value: 'tri',          label: 'Tricopter',    hint: '3 motors + yaw servo' },
-  { value: 'coaxial',      label: 'Coaxial X8',   hint: '4 coaxial pairs stacked' },
-  { value: 'inline-2',     label: 'Inline 2',     hint: '2 motors side-by-side' },
-  { value: 'twin-tractor', label: 'Twin-Tractor', hint: '2 motors pulling from wing LE' },
-  { value: 'twin-pusher',  label: 'Twin-Pusher',  hint: '2 motors pushing from wing TE' },
+  { value: 'quad-x',       label: '四轴 X',       hint: '4 个电机呈 X 形布局' },
+  { value: 'quad-plus',    label: '四轴 +',       hint: '4 个电机呈 + 形布局' },
+  { value: 'quad-h',       label: '四轴 H',       hint: '4 个电机呈 H 形布局' },
+  { value: 'hex-x',        label: '六轴 X',        hint: '6 个电机呈 X 形布局' },
+  { value: 'hex-plus',     label: '六轴 +',       hint: '6 个电机呈 + 形布局' },
+  { value: 'octo-x',       label: '八轴 X',       hint: '8 个电机呈 X 形布局' },
+  { value: 'octo-plus',    label: '八轴 +',      hint: '8 个电机呈 + 形布局' },
+  { value: 'y6',           label: 'Y6',           hint: '3 个机臂，每臂 2 个同轴电机' },
+  { value: 'tri',          label: '三旋翼',    hint: '3 个电机 + 偏航舵机' },
+  { value: 'coaxial',      label: '同轴 X8',   hint: '4 组上下叠置的同轴电机' },
+  { value: 'inline-2',     label: '双电机并排',     hint: '2 个电机并排布置' },
+  { value: 'twin-tractor', label: '双拉力桨', hint: '2 个电机在机翼前缘拉动' },
+  { value: 'twin-pusher',  label: '双推力桨',  hint: '2 个电机在机翼后缘推动' },
 ];
 
 /**
@@ -52,7 +52,7 @@ export function ConfigSelectors({ vehicle, onUpdate }: ConfigSelectorsProps) {
     <div className="grid grid-cols-2 gap-4">
       {showWing && (
         <Selector
-          label="Wing Shape"
+          label="机翼构型"
           value={vehicle.wingShape}
           options={WING_SHAPES}
           onChange={v => onUpdate({ wingShape: v as WingShape })}
@@ -60,7 +60,7 @@ export function ConfigSelectors({ vehicle, onUpdate }: ConfigSelectorsProps) {
       )}
       {showVtol && (
         <Selector
-          label="VTOL Style"
+          label="VTOL 形式"
           value={vehicle.vtolStyle}
           options={VTOL_STYLES}
           onChange={v => onUpdate({ vtolStyle: v as VtolStyle })}
@@ -68,7 +68,7 @@ export function ConfigSelectors({ vehicle, onUpdate }: ConfigSelectorsProps) {
       )}
       {showMotor && (
         <Selector
-          label="Motor Arrangement"
+          label="电机布局"
           value={vehicle.motorArrangement}
           options={MOTOR_ARRANGEMENTS}
           onChange={v => onUpdate({ motorArrangement: v as MotorArrangement })}
@@ -95,7 +95,7 @@ function Selector<T extends string>({ label, value, options, onChange }: Selecto
         onChange={e => onChange(e.target.value as T)}
         className="w-full px-3 py-2 bg-surface-input border border-border rounded-lg text-content focus:outline-none focus:border-blue-500"
       >
-        <option value="">- select -</option>
+        <option value="">— 请选择 —</option>
         {options.map(o => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}

@@ -14,7 +14,7 @@ import { boardSupportsPersistentParamSave } from '../../../../shared/board-mappi
 import { CalibrationResultCard } from '../shared/CalibrationResultCard';
 
 const ROTATION_NAMES: Record<number, string> = {
-  0: 'None', 1: 'Yaw 45', 2: 'Yaw 90', 3: 'Yaw 135', 4: 'Yaw 180',
+  0: '无', 1: 'Yaw 45', 2: 'Yaw 90', 3: 'Yaw 135', 4: 'Yaw 180',
   5: 'Yaw 225', 6: 'Yaw 270', 7: 'Yaw 315', 8: 'Roll 180', 12: 'Pitch 180',
 };
 function rotationName(o: number | null): string {
@@ -24,10 +24,10 @@ function rotationName(o: number | null): string {
 /** Verdict styling. The judgement itself lives in shared/calibration-quality
  *  so the wizard, the stored record and the preflight card cannot disagree. */
 const VERDICT_STYLE: Record<CalibrationVerdict, { label: string; cls: string }> = {
-  good: { label: 'Good', cls: 'text-green-400 bg-green-500/15 border-green-500/30' },
-  marginal: { label: 'Marginal', cls: 'text-amber-400 bg-amber-500/15 border-amber-500/30' },
-  bad: { label: 'Poor', cls: 'text-red-400 bg-red-500/15 border-red-500/30' },
-  unknown: { label: 'Unknown', cls: 'text-content-secondary bg-surface-raised border-subtle' },
+  good: { label: '良好', cls: 'text-green-400 bg-green-500/15 border-green-500/30' },
+  marginal: { label: '临界', cls: 'text-amber-400 bg-amber-500/15 border-amber-500/30' },
+  bad: { label: '较差', cls: 'text-red-400 bg-red-500/15 border-red-500/30' },
+  unknown: { label: '未知', cls: 'text-content-secondary bg-surface-raised border-subtle' },
 };
 
 const VERDICT_ORDER: Record<CalibrationVerdict, number> = { good: 0, unknown: 1, marginal: 2, bad: 3 };
@@ -86,14 +86,14 @@ export function CalibrationCompleteStep() {
     try {
       const ok = await window.electronAPI?.mavlinkReboot();
       if (!ok) {
-        setRebootError('Reboot command failed, reboot from the connection panel instead.');
+        setRebootError('重启命令失败，请改从连接面板重启。');
         setIsRebooting(false);
         return;
       }
       // Reboot + reconnect runs in the background; leave the wizard.
       setStep('select');
     } catch (err) {
-      setRebootError(err instanceof Error ? err.message : 'Unknown error');
+      setRebootError(err instanceof Error ? err.message : '未知错误');
       setIsRebooting(false);
     }
   };
@@ -182,18 +182,18 @@ export function CalibrationCompleteStep() {
             : showSuccess ? 'text-green-400' : showUnconfirmed ? 'text-amber-400' : 'text-red-400'
         }`}>
           {isVerifying
-            ? 'Verifying Calibration…'
-            : showSuccess ? 'Calibration Complete!' : showUnconfirmed ? 'Completed, Not Confirmed' : 'Calibration Failed'}
+            ? '正在验证校准...'
+            : showSuccess ? '校准完成！' : showUnconfirmed ? '已完成，未确认' : '校准失败'}
         </h3>
 
         <p className="text-content-secondary">
           {isVerifying
-            ? 'Reading parameters back from the flight controller to confirm the calibration was applied.'
+            ? '正在从飞行控制器回读参数，确认校准已生效。'
             : showSuccess
-              ? `${calTypeInfo?.name} calibration was successful.`
+              ? `${calTypeInfo?.name}校准成功。`
               : showUnconfirmed
-                ? 'The flight controller never confirmed this calibration and the parameter check could not settle it. Verify the calibration parameters changed before flying, or run it again.'
-                : error || 'An error occurred during calibration. Please try again.'}
+                ? '飞行控制器未确认此次校准，参数检查也无法判定。飞行前请确认校准参数已更改，或重新校准。'
+                : error || '校准过程中发生错误，请重试。'}
         </p>
       </div>
 
@@ -203,7 +203,7 @@ export function CalibrationCompleteStep() {
       {showSuccess && calibrationData && (
         <div className="space-y-4">
           <h4 className="text-sm font-medium text-content uppercase tracking-wide">
-            Calibration Results
+            校准结果
           </h4>
 
           <CalibrationResultCard data={calibrationData} type={calibrationType!} />
@@ -214,16 +214,16 @@ export function CalibrationCompleteStep() {
           orientation so a bad cal reads as a warning instead of a bare green. */}
       {showSuccess && calibrationType === 'compass' && calibrationData?.compassResults?.length ? (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-content uppercase tracking-wide">Compass Fit</h4>
+          <h4 className="text-sm font-medium text-content uppercase tracking-wide">罗盘拟合</h4>
           {calibrationData.compassResults.map((r) => {
             const assessment = assessCompassFitness(r.fitness);
             const v = VERDICT_STYLE[assessment.verdict];
             return (
               <div key={r.compass} className="flex items-center justify-between bg-surface rounded-lg border border-subtle p-3">
-                <div className="text-sm text-content">Compass {r.compass}</div>
+                <div className="text-sm text-content">罗盘 {r.compass}</div>
                 <div className="flex items-center gap-3 text-xs">
-                  <span className="text-content-secondary">orient <span className="text-content font-mono">{rotationName(r.orientation)}</span></span>
-                  <span className="text-content-secondary">fitness <span className="text-content font-mono">{r.fitness.toFixed(1)}</span></span>
+                  <span className="text-content-secondary">朝向 <span className="text-content font-mono">{rotationName(r.orientation)}</span></span>
+                  <span className="text-content-secondary">拟合度 <span className="text-content font-mono">{r.fitness.toFixed(1)}</span></span>
                   <span className={`px-2 py-0.5 rounded-full border text-[11px] font-medium ${v.cls}`}>{v.label}</span>
                 </div>
               </div>
@@ -250,7 +250,7 @@ export function CalibrationCompleteStep() {
           reported success. */}
       {showSuccess && calibrationType === 'accel-6point' && accelAssessment && accelAssessment.verdict !== 'unknown' ? (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-content uppercase tracking-wide">Accelerometer Fit</h4>
+          <h4 className="text-sm font-medium text-content uppercase tracking-wide">加速度计拟合</h4>
           <div className="flex items-center justify-between bg-surface rounded-lg border border-subtle p-3">
             <div className="text-sm text-content">{accelAssessment.summary}</div>
             <span className={`px-2 py-0.5 rounded-full border text-[11px] font-medium ${VERDICT_STYLE[accelAssessment.verdict].cls}`}>
@@ -269,9 +269,9 @@ export function CalibrationCompleteStep() {
           the EKF reports yaw inconsistent until the FC restarts. */}
       {showSuccess && calibrationRebootRequired && (
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-content mb-1">Reboot required</h4>
+          <h4 className="text-sm font-medium text-content mb-1">需要重启</h4>
           <p className="text-xs text-content-secondary mb-3">
-            The new compass offsets only take effect after the flight controller reboots. Until then the EKF will report yaw inconsistent and arming will be blocked.
+            新的罗盘偏移仅在飞行控制器重启后生效。在此之前 EKF 会报告偏航不一致并阻止解锁。
           </p>
           {rebootError && <p className="text-xs text-red-400 mb-2">{rebootError}</p>}
           <button
@@ -279,7 +279,7 @@ export function CalibrationCompleteStep() {
             disabled={isRebooting}
             className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-amber-400 text-sm font-medium transition-colors"
           >
-            {isRebooting ? 'Rebooting…' : 'Reboot Now'}
+            {isRebooting ? '重启中...' : '立即重启'}
           </button>
         </div>
       )}
@@ -318,7 +318,7 @@ export function CalibrationCompleteStep() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Back to Calibrations
+            返回校准列表
           </button>
         ) : (
           <button
@@ -328,7 +328,7 @@ export function CalibrationCompleteStep() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-            Cancel
+            取消
           </button>
         )}
 
@@ -341,7 +341,7 @@ export function CalibrationCompleteStep() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              Try Again
+              重试
             </button>
           )}
 
@@ -358,14 +358,14 @@ export function CalibrationCompleteStep() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Saving...
+                  保存中...
                 </>
               ) : (
                 <>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                   </svg>
-                  Save to FC
+                  保存到飞控
                 </>
               )}
             </button>
@@ -376,7 +376,7 @@ export function CalibrationCompleteStep() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              Saved successfully
+              保存成功
             </div>
           )}
         </div>
@@ -398,12 +398,12 @@ export function CalibrationCompleteStep() {
             </div>
             <div className="flex-1">
               <h4 className="text-sm font-medium text-content mb-1">
-                {isMavlink ? 'Save Calibration to Flash' : 'Save to Persistent Storage'}
+                {isMavlink ? '将校准保存到闪存' : '保存到持久存储'}
               </h4>
               <p className="text-xs text-content-secondary mb-3">
                 {isMavlink
-                  ? 'Calibration is already applied. Write parameters to the FC\u2019s parameter storage so they persist across reboots.'
-                  : 'Save calibration data to the bootloader partition. This data will survive firmware updates.'}
+                  ? '校准已生效。将参数写入飞控的参数存储，重启后仍会保留。'
+                  : '将校准数据保存到 bootloader 分区，固件升级后仍会保留。'}
               </p>
 
               {savePersistentError && (
@@ -422,14 +422,14 @@ export function CalibrationCompleteStep() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      Saving...
+                      保存中...
                     </>
                   ) : (
                     <>
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
                       </svg>
-                      {isMavlink ? 'Save Calibration to Flash' : 'Save to Persistent Storage'}
+                      {isMavlink ? '将校准保存到闪存' : '保存到持久存储'}
                     </>
                   )}
                 </button>
@@ -439,7 +439,7 @@ export function CalibrationCompleteStep() {
                   disabled={isSavingPersistent}
                   className="text-xs text-content-secondary hover:text-content-secondary transition-colors"
                 >
-                  Skip
+                  跳过
                 </button>
               </div>
             </div>
@@ -454,8 +454,8 @@ export function CalibrationCompleteStep() {
           </svg>
           <p className="text-sm text-green-400">
             {isMavlink
-              ? 'Calibration saved to flight controller storage.'
-              : 'Calibration saved to persistent storage. Data will survive firmware updates.'}
+              ? '校准已保存到飞行控制器存储。'
+              : '校准已保存到持久存储，数据在固件升级后仍会保留。'}
           </p>
         </div>
       )}
@@ -464,27 +464,27 @@ export function CalibrationCompleteStep() {
           stay hidden during the verification window. */}
       {showSuccess && !saveSuccess && !isMavlink && (
         <p className="text-center text-xs text-content-secondary">
-          Calibration data has been applied. Click "Save to FC" to persist changes to flash memory.
+          校准数据已生效。点击"保存到飞控"将更改写入闪存。
         </p>
       )}
       {showSuccess && isMavlink && showPersistentSave && !savePersistentSuccess && (
         <p className="text-center text-xs text-content-secondary">
-          The flight controller already applied the calibration. Use "Save Calibration to Flash" so it persists across reboots.
+          飞行控制器已应用校准。请使用"将校准保存到闪存"，重启后仍会保留。
         </p>
       )}
       {showSuccess && isMavlink && !showPersistentSave && (
         <p className="text-center text-xs text-content-secondary">
-          The flight controller has applied and saved the calibration.
+          飞行控制器已应用并保存校准。
         </p>
       )}
       {saveSuccess && !isMavlink && !savePersistentSuccess && (
         <p className="text-center text-xs text-green-600">
-          Calibration saved to flash memory. You can also save to persistent storage above to survive firmware updates.
+          校准已保存到闪存。也可在上方保存到持久存储，以在固件升级后保留。
         </p>
       )}
       {savePersistentSuccess && (
         <p className="text-center text-xs text-green-600">
-          All saved. Returning to calibration menu...
+          全部保存完成。正在返回校准菜单...
         </p>
       )}
     </div>
@@ -505,7 +505,7 @@ function CalibrationVerificationCard({ verification }: { verification: Calibrati
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
         </svg>
-        <p className="text-sm text-content-secondary">Verifying calibration parameters on flight controller…</p>
+        <p className="text-sm text-content-secondary">正在验证飞行控制器上的校准参数...</p>
       </div>
     );
   }
@@ -518,8 +518,8 @@ function CalibrationVerificationCard({ verification }: { verification: Calibrati
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <div>
-            <p className="text-sm font-medium text-amber-400 mb-1">Could not verify calibration</p>
-            <p className="text-xs text-amber-600">{verification.error ?? 'Parameter readback failed.'} The flight controller still reported success, but ArduDeck could not confirm the new values were written.</p>
+            <p className="text-sm font-medium text-amber-400 mb-1">无法验证校准</p>
+            <p className="text-xs text-amber-600">{verification.error ?? '参数回读失败。'}飞控仍报告成功，但 ArduDeck 无法确认新值已写入。</p>
           </div>
         </div>
       </div>
@@ -547,13 +547,13 @@ function CalibrationVerificationCard({ verification }: { verification: Calibrati
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-medium ${palette.text} mb-1`}>
             {isUnchanged
-              ? 'Calibration may not have applied'
-              : `Calibration verified - ${changedCount} of ${totalCount} parameter${totalCount === 1 ? '' : 's'} updated`}
+              ? '校准可能未生效'
+              : `校准已验证 — ${totalCount} 个参数中的 ${changedCount} 个已更新`}
           </p>
           <p className={`text-xs ${palette.sub}`}>
             {isUnchanged
-              ? 'The flight controller reported success but the tracked parameters did not change. This usually means the calibration silently failed - try again, and if the values still do not move, check the FC logs.'
-              : 'ArduDeck re-read the relevant parameters from the flight controller and confirmed they changed.'}
+              ? '飞控报告成功，但跟踪的参数没有变化。这通常意味着校准静默失败 — 请重试，若数值仍未变化，请查看飞控日志。'
+              : 'ArduDeck 已从飞行控制器回读相关参数，确认其已更改。'}
           </p>
 
           <button
@@ -563,7 +563,7 @@ function CalibrationVerificationCard({ verification }: { verification: Calibrati
             <svg className={`w-3 h-3 transition-transform ${expanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-            {expanded ? 'Hide' : 'Show'} parameter values
+            {expanded ? '隐藏' : '显示'}参数值
           </button>
 
           {expanded && (
@@ -571,10 +571,10 @@ function CalibrationVerificationCard({ verification }: { verification: Calibrati
               <table className="w-full text-xs">
                 <thead className="bg-surface">
                   <tr className="text-left text-content-secondary">
-                    <th className="px-3 py-2 font-medium">Parameter</th>
-                    <th className="px-3 py-2 font-medium text-right">Before</th>
-                    <th className="px-3 py-2 font-medium text-right">After</th>
-                    <th className="px-3 py-2 font-medium text-right">Delta</th>
+                    <th className="px-3 py-2 font-medium">参数</th>
+                    <th className="px-3 py-2 font-medium text-right">更改前</th>
+                    <th className="px-3 py-2 font-medium text-right">更改后</th>
+                    <th className="px-3 py-2 font-medium text-right">变化量</th>
                   </tr>
                 </thead>
                 <tbody>

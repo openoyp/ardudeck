@@ -38,8 +38,8 @@ interface Props {
 }
 
 const CATEGORY_LABEL: Record<CalibrationCategory, string> = {
-  accel: 'Accelerometer',
-  mag: 'Magnetometer',
+  accel: '加速度计',
+  mag: '磁力计',
 };
 
 const CATEGORY_ACCENT: Record<CalibrationCategory, { ring: string; text: string; bg: string }> = {
@@ -55,9 +55,9 @@ function formatValue(v: number | undefined): string {
 
 /** Human-readable reason a category can't be applied. Returns null if it can. */
 function getBlockedReason(v: CategoryValidation): string | null {
-  if (!v.hasCalData) return 'No calibration data: all offsets in the file are zero';
-  if (v.idStatus === 'mismatch') return 'Sensor IDs do not match this flight controller';
-  if (v.idStatus === 'missing') return 'File contains no sensor IDs, cannot verify the source board';
+  if (!v.hasCalData) return '没有校准数据：文件中所有偏移均为零';
+  if (v.idStatus === 'mismatch') return '传感器 ID 与本飞行控制器不匹配';
+  if (v.idStatus === 'missing') return '文件中没有传感器 ID，无法核对源板';
   return null;
 }
 
@@ -94,9 +94,9 @@ export function LoadCalibrationFromFileDialog({ onClose }: Props) {
       if (cancelled) return;
       setIsLoadingFile(false);
       if (!r.ok) {
-        setLoadError(r.error ?? 'Failed to load file');
+        setLoadError(r.error ?? '加载文件失败');
       } else if ((r.calCount ?? 0) === 0) {
-        setLoadError('No accel or mag calibration parameters found in the selected file.');
+        setLoadError('所选文件中未找到加速度计或磁力计校准参数。');
       }
     })();
     return () => { cancelled = true; };
@@ -161,12 +161,11 @@ export function LoadCalibrationFromFileDialog({ onClose }: Props) {
           <>
             {/* Header */}
             <div className="px-6 py-4 border-b border-subtle">
-              <h3 className="text-lg font-semibold text-content">Load calibration from file</h3>
+              <h3 className="text-lg font-semibold text-content">从文件加载校准</h3>
               <p className="text-sm text-content-secondary mt-1">
-                Restore ACC / MAG calibration from a .param file. The file is
-                verified against this flight controller's sensor IDs before any
-                values are written, and the verified IDs are saved with the
-                offsets so ArduPilot accepts the calibration after reboot.
+                从 .param 文件恢复加速度计/磁力计校准。写入任何数值前都会对照本飞控的
+                传感器 ID 校验文件，且已校验的 ID 会与偏移一起保存，
+                确保 ArduPilot 重启后接受该校准。
               </p>
               {loadedCalibration?.filePath && (
                 <div className="mt-2 flex items-center gap-2 text-xs text-content-tertiary">
@@ -179,7 +178,7 @@ export function LoadCalibrationFromFileDialog({ onClose }: Props) {
             {/* Body */}
             <div className="flex-1 min-h-0 overflow-auto px-6 py-4">
               {isLoadingFile && (
-                <div className="text-sm text-content-secondary text-center py-6">Reading file…</div>
+                <div className="text-sm text-content-secondary text-center py-6">正在读取文件...</div>
               )}
 
               {loadError && (
@@ -220,7 +219,7 @@ export function LoadCalibrationFromFileDialog({ onClose }: Props) {
             {isApplying && progress && (
               <div className="px-6 py-2 border-t border-subtle">
                 <div className="flex items-center justify-between text-xs text-content-secondary mb-1">
-                  <span>Writing calibration…</span>
+                  <span>正在写入校准...</span>
                   <span>{progress.applied} / {progress.total}</span>
                 </div>
                 <div className="h-1.5 bg-surface-inset rounded-full overflow-hidden">
@@ -238,7 +237,7 @@ export function LoadCalibrationFromFileDialog({ onClose }: Props) {
                 disabled={isApplying}
                 className="px-4 py-2 text-sm text-content-secondary hover:text-content disabled:text-content-tertiary transition-colors"
               >
-                Cancel
+                取消
               </button>
               <button
                 onClick={handleApply}
@@ -246,8 +245,8 @@ export function LoadCalibrationFromFileDialog({ onClose }: Props) {
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-surface-raised text-white disabled:text-content-tertiary rounded-lg text-sm font-medium transition-colors"
               >
                 {isApplying
-                  ? 'Applying…'
-                  : `Apply ${totalSelected} param${totalSelected !== 1 ? 's' : ''}`}
+                  ? '应用中...'
+                  : `应用 ${totalSelected} 个参数`}
               </button>
             </div>
           </>
@@ -292,8 +291,8 @@ function CategoryCard({
           <div className={`text-sm font-medium ${accent.text}`}>{title}</div>
           <div className="text-xs text-content-tertiary">
             {totalCount === 0
-              ? 'no calibration values in file'
-              : `${writableCount} param${writableCount !== 1 ? 's' : ''} from file`}
+              ? '文件中没有校准值'
+              : `文件中的 ${writableCount} 个参数`}
           </div>
         </div>
         {totalCount > 0 && (
@@ -301,7 +300,7 @@ function CategoryCard({
             onClick={() => setExpanded(v => !v)}
             className="text-xs text-content-secondary hover:text-content transition-colors"
           >
-            {expanded ? 'Hide' : 'Show'} diffs
+            {expanded ? '隐藏' : '显示'}差异
           </button>
         )}
       </div>
@@ -317,10 +316,10 @@ function CategoryCard({
           <table className="w-full text-xs font-mono">
             <thead>
               <tr className="text-content-tertiary">
-                <th className="text-left font-normal pb-1">Param</th>
-                <th className="text-right font-normal pb-1">Current</th>
+                <th className="text-left font-normal pb-1">参数</th>
+                <th className="text-right font-normal pb-1">当前</th>
                 <th className="w-6"></th>
-                <th className="text-right font-normal pb-1">File</th>
+                <th className="text-right font-normal pb-1">文件</th>
               </tr>
             </thead>
             <tbody>
@@ -329,7 +328,7 @@ function CategoryCard({
                   <td className="py-1 text-content">
                     {p.paramId}
                     {p.info.kind === 'devid' && (
-                      <span className="text-content-tertiary"> (sensor ID, locks in the calibration)</span>
+                      <span className="text-content-tertiary">（传感器 ID，锁定该校准）</span>
                     )}
                   </td>
                   <td className="py-1 text-right text-content-secondary">{formatValue(p.currentValue)}</td>
@@ -352,8 +351,7 @@ function ValidationBadge({ validation, blockedReason }: { validation: CategoryVa
         <div className="flex items-start gap-2 px-3 py-2 rounded-md border border-emerald-500/20 bg-emerald-500/5 text-xs text-emerald-300">
           <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
           <div>
-            <span className="font-medium">Verified.</span> Sensor IDs match this
-            flight controller and the file contains non-zero calibration data.
+            <span className="font-medium">已验证。</span>传感器 ID 与本飞控匹配，且文件包含非零校准数据。
           </div>
         </div>
       </div>
@@ -364,12 +362,12 @@ function ValidationBadge({ validation, blockedReason }: { validation: CategoryVa
       <div className="flex items-start gap-2 px-3 py-2 rounded-md border border-red-500/30 bg-red-500/10 text-xs text-red-300">
         <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
-          <span className="font-medium">Cannot apply.</span> {blockedReason}.
+          <span className="font-medium">无法应用。</span>{blockedReason}。
           {validation.idMismatches.length > 0 && (
             <ul className="mt-1 font-mono text-[11px] text-red-300/80 space-y-0.5">
               {validation.idMismatches.map(m => (
                 <li key={m.paramId}>
-                  {m.paramId}: file {formatValue(m.fileValue)} ≠ FC {formatValue(m.liveValue)}
+                  {m.paramId}：文件 {formatValue(m.fileValue)} ≠ 飞控 {formatValue(m.liveValue)}
                 </li>
               ))}
             </ul>
@@ -400,7 +398,7 @@ function ResultView({ result, onDone }: ResultViewProps) {
     try {
       const ok = await window.electronAPI?.mavlinkReboot();
       if (!ok) {
-        setRebootError('Reboot command failed. Check the connection and try again, or reboot from the connection panel.');
+        setRebootError('重启命令失败。请检查连接后重试，或从连接面板重启。');
         setIsRebooting(false);
         return;
       }
@@ -408,7 +406,7 @@ function ResultView({ result, onDone }: ResultViewProps) {
       // user can watch the reconnect indicator in the connection panel.
       onDone();
     } catch (err) {
-      setRebootError(err instanceof Error ? err.message : 'Unknown error');
+      setRebootError(err instanceof Error ? err.message : '未知错误');
       setIsRebooting(false);
     }
   };
@@ -416,14 +414,14 @@ function ResultView({ result, onDone }: ResultViewProps) {
   return (
     <>
       <div className="px-6 py-4 border-b border-subtle">
-        <h3 className="text-lg font-semibold text-content">Apply complete</h3>
+        <h3 className="text-lg font-semibold text-content">应用完成</h3>
       </div>
       <div className="flex-1 min-h-0 overflow-auto px-6 py-5 space-y-4">
         {applied > 0 && (
           <div className="flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
             <span className="text-sm text-emerald-300">
-              {applied} calibration param{applied !== 1 ? 's' : ''} written and saved to flash
+              已写入并保存到闪存 {applied} 个校准参数
             </span>
           </div>
         )}
@@ -431,21 +429,20 @@ function ResultView({ result, onDone }: ResultViewProps) {
           <div className="flex items-center gap-3">
             <XCircle className="w-5 h-5 text-red-400 shrink-0" />
             <span className="text-sm text-red-300">
-              {failed} param{failed !== 1 ? 's' : ''} failed (no PARAM_VALUE confirmation from FC)
+              {failed} 个参数失败（飞控未返回 PARAM_VALUE 确认）
             </span>
           </div>
         )}
         {applied === 0 && failed === 0 && (
           <div className="text-sm text-content-secondary">
-            Nothing to apply: the selected calibration params already match the vehicle.
+            无可应用内容：所选校准参数已与飞行器一致。
           </div>
         )}
         {rebootRecommended && (
           <div className="flex items-start gap-3 px-3 py-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10">
             <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div className="text-sm text-amber-300">
-              Reboot the flight controller to make sure all calibration values are loaded
-              from EEPROM cleanly. Some IMU/compass parameters only take effect on boot.
+              请重启飞行控制器，确保所有校准值从 EEPROM 干净加载。部分 IMU/罗盘参数仅在启动时生效。
             </div>
           </div>
         )}
@@ -462,7 +459,7 @@ function ResultView({ result, onDone }: ResultViewProps) {
           disabled={isRebooting}
           className="px-4 py-2 text-sm text-content-secondary hover:text-content disabled:text-content-tertiary transition-colors"
         >
-          Done
+          完成
         </button>
         {rebootRecommended && (
           <button
@@ -471,7 +468,7 @@ function ResultView({ result, onDone }: ResultViewProps) {
             className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 disabled:bg-surface-raised disabled:text-content-tertiary text-white rounded-lg text-sm font-medium transition-colors"
           >
             <RotateCw className={`w-4 h-4 ${isRebooting ? 'animate-spin' : ''}`} />
-            {isRebooting ? 'Rebooting…' : 'Reboot now'}
+            {isRebooting ? '重启中...' : '立即重启'}
           </button>
         )}
       </div>

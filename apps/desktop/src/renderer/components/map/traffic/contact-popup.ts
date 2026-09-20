@@ -37,19 +37,19 @@ export function buildContactPopup(
   const color = ALT_STATE_COLOR[altitudeColorState(c, band)];
 
   const rows: string[] = [];
-  if (c.altMeters != null) rows.push(row('Altitude', `${Math.round(c.altMeters * M_TO_FT).toLocaleString()} ft`));
-  if (c.onGround) rows.push(row('State', 'On ground'));
-  if (c.groundSpeedMps != null) rows.push(row('Ground speed', `${Math.round(c.groundSpeedMps * MS_TO_KT)} kt`));
-  if (c.trackDeg != null) rows.push(row('Track', `${Math.round(c.trackDeg)}°`));
+  if (c.altMeters != null) rows.push(row('高度', `${Math.round(c.altMeters * M_TO_FT).toLocaleString()} ft`));
+  if (c.onGround) rows.push(row('状态', '在地面'));
+  if (c.groundSpeedMps != null) rows.push(row('地速', `${Math.round(c.groundSpeedMps * MS_TO_KT)} kt`));
+  if (c.trackDeg != null) rows.push(row('航迹', `${Math.round(c.trackDeg)}°`));
   if (c.verticalRateMps != null && Math.abs(c.verticalRateMps) > 0.05)
-    rows.push(row('Vertical', `${c.verticalRateMps > 0 ? '+' : ''}${Math.round(c.verticalRateMps * MS_TO_FPM)} fpm`));
-  if (c.squawk) rows.push(row('Squawk', c.squawk));
+    rows.push(row('垂直速度', `${c.verticalRateMps > 0 ? '+' : ''}${Math.round(c.verticalRateMps * MS_TO_FPM)} fpm`));
+  if (c.squawk) rows.push(row('应答机', c.squawk));
   if (prox) {
-    rows.push(row('Distance', `${(prox.distanceMeters / 1000).toFixed(1)} km`));
-    rows.push(row('Bearing', `${Math.round(prox.bearingDeg)}°`));
-    if (prox.verticalMeters != null) rows.push(row('Vert sep', `${Math.round(prox.verticalMeters * M_TO_FT).toLocaleString()} ft`));
+    rows.push(row('距离', `${(prox.distanceMeters / 1000).toFixed(1)} km`));
+    rows.push(row('方位', `${Math.round(prox.bearingDeg)}°`));
+    if (prox.verticalMeters != null) rows.push(row('垂直间隔', `${Math.round(prox.verticalMeters * M_TO_FT).toLocaleString()} ft`));
   }
-  rows.push(row('Age', `${Math.max(0, Math.round((nowMs - c.lastSeen) / 1000))}s`));
+  rows.push(row('时延', `${Math.max(0, Math.round((nowMs - c.lastSeen) / 1000))}s`));
 
   return `<div style="min-width:190px;font-size:12px">
     <div style="display:flex;align-items:center;gap:7px">

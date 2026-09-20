@@ -61,7 +61,7 @@ export function CountdownTimer({ seconds, total }: CountdownTimerProps) {
         <span className="text-4xl font-bold text-content font-mono">
           {seconds}
         </span>
-        <span className="text-xs text-content-secondary mt-1">seconds</span>
+        <span className="text-xs text-content-secondary mt-1">秒</span>
       </div>
 
       {/* Pulsing ring animation */}

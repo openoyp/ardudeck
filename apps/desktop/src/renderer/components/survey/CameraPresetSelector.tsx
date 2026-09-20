@@ -59,12 +59,12 @@ export function CameraPresetSelector({ value, onChange }: CameraPresetSelectorPr
       {/* Sensor info summary */}
       {!isCustom && !isManual && (
         <div className="mt-1 text-[10px] text-content-secondary leading-tight">
-          {value.sensorWidth}x{value.sensorHeight}mm sensor, {value.focalLength}mm, {value.imageWidth}x{value.imageHeight}px
+          {value.sensorWidth}x{value.sensorHeight}mm 传感器,{value.focalLength}mm 焦距,{value.imageWidth}x{value.imageHeight}px
         </div>
       )}
       {isManual && (
         <div className="mt-1 text-[10px] text-content-secondary leading-tight">
-          Corridor width set directly (no camera)
+          直接设置走廊宽度(无相机)
         </div>
       )}
 
@@ -77,7 +77,7 @@ export function CameraPresetSelector({ value, onChange }: CameraPresetSelectorPr
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search cameras..."
+              placeholder="搜索相机..."
               className="w-full px-2 py-1 text-xs bg-surface-input border border rounded text-content placeholder-content-tertiary focus:border-purple-500 focus:outline-none"
               autoFocus
             />
@@ -107,7 +107,7 @@ export function CameraPresetSelector({ value, onChange }: CameraPresetSelectorPr
           {savedMatches.length > 0 && (
             <div>
               <div className="px-3 py-1 text-[10px] font-medium text-content-secondary uppercase tracking-wider bg-surface-input">
-                Saved
+                已保存
               </div>
               {savedMatches.map((preset) => (
                 <div
@@ -127,7 +127,7 @@ export function CameraPresetSelector({ value, onChange }: CameraPresetSelectorPr
                   <button
                     onClick={(e) => { e.stopPropagation(); removeCameraPreset(preset.name); }}
                     className="opacity-0 group-hover:opacity-100 px-2 text-content-tertiary hover:text-red-400 transition-opacity"
-                    title="Delete saved camera"
+                    title="删除已保存相机"
                   >
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -147,20 +147,20 @@ export function CameraPresetSelector({ value, onChange }: CameraPresetSelectorPr
               className={`w-full px-3 py-1.5 text-left text-xs hover:bg-purple-600/20 transition-colors ${
                 isCustom ? 'text-purple-300 bg-purple-600/10' : 'text-content-secondary'
               }`}
-              title="Camera not in presets: enter sensor/focal specs to compute the footprint"
+              title="预设中没有的相机:输入传感器/焦距参数以计算幅面"
             >
-              <div className="font-medium">Custom camera...</div>
-              <div className="text-[10px] text-content-tertiary">Enter sensor + focal length</div>
+              <div className="font-medium">自定义相机...</div>
+              <div className="text-[10px] text-content-tertiary">输入传感器与焦距</div>
             </button>
             <button
               onClick={() => { onChange({ ...MANUAL_CAMERA }); setIsOpen(false); }}
               className={`w-full px-3 py-1.5 text-left text-xs hover:bg-purple-600/20 transition-colors ${
                 isManual ? 'text-purple-300 bg-purple-600/10' : 'text-content-secondary'
               }`}
-              title="No camera: set the line spacing directly (e.g. rover/lawnmower deck width)"
+              title="无相机:直接设置行距(如车体/割草机作业宽度)"
             >
-              <div className="font-medium">No camera (manual width)...</div>
-              <div className="text-[10px] text-content-tertiary">Set corridor width directly (rover/mower)</div>
+              <div className="font-medium">无相机(手动宽度)...</div>
+              <div className="text-[10px] text-content-tertiary">直接设置走廊宽度(车/割草机)</div>
             </button>
           </div>
         </div>

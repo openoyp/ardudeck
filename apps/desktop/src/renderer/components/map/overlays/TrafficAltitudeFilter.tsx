@@ -39,7 +39,7 @@ export function TrafficAltitudeFilterCard({ className }: { className?: string })
         <button
           type="button"
           onClick={() => setOpen(true)}
-          data-tip="Altitude filter"
+          data-tip="高度过滤"
           className="flex items-center gap-1.5 h-8 px-2.5 bg-surface-overlay backdrop-blur-sm rounded-lg border border-subtle shadow-lg text-xs font-medium text-content hover:border-strong transition-colors"
         >
           <AltIcon className="w-3.5 h-3.5 text-content-secondary" />
@@ -54,11 +54,11 @@ export function TrafficAltitudeFilterCard({ className }: { className?: string })
       <div className="flex items-center justify-between mb-2">
         <span className="flex items-center gap-1.5 text-xs font-medium text-content">
           <AltIcon className="w-3.5 h-3.5 text-content-secondary" />
-          Altitude filter
+          高度过滤
         </span>
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-content-tertiary uppercase tracking-wide">MSL</span>
-          <button type="button" onClick={() => setOpen(false)} data-tip="Collapse" className="text-content-tertiary hover:text-content">
+          <button type="button" onClick={() => setOpen(false)} data-tip="收起" className="text-content-tertiary hover:text-content">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
             </svg>
@@ -66,7 +66,7 @@ export function TrafficAltitudeFilterCard({ className }: { className?: string })
         </div>
       </div>
       <label className="block text-[11px] text-content-secondary mb-1">
-        Floor <span className="text-content tabular-nums">{band.floorMeters} m</span> <span className="text-content-tertiary">({ft(band.floorMeters)} ft)</span>
+        下限 <span className="text-content tabular-nums">{band.floorMeters} m</span> <span className="text-content-tertiary">({ft(band.floorMeters)} ft)</span>
       </label>
       <input
         type="range"
@@ -78,7 +78,7 @@ export function TrafficAltitudeFilterCard({ className }: { className?: string })
         className="w-full accent-sky-500 mb-2"
       />
       <label className="block text-[11px] text-content-secondary mb-1">
-        Ceiling <span className="text-content tabular-nums">{band.ceilingMeters} m</span> <span className="text-content-tertiary">({ft(band.ceilingMeters)} ft)</span>
+        上限 <span className="text-content tabular-nums">{band.ceilingMeters} m</span> <span className="text-content-tertiary">({ft(band.ceilingMeters)} ft)</span>
       </label>
       <input
         type="range"
@@ -94,13 +94,13 @@ export function TrafficAltitudeFilterCard({ className }: { className?: string })
         onClick={() => setHardCeiling(!band.hardCeiling)}
         className="mt-2.5 flex items-center justify-between w-full text-left"
       >
-        <span className="text-[11px] text-content-secondary">Hide traffic above ceiling</span>
+        <span className="text-[11px] text-content-secondary">隐藏上限以上的目标</span>
         <span className={`w-8 h-[18px] rounded-full transition-colors relative flex-shrink-0 ${band.hardCeiling ? 'bg-sky-500' : 'bg-surface-inset'}`}>
           <span className={`w-3.5 h-3.5 rounded-full bg-white border border-strong shadow-sm absolute top-0.5 transition-all ${band.hardCeiling ? 'left-[14px]' : 'left-0.5'}`} />
         </span>
       </button>
       <p className="text-[10px] text-content-tertiary mt-1.5 leading-snug">
-        Below the floor is hidden. Above the ceiling {band.hardCeiling ? 'is hidden' : 'shrinks and fades'}.
+        低于下限的目标将被隐藏;高于上限的目标{band.hardCeiling ? '将被隐藏' : '缩小并淡出'}。
       </p>
     </div>
   );

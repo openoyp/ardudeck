@@ -9,15 +9,15 @@ function msg(type: string, timeUs: number, fields: Record<string, number | strin
 describe('decodeErr', () => {
   it('decodes crash-check crash as an error', () => {
     const d = decodeErr(12, 1);
-    expect(d.label).toBe('Crash check');
-    expect(d.detail).toBe('CRASH DETECTED');
+    expect(d.label).toBe('坠机检查');
+    expect(d.detail).toBe('检测到坠机');
     expect(d.severity).toBe('error');
   });
 
   it('treats code 0 as resolved/info', () => {
     const d = decodeErr(16, 0);
     expect(d.severity).toBe('info');
-    expect(d.detail).toBe('variance cleared');
+    expect(d.detail).toBe('方差已恢复');
   });
 
   it('decodes flight-mode refusals with the mode name', () => {
@@ -27,15 +27,15 @@ describe('decodeErr', () => {
 
   it('falls back gracefully on unknown ids', () => {
     const d = decodeErr(99, 7);
-    expect(d.label).toBe('Subsystem 99');
-    expect(d.detail).toBe('code 7');
+    expect(d.label).toBe('子系统 99');
+    expect(d.detail).toBe('代码 7');
   });
 });
 
 describe('decodeEv', () => {
   it('names common events', () => {
-    expect(decodeEv(10).label).toBe('Armed');
-    expect(decodeEv(11).label).toBe('Disarmed');
+    expect(decodeEv(10).label).toBe('已解锁');
+    expect(decodeEv(11).label).toBe('已上锁');
   });
 
   it('grades hazardous events as warnings', () => {
@@ -56,7 +56,7 @@ describe('extractLogEvents', () => {
       },
     });
     expect(events.map((e) => e.kind)).toEqual(['MODE', 'EV', 'MSG', 'CMD', 'ERR']);
-    expect(events[0]!.label).toBe('Mode: LOITER');
+    expect(events[0]!.label).toBe('模式: LOITER');
     expect(events[1]!.severity).toBe('info');
     expect(events[2]!.severity).toBe('warn'); // PreArm message
     expect(events[4]!.severity).toBe('error');
@@ -96,6 +96,6 @@ describe('helpers', () => {
       metadata: { vehicleType: 'plane' },
       messages: { MODE: columnsFromRows([msg('MODE', 1_000_000, { ModeNum: 10 })]) },
     });
-    expect(events[0]!.label).toBe('Mode: AUTO');
+    expect(events[0]!.label).toBe('模式: AUTO');
   });
 });

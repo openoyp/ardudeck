@@ -63,7 +63,7 @@ export function RecentConnectionsButton({ recents, currentLabel, onSelect, onRem
             ? 'bg-blue-500/15 text-blue-400'
             : 'text-content-tertiary hover:text-content-secondary hover:bg-surface-raised'
         }`}
-        title={`Recent connections (${recents.length})`}
+        title={`最近连接 (${recents.length})`}
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -83,14 +83,14 @@ export function RecentConnectionsButton({ recents, currentLabel, onSelect, onRem
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Filter..."
+                placeholder="筛选…"
                 className="w-full bg-input border border-default rounded px-2 py-1 text-xs text-content placeholder-content-tertiary focus:outline-none focus:border-blue-500/50"
               />
             </div>
           )}
           <div className="max-h-64 overflow-y-auto">
             {filtered.length === 0 ? (
-              <div className="px-3 py-4 text-xs text-content-tertiary text-center">No matches</div>
+              <div className="px-3 py-4 text-xs text-content-tertiary text-center">无匹配项</div>
             ) : (
               filtered.map((c) => {
                 const isActive = c.label === currentLabel;
@@ -122,8 +122,8 @@ export function RecentConnectionsButton({ recents, currentLabel, onSelect, onRem
                         onRemove(c.label);
                       }}
                       className="px-2 py-2 text-content-tertiary hover:text-red-400 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-                      title="Remove from recent"
-                      aria-label={`Remove ${c.label}`}
+                      title="从最近连接中移除"
+                      aria-label={`移除 ${c.label}`}
                     >
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

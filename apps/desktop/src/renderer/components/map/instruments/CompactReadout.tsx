@@ -70,7 +70,7 @@ const GPS_FIX_SHORT: Record<number, string> = {
   6: 'RTK',
 };
 
-const CARDINALS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+const CARDINALS = ['北', '东北', '东', '东南', '南', '西南', '西', '西北'];
 
 // ===========================================================================
 // Shell + treatments
@@ -204,7 +204,7 @@ function BatteryReadout({ treatment }: { treatment: ReadoutTreatment }): JSX.Ele
   const known = connected && remaining >= 0;
   const currentKnown = connected && current > 0;
   const r: Readout = {
-    tag: 'BAT',
+    tag: '电池',
     value: known ? `${Math.round(remaining)}%` : '--',
     detail: connected ? `${voltage.toFixed(1)}V${currentKnown ? `  ${current.toFixed(0)}A` : ''}` : '--',
     fraction: known ? remaining / 100 : 0,
@@ -224,10 +224,10 @@ function GpsReadout({ treatment }: { treatment: ReadoutTreatment }): JSX.Element
   const hdopKnown = connected && hdop < 99;
   const r: Readout = {
     tag: 'GPS',
-    value: known ? (GPS_FIX_SHORT[fixType] ?? 'NO FIX') : '--',
+    value: known ? (GPS_FIX_SHORT[fixType] ?? '无定位') : '--',
     // Sat count saturates the bar at 12; more than that is not a meaningfully
     // better fix, and the number is right there in the detail line.
-    detail: connected ? `${satellites} sats${hdopKnown ? `  ${hdop.toFixed(1)} hdop` : ''}` : '-- sats',
+    detail: connected ? `${satellites} 颗卫星${hdopKnown ? `  ${hdop.toFixed(1)} hdop` : ''}` : '-- 颗卫星',
     fraction: known ? Math.max(0, Math.min(1, satellites / 12)) : 0,
     known,
     color: known ? (fixType >= 3 ? GAUGE_COLORS.green : GAUGE_COLORS.amber) : GAUGE_COLORS.tickMinor,
@@ -244,9 +244,9 @@ function AltitudeReadout({ treatment }: { treatment: ReadoutTreatment }): JSX.El
   const fmt = (m: number) => trimmed(altitudeValueFromMeters(m, altitudeUnit), UNIT_PRECISION.altitude[altitudeUnit]);
   const unit = UNIT_LABELS.altitude[altitudeUnit];
   const r: Readout = {
-    tag: 'ALT',
+    tag: '高度',
     value: connected ? `${fmt(agl)}` : '--',
-    detail: connected ? `MSL ${fmt(msl)} ${unit}` : 'MSL --',
+    detail: connected ? `海拔 ${fmt(msl)} ${unit}` : '海拔 --',
     fraction: null,
     known: connected,
     color: connected ? GAUGE_COLORS.text : GAUGE_COLORS.tickMinor,
@@ -263,9 +263,9 @@ function SpeedReadout({ treatment }: { treatment: ReadoutTreatment }): JSX.Eleme
   const fmt = (mps: number) => trimmed(speedValueFromMetersPerSecond(mps, speedUnit), UNIT_PRECISION.speed[speedUnit]);
   const unit = UNIT_LABELS.speed[speedUnit];
   const r: Readout = {
-    tag: 'SPD',
+    tag: '速度',
     value: connected ? fmt(groundspeed) : '--',
-    detail: connected ? `AIR ${fmt(airspeed)} ${unit}` : 'AIR --',
+    detail: connected ? `空速 ${fmt(airspeed)} ${unit}` : '空速 --',
     fraction: null,
     known: connected,
     color: connected ? GAUGE_COLORS.text : GAUGE_COLORS.tickMinor,
@@ -279,9 +279,9 @@ function HeadingReadout({ treatment }: { treatment: ReadoutTreatment }): JSX.Ele
 
   const deg = ((heading % 360) + 360) % 360;
   const r: Readout = {
-    tag: 'HDG',
+    tag: '航向',
     value: connected ? `${Math.round(deg)}°` : '--',
-    detail: connected ? (CARDINALS[Math.floor(((deg + 22.5) % 360) / 45) % 8] ?? 'N') : '--',
+    detail: connected ? (CARDINALS[Math.floor(((deg + 22.5) % 360) / 45) % 8] ?? '北') : '--',
     // Heading is the one unbounded quantity with a real range: a compass rose
     // is a full circle, so the fill reads as "where round the dial".
     fraction: connected ? deg / 360 : 0,
@@ -303,7 +303,7 @@ function VsiReadout({ treatment }: { treatment: ReadoutTreatment }): JSX.Element
   // jiggled as climb crossed zero. A constant sign + fixed places holds width.
   const vsiPrecision = UNIT_PRECISION.verticalSpeed[verticalSpeedUnit];
   const r: Readout = {
-    tag: 'VSI',
+    tag: '升降速',
     value: connected ? `${value < 0 ? '-' : '+'}${Math.abs(value).toFixed(vsiPrecision)}` : '--',
     detail: connected ? unit : '--',
     fraction: null,
@@ -325,9 +325,9 @@ function HomeReadout({ treatment }: { treatment: ReadoutTreatment }): JSX.Elemen
   const active = !!home && hasFix;
   const distance = active ? haversineMeters(lat, lon, home[0], home[1]) : null;
   const r: Readout = {
-    tag: 'HOME',
+    tag: '家点',
     value: distance !== null ? formatDistanceFromMeters(distance, distanceUnit) : '--',
-    detail: active ? 'to launch' : 'no home',
+    detail: active ? '至起飞点' : '无家点',
     fraction: null,
     known: active,
     color: active ? GAUGE_COLORS.green : GAUGE_COLORS.tickMinor,
@@ -349,9 +349,9 @@ function LinkReadout({ treatment }: { treatment: ReadoutTreatment }): JSX.Elemen
   });
   const known = state.kind === 'value';
   const r: Readout = {
-    tag: 'LINK',
+    tag: '链路',
     value: known ? `${state.pct}%` : '--',
-    detail: known ? (state.fromModem ? 'TLM RSSI' : 'RSSI') : state.kind === 'unconfigured' ? 'not set up' : 'no RSSI',
+    detail: known ? (state.fromModem ? 'TLM RSSI' : 'RSSI') : state.kind === 'unconfigured' ? '未配置' : '无 RSSI',
     fraction: known ? state.pct / 100 : 0,
     known,
     color: known ? bandColor(state.pct) : GAUGE_COLORS.tickMinor,

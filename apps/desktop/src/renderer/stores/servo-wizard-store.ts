@@ -21,11 +21,11 @@ export type WizardStep = 'aircraft' | 'assign' | 'test' | 'endpoints' | 'review'
 const STEPS: WizardStep[] = ['aircraft', 'assign', 'test', 'endpoints', 'review'];
 
 export const STEP_INFO: Record<WizardStep, { label: string; icon: LucideIcon; description: string }> = {
-  aircraft: { label: 'Aircraft', icon: Plane, description: 'Select your aircraft type' },
-  assign: { label: 'Assign', icon: Wrench, description: 'Map servos to control surfaces' },
-  test: { label: 'Test', icon: Gamepad2, description: 'Verify servo movement' },
-  endpoints: { label: 'Calibrate', icon: Ruler, description: 'Adjust servo limits' },
-  review: { label: 'Save', icon: Save, description: 'Review and save' },
+  aircraft: { label: '机型', icon: Plane, description: '选择你的机型' },
+  assign: { label: '分配', icon: Wrench, description: '将舵机映射到控制面' },
+  test: { label: '测试', icon: Gamepad2, description: '验证舵机动作' },
+  endpoints: { label: '校准', icon: Ruler, description: '调整舵机行程' },
+  review: { label: '保存', icon: Save, description: '检查并保存' },
 };
 
 interface ServoWizardState {

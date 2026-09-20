@@ -59,11 +59,11 @@ describe('windVectorFromUV', () => {
 
 describe('compassPoint', () => {
   it('labels cardinal directions', () => {
-    expect(compassPoint(0)).toBe('N');
-    expect(compassPoint(90)).toBe('E');
-    expect(compassPoint(180)).toBe('S');
-    expect(compassPoint(270)).toBe('W');
-    expect(compassPoint(359)).toBe('N');
+    expect(compassPoint(0)).toBe('北');
+    expect(compassPoint(90)).toBe('东');
+    expect(compassPoint(180)).toBe('南');
+    expect(compassPoint(270)).toBe('西');
+    expect(compassPoint(359)).toBe('北');
   });
 });
 

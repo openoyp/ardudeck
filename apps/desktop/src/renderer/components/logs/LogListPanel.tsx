@@ -54,7 +54,7 @@ function formatBytes(bytes: number): string {
 }
 
 function formatDate(utcSeconds: number): string {
-  if (utcSeconds === 0) return 'Unknown';
+  if (utcSeconds === 0) return '未知';
   return new Date(utcSeconds * 1000).toLocaleString();
 }
 
@@ -70,7 +70,7 @@ function SuccessToast({ message, onDismiss }: { message: string; onDismiss: () =
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
       </svg>
       {message}
-      <button onClick={onDismiss} className="ml-2 text-emerald-100/80 hover:text-white text-base leading-none" aria-label="Dismiss">×</button>
+      <button onClick={onDismiss} className="ml-2 text-emerald-100/80 hover:text-white text-base leading-none" aria-label="关闭">×</button>
     </div>
   );
 }
@@ -87,7 +87,7 @@ function ErrorToast({ message, onDismiss }: { message: string; onDismiss: () => 
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
       </svg>
       <span className="truncate">{message}</span>
-      <button onClick={onDismiss} className="ml-2 text-red-100/80 hover:text-white text-base leading-none shrink-0" aria-label="Dismiss">×</button>
+      <button onClick={onDismiss} className="ml-2 text-red-100/80 hover:text-white text-base leading-none shrink-0" aria-label="关闭">×</button>
     </div>
   );
 }
@@ -233,7 +233,7 @@ export function LogListPanel() {
       useLogStore.getState().setDownloadingLogId(null);
       useLogStore.getState().setDownloadProgress(0);
       setDownloadStats(null);
-      setErrorToast(`Download failed: ${error}`);
+      setErrorToast(`下载失败：${error}`);
     });
 
     const cleanupParseProgress = window.electronAPI.onLogParseProgress((progress) => {
@@ -276,7 +276,7 @@ export function LogListPanel() {
     await window.electronAPI.logRecentAdd({ path: savedPath, name: filename, size: log.size });
     const updated = await window.electronAPI.logRecentGet();
     setRecentLogs(updated);
-    setToast(`Saved ${filename} (${formatBytes(log.size)})`);
+    setToast(`已保存 ${filename}（${formatBytes(log.size)}）`);
   };
 
   const handleOpenFile = async () => {
@@ -330,7 +330,7 @@ export function LogListPanel() {
             disabled={isListLoading}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-surface-raised disabled:text-content-secondary text-white text-sm font-medium rounded-lg transition-colors"
           >
-            {isListLoading ? 'Loading...' : 'List Logs from FC'}
+            {isListLoading ? '加载中...' : '列出 FC 上的日志'}
           </button>
         )}
         <button
@@ -338,14 +338,14 @@ export function LogListPanel() {
           disabled={isParsingLog}
           className="px-4 py-2 bg-surface-raised hover:bg-surface-raised disabled:bg-surface-raised disabled:text-content-tertiary text-content text-sm font-medium rounded-lg transition-colors"
         >
-          Open .bin File
+          打开 .bin 文件
         </button>
         {recentLogs.length + availableLogs.length > 8 && (
           <input
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="Filter logs"
-            aria-label="Filter logs"
+            placeholder="筛选日志"
+            aria-label="筛选日志"
             className="ml-auto w-44 px-3 py-2 text-sm bg-surface-raised border border-subtle rounded-lg text-content placeholder:text-content-tertiary focus:outline-none focus:ring-1 focus:ring-blue-500/50"
           />
         )}
@@ -355,7 +355,7 @@ export function LogListPanel() {
       {isParsingLog && (
         <div className="bg-surface rounded-xl border border-subtle p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-content">Parsing log...</span>
+            <span className="text-sm text-content">正在解析日志...</span>
             <span className="text-sm text-content-secondary">{parseProgress.toFixed(0)}%</span>
           </div>
           <div className="w-full bg-surface-inset rounded-full h-2">
@@ -368,7 +368,7 @@ export function LogListPanel() {
       {!isConnected && availableLogs.length === 0 && recentLogs.length === 0 && !isParsingLog && (
         <div className="bg-surface rounded-xl border border-subtle p-6 text-center">
           <p className="text-content-secondary text-sm">
-            Connect to a flight controller to download logs, or open a .bin file from disk.
+            连接飞控以下载日志，或从磁盘打开 .bin 文件。
           </p>
         </div>
       )}
@@ -377,7 +377,7 @@ export function LogListPanel() {
       {isConnected && !isMavlink && availableLogs.length === 0 && recentLogs.length === 0 && !isParsingLog && (
         <div className="bg-surface rounded-xl border border-subtle p-6 text-center">
           <p className="text-content-secondary text-sm">
-            Listing logs from the flight controller needs a MAVLink connection; the current connection uses a different protocol. You can still open a .bin file from disk.
+            列出飞控上的日志需要 MAVLink 连接；当前连接使用的是其他协议。你仍可从磁盘打开 .bin 文件。
           </p>
         </div>
       )}
@@ -386,18 +386,18 @@ export function LogListPanel() {
       {recentLogs.length > 0 && (
         <div>
           <SectionHeader
-            label="Recent Logs"
-            count={filterQuery ? `${visibleRecents.length} of ${recentLogs.length}` : String(recentLogs.length)}
+            label="最近日志"
+            count={filterQuery ? `${visibleRecents.length} / ${recentLogs.length}` : String(recentLogs.length)}
             collapsed={recentsCollapsed && !filterQuery}
             onToggle={toggleRecents}
             action={
               <button
                 onClick={handleClearRecents}
                 disabled={openingRecent !== null}
-                title="Clear list (files stay on disk)"
+                title="清空列表（文件保留在磁盘上）"
                 className="text-xs text-content-tertiary hover:text-red-400 disabled:opacity-50 transition-colors"
               >
-                Clear all
+                全部清空
               </button>
             }
           />
@@ -406,10 +406,10 @@ export function LogListPanel() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-subtle">
-                  <th className="text-left px-4 py-2.5 text-content-secondary font-medium">File</th>
-                  <th className="text-right px-4 py-2.5 text-content-secondary font-medium">Size</th>
-                  <th className="text-right px-4 py-2.5 text-content-secondary font-medium">Opened</th>
-                  <th className="text-right px-4 py-2.5 text-content-secondary font-medium">Action</th>
+                  <th className="text-left px-4 py-2.5 text-content-secondary font-medium">文件</th>
+                  <th className="text-right px-4 py-2.5 text-content-secondary font-medium">大小</th>
+                  <th className="text-right px-4 py-2.5 text-content-secondary font-medium">打开时间</th>
+                  <th className="text-right px-4 py-2.5 text-content-secondary font-medium">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -430,13 +430,13 @@ export function LogListPanel() {
                           disabled={isParsingLog || openingRecent !== null}
                           className="text-xs px-3 py-1 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 disabled:opacity-50 rounded-md transition-colors"
                         >
-                          {openingRecent === log.path ? 'Opening...' : 'Open'}
+                          {openingRecent === log.path ? '打开中...' : '打开'}
                         </button>
                         <button
                           onClick={() => handleRemoveRecent(log)}
                           disabled={openingRecent !== null}
-                          title="Remove from recent list (file stays on disk)"
-                          aria-label={`Remove ${log.name} from recent list`}
+                          title="从最近列表移除（文件保留在磁盘上）"
+                          aria-label={`从最近列表移除 ${log.name}`}
                           className="text-xs w-7 h-7 inline-flex items-center justify-center text-content-tertiary hover:text-red-400 hover:bg-red-500/10 disabled:opacity-50 rounded-md transition-colors"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -463,9 +463,9 @@ export function LogListPanel() {
       {/* No logs found after request */}
       {listRequested && !isListLoading && availableLogs.length === 0 && (
         <div className="bg-surface rounded-xl border border-amber-500/30 p-6 text-center">
-          <p className="text-amber-400 text-sm font-medium mb-1">No logs found</p>
+          <p className="text-amber-400 text-sm font-medium mb-1">未找到日志</p>
           <p className="text-content-secondary text-xs">
-            The flight controller did not return any logs. This can happen if no flights have been recorded or the FC timed out.
+            飞控未返回任何日志。可能是尚未记录任何飞行，或 FC 超时。
           </p>
         </div>
       )}
@@ -473,7 +473,7 @@ export function LogListPanel() {
       {/* No matches for the filter anywhere */}
       {filterQuery && visibleRecents.length === 0 && visibleFcLogs.length === 0 && (recentLogs.length > 0 || availableLogs.length > 0) && (
         <div className="bg-surface rounded-xl border border-subtle p-4 text-center">
-          <p className="text-content-secondary text-sm">No logs match "{filter.trim()}"</p>
+          <p className="text-content-secondary text-sm">没有匹配 "{filter.trim()}" 的日志</p>
         </div>
       )}
 
@@ -481,8 +481,8 @@ export function LogListPanel() {
       {visibleFcLogs.length > 0 && (
         <div>
           <SectionHeader
-            label="On Flight Controller"
-            count={filterQuery ? `${visibleFcLogs.length} of ${availableLogs.length}` : String(availableLogs.length)}
+            label="飞控上的日志"
+            count={filterQuery ? `${visibleFcLogs.length} / ${availableLogs.length}` : String(availableLogs.length)}
             collapsed={fcCollapsed && !filterQuery}
             onToggle={toggleFc}
           />
@@ -492,9 +492,9 @@ export function LogListPanel() {
             <thead>
               <tr className="border-b border-subtle">
                 <th className="text-left px-4 py-3 text-content-secondary font-medium">#</th>
-                <th className="text-left px-4 py-3 text-content-secondary font-medium">Date</th>
-                <th className="text-right px-4 py-3 text-content-secondary font-medium">Size</th>
-                <th className="text-right px-4 py-3 text-content-secondary font-medium">Action</th>
+                <th className="text-left px-4 py-3 text-content-secondary font-medium">日期</th>
+                <th className="text-right px-4 py-3 text-content-secondary font-medium">大小</th>
+                <th className="text-right px-4 py-3 text-content-secondary font-medium">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -507,13 +507,13 @@ export function LogListPanel() {
                         <span>{log.id}</span>
                         {downloaded && (
                           <span
-                            title={`Already downloaded:\n${downloaded.path}`}
+                            title={`已下载：\n${downloaded.path}`}
                             className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
                           >
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
-                            Downloaded
+                            已下载
                           </span>
                         )}
                       </div>
@@ -535,7 +535,7 @@ export function LogListPanel() {
                           ) : (
                             <>
                               <span className="text-xs text-content-secondary tabular-nums whitespace-nowrap">
-                                Downloading...{downloadStats && downloadStats.received > 0 ? ` ${formatBytes(downloadStats.received)}` : ''}
+                                下载中...{downloadStats && downloadStats.received > 0 ? ` ${formatBytes(downloadStats.received)}` : ''}
                               </span>
                               <div className="w-24 bg-surface-inset rounded-full h-1.5 overflow-hidden">
                                 <div className="w-1/3 bg-blue-500/70 h-1.5 rounded-full animate-pulse" />
@@ -543,7 +543,7 @@ export function LogListPanel() {
                             </>
                           )}
                           <button onClick={handleCancel} className="text-xs text-red-400 hover:text-red-300">
-                            Cancel
+                            取消
                           </button>
                         </div>
                       ) : downloaded ? (
@@ -553,13 +553,13 @@ export function LogListPanel() {
                             disabled={isParsingLog || openingRecent !== null}
                             className="text-xs px-3 py-1 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 disabled:opacity-50 rounded-md transition-colors"
                           >
-                            {openingRecent === downloaded.path ? 'Opening...' : 'Open'}
+                            {openingRecent === downloaded.path ? '打开中...' : '打开'}
                           </button>
                           <button
                             onClick={() => handleDownload(log)}
                             disabled={downloadingLogId !== null}
-                            title="Re-download from FC"
-                            aria-label={`Re-download log ${log.id} from flight controller`}
+                            title="从 FC 重新下载"
+                            aria-label={`从飞控重新下载日志 ${log.id}`}
                             className="text-xs w-7 h-7 inline-flex items-center justify-center text-content-secondary hover:text-content hover:bg-surface-overlay-subtle disabled:opacity-50 rounded-md transition-colors"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -573,7 +573,7 @@ export function LogListPanel() {
                           disabled={downloadingLogId !== null}
                           className="text-xs px-3 py-1 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 disabled:opacity-50 rounded-md transition-colors"
                         >
-                          Download
+                          下载
                         </button>
                       )}
                     </td>

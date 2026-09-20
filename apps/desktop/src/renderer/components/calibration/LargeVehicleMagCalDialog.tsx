@@ -55,10 +55,10 @@ export function LargeVehicleMagCalDialog({ onClose }: LargeVehicleMagCalDialogPr
       if (result?.success) {
         setRun({ kind: 'success' });
       } else {
-        setRun({ kind: 'error', message: result?.error || 'Command failed' });
+        setRun({ kind: 'error', message: result?.error || '命令失败' });
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = err instanceof Error ? err.message : '未知错误';
       setRun({ kind: 'error', message });
     }
   };
@@ -87,10 +87,10 @@ export function LargeVehicleMagCalDialog({ onClose }: LargeVehicleMagCalDialogPr
             <Compass className="w-5 h-5 text-amber-400" />
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-semibold text-content">Large Vehicle MagCal</h3>
+            <h3 className="text-sm font-semibold text-content">大型飞行器罗盘校准</h3>
             <p className="text-xs text-content-secondary mt-1 leading-relaxed">
-              Single-shot compass calibration for aircraft that cannot be rotated.
-              Point the vehicle in a known true direction and enter the heading below.
+              适用于无法旋转的飞行器的单次罗盘校准。
+              将飞行器对准已知的真方向，并在下方输入航向。
             </p>
           </div>
         </div>
@@ -102,8 +102,8 @@ export function LargeVehicleMagCalDialog({ onClose }: LargeVehicleMagCalDialogPr
             <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30">
               <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <div className="text-xs text-amber-200">
-                <span className="font-medium">No GPS 3D lock.</span> A 3D fix is required so the
-                FC can derive the local earth-field vector. Calibration will fail without it.
+                <span className="font-medium">没有 GPS 3D 定位。</span>飞控需要 3D 定位来推算
+                当地地磁场矢量，缺少它校准将失败。
               </div>
             </div>
           )}
@@ -111,7 +111,7 @@ export function LargeVehicleMagCalDialog({ onClose }: LargeVehicleMagCalDialogPr
             <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
               <Satellite className="w-4 h-4 text-emerald-400 shrink-0" />
               <div className="text-xs text-emerald-200">
-                GPS 3D fix ({gps?.satellites ?? 0} sats)
+                GPS 3D 定位（{gps?.satellites ?? 0} 颗卫星）
               </div>
             </div>
           )}
@@ -119,7 +119,7 @@ export function LargeVehicleMagCalDialog({ onClose }: LargeVehicleMagCalDialogPr
           {/* Heading input */}
           <div>
             <label className="block text-xs font-medium text-content-secondary mb-1.5">
-              Current True Heading (degrees)
+              当前真航向（度）
             </label>
             <div className="flex gap-2">
               <input
@@ -141,14 +141,14 @@ export function LargeVehicleMagCalDialog({ onClose }: LargeVehicleMagCalDialogPr
                 onClick={useLiveHeading}
                 disabled={run.kind === 'running' || run.kind === 'success'}
                 className="px-3 py-2 text-xs rounded-lg bg-surface border border-subtle hover:border-amber-400/60 hover:text-amber-300 text-content-secondary transition-colors disabled:opacity-50"
-                title={`Use live heading (${Math.round(liveHeading)}°)`}
+                title={`使用实时航向（${Math.round(liveHeading)}°）`}
               >
-                Use Live ({Math.round(liveHeading)}°)
+                使用实时（{Math.round(liveHeading)}°）
               </button>
             </div>
             <p className="text-[11px] text-content-tertiary mt-1.5 leading-relaxed">
-              Heading is true (not magnetic). Use a known landmark, runway alignment,
-              or a separate compass. Accuracy directly affects calibration quality.
+              航向为真航向（非磁航向）。可使用已知地标、跑道朝向或独立罗盘确定。
+              精度直接影响校准质量。
             </p>
           </div>
 
@@ -156,15 +156,15 @@ export function LargeVehicleMagCalDialog({ onClose }: LargeVehicleMagCalDialogPr
           {run.kind === 'running' && (
             <div className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/30">
               <Loader2 className="w-4 h-4 text-blue-400 animate-spin shrink-0" />
-              <div className="text-xs text-blue-200">Sending calibration command...</div>
+              <div className="text-xs text-blue-200">正在发送校准命令...</div>
             </div>
           )}
           {run.kind === 'success' && (
             <div className="flex items-start gap-2 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div className="text-xs text-emerald-200">
-                <span className="font-medium">Calibration complete.</span> Compass offsets
-                have been written. A reboot is recommended for the new offsets to take effect.
+                <span className="font-medium">校准完成。</span>罗盘偏移已写入。
+                建议重启飞控使新偏移生效。
               </div>
             </div>
           )}
@@ -182,7 +182,7 @@ export function LargeVehicleMagCalDialog({ onClose }: LargeVehicleMagCalDialogPr
             onClick={onClose}
             className="px-3 py-1.5 rounded-lg text-xs text-content-secondary hover:text-content hover:bg-surface transition-colors"
           >
-            {run.kind === 'success' ? 'Close' : 'Cancel'}
+            {run.kind === 'success' ? '关闭' : '取消'}
           </button>
           {run.kind !== 'success' && (
             <button
@@ -190,7 +190,7 @@ export function LargeVehicleMagCalDialog({ onClose }: LargeVehicleMagCalDialogPr
               disabled={!headingValid || run.kind === 'running'}
               className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-amber-600 hover:bg-amber-500 disabled:bg-amber-600/40 disabled:cursor-not-allowed transition-colors"
             >
-              {run.kind === 'running' ? 'Running...' : 'Run Calibration'}
+              {run.kind === 'running' ? '运行中...' : '运行校准'}
             </button>
           )}
         </div>

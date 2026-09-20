@@ -75,16 +75,16 @@ export function FleetSurveyPanel({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-content">Split survey across fleet</h2>
+          <h2 className="text-sm font-semibold text-content">将勘测分割给机群</h2>
           <button onClick={onClose} className="text-content-tertiary hover:text-content text-sm">✕</button>
         </div>
 
         {!polygon ? (
-          <p className="text-xs text-content-secondary">Draw a survey polygon first, then split it across vehicles.</p>
+          <p className="text-xs text-content-secondary">请先绘制勘测多边形,再分割给各无人机。</p>
         ) : (
           <>
             <div className="mb-4">
-              <span className="text-[11px] uppercase tracking-wide text-content-secondary">Vehicles</span>
+              <span className="text-[11px] uppercase tracking-wide text-content-secondary">无人机</span>
               <div className="mt-1.5 flex flex-col gap-1">
                 {vehicles.map((v) => (
                   <label key={v.key} className="flex items-center gap-2 text-xs text-content cursor-pointer">
@@ -99,13 +99,13 @@ export function FleetSurveyPanel({ onClose }: { onClose: () => void }) {
                   </label>
                 ))}
                 {vehicles.length === 0 && (
-                  <span className="text-xs text-content-tertiary">No vehicles connected.</span>
+                  <span className="text-xs text-content-tertiary">没有已连接的无人机。</span>
                 )}
               </div>
             </div>
 
             <label className="flex items-center justify-between gap-3 mb-4 text-xs text-content">
-              <span>Altitude layer step (m/vehicle)</span>
+              <span>高度分层步长(米/无人机)</span>
               <DraftNumberInput
                 value={altStep}
                 min={0}
@@ -119,12 +119,12 @@ export function FleetSurveyPanel({ onClose }: { onClose: () => void }) {
               disabled={!canGenerate}
               className="w-full mb-4 px-3 py-2 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold disabled:opacity-50"
             >
-              {building ? 'Generating…' : `Generate split (${selected.length} vehicles)`}
+              {building ? '生成中…' : `生成分割(${selected.length} 架无人机)`}
             </button>
 
             {assignments.length > 0 && (
               <div className="mb-4">
-                <span className="text-[11px] uppercase tracking-wide text-content-secondary">Assignments</span>
+                <span className="text-[11px] uppercase tracking-wide text-content-secondary">分配</span>
                 <div className="mt-1.5 rounded-lg border border-subtle overflow-hidden">
                   {assignments.map((a) => {
                     const st = uploadStatus[a.vehicleKey]?.state ?? 'idle';
@@ -150,13 +150,13 @@ export function FleetSurveyPanel({ onClose }: { onClose: () => void }) {
                 disabled={uploading}
                 className="w-full px-3 py-2 rounded bg-surface-raised hover:bg-surface-solid border border-subtle text-content text-xs font-semibold disabled:opacity-50"
               >
-                {uploading ? 'Uploading…' : 'Upload all'}
+                {uploading ? '上传中…' : '全部上传'}
               </button>
             )}
 
             <p className="mt-3 text-[10px] text-content-tertiary leading-relaxed">
-              Bands are non-overlapping; missions upload sequentially to each vehicle on any connected link.
-              Timing deconfliction is out of scope here.
+              条带互不重叠;任务经任意已连接链路按顺序上传到各无人机。
+              时间冲突规避不在本功能范围内。
             </p>
           </>
         )}

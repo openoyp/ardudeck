@@ -150,7 +150,7 @@ function PanelHeaderActions(props: IDockviewHeaderActionsProps): JSX.Element | n
               ? 'text-blue-500 bg-blue-500/10'
               : 'text-content-secondary hover:text-content hover:bg-surface-raised'
           }`}
-          data-tip={instrumentVisible ? 'Hide map instrument' : 'Show as instrument on the map'}
+          data-tip={instrumentVisible ? '隐藏地图仪表' : '在地图上显示为仪表'}
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3.6 15a8.4 8.4 0 1116.8 0" />
@@ -161,13 +161,13 @@ function PanelHeaderActions(props: IDockviewHeaderActionsProps): JSX.Element | n
       <button
         onClick={handleClick}
         className="h-7 px-2 mx-0.5 rounded-md inline-flex items-center gap-1.5 text-xs transition-colors text-content-secondary hover:text-content hover:bg-surface-raised"
-        title={`Open ${title} in new window`}
+        title={`在新窗口打开 ${title}`}
       >
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
             d="M14 3h7m0 0v7m0-7L10 14M5 5h4M5 19h14a0 0 0 010 0v-4" />
         </svg>
-        <span>Pop out</span>
+        <span>弹出</span>
       </button>
     </>
   );
@@ -203,11 +203,11 @@ const components: Record<string, React.FC<IDockviewPanelProps>> = {
 
 // Preset layout definitions (pilotView is the default)
 const PRESET_LAYOUTS = {
-  pilotView: 'Pilot View',
+  pilotView: '飞行员视图',
   fpv: 'FPV',
-  missionTelemetry: 'Mission Telemetry',
+  missionTelemetry: '任务遥测',
   sitl: 'SITL',
-  allPanels: 'All Panels',
+  allPanels: '全部面板',
 } as const;
 
 // The default preset to load when no saved layout exists
@@ -264,13 +264,13 @@ const PILOT_VIEW_LAYOUT: SerializedDockview = {
     orientation: Orientation.HORIZONTAL,
   },
   panels: {
-    map: { id: 'map', contentComponent: 'MapPanel', title: 'Map' },
-    flightControl: { id: 'flightControl', contentComponent: 'FlightControlPanel', title: 'Flight Control' },
-    battery: { id: 'battery', contentComponent: 'BatteryPanel', title: 'Battery' },
+    map: { id: 'map', contentComponent: 'MapPanel', title: '地图' },
+    flightControl: { id: 'flightControl', contentComponent: 'FlightControlPanel', title: '飞行控制' },
+    battery: { id: 'battery', contentComponent: 'BatteryPanel', title: '电池' },
     gps: { id: 'gps', contentComponent: 'GpsPanel', title: 'GPS' },
-    altitude: { id: 'altitude', contentComponent: 'AltitudePanel', title: 'Altitude' },
-    speed: { id: 'speed', contentComponent: 'SpeedPanel', title: 'Speed' },
-    position: { id: 'position', contentComponent: 'PositionPanel', title: 'Position' },
+    altitude: { id: 'altitude', contentComponent: 'AltitudePanel', title: '高度' },
+    speed: { id: 'speed', contentComponent: 'SpeedPanel', title: '速度' },
+    position: { id: 'position', contentComponent: 'PositionPanel', title: '位置' },
   },
   activeGroup: '1',
 };
@@ -325,14 +325,14 @@ const FPV_LAYOUT: SerializedDockview = {
     orientation: Orientation.HORIZONTAL,
   },
   panels: {
-    map: { id: 'map', contentComponent: 'MapPanel', title: 'Map' },
-    camera: { id: 'camera', contentComponent: 'CameraPanel', title: 'Vision' },
-    flightControl: { id: 'flightControl', contentComponent: 'FlightControlPanel', title: 'Flight Control' },
-    battery: { id: 'battery', contentComponent: 'BatteryPanel', title: 'Battery' },
+    map: { id: 'map', contentComponent: 'MapPanel', title: '地图' },
+    camera: { id: 'camera', contentComponent: 'CameraPanel', title: '视觉' },
+    flightControl: { id: 'flightControl', contentComponent: 'FlightControlPanel', title: '飞行控制' },
+    battery: { id: 'battery', contentComponent: 'BatteryPanel', title: '电池' },
     gps: { id: 'gps', contentComponent: 'GpsPanel', title: 'GPS' },
-    altitude: { id: 'altitude', contentComponent: 'AltitudePanel', title: 'Altitude' },
-    speed: { id: 'speed', contentComponent: 'SpeedPanel', title: 'Speed' },
-    position: { id: 'position', contentComponent: 'PositionPanel', title: 'Position' },
+    altitude: { id: 'altitude', contentComponent: 'AltitudePanel', title: '高度' },
+    speed: { id: 'speed', contentComponent: 'SpeedPanel', title: '速度' },
+    position: { id: 'position', contentComponent: 'PositionPanel', title: '位置' },
   },
   activeGroup: '1',
 };
@@ -378,11 +378,11 @@ const MISSION_TELEMETRY_LAYOUT: SerializedDockview = {
     orientation: Orientation.HORIZONTAL,
   },
   panels: {
-    map: { id: 'map', contentComponent: 'MapPanel', title: 'Map' }, // Uses unified MapPanel with mission overlays
-    altitudeProfile: { id: 'altitudeProfile', contentComponent: 'AltitudeProfilePanel', title: 'Altitude Profile' },
-    waypoints: { id: 'waypoints', contentComponent: 'WaypointTablePanel', title: 'Waypoints' },
-    battery: { id: 'battery', contentComponent: 'BatteryPanel', title: 'Battery' },
-    flightControl: { id: 'flightControl', contentComponent: 'FlightControlPanel', title: 'Flight Control' },
+    map: { id: 'map', contentComponent: 'MapPanel', title: '地图' }, // Uses unified MapPanel with mission overlays
+    altitudeProfile: { id: 'altitudeProfile', contentComponent: 'AltitudeProfilePanel', title: '高度剖面' },
+    waypoints: { id: 'waypoints', contentComponent: 'WaypointTablePanel', title: '航点' },
+    battery: { id: 'battery', contentComponent: 'BatteryPanel', title: '电池' },
+    flightControl: { id: 'flightControl', contentComponent: 'FlightControlPanel', title: '飞行控制' },
   },
   activeGroup: '5',
 };
@@ -446,25 +446,25 @@ const ALL_PANELS_LAYOUT: SerializedDockview = {
     orientation: Orientation.HORIZONTAL,
   },
   panels: {
-    flightControl: { id: 'flightControl', contentComponent: 'FlightControlPanel', title: 'Flight Control' },
-    attitude: { id: 'attitude', contentComponent: 'AttitudePanel', title: 'Attitude' },
-    altitude: { id: 'altitude', contentComponent: 'AltitudePanel', title: 'Altitude' },
-    speed: { id: 'speed', contentComponent: 'SpeedPanel', title: 'Speed' },
-    map: { id: 'map', contentComponent: 'MapPanel', title: 'Map' },
-    messages: { id: 'messages', contentComponent: 'MessagesPanel', title: 'Messages' },
-    preflightCheck: { id: 'preflightCheck', contentComponent: 'PreflightCheckCard', title: 'Pre-flight Checks' },
-    safetyMonitor: { id: 'safetyMonitor', contentComponent: 'SafetyMonitorPanel', title: 'Safety Monitor' },
-    battery: { id: 'battery', contentComponent: 'BatteryPanel', title: 'Battery' },
+    flightControl: { id: 'flightControl', contentComponent: 'FlightControlPanel', title: '飞行控制' },
+    attitude: { id: 'attitude', contentComponent: 'AttitudePanel', title: '姿态' },
+    altitude: { id: 'altitude', contentComponent: 'AltitudePanel', title: '高度' },
+    speed: { id: 'speed', contentComponent: 'SpeedPanel', title: '速度' },
+    map: { id: 'map', contentComponent: 'MapPanel', title: '地图' },
+    messages: { id: 'messages', contentComponent: 'MessagesPanel', title: '消息' },
+    preflightCheck: { id: 'preflightCheck', contentComponent: 'PreflightCheckCard', title: '起飞前检查' },
+    safetyMonitor: { id: 'safetyMonitor', contentComponent: 'SafetyMonitorPanel', title: '安全监控' },
+    battery: { id: 'battery', contentComponent: 'BatteryPanel', title: '电池' },
     gps: { id: 'gps', contentComponent: 'GpsPanel', title: 'GPS' },
     rtk: { id: 'rtk', contentComponent: 'NtripPanel', title: 'RTK / NTRIP' },
-    position: { id: 'position', contentComponent: 'PositionPanel', title: 'Position' },
-    velocity: { id: 'velocity', contentComponent: 'VelocityPanel', title: 'Velocity' },
-    flightMode: { id: 'flightMode', contentComponent: 'FlightModePanel', title: 'Flight Mode' },
-    camera: { id: 'camera', contentComponent: 'CameraPanel', title: 'Vision' },
-    waypoints: { id: 'waypoints', contentComponent: 'WaypointTablePanel', title: 'Waypoints' },
-    altitudeProfile: { id: 'altitudeProfile', contentComponent: 'AltitudeProfilePanel', title: 'Altitude Profile' },
-    sitlFailures: { id: 'sitlFailures', contentComponent: 'SitlFailureDockPanel', title: 'SITL Failures' },
-    sitlEnvironment: { id: 'sitlEnvironment', contentComponent: 'SitlEnvironmentDockPanel', title: 'SITL Environment' },
+    position: { id: 'position', contentComponent: 'PositionPanel', title: '位置' },
+    velocity: { id: 'velocity', contentComponent: 'VelocityPanel', title: '速度分量' },
+    flightMode: { id: 'flightMode', contentComponent: 'FlightModePanel', title: '飞行模式' },
+    camera: { id: 'camera', contentComponent: 'CameraPanel', title: '视觉' },
+    waypoints: { id: 'waypoints', contentComponent: 'WaypointTablePanel', title: '航点' },
+    altitudeProfile: { id: 'altitudeProfile', contentComponent: 'AltitudeProfilePanel', title: '高度剖面' },
+    sitlFailures: { id: 'sitlFailures', contentComponent: 'SitlFailureDockPanel', title: 'SITL 故障' },
+    sitlEnvironment: { id: 'sitlEnvironment', contentComponent: 'SitlEnvironmentDockPanel', title: 'SITL 环境' },
   },
   activeGroup: '5',
 };
@@ -511,14 +511,14 @@ const SITL_LAYOUT: SerializedDockview = {
     orientation: Orientation.HORIZONTAL,
   },
   panels: {
-    flightControl: { id: 'flightControl', contentComponent: 'FlightControlPanel', title: 'Flight Control' },
-    altitude: { id: 'altitude', contentComponent: 'AltitudePanel', title: 'Altitude' },
-    speed: { id: 'speed', contentComponent: 'SpeedPanel', title: 'Speed' },
-    map: { id: 'map', contentComponent: 'MapPanel', title: 'Map' },
-    messages: { id: 'messages', contentComponent: 'MessagesPanel', title: 'Messages' },
+    flightControl: { id: 'flightControl', contentComponent: 'FlightControlPanel', title: '飞行控制' },
+    altitude: { id: 'altitude', contentComponent: 'AltitudePanel', title: '高度' },
+    speed: { id: 'speed', contentComponent: 'SpeedPanel', title: '速度' },
+    map: { id: 'map', contentComponent: 'MapPanel', title: '地图' },
+    messages: { id: 'messages', contentComponent: 'MessagesPanel', title: '消息' },
     gps: { id: 'gps', contentComponent: 'GpsPanel', title: 'GPS' },
-    sitlFailures: { id: 'sitlFailures', contentComponent: 'SitlFailureDockPanel', title: 'SITL Failures' },
-    sitlEnvironment: { id: 'sitlEnvironment', contentComponent: 'SitlEnvironmentDockPanel', title: 'SITL Environment' },
+    sitlFailures: { id: 'sitlFailures', contentComponent: 'SitlFailureDockPanel', title: 'SITL 故障' },
+    sitlEnvironment: { id: 'sitlEnvironment', contentComponent: 'SitlEnvironmentDockPanel', title: 'SITL 环境' },
   },
   activeGroup: '4',
 };
@@ -530,7 +530,7 @@ function createDefaultLayout(api: DockviewApi): void {
   api.addPanel({
     id: 'map',
     component: 'MapPanel',
-    title: 'Map',
+    title: '地图',
     position: { referenceGroup: centerGroup },
   });
 
@@ -539,19 +539,19 @@ function createDefaultLayout(api: DockviewApi): void {
   api.addPanel({
     id: 'flightControl',
     component: 'FlightControlPanel',
-    title: 'Flight Control',
+    title: '飞行控制',
     position: { referenceGroup: leftGroup },
   });
   api.addPanel({
     id: 'altitude',
     component: 'AltitudePanel',
-    title: 'Altitude',
+    title: '高度',
     position: { referenceGroup: leftGroup, index: 1 },
   });
   api.addPanel({
     id: 'speed',
     component: 'SpeedPanel',
-    title: 'Speed',
+    title: '速度',
     position: { referenceGroup: leftGroup, index: 2 },
   });
 
@@ -560,7 +560,7 @@ function createDefaultLayout(api: DockviewApi): void {
   api.addPanel({
     id: 'battery',
     component: 'BatteryPanel',
-    title: 'Battery',
+    title: '电池',
     position: { referenceGroup: rightGroup },
   });
   api.addPanel({
@@ -572,7 +572,7 @@ function createDefaultLayout(api: DockviewApi): void {
   api.addPanel({
     id: 'position',
     component: 'PositionPanel',
-    title: 'Position',
+    title: '位置',
     position: { referenceGroup: rightGroup, index: 2 },
   });
 }
@@ -627,14 +627,14 @@ function WorkspaceButton(props: WorkspaceProps): JSX.Element {
       <button
         onClick={() => setOpen(true)}
         data-tour="telemetry-layout-select"
-        data-tip="Workspace: panel layout, view and panels"
+        data-tip="工作区:面板布局、视图与面板"
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-default bg-surface-raised text-content text-xs hover:bg-surface-solid transition-colors shrink-0"
       >
         <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
           <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
         </svg>
-        <span className="font-medium">Workspace</span>
+        <span className="font-medium">工作区</span>
         <span className="text-content-tertiary max-w-[140px] truncate hidden lg:inline">· {activeName}</span>
       </button>
       {open && <WorkspaceDialog {...props} onClose={() => setOpen(false)} />}
@@ -812,8 +812,8 @@ function WorkspaceDialog(props: WorkspaceProps & { onClose: () => void }): JSX.E
         <div className="pointer-events-auto w-full max-w-[600px] max-h-[85vh] flex flex-col rounded-xl bg-surface-solid border border-subtle shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center gap-2.5 px-4 py-3 border-b border-subtle">
             <svg className="w-4 h-4 text-content-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
-            <span className="text-sm font-semibold text-content">Workspace</span>
-            <button onClick={onClose} data-tip="Close" className="ml-auto p-1.5 rounded text-content-secondary hover:text-content hover:bg-surface-raised transition-colors">
+            <span className="text-sm font-semibold text-content">工作区</span>
+            <button onClick={onClose} data-tip="关闭" className="ml-auto p-1.5 rounded text-content-secondary hover:text-content hover:bg-surface-raised transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
               </svg>
@@ -821,7 +821,7 @@ function WorkspaceDialog(props: WorkspaceProps & { onClose: () => void }): JSX.E
           </div>
 
           <div className="overflow-y-auto p-4 space-y-6 bg-surface-base">
-            <WsSection label="Panel layout" accent={WS_ACCENT.layout} icon={WS_ICONS.layout}>
+            <WsSection label="面板布局" accent={WS_ACCENT.layout} icon={WS_ICONS.layout}>
               <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))]">
                 {availablePresets.map(([key, name]) => (
                   <WsCard key={key} accent={WS_ACCENT.layout} active={key === activeLayout} icon={WS_ICONS.layout} label={name} onClick={() => { onLoad(key); onClose(); }} />
@@ -834,7 +834,7 @@ function WorkspaceDialog(props: WorkspaceProps & { onClose: () => void }): JSX.E
                 {savingName === null ? (
                   <button onClick={() => setSavingName('')} className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-subtle text-xs text-content-secondary hover:text-content hover:border-default transition-colors">
                     {plusIcon}
-                    Save current as…
+                    将当前另存为…
                   </button>
                 ) : (
                   <div className="flex items-center gap-1">
@@ -842,33 +842,33 @@ function WorkspaceDialog(props: WorkspaceProps & { onClose: () => void }): JSX.E
                       autoFocus
                       type="text"
                       value={savingName}
-                      placeholder="Layout name"
+                      placeholder="布局名称"
                       onChange={(e) => setSavingName(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') commitSave(); if (e.key === 'Escape') setSavingName(null); }}
                       className="w-40 px-2 py-1 text-xs rounded bg-surface-input border border-default text-content focus:outline-none focus:border-blue-500"
                     />
-                    <button onClick={commitSave} disabled={!savingName.trim()} className="px-2.5 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 transition-colors">Save</button>
-                    <button onClick={() => setSavingName(null)} className="px-2.5 py-1 text-xs rounded border border-subtle text-content-secondary hover:text-content transition-colors">Cancel</button>
+                    <button onClick={commitSave} disabled={!savingName.trim()} className="px-2.5 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 transition-colors">保存</button>
+                    <button onClick={() => setSavingName(null)} className="px-2.5 py-1 text-xs rounded border border-subtle text-content-secondary hover:text-content transition-colors">取消</button>
                   </div>
                 )}
                 <button onClick={() => { onReset(); }} className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-subtle text-xs text-content-secondary hover:text-content hover:border-default transition-colors">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M20 9A8 8 0 006.34 6.34M4 15a8 8 0 0013.66 2.66" /></svg>
-                  Reset to preset
+                  重置为预设
                 </button>
               </div>
             </WsSection>
 
             {isMavlink && (
-              <WsSection label="Telemetry rate" accent={WS_ACCENT.rate} icon={WS_ICONS.rate}>
+              <WsSection label="遥测速率" accent={WS_ACCENT.rate} icon={WS_ICONS.rate}>
                 <WsSegment options={SPEED_OPTIONS} value={telemetrySpeed} accent={WS_ACCENT.rate} onChange={handleSpeedChange} />
-                <p className="mt-1.5 text-[11px] text-content-tertiary">How often the vehicle streams telemetry. FC leaves the flight controller's own rates untouched.</p>
+                <p className="mt-1.5 text-[11px] text-content-tertiary">飞行器推送遥测数据的频率。FC 选项不会改动飞控自身的速率。</p>
               </WsSection>
             )}
 
             {import.meta.env.DEV && (
-              <WsSection label="Map view" accent={WS_ACCENT.view} icon={WS_ICONS.view}>
+              <WsSection label="地图视图" accent={WS_ACCENT.view} icon={WS_ICONS.view}>
                 <WsSegment
-                  options={[{ value: '2d', label: '2D map' }, { value: '3d', label: '3D terrain' }]}
+                  options={[{ value: '2d', label: '2D 地图' }, { value: '3d', label: '3D 地形' }]}
                   value={mapMode}
                   accent={WS_ACCENT.view}
                   onChange={(v) => setMapMode(v)}
@@ -877,7 +877,7 @@ function WorkspaceDialog(props: WorkspaceProps & { onClose: () => void }): JSX.E
             )}
 
             {hasMapPanel && (
-              <WsSection label="Offline maps" accent={WS_ACCENT.offline} icon={WS_ICONS.offline}>
+              <WsSection label="离线地图" accent={WS_ACCENT.offline} icon={WS_ICONS.offline}>
                 <button
                   onClick={() => { setCacheActive(!cacheActive); onClose(); }}
                   className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs shadow-sm transition-all hover:shadow-md"
@@ -888,13 +888,13 @@ function WorkspaceDialog(props: WorkspaceProps & { onClose: () => void }): JSX.E
                   }
                 >
                   <span style={{ color: cacheActive ? '#fff' : WS_ACCENT.offline }}>{WS_ICONS.offline}</span>
-                  {cacheActive ? 'Selecting… draw a box on the map' : 'Save an area for offline use'}
+                  {cacheActive ? '选择中…请在地图上框选区域' : '保存区域供离线使用'}
                 </button>
-                <p className="mt-1.5 text-[11px] text-content-tertiary">Draw a box on the map to cache its tiles for flying without a connection.</p>
+                <p className="mt-1.5 text-[11px] text-content-tertiary">在地图上框选区域即可缓存瓦片,无网络也能飞行。</p>
               </WsSection>
             )}
 
-            <WsSection label="Add panel" accent={WS_ACCENT.panel} icon={WS_ICONS.panel}>
+            <WsSection label="添加面板" accent={WS_ACCENT.panel} icon={WS_ICONS.panel}>
               <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(150px,1fr))]">
                 {availablePanels.map(([id, { component, title }]) => (
                   <WsCard
@@ -932,7 +932,7 @@ function SensorHealthWarning({ sensors }: { sensors: string[] }) {
   return (
     <div
       className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500/10 border border-red-500/30 rounded"
-      title={`Unhealthy: ${sensors.join(', ')} - check Messages panel for details`}
+      title={`传感器异常: ${sensors.join(', ')} - 详情请查看消息面板`}
     >
       <svg className="w-3.5 h-3.5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
@@ -944,10 +944,10 @@ function SensorHealthWarning({ sensors }: { sensors: string[] }) {
 
 // Telemetry speed selector labels
 const SPEED_OPTIONS: { value: TelemetrySpeed; label: string; tip: string }[] = [
-  { value: 'fc', label: 'FC', tip: 'Hands off: ArduDeck never asks for different data rates. The vehicle keeps sending at the rates saved on the flight controller. Pick this if you tuned those rates yourself.' },
-  { value: 'eco', label: 'Eco', tip: 'Slow updates: easy on weak or long-range telemetry links' },
-  { value: 'normal', label: 'Normal', tip: 'Balanced update speed, good for most links' },
-  { value: 'max', label: 'Max', tip: 'Fastest updates, for fast links like USB or WiFi' },
+  { value: 'fc', label: 'FC', tip: '不干预:ArduDeck 不会请求不同的数据速率,飞行器按飞控上保存的速率持续发送。若你自行调校过这些速率,请选择此项。' },
+  { value: 'eco', label: '节能', tip: '慢速更新:适合弱信号或远距离遥测链路' },
+  { value: 'normal', label: '标准', tip: '均衡的更新速度,适合大多数链路' },
+  { value: 'max', label: '最快', tip: '最快更新,适合 USB 或 WiFi 等高速链路' },
 ];
 
 // Quick stats bar
@@ -997,35 +997,35 @@ function QuickStatsBar({ trailing }: { trailing?: ReactNode }) {
         <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wide ${
           flight.armed && connected ? 'bg-red-500 text-white' : 'bg-surface-raised text-content-secondary'
         }`}>
-          {!connected ? 'No Link' : flight.armed ? 'Armed' : 'Disarmed'}
+          {!connected ? '无连接' : flight.armed ? '已解锁' : '已上锁'}
         </span>
         <span className={`text-lg font-medium ${connected ? 'text-content' : 'text-content-tertiary'}`}>
-          {connected ? flight.mode : 'Not connected'}
+          {connected ? flight.mode : '未连接'}
         </span>
       </div>
       <div className="flex items-center gap-6 text-xs">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-content-secondary">HDG</span>
+          <span className="text-content-secondary">航向</span>
           <span className="font-mono text-sm text-content">{stat(`${vfrHud.heading.toFixed(0)}°`)}</span>
         </div>
         <div className="flex items-baseline gap-1.5">
-          <span className="text-content-secondary">ALT</span>
+          <span className="text-content-secondary">高度</span>
           <span className="font-mono text-sm text-content">{stat(formatAltitudeFromMeters(vfrHud.alt, altitudeUnit))}</span>
         </div>
         <div className="flex items-baseline gap-1.5">
-          <span className="text-content-secondary">SPD</span>
+          <span className="text-content-secondary">速度</span>
           <span className="font-mono text-sm text-content">{stat(formatSpeedFromMetersPerSecond(vfrHud.groundspeed, speedUnit))}</span>
         </div>
         <div className="flex items-baseline gap-1.5">
-          <span className="text-content-secondary">THR</span>
+          <span className="text-content-secondary">油门</span>
           <span className="font-mono text-sm text-content">{stat(`${vfrHud.throttle}%`)}</span>
         </div>
         <div className="flex items-baseline gap-1.5">
-          <span className="text-content-secondary">BAT</span>
+          <span className="text-content-secondary">电池</span>
           <span className={`font-mono text-sm ${batteryColor}`}>{stat(`${battery.voltage.toFixed(1)}V`)}</span>
         </div>
         <div className="flex items-baseline gap-1.5">
-          <span className="text-content-secondary">SAT</span>
+          <span className="text-content-secondary">卫星</span>
           <span className={`font-mono text-sm ${satColor}`}>{stat(String(gps.satellites))}</span>
         </div>
         {unhealthySensors.length > 0 && (

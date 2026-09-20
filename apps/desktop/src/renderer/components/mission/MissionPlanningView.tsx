@@ -65,7 +65,7 @@ function ensureFlightInfoPanel(api: DockviewApi): void {
   api.addPanel({
     id: 'flightInfo',
     component: 'FlightInfoPanel',
-    title: 'Flight Info',
+    title: '飞行信息',
     ...(refGroup ? { position: { referenceGroup: refGroup } } : {}),
   });
   // Keep Waypoints as the visible tab; Flight Info is a sibling.
@@ -83,7 +83,7 @@ function createDefaultLayout(api: DockviewApi): void {
   api.addPanel({
     id: 'missionMap',
     component: 'MissionMapPanel',
-    title: 'Mission Map',
+    title: '任务地图',
     position: { referenceGroup: mainGroup },
   });
 
@@ -92,7 +92,7 @@ function createDefaultLayout(api: DockviewApi): void {
   api.addPanel({
     id: 'waypointTable',
     component: 'WaypointTablePanel',
-    title: 'Waypoints',
+    title: '航点',
     position: { referenceGroup: rightGroup },
   });
 
@@ -105,7 +105,7 @@ function createDefaultLayout(api: DockviewApi): void {
   api.addPanel({
     id: 'altitudeProfile',
     component: 'AltitudeProfilePanel',
-    title: 'Altitude Profile',
+    title: '高度剖面',
     position: { referenceGroup: bottomGroup },
   });
 
@@ -163,19 +163,19 @@ function MissionNotAvailable({ fcVariant, boardId }: { fcVariant: string; boardI
 
           {/* Title */}
           <h1 className="text-2xl font-bold text-content mb-3">
-            Legacy iNav Available
+            可刷入旧版 iNav
           </h1>
 
           {/* Explanation */}
           <p className="text-content-secondary mb-6 leading-relaxed">
-            Your <span className="text-orange-400 font-medium">{boardId}</span> is an F3 board with 256KB flash.
-            You can flash <span className="text-blue-400 font-medium">iNav 2.6.1</span> for basic mission planning and GPS navigation.
+            您的 <span className="text-orange-400 font-medium">{boardId}</span> 是一块 256KB 闪存的 F3 板。
+            可以刷入 <span className="text-blue-400 font-medium">iNav 2.6.1</span> 以获得基础任务规划和 GPS 导航。
           </p>
 
           {/* Note about limitations */}
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-6 text-left">
             <p className="text-yellow-400/90 text-sm">
-              <strong>Note:</strong> iNav 2.6.1 supports waypoint missions but lacks newer features like safehome and advanced failsafes available in modern iNav 7.x on F4+ boards.
+              <strong>注意:</strong>iNav 2.6.1 支持航点任务,但没有 F4+ 板上现代 iNav 7.x 的新特性,如安全点和高级失效保护。
             </p>
           </div>
 
@@ -185,13 +185,13 @@ function MissionNotAvailable({ fcVariant, boardId }: { fcVariant: string; boardI
               onClick={() => setView('telemetry')}
               className="px-4 py-2 bg-surface-raised hover:bg-surface-raised text-content-secondary rounded-lg text-sm transition-colors"
             >
-              ← Back
+              ← 返回
             </button>
             <button
               onClick={handleFlashInav}
               className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-lg font-medium transition-all shadow-lg shadow-blue-500/25"
             >
-              Flash iNav 2.6.1
+              刷入 iNav 2.6.1
             </button>
           </div>
         </div>
@@ -211,18 +211,18 @@ function MissionNotAvailable({ fcVariant, boardId }: { fcVariant: string; boardI
 
           {/* Title */}
           <h1 className="text-2xl font-bold text-content mb-3">
-            Hardware Upgrade Needed
+            需要升级硬件
           </h1>
 
           {/* Explanation */}
           <p className="text-content-secondary mb-6 leading-relaxed">
-            Your <span className="text-red-400 font-medium">{boardId}</span> is an F3 board that was never supported by iNav.
-            For mission planning, you need an F4 or newer board.
+            您的 <span className="text-red-400 font-medium">{boardId}</span> 是一块从未被 iNav 支持的 F3 板。
+            要使用任务规划,需要 F4 或更新的板子。
           </p>
 
           {/* Upgrade suggestions */}
           <div className="bg-surface rounded-xl border border-subtle p-4 text-left mb-6">
-            <p className="text-sm text-content-secondary mb-3">Recommended upgrades:</p>
+            <p className="text-sm text-content-secondary mb-3">推荐升级:</p>
             <div className="flex flex-wrap gap-2">
               {['SpeedyBee F405 V3', 'Matek F405-SE', 'Kakute F7'].map((board) => (
                 <span key={board} className="px-2 py-1 bg-surface-raised rounded text-content text-xs">
@@ -237,7 +237,7 @@ function MissionNotAvailable({ fcVariant, boardId }: { fcVariant: string; boardI
             onClick={() => setView('telemetry')}
             className="px-4 py-2 bg-surface-raised hover:bg-surface-raised text-content-secondary rounded-lg text-sm transition-colors"
           >
-            ← Back to Telemetry
+            ← 返回遥测
           </button>
         </div>
       </div>
@@ -254,22 +254,22 @@ function MissionNotAvailable({ fcVariant, boardId }: { fcVariant: string; boardI
 
         {/* Title */}
         <h1 className="text-2xl font-bold text-content mb-3">
-          Mission Planning Not Available
+          任务规划不可用
         </h1>
 
         {/* Explanation */}
         <p className="text-content-secondary mb-6 leading-relaxed">
-          Your <span className="text-orange-400 font-medium">{fcVariant === 'BTFL' ? 'Betaflight' : fcVariant}</span> flight controller
-          on <span className="text-blue-400">{boardId}</span> doesn't support autonomous waypoint missions.
+          您的 <span className="text-orange-400 font-medium">{fcVariant === 'BTFL' ? 'Betaflight' : fcVariant}</span> 飞控
+          (<span className="text-blue-400">{boardId}</span>)不支持自主航点任务。
           {fcVariant === 'BTFL' && (
-            <> Betaflight is designed for FPV racing and freestyle flying with manual control.</>
+            <> Betaflight 专为手动控制的 FPV 竞速与自由飞设计。</>
           )}
         </p>
 
         {/* What you can do */}
         <div className="bg-surface rounded-xl border border-subtle p-6 text-left mb-6">
           <h3 className="text-sm font-medium text-content mb-4 flex items-center gap-2">
-            <Lightbulb className="w-4 h-4 text-amber-400 inline" /> Want autonomous missions? Here are your options:
+            <Lightbulb className="w-4 h-4 text-amber-400 inline" /> 想要自主任务?您有以下选择:
           </h3>
           <div className="space-y-4">
             <div className="flex items-start gap-3">
@@ -277,10 +277,10 @@ function MissionNotAvailable({ fcVariant, boardId }: { fcVariant: string; boardI
                 <RefreshCw className="w-5 h-5 text-blue-400" />
               </div>
               <div>
-                <h4 className="font-medium text-blue-400">Flash iNav Firmware</h4>
+                <h4 className="font-medium text-blue-400">刷入 iNav 固件</h4>
                 <p className="text-sm text-content-secondary">
-                  iNav is a fork of Betaflight with full GPS navigation and mission planning support.
-                  Same board, different firmware. Go to <span className="text-content-secondary">Firmware Flash</span> and select iNav.
+                  iNav 是 Betaflight 的分支,提供完整 GPS 导航和任务规划支持。
+                  同一块板,换个固件即可。前往 <span className="text-content-secondary">固件烧录</span> 并选择 iNav。
                 </p>
               </div>
             </div>
@@ -289,10 +289,10 @@ function MissionNotAvailable({ fcVariant, boardId }: { fcVariant: string; boardI
                 <Plane className="w-5 h-5 text-green-400" />
               </div>
               <div>
-                <h4 className="font-medium text-green-400">Use ArduPilot Hardware</h4>
+                <h4 className="font-medium text-green-400">使用 ArduPilot 硬件</h4>
                 <p className="text-sm text-content-secondary">
-                  For the most advanced mission planning, consider a Pixhawk or compatible board running ArduPilot.
-                  Supports copters, planes, VTOLs, rovers, boats, and submarines.
+                  要获得最强大的任务规划,可考虑运行 ArduPilot 的 Pixhawk 或兼容板。
+                  支持多旋翼、固定翼、VTOL、车、艇和潜航器。
                 </p>
               </div>
             </div>
@@ -301,9 +301,9 @@ function MissionNotAvailable({ fcVariant, boardId }: { fcVariant: string; boardI
 
         {/* Supported boards */}
         <div className="text-sm text-content-secondary">
-          <p className="mb-2">Boards that support mission planning:</p>
+          <p className="mb-2">支持任务规划的板子:</p>
           <div className="flex flex-wrap justify-center gap-2">
-            {['Pixhawk', 'Cube', 'Matek F405-WSE', 'Kakute F7', 'Any iNav board'].map((board) => (
+            {['Pixhawk', 'Cube', 'Matek F405-WSE', 'Kakute F7', '任意 iNav 板'].map((board) => (
               <span key={board} className="px-2 py-1 bg-surface-raised rounded text-content-secondary text-xs">
                 {board}
               </span>
@@ -317,13 +317,13 @@ function MissionNotAvailable({ fcVariant, boardId }: { fcVariant: string; boardI
             onClick={handleFlashInav}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors"
           >
-            Flash iNav Firmware
+            刷入 iNav 固件
           </button>
           <button
             onClick={() => setView('telemetry')}
             className="px-4 py-2 bg-surface-raised hover:bg-surface-raised text-content-secondary rounded-lg text-sm transition-colors"
           >
-            ← Back to Telemetry
+            ← 返回遥测
           </button>
         </div>
       </div>
@@ -403,7 +403,7 @@ export function MissionPlanningView() {
       api.addPanel({
         id: SURVEY_PANEL_ID,
         component: 'SurveyConfigPanel',
-        title: 'Survey',
+        title: '勘测',
         ...(refGroup ? { position: { referenceGroup: refGroup } } : {}),
       });
       // Focus the new tab so the user lands on it after starting survey mode.
@@ -440,7 +440,7 @@ export function MissionPlanningView() {
       api.addPanel({
         id: FLIGHT_PREVIEW_PANEL_ID,
         component: 'FlightPreviewPanel',
-        title: 'Flight Preview',
+        title: '飞行预览',
         ...(refGroup ? { position: { referenceGroup: refGroup } } : {}),
       });
       api.getPanel(FLIGHT_PREVIEW_PANEL_ID)?.api.setActive();

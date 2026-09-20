@@ -309,8 +309,8 @@ function createEndpointIcon(label: string, color: string): L.DivIcon {
   });
 }
 
-const START_ICON = createEndpointIcon('START', '#22c55e');
-const END_ICON = createEndpointIcon('END', '#ef4444');
+const START_ICON = createEndpointIcon('起点', '#22c55e');
+const END_ICON = createEndpointIcon('终点', '#ef4444');
 
 // Mission home marker icon
 function createMissionHomeIcon(): L.DivIcon {
@@ -978,7 +978,7 @@ function LayerSwitcher({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="px-2 py-1 text-xs rounded bg-surface text-content hover:bg-surface-raised shadow-lg transition-colors flex items-center gap-1"
-        title="Change map layer"
+        title="切换地图图层"
       >
         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -1043,13 +1043,13 @@ function SplitControl() {
         className={`w-full px-2 py-1 text-xs rounded shadow-lg transition-colors flex items-center gap-1.5 ${
           target ? 'bg-blue-600 text-white' : 'bg-surface text-content hover:bg-surface-raised'
         }`}
-        data-tip={target ? `Split with ${PANEL_COMPONENTS[target].title}` : 'Split the map with another panel'}
+        data-tip={target ? `与 ${PANEL_COMPONENTS[target].title} 分屏` : '与另一个面板分屏'}
       >
         <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <rect x="3" y="4" width="18" height="16" rx="1.5" />
           <line x1="12" y1="4" x2="12" y2="20" />
         </svg>
-        {target ? PANEL_COMPONENTS[target].title : 'Split'}
+        {target ? PANEL_COMPONENTS[target].title : '分屏'}
       </button>
 
       {isOpen && (
@@ -1068,7 +1068,7 @@ function SplitControl() {
                   <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                  Close split
+                  关闭分屏
                 </button>
                 <div className="my-1 border-t border-subtle" />
               </>
@@ -1084,7 +1084,7 @@ function SplitControl() {
                   id === target ? 'bg-blue-600 text-white' : 'text-content hover:bg-surface-raised'
                 }`}
               >
-                Split with {PANEL_COMPONENTS[id].title}
+                与 {PANEL_COMPONENTS[id].title} 分屏
               </button>
             ))}
           </div>
@@ -1152,13 +1152,13 @@ function SplitDivider({
       className={`group relative z-[1200] w-1.5 h-full shrink-0 cursor-col-resize flex items-stretch justify-center ${
         dragging ? 'bg-blue-500' : 'bg-subtle hover:bg-blue-500/60'
       } transition-colors`}
-      data-tip="Drag to resize, or use the X to close the split"
+      data-tip="拖动可调整大小,或点 × 关闭分屏"
     >
       <button
         onPointerDown={(e) => e.stopPropagation()}
         onClick={onClose}
         className="absolute top-2 left-1/2 -translate-x-1/2 z-[1201] w-5 h-5 rounded-full bg-surface-solid border border-subtle text-content-secondary hover:text-content hover:bg-surface-raised shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-        data-tip="Close split"
+        data-tip="关闭分屏"
       >
         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -1312,16 +1312,16 @@ function SplitLayoutPrompt({ onChoose }: { onChoose: (action: 'preset' | 'curren
   return (
     <div className="absolute inset-0 z-[1500] flex items-center justify-center bg-black/40" onClick={() => onChoose('keep', false)}>
       <div className="w-[390px] rounded-xl bg-surface-solid border border-strong shadow-2xl p-4" onClick={(e) => e.stopPropagation()}>
-        <div className="text-sm font-semibold text-content">Split view layout</div>
-        <div className="mt-0.5 text-xs text-content-secondary">Switch the instruments to a layout sized for the half-width map?</div>
+        <div className="text-sm font-semibold text-content">分屏视图布局</div>
+        <div className="mt-0.5 text-xs text-content-secondary">是否将仪表切换为适配半宽地图的布局?</div>
         <div className="mt-3 space-y-2">
-          {opt('Use split preset', 'The split cockpit layout (a saved layout named "split" wins)', 'preset')}
-          {opt('Use my current layout', 'Keep what is on screen as the split layout', 'current')}
-          {opt('Keep current, do not switch', 'Leave the layout as it is', 'keep')}
+          {opt('使用分屏预设', '分屏驾驶舱布局(若已保存名为 "split" 的布局则优先使用)', 'preset')}
+          {opt('使用当前布局', '保持当前屏幕上的布局作为分屏布局', 'current')}
+          {opt('保持不变', '布局保持原样', 'keep')}
         </div>
         <label className="mt-3 flex items-center gap-2 text-xs text-content-secondary cursor-pointer select-none">
           <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="accent-blue-600" />
-          Remember my choice
+          记住我的选择
         </label>
       </div>
     </div>
@@ -1643,42 +1643,42 @@ const TelemetryMap3D = React.memo(function TelemetryMap3D() {
   const toolbarContent = useMemo(() => (
     <>
       <div className="my-0.5 border-t border-subtle" />
-      {toggleBtn(followVehicle ? 'Following' : 'Free', followVehicle, () => setFollowVehicle(f => !f), followVehicle ? 'Following vehicle' : 'Free camera', icons.crosshair)}
-      {toggleBtn(useRealVehicleSize ? 'Real Size' : 'Auto Size', useRealVehicleSize, () => setUseRealVehicleSize(v => !v), useRealVehicleSize ? 'Vehicle at real profile size' : 'Vehicle auto-scaled to stay visible', icons.resize)}
+      {toggleBtn(followVehicle ? '跟随中' : '自由', followVehicle, () => setFollowVehicle(f => !f), followVehicle ? '正在跟随飞行器' : '自由视角', icons.crosshair)}
+      {toggleBtn(useRealVehicleSize ? '真实尺寸' : '自动尺寸', useRealVehicleSize, () => setUseRealVehicleSize(v => !v), useRealVehicleSize ? '按真实轮廓尺寸显示飞行器' : '飞行器自动缩放以保持可见', icons.resize)}
       {/* Overflow toggle */}
       <button
         onClick={() => setShowMoreTools(v => !v)}
         className={`px-2 py-1 text-xs rounded shadow-lg transition-colors flex items-center gap-1.5 ${
           showMoreTools ? 'bg-surface-raised text-content' : 'bg-surface text-content-secondary hover:text-content'
         }`}
-        title="More options"
+        title="更多选项"
       >
         {icons.more}
-        {showMoreTools ? 'Less' : 'More...'}
+        {showMoreTools ? '收起' : '更多…'}
       </button>
       {showMoreTools && (
         <>
-          {toggleBtn('Compass', showCompass, () => setShowCompass(v => !v), 'Toggle compass', icons.compass)}
-          {toggleBtn('Attitude', showAttitude, () => toggleInstrument('attitude'), 'Toggle attitude indicator', icons.attitude)}
-          {toggleBtn('Mission', showMission, () => setShowMission(v => !v), 'Toggle mission overlays', icons.mission)}
-          {toggleBtn('Height', showTerrain, () => setShowTerrain(v => !v), 'Toggle terrain elevation', icons.height)}
+          {toggleBtn('罗盘', showCompass, () => setShowCompass(v => !v), '切换罗盘', icons.compass)}
+          {toggleBtn('姿态', showAttitude, () => toggleInstrument('attitude'), '切换姿态指示器', icons.attitude)}
+          {toggleBtn('任务', showMission, () => setShowMission(v => !v), '切换任务叠加层', icons.mission)}
+          {toggleBtn('地形', showTerrain, () => setShowTerrain(v => !v), '切换地形高程', icons.height)}
           <div className="my-0.5 border-t border-subtle" />
           <button
             onClick={clearTrail}
             className="px-2 py-1 text-xs rounded bg-surface text-content hover:bg-surface-raised shadow-lg transition-colors flex items-center gap-1.5"
-            title="Clear flight trail"
+            title="清除飞行航迹"
           >
             {icons.trash}
-            Clear Trail
+            清除航迹
           </button>
           <button
             onClick={setHome}
             disabled={!hasValidGps}
             className="px-2 py-1 text-xs rounded bg-surface text-content hover:bg-surface-raised shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-            title="Set home to current position"
+            title="将家点设为当前位置"
           >
             {icons.home}
-            Set Home
+            设置家
           </button>
         </>
       )}
@@ -1714,33 +1714,33 @@ const TelemetryMap3D = React.memo(function TelemetryMap3D() {
       {/* GPS warning */}
       {!hasValidGps && (
         <div className="absolute top-2 left-2 z-[1000] px-2 py-1 bg-yellow-600/90 text-white text-xs rounded shadow-lg">
-          No GPS fix
+          无 GPS 定位
         </div>
       )}
 
       {/* Stats overlay */}
       <div className="absolute bottom-2 left-2 z-[1000] bg-surface-overlay backdrop-blur-sm rounded px-3 py-2 text-xs text-content space-y-1 min-w-[130px] border border-subtle shadow-lg">
         <div className="flex justify-between">
-          <span className="text-content-secondary">MSL</span>
+          <span className="text-content-secondary">海拔</span>
           <span className="font-mono text-content">{formatAltitudeFromMeters(position.alt, altitudeUnit)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-content-secondary">Rel</span>
+          <span className="text-content-secondary">相对</span>
           <span className="font-mono text-content">{formatAltitudeFromMeters(position.relativeAlt, altitudeUnit)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-content-secondary">Spd</span>
+          <span className="text-content-secondary">速度</span>
           <span className="font-mono text-content">{formatSpeedFromMetersPerSecond(vfrHud.groundspeed, speedUnit)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-content-secondary">Hdg</span>
-          <span className="font-mono text-content">{vfrHud.heading.toFixed(0)}<span className="text-content-secondary ml-0.5">deg</span></span>
+          <span className="text-content-secondary">航向</span>
+          <span className="font-mono text-content">{vfrHud.heading.toFixed(0)}<span className="text-content-secondary ml-0.5">度</span></span>
         </div>
         {homeStats && (
           <>
             <div className="border-t border-default my-1" />
             <div className="flex justify-between">
-              <span className="text-content-secondary">Home</span>
+              <span className="text-content-secondary">家</span>
               <span className="font-mono text-emerald-400">{formatDistance(homeStats.distance, distanceUnit)}</span>
             </div>
           </>
@@ -2349,11 +2349,11 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
   // Both refusals say WHY. Silence here reads as "the fleet ignores right-click".
   const handleMapContextMenu = useCallback((lat: number, lon: number) => {
     if (!selectedVehicleId && !fleetActive) {
-      showMapNotice('No vehicle selected: click a vehicle marker before commanding.');
+      showMapNotice('未选择飞行器:请先点击飞行器标记再下达指令。');
       return;
     }
     if (!useTelemetryStore.getState().flight.armed) {
-      showMapNotice('Map commands need an armed vehicle.');
+      showMapNotice('地图指令需要已解锁的飞行器。');
       return;
     }
     setCommandPopup({ lat, lon });
@@ -2414,7 +2414,7 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
   const handleCommandConfirm = useCallback(async (command: MapCommand, options?: { preferScript?: boolean }) => {
     // Safety: verify still armed before sending any flight command
     if (!useTelemetryStore.getState().flight.armed) {
-      showMapNotice('Command dropped: vehicle disarmed.');
+      showMapNotice('指令已丢弃:飞行器已上锁。');
       setCommandPopup(null);
       return;
     }
@@ -2663,14 +2663,14 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span>
-            Large mission: showing key waypoints (launch, turns, landing) and the live target. The full flight path is still drawn.
+            大型任务:仅显示关键航点(起飞、转弯、降落)和实时目标,完整航线仍会绘制。
           </span>
           {/* The banner is click-through so it never eats a map click; only the
               dismiss button opts back into pointer events. */}
           <button
             type="button"
             onClick={() => setLargeMissionNoticeDismissed(true)}
-            data-tip="Dismiss"
+            data-tip="忽略"
             className="pointer-events-auto ml-1 p-0.5 rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
           >
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -2709,7 +2709,7 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
       {/* GPS status overlay (below the Instruments menu button) */}
       {!hasValidGps && (
         <div className="absolute top-10 left-2 z-[1000] px-2 py-1 bg-yellow-600/90 text-white text-xs rounded shadow-lg">
-          No GPS fix
+          无 GPS 定位
         </div>
       )}
 
@@ -2902,7 +2902,7 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
       {controlsHidden ? (
         <button
           onClick={() => setControlsHidden(false)}
-          data-tip="Show map controls"
+          data-tip="显示地图控件"
           data-arrange-chrome
           className="absolute top-2 right-2 z-[1100] p-1.5 rounded bg-surface text-content-secondary hover:text-content hover:bg-surface-raised shadow-lg transition-colors"
         >
@@ -2917,7 +2917,7 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
             the flight instruments. Sits at the top of the stack as its handle. */}
         <button
           onClick={() => setControlsHidden(true)}
-          data-tip="Hide map controls"
+          data-tip="隐藏地图控件"
           className="self-end p-1.5 rounded bg-surface text-content-secondary hover:text-content hover:bg-surface-raised shadow-lg transition-colors"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -2940,7 +2940,7 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
               ? 'bg-blue-600 text-white'
               : 'bg-surface text-content hover:bg-surface-raised'
           }`}
-          title={followVehicle ? 'Following vehicle' : 'Free camera'}
+          title={followVehicle ? '正在跟随飞行器' : '自由视角'}
         >
           <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <circle cx="12" cy="12" r="3" />
@@ -2949,7 +2949,7 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
             <line x1="2" y1="12" x2="6" y2="12" strokeLinecap="round" />
             <line x1="18" y1="12" x2="22" y2="12" strokeLinecap="round" />
           </svg>
-          {followVehicle ? 'Following' : 'Free'}
+          {followVehicle ? '跟随中' : '自由'}
         </button>
         <button
           onClick={() => setShowHeadingLine(!showHeadingLine)}
@@ -2958,12 +2958,12 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
               ? 'bg-blue-600 text-white'
               : 'bg-surface text-content hover:bg-surface-raised'
           }`}
-          title="Toggle heading line"
+          title="切换航向线"
         >
           <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-4 4m4-4l4 4" />
           </svg>
-          HDG Line
+          航向线
         </button>
         <button
           onClick={() => toggleInstrument('heading')}
@@ -2972,13 +2972,13 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
               ? 'bg-blue-600 text-white'
               : 'bg-surface text-content hover:bg-surface-raised'
           }`}
-          title="Toggle compass"
+          title="切换罗盘"
         >
           <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <circle cx="12" cy="12" r="10" />
             <polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88" fill="currentColor" stroke="none" />
           </svg>
-          Compass
+          罗盘
         </button>
         <button
           onClick={() => toggleInstrument('attitude')}
@@ -2987,35 +2987,35 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
               ? 'bg-blue-600 text-white'
               : 'bg-surface text-content hover:bg-surface-raised'
           }`}
-          title="Toggle attitude indicator"
+          title="切换姿态指示器"
         >
           <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <circle cx="12" cy="12" r="10" />
             <path strokeLinecap="round" d="M4.93 12h14.14" />
             <path strokeLinecap="round" d="M8 9.5l4-2 4 2" />
           </svg>
-          Attitude
+          姿态
         </button>
         <button
           onClick={clearTrail}
           className="px-2 py-1 text-xs rounded bg-surface text-content hover:bg-surface-raised shadow-lg transition-colors flex items-center gap-1.5"
-          title="Clear flight trail"
+          title="清除飞行航迹"
         >
           <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
-          Clear Trail
+          清除航迹
         </button>
         <button
           onClick={setHome}
           disabled={!hasValidGps}
           className="px-2 py-1 text-xs rounded bg-surface text-content hover:bg-surface-raised shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-          title="Set home to current position"
+          title="将家点设为当前位置"
         >
           <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
-          Set Home
+          设置家
         </button>
         <button
           onClick={() => setShowMission(!showMission)}
@@ -3024,12 +3024,12 @@ const TelemetryMap2D = React.memo(function TelemetryMap2D() {
               ? 'bg-blue-600 text-white'
               : 'bg-surface text-content hover:bg-surface-raised'
           }`}
-          title="Toggle mission overlays (waypoints, geofence, rally)"
+          title="切换任务叠加层(航点、地理围栏、集结点)"
         >
           <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
           </svg>
-          Mission
+          任务
         </button>
       </div>
       )}

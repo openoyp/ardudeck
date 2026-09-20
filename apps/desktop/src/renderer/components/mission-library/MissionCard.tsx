@@ -10,10 +10,10 @@ const STATUS_DOT_COLORS: Record<FlightStatus, string> = {
 };
 
 const STATUS_LABELS: Record<FlightStatus, string> = {
-  planned: 'Planned',
-  in_progress: 'In Progress',
-  completed: 'Completed',
-  aborted: 'Aborted',
+  planned: '已计划',
+  in_progress: '进行中',
+  completed: '已完成',
+  aborted: '已中止',
 };
 
 const STATUS_BADGE_STYLES: Record<FlightStatus, string> = {
@@ -39,10 +39,10 @@ function formatRelativeDate(iso: string): string {
   const diffHr = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHr / 24);
 
-  if (diffMin < 1) return 'Just now';
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHr < 24) return `${diffHr}h ago`;
-  if (diffDay < 7) return `${diffDay}d ago`;
+  if (diffMin < 1) return '刚刚';
+  if (diffMin < 60) return `${diffMin} 分钟前`;
+  if (diffHr < 24) return `${diffHr} 小时前`;
+  if (diffDay < 7) return `${diffDay} 天前`;
   return date.toLocaleDateString();
 }
 
@@ -86,7 +86,7 @@ export function MissionCard({ mission, isSelected, confirmDelete, onClick, onLoa
             </span>
           ) : (
             <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded border bg-surface-raised text-content-secondary border-subtle">
-              New
+              新建
             </span>
           )}
         </div>
@@ -104,7 +104,7 @@ export function MissionCard({ mission, isSelected, confirmDelete, onClick, onLoa
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
           </svg>
-          {mission.waypointCount} WP
+          {mission.waypointCount} 个航点
         </span>
         <span>{formatDistanceFromMeters(mission.totalDistanceMeters, distanceUnit)}</span>
         {mission.flightCount > 0 && (
@@ -112,7 +112,7 @@ export function MissionCard({ mission, isSelected, confirmDelete, onClick, onLoa
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            {mission.flightCount} flights
+            {mission.flightCount} 次飞行
           </span>
         )}
         {vehicle && (
@@ -139,7 +139,7 @@ export function MissionCard({ mission, isSelected, confirmDelete, onClick, onLoa
         <button
           onClick={(e) => { e.stopPropagation(); onLoad(); }}
           className="p-1.5 rounded-md bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 transition-colors"
-          title="Load into Editor"
+          title="加载到编辑器"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -148,7 +148,7 @@ export function MissionCard({ mission, isSelected, confirmDelete, onClick, onLoa
         <button
           onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
           className="p-1.5 rounded-md bg-surface-raised hover:bg-surface-raised text-content-secondary transition-colors"
-          title="Duplicate"
+          title="复制"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -161,7 +161,7 @@ export function MissionCard({ mission, isSelected, confirmDelete, onClick, onLoa
               ? 'bg-red-600/40 text-red-400 ring-1 ring-red-500/60'
               : 'bg-red-600/20 hover:bg-red-600/40 text-red-400'
           }`}
-          title={confirmDelete ? 'Click again to confirm' : 'Delete'}
+          title={confirmDelete ? '再次点击确认' : '删除'}
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

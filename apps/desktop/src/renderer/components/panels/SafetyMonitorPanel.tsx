@@ -33,9 +33,9 @@ const TONES: Record<Severity, Tone> = {
 };
 
 const SEVERITY_TITLE: Record<Severity, string> = {
-  nominal: 'NOMINAL',
-  caution: 'CAUTION',
-  danger: 'DANGER',
+  nominal: '正常',
+  caution: '注意',
+  danger: '危险',
 };
 
 function useCompact<T extends HTMLElement>(): [React.RefObject<T>, boolean] {
@@ -81,15 +81,15 @@ function SignalRow({ signal, compact }: { signal: SignalResult; compact: boolean
       <div className="py-1.5">
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-content-secondary text-xs truncate">{signal.label}</span>
-          <span className="text-content-tertiary text-[10px]">unavailable</span>
+          <span className="text-content-tertiary text-[10px]">不可用</span>
         </div>
         {isPidSignal && (
           <button
             onClick={() => void enablePidStreaming()}
             className="mt-1 text-[11px] inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 transition-colors"
-            data-tip="Set the roll+pitch bits of GCS_PID_MASK so the FC streams PID_TUNING"
+            data-tip="设置 GCS_PID_MASK 的横滚+俯仰位,使飞控下发 PID_TUNING"
           >
-            <Zap className="w-3 h-3" /> Enable PID streaming
+            <Zap className="w-3 h-3" /> 启用 PID 流
           </button>
         )}
       </div>
@@ -215,7 +215,7 @@ export function SafetyMonitorPanel() {
               )}
               {!monitor.action && !compact && (
                 <div className="mt-1 text-xs text-content-tertiary">
-                  {monitor.tipoverArmed ? 'Armed & on the ground - tip-over watch active' : 'Tip-over watch idle'}
+                  {monitor.tipoverArmed ? '已解锁且在地面 - 倾覆监视进行中' : '倾覆监视待机'}
                 </div>
               )}
             </div>
@@ -223,7 +223,7 @@ export function SafetyMonitorPanel() {
               <button
                 onClick={() => setAudioEnabled(!audioEnabled)}
                 className="p-1.5 rounded-md text-content-secondary hover:text-content hover:bg-surface-raised transition-colors"
-                data-tip={audioEnabled ? 'Mute the DANGER audio cue' : 'Enable the DANGER audio cue'}
+                data-tip={audioEnabled ? '静音危险提示音' : '启用危险提示音'}
               >
                 {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               </button>
@@ -231,7 +231,7 @@ export function SafetyMonitorPanel() {
                 <button
                   onClick={() => clearLatch()}
                   className="p-1.5 rounded-md text-red-400 hover:bg-red-500/15 transition-colors"
-                  data-tip="Clear the latched DANGER"
+                  data-tip="清除已锁定的危险状态"
                 >
                   <RotateCcw className="w-4 h-4" />
                 </button>
@@ -243,7 +243,7 @@ export function SafetyMonitorPanel() {
         {/* Integrator gauges */}
         <div className="rounded-lg border border-subtle p-2.5 flex flex-col gap-2">
           <div className="text-[10px] font-medium text-content-secondary uppercase tracking-wider">
-            Integrator load (% of IMAX)
+            积分器负载(IMAX 百分比)
           </div>
           <IntegratorGauge label="R" pct={monitor.integrator.roll} />
           <IntegratorGauge label="P" pct={monitor.integrator.pitch} />
@@ -261,22 +261,22 @@ export function SafetyMonitorPanel() {
           <div className="rounded-lg border border-subtle p-2.5 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-medium text-content-secondary uppercase tracking-wider">
-                Replay log (.tlog)
+                日志回放(.tlog)
               </span>
               {replayProgress === null ? (
                 <button
                   onClick={() => fileRef.current?.click()}
                   className="text-[11px] inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-raised border border-subtle text-content-secondary hover:text-content transition-colors"
-                  data-tip="Replay a recorded .tlog through the monitor"
+                  data-tip="将录制的 .tlog 通过监视器回放"
                 >
-                  <FileUp className="w-3 h-3" /> Load
+                  <FileUp className="w-3 h-3" /> 加载
                 </button>
               ) : (
                 <button
                   onClick={stopReplay}
                   className="text-[11px] inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors"
                 >
-                  <Square className="w-3 h-3" /> Stop
+                  <Square className="w-3 h-3" /> 停止
                 </button>
               )}
             </div>
@@ -307,13 +307,13 @@ export function SafetyMonitorPanel() {
           <div className="flex flex-col gap-1">
             {landedSource === 'inferred' && (
               <div className="text-[10px] text-content-tertiary">
-                Ground state inferred (no EXTENDED_SYS_STATE on this link).
+                地面状态为推断值(该链路无 EXTENDED_SYS_STATE)。
               </div>
             )}
             {recentEvents.length > 0 && (
               <div className="rounded-lg border border-subtle p-2 flex flex-col gap-0.5">
                 <div className="text-[10px] font-medium text-content-secondary uppercase tracking-wider mb-0.5">
-                  Events
+                  事件
                 </div>
                 {recentEvents.map((e, i) => (
                   <div key={i} className="flex items-baseline justify-between gap-2 text-[11px]">

@@ -71,9 +71,9 @@ export function ParamsPreview({ vehicle, onBeforeApply }: ParamsPreviewProps) {
         className={`w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-dashed text-xs font-medium transition-colors ${buttonStatus.containerClass}`}
       >
         <Eye className="w-3.5 h-3.5" />
-        Generate params preview
+        生成参数预览
         <span className="text-content-tertiary font-normal">
-          ({core.length} core{sim.length > 0 && ` + ${sim.length} SITL`})
+          （{core.length} 个核心{sim.length > 0 && ` + ${sim.length} 个 SITL`}）
         </span>
         {buttonStatus.badge && (
           <span className={`inline-flex items-center gap-1 text-[10px] font-medium ${buttonStatus.badgeClass}`}>
@@ -90,9 +90,9 @@ export function ParamsPreview({ vehicle, onBeforeApply }: ParamsPreviewProps) {
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="text-[11px] text-content-secondary leading-tight min-w-0">
-          <span className="text-content font-semibold">{core.length}</span> core
-          {sim.length > 0 && <> <span className="text-content-tertiary">·</span> <span className="text-content font-semibold">{sim.length}</span> SITL</>}
-          {' '}params from <span className="text-blue-400 font-medium">{template.name}</span>
+          来自 <span className="text-blue-400 font-medium">{template.name}</span> 的
+          <span className="text-content font-semibold">{core.length}</span> 个核心参数
+          {sim.length > 0 && <> <span className="text-content-tertiary">·</span> <span className="text-content font-semibold">{sim.length}</span> 个 SITL 参数</>}
         </div>
         <button
           type="button"
@@ -100,7 +100,7 @@ export function ParamsPreview({ vehicle, onBeforeApply }: ParamsPreviewProps) {
           className="inline-flex items-center gap-1 text-[10px] text-content-tertiary hover:text-content-secondary shrink-0"
         >
           <EyeOff className="w-3 h-3" />
-          Hide
+          隐藏
         </button>
       </div>
 
@@ -145,14 +145,14 @@ function pickCollapsedStatus(args: {
 
   // Never applied.
   if (!lastApplied) {
-    return { containerClass: base, badge: 'not applied yet', badgeClass: 'text-content-tertiary', badgeIcon: <Circle className="w-2.5 h-2.5" /> };
+    return { containerClass: base, badge: '尚未应用', badgeClass: 'text-content-tertiary', badgeIcon: <Circle className="w-2.5 h-2.5" /> };
   }
 
   // Applied but everything offline.
   if (offlineCount === total) {
     return {
       containerClass: base,
-      badge: `last applied ${timeAgo(lastApplied)}`,
+      badge: `上次应用 ${timeAgo(lastApplied)}`,
       badgeClass: 'text-content-tertiary',
       badgeIcon: <Circle className="w-2.5 h-2.5" />,
     };
@@ -162,7 +162,7 @@ function pickCollapsedStatus(args: {
   if (driftCount > 0) {
     return {
       containerClass: 'border-amber-500/40 text-amber-400 hover:bg-amber-500/5 hover:border-amber-500/60',
-      badge: `${driftCount} drifted`,
+      badge: `${driftCount} 项漂移`,
       badgeClass: 'text-amber-400',
       badgeIcon: <AlertTriangle className="w-2.5 h-2.5" />,
     };
@@ -171,7 +171,7 @@ function pickCollapsedStatus(args: {
   // All match.
   return {
     containerClass: 'border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/5 hover:border-emerald-500/60',
-    badge: `all ${matchCount} match`,
+    badge: `全部 ${matchCount} 项匹配`,
     badgeClass: 'text-emerald-400',
     badgeIcon: <CheckCircle2 className="w-2.5 h-2.5" />,
   };
@@ -192,7 +192,7 @@ function StatusBanner({ lastApplied, lastAppliedTo, matchCount, driftCount, offl
     return (
       <div className="mt-2 flex items-center gap-2 text-[11px] text-content-tertiary">
         <Circle className="w-3 h-3" />
-        Never applied · connect to the vehicle to check live state
+        从未应用 · 连接飞行器后可检查实时状态
       </div>
     );
   }
@@ -200,22 +200,22 @@ function StatusBanner({ lastApplied, lastAppliedTo, matchCount, driftCount, offl
     return (
       <div className="mt-2 flex items-center gap-2 text-[11px] text-content-tertiary">
         <Circle className="w-3 h-3" />
-        Never applied
+        从未应用
         {matchCount > 0 && (
           <span className="text-emerald-400">
-            · {matchCount} already match the live vehicle
+            · 已有 {matchCount} 项与飞行器当前值一致
           </span>
         )}
       </div>
     );
   }
-  const target = lastAppliedTo?.isSitl ? 'SITL' : 'vehicle';
+  const target = lastAppliedTo?.isSitl ? 'SITL' : '飞行器';
   const when = timeAgo(lastApplied);
   if (driftCount > 0) {
     return (
       <div className="mt-2 flex items-center gap-2 text-[11px] text-amber-400">
         <AlertTriangle className="w-3 h-3" />
-        Applied to {target} {when} · <span className="font-semibold">{driftCount}</span> param{driftCount === 1 ? '' : 's'} drifted from applied state
+        {when}应用到{target} · <span className="font-semibold">{driftCount}</span> 项参数已偏离应用时的状态
       </div>
     );
   }
@@ -223,14 +223,14 @@ function StatusBanner({ lastApplied, lastAppliedTo, matchCount, driftCount, offl
     return (
       <div className="mt-2 flex items-center gap-2 text-[11px] text-content-tertiary">
         <Circle className="w-3 h-3" />
-        Last applied to {target} {when} · reconnect to verify live state
+        {when}应用到{target} · 重新连接以核对实时状态
       </div>
     );
   }
   return (
     <div className="mt-2 flex items-center gap-2 text-[11px] text-emerald-400">
       <CheckCircle2 className="w-3 h-3" />
-      Applied to {target} {when} · all live values match
+      {when}应用到{target} · 所有实时值均匹配
     </div>
   );
 }
@@ -259,8 +259,8 @@ function Chip({ name, reason, status, variant }: ChipProps) {
     : null;
 
   const statusLabel =
-    status === 'match' ? ' (live value matches)'
-    : status === 'drift' ? ' (drifted from applied state)'
+    status === 'match' ? '（实时值匹配）'
+    : status === 'drift' ? '（已偏离应用时的状态）'
     : '';
 
   void baseColor;
@@ -278,11 +278,11 @@ function Chip({ name, reason, status, variant }: ChipProps) {
 /** Human-readable relative time. */
 function timeAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
-  if (ms < 60_000) return 'just now';
+  if (ms < 60_000) return '刚刚';
   const mins = Math.round(ms / 60_000);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `${mins} 分钟前`;
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours} 小时前`;
   const days = Math.round(hours / 24);
-  return `${days}d ago`;
+  return `${days} 天前`;
 }

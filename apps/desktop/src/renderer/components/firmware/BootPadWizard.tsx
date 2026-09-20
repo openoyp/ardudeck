@@ -122,7 +122,7 @@ export function BootPadWizard({
                 </svg>
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-content">Boot Pad Flash Wizard</h2>
+                <h2 className="text-lg font-semibold text-content">Boot 焊盘烧录向导</h2>
                 <p className="text-sm text-content-secondary">{boardName}</p>
               </div>
             </div>
@@ -173,22 +173,22 @@ export function BootPadWizard({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                   <div>
-                    <h3 className="text-amber-400 font-medium">Boot Pads Required</h3>
+                    <h3 className="text-amber-400 font-medium">需要短接 Boot 焊盘</h3>
                     <p className="text-content text-sm mt-1">
-                      Your board (<span className="text-content font-medium">{boardName}</span>) uses a USB-serial adapter
-                      and cannot enter bootloader mode via software. You'll need to physically short the boot pads.
+                      你的板子(<span className="text-content font-medium">{boardName}</span>)使用 USB 串口适配芯片,
+                      无法通过软件进入 bootloader 模式。你需要手动短接 boot 焊盘。
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="text-content-secondary text-sm">
-                <p className="mb-2">This wizard will guide you through:</p>
+                <p className="mb-2">此向导将引导你完成:</p>
                 <ol className="list-decimal list-inside space-y-1 text-content">
-                  <li>Disconnecting your board</li>
-                  <li>Shorting the boot pads</li>
-                  <li>Reconnecting in bootloader mode</li>
-                  <li>Flashing <span className="text-blue-400">{firmwareSource} {firmwareVersion}</span></li>
+                  <li>断开板子连接</li>
+                  <li>短接 boot 焊盘</li>
+                  <li>以 bootloader 模式重新连接</li>
+                  <li>烧录 <span className="text-blue-400">{firmwareSource} {firmwareVersion}</span></li>
                 </ol>
               </div>
 
@@ -196,7 +196,7 @@ export function BootPadWizard({
                 onClick={() => setStep('disconnect')}
                 className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
               >
-                Start Wizard
+                启动向导
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -213,23 +213,23 @@ export function BootPadWizard({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-content mb-2">Disconnect Your Board</h3>
-                <p className="text-content-secondary">Unplug the USB cable from your flight controller</p>
+                <h3 className="text-xl font-semibold text-content mb-2">断开你的板子</h3>
+                <p className="text-content-secondary">拔掉飞控上的 USB 线</p>
               </div>
 
               <div className="p-4 bg-surface-raised rounded-lg space-y-3">
-                <h4 className="text-content font-medium">Then short the boot pads:</h4>
+                <h4 className="text-content font-medium">然后短接 boot 焊盘:</h4>
                 <div className="flex gap-3 items-start">
                   <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-sm font-medium flex-shrink-0">1</div>
-                  <p className="text-content-secondary text-sm">Find the <span className="text-content">BOOT</span> pads on your board (usually labeled "BOOT" or "BT" near the MCU)</p>
+                  <p className="text-content-secondary text-sm">找到板子上的 <span className="text-content">BOOT</span> 焊盘(通常在 MCU 附近,标有 "BOOT" 或 "BT")</p>
                 </div>
                 <div className="flex gap-3 items-start">
                   <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-sm font-medium flex-shrink-0">2</div>
-                  <p className="text-content-secondary text-sm">Use tweezers, a jumper wire, or conductive material to <span className="text-content">short the two pads together</span></p>
+                  <p className="text-content-secondary text-sm">用镊子、跳线或导电材料<span>将两个焊盘短接</span></p>
                 </div>
                 <div className="flex gap-3 items-start">
                   <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-sm font-medium flex-shrink-0">3</div>
-                  <p className="text-content-secondary text-sm"><span className="text-content">Keep them shorted</span> and plug in the USB cable</p>
+                  <p className="text-content-secondary text-sm"><span className="text-content">保持短接状态</span>,插入 USB 线</p>
                 </div>
               </div>
 
@@ -241,7 +241,7 @@ export function BootPadWizard({
                   className="rounded border bg-surface-raised text-emerald-500 focus:ring-emerald-500"
                 />
                 <span className="text-content text-sm">
-                  I have shorted the boot pads and reconnected the USB cable
+                  我已短接 boot 焊盘并重新连上 USB 线
                 </span>
               </label>
 
@@ -250,7 +250,7 @@ export function BootPadWizard({
                   onClick={() => setStep('intro')}
                   className="px-4 py-2.5 text-content-secondary hover:text-content hover:bg-surface-raised rounded-lg transition-colors"
                 >
-                  Back
+                  上一步
                 </button>
                 <button
                   onClick={() => setStep('waiting')}
@@ -259,7 +259,7 @@ export function BootPadWizard({
                     ${jumperConfirmed ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-surface-raised text-content-secondary cursor-not-allowed'}
                   `}
                 >
-                  Detect Board
+                  检测板子
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -275,13 +275,13 @@ export function BootPadWizard({
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/20 flex items-center justify-center">
                   <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 </div>
-                <h3 className="text-xl font-semibold text-content mb-2">Waiting for Bootloader...</h3>
-                <p className="text-content-secondary">Make sure the boot pads are shorted and USB is connected</p>
+                <h3 className="text-xl font-semibold text-content mb-2">正在等待 Bootloader…</h3>
+                <p className="text-content-secondary">请确认 boot 焊盘已短接且 USB 已连接</p>
               </div>
 
               <div className="p-4 bg-surface-raised rounded-lg text-center">
                 <p className="text-content-secondary text-sm">
-                  Scanning serial ports for STM32 bootloader...
+                  正在扫描串口以查找 STM32 bootloader…
                 </p>
               </div>
 
@@ -289,7 +289,7 @@ export function BootPadWizard({
                 onClick={() => setStep('disconnect')}
                 className="w-full py-2.5 text-content-secondary hover:text-content hover:bg-surface-raised rounded-lg transition-colors"
               >
-                Go Back
+                返回
               </button>
             </div>
           )}
@@ -303,9 +303,9 @@ export function BootPadWizard({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-content mb-2">Board Detected!</h3>
+                <h3 className="text-xl font-semibold text-content mb-2">已检测到板子!</h3>
                 <p className="text-content-secondary">
-                  Found <span className="text-emerald-400 font-medium">{detectedMcu || 'STM32'}</span> in bootloader mode
+                  已在 bootloader 模式中发现 <span className="text-emerald-400 font-medium">{detectedMcu || 'STM32'}</span>
                 </p>
               </div>
 
@@ -318,23 +318,23 @@ export function BootPadWizard({
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-amber-300 font-medium mb-1">Before flashing: Remove the boot jumper!</h4>
+                    <h4 className="text-amber-300 font-medium mb-1">烧录前:请取下 boot 跳线!</h4>
                     <p className="text-content text-sm">
-                      Keep the USB connected, but <span className="text-amber-400 font-semibold">remove the jumper wire now</span>.
-                      This way, after flashing completes, the board will boot into the new firmware instead of staying in bootloader.
+                      保持 USB 连接,但<span className="text-amber-400 font-semibold">现在就取下跳线</span>。
+                      这样烧录完成后,板子将启动到新固件,而不是停留在 bootloader。
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="p-4 bg-surface-raised rounded-lg">
-                <h4 className="text-content font-medium mb-2">Ready to flash:</h4>
+                <h4 className="text-content font-medium mb-2">准备烧录:</h4>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-content-secondary">Board:</span>
+                  <span className="text-content-secondary">板子:</span>
                   <span className="text-content">{boardName}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm mt-1">
-                  <span className="text-content-secondary">Firmware:</span>
+                  <span className="text-content-secondary">固件:</span>
                   <span className="text-blue-400">{firmwareSource} {firmwareVersion}</span>
                 </div>
               </div>
@@ -347,7 +347,7 @@ export function BootPadWizard({
                   className="mt-0.5 rounded border bg-surface-raised text-emerald-500 focus:ring-emerald-500"
                 />
                 <span className="text-content text-sm">
-                  I have <span className="text-emerald-400 font-semibold">removed the boot jumper</span> (USB still connected)
+                  我已<span className="text-emerald-400 font-semibold">取下 boot 跳线</span>(USB 仍保持连接)
                 </span>
               </label>
 
@@ -360,8 +360,8 @@ export function BootPadWizard({
                     className="mt-0.5 rounded border bg-surface-raised text-red-500 focus:ring-red-500"
                   />
                   <span className="text-red-300 text-sm">
-                    I understand that flashing incorrect firmware can <span className="text-red-400 font-medium">brick my board</span> and
-                    I have verified the board selection is correct
+                    我了解烧录错误的固件可能导致<span className="text-red-400 font-medium">板子变砖</span>,
+                    且我已确认所选板子无误
                   </span>
                 </label>
               </div>
@@ -378,7 +378,7 @@ export function BootPadWizard({
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Flash Firmware
+                烧录固件
               </button>
             </div>
           )}
@@ -390,13 +390,13 @@ export function BootPadWizard({
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/20 flex items-center justify-center">
                   <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 </div>
-                <h3 className="text-xl font-semibold text-content mb-2">Flashing...</h3>
-                <p className="text-content-secondary">{flashProgress?.message || 'Please wait...'}</p>
+                <h3 className="text-xl font-semibold text-content mb-2">烧录中…</h3>
+                <p className="text-content-secondary">{flashProgress?.message || '请稍候…'}</p>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-content-secondary">Progress</span>
+                  <span className="text-content-secondary">进度</span>
                   <span className="text-content">{flashProgress?.progress || 0}%</span>
                 </div>
                 <div className="h-3 bg-surface-inset rounded-full overflow-hidden">
@@ -408,7 +408,7 @@ export function BootPadWizard({
               </div>
 
               <p className="text-content-secondary text-sm text-center">
-                Do not disconnect the board during flashing!
+                烧录过程中请勿断开板子!
               </p>
             </div>
           )}
@@ -422,16 +422,16 @@ export function BootPadWizard({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-content mb-2">Flash Complete!</h3>
+                <h3 className="text-xl font-semibold text-content mb-2">烧录完成!</h3>
                 <p className="text-content-secondary">
-                  Successfully flashed <span className="text-emerald-400">{firmwareSource} {firmwareVersion}</span>
+                  已成功烧录 <span className="text-emerald-400">{firmwareSource} {firmwareVersion}</span>
                 </p>
               </div>
 
               <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-center">
                 <p className="text-emerald-300 text-sm">
-                  Your board should now reboot with the new firmware.
-                  You can reconnect and configure it.
+                  你的板子现在应会以新固件重启。
+                  你可以重新连接并进行配置。
                 </p>
               </div>
 
@@ -439,7 +439,7 @@ export function BootPadWizard({
                 onClick={handleClose}
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors"
               >
-                Done
+                完成
               </button>
             </div>
           )}
@@ -453,8 +453,8 @@ export function BootPadWizard({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-content mb-2">Flash Failed</h3>
-                <p className="text-content-secondary">Something went wrong during flashing</p>
+                <h3 className="text-xl font-semibold text-content mb-2">烧录失败</h3>
+                <p className="text-content-secondary">烧录过程中出现问题</p>
               </div>
 
               {flashError && (
@@ -470,13 +470,13 @@ export function BootPadWizard({
                   onClick={() => setStep('disconnect')}
                   className="flex-1 py-2.5 bg-surface-raised hover:bg-surface-raised text-content rounded-lg font-medium transition-colors"
                 >
-                  Try Again
+                  重试
                 </button>
                 <button
                   onClick={handleClose}
                   className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium transition-colors"
                 >
-                  Close
+                  关闭
                 </button>
               </div>
             </div>

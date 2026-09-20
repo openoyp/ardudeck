@@ -481,7 +481,7 @@ const DEFAULT_MISSION_DEFAULTS: MissionDefaults = {
 
 const DEFAULT_VEHICLE: VehicleProfile = {
   id: 'default',
-  name: 'My Vehicle',
+  name: '我的飞行器',
   type: 'copter',
   frameSize: 127,        // 5" quad (127mm)
   weight: 600,           // 600g AUW

@@ -368,12 +368,12 @@ export const useModesWizardStore = create<ModesWizardState>((set, get) => ({
           isLoading: false,
         });
       } else {
-        set({ isLoading: false, loadError: 'Failed to load modes from FC', boxNameMapping });
+        set({ isLoading: false, loadError: '从飞控加载模式失败', boxNameMapping });
       }
     } catch (error) {
       set({
         isLoading: false,
-        loadError: error instanceof Error ? error.message : 'Failed to load modes',
+        loadError: error instanceof Error ? error.message : '加载模式失败',
       });
     }
   },
@@ -412,7 +412,7 @@ export const useModesWizardStore = create<ModesWizardState>((set, get) => ({
           rangeEnd: 900, // Same start/end = disabled
         });
         if (!success) {
-          throw new Error(`Failed to clear mode slot ${i}`);
+          throw new Error(`清除模式槽位 ${i} 失败`);
         }
       }
 
@@ -421,14 +421,14 @@ export const useModesWizardStore = create<ModesWizardState>((set, get) => ({
         const mode = pendingModes[i]!;
         const success = await window.electronAPI?.mspSetModeRange(i, mode);
         if (!success) {
-          throw new Error(`Failed to set mode ${i}`);
+          throw new Error(`设置模式 ${i} 失败`);
         }
       }
 
       // Save to EEPROM
       const eepromSuccess = await window.electronAPI?.mspSaveEeprom();
       if (!eepromSuccess) {
-        throw new Error('Modes sent but EEPROM save failed');
+        throw new Error('模式已发送,但 EEPROM 保存失败');
       }
 
       set({
@@ -444,7 +444,7 @@ export const useModesWizardStore = create<ModesWizardState>((set, get) => ({
 
       return true;
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Failed to save modes';
+      const msg = error instanceof Error ? error.message : '保存模式失败';
       console.error('[ModesWizard] Save failed:', msg);
       set({
         isSaving: false,
@@ -500,7 +500,7 @@ export const useModesWizardStore = create<ModesWizardState>((set, get) => ({
   // Helper - Get mode name by boxId (uses dynamic mapping from FC)
   getModeName: (boxId: number) => {
     const { boxNameMapping } = get();
-    return boxNameMapping[boxId] || `Mode ${boxId}`;
+    return boxNameMapping[boxId] || `模式 ${boxId}`;
   },
 }));
 

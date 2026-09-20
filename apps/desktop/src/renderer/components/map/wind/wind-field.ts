@@ -145,12 +145,12 @@ export function windVectorFromUV(u: number, v: number): WindVector {
   return { speed, dirFromDeg };
 }
 
-const COMPASS_16 = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+const COMPASS_16 = ['北', '北东北', '东北', '东北东', '东', '东南东', '东南', '南东南', '南', '南西南', '西南', '西南西', '西', '西北西', '西北', '北西北'];
 
 /** Nearest 16-point compass label for a bearing in degrees. */
 export function compassPoint(dirDeg: number): string {
   const i = Math.round((((dirDeg % 360) + 360) % 360) / 22.5) % 16;
-  return COMPASS_16[i] ?? 'N';
+  return COMPASS_16[i] ?? '北';
 }
 
 export interface RoseBin {

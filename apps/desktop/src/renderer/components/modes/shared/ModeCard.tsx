@@ -40,9 +40,9 @@ export const ModeCard: React.FC<ModeCardProps> = ({
 }) => {
   const modeInfo = MODE_INFO[mode.boxId];
   const info = modeInfo || {
-    name: `Mode ${mode.boxId}`,
+    name: `模式 ${mode.boxId}`,
     icon: HelpCircle,
-    description: 'Unknown mode',
+    description: '未知模式',
     color: 'bg-zinc-500',
     beginner: '',
   };
@@ -77,7 +77,7 @@ export const ModeCard: React.FC<ModeCardProps> = ({
               <h3 className="font-semibold text-content">{displayName}</h3>
               {info.essential && (
                 <span className="px-1.5 py-0.5 text-[10px] bg-amber-500/20 text-amber-400 rounded">
-                  ESSENTIAL
+                  必备
                 </span>
               )}
             </div>
@@ -96,10 +96,10 @@ export const ModeCard: React.FC<ModeCardProps> = ({
             <button
               onClick={() => onConfigure(modeInfo.configureTab!)}
               className="px-2 py-1 text-xs bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 rounded-lg transition-colors flex items-center gap-1"
-              title={`Configure ${displayName} settings`}
+              title={`配置 ${displayName} 相关设置`}
             >
               <Settings2 className="w-3 h-3" />
-              Configure
+              配置
             </button>
           )}
 
@@ -109,7 +109,7 @@ export const ModeCard: React.FC<ModeCardProps> = ({
                 <button
                   onClick={onEdit}
                   className="p-2 text-content-secondary hover:text-content hover:bg-surface-raised rounded-lg transition-colors"
-                  title="Edit mode"
+                  title="编辑模式"
                 >
                   <Pencil className="w-4 h-4" />
                 </button>
@@ -118,7 +118,7 @@ export const ModeCard: React.FC<ModeCardProps> = ({
                 <button
                   onClick={onDelete}
                   className="p-2 text-content-secondary hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                  title="Remove mode"
+                  title="移除模式"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -152,11 +152,11 @@ export const ModeCard: React.FC<ModeCardProps> = ({
       {expanded && (
         <div className="px-4 pb-4 pt-0 flex items-center justify-between text-xs text-content-secondary">
           <span>
-            Range: <span className="font-mono text-content">{mode.rangeStart}</span> -{' '}
+            范围: <span className="font-mono text-content">{mode.rangeStart}</span> -{' '}
             <span className="font-mono text-content">{mode.rangeEnd}</span>
           </span>
           <span>
-            Channel: <span className="text-content">{auxChannel?.name}</span>
+            通道: <span className="text-content">{auxChannel?.name}</span>
           </span>
         </div>
       )}

@@ -31,9 +31,9 @@ const SCALE_MARKERS = [
 
 // Zone definitions for visual indicators
 const ZONES = [
-  { start: 900, end: 1300, label: 'LOW', color: 'bg-blue-500/10' },
-  { start: 1300, end: 1700, label: 'MID', color: 'bg-purple-500/10' },
-  { start: 1700, end: 2100, label: 'HIGH', color: 'bg-orange-500/10' },
+  { start: 900, end: 1300, label: '低', color: 'bg-blue-500/10' },
+  { start: 1300, end: 1700, label: '中', color: 'bg-purple-500/10' },
+  { start: 1700, end: 2100, label: '高', color: 'bg-orange-500/10' },
 ];
 
 export const RangeSlider: React.FC<RangeSliderProps> = ({
@@ -161,18 +161,18 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
       {/* Quick position buttons with labels */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-content-secondary uppercase tracking-wide font-medium">Switch Position</span>
-          <span className="text-[10px] text-content-tertiary">Click to set range</span>
+          <span className="text-[10px] text-content-secondary uppercase tracking-wide font-medium">开关位置</span>
+          <span className="text-[10px] text-content-tertiary">点击设置范围</span>
         </div>
         <div className="flex gap-1.5">
           {(['low', 'mid', 'high', 'always'] as const).map((preset) => {
             const isSelected = isPreset(preset);
             const isAlways = preset === 'always';
             const hints: Record<string, string> = {
-              low: 'Switch DOWN',
-              mid: 'Switch MID',
-              high: 'Switch UP',
-              always: 'Always ON',
+              low: '开关向下',
+              mid: '开关居中',
+              high: '开关向上',
+              always: '始终开启',
             };
             return (
               <button
@@ -188,7 +188,7 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
                     : 'bg-surface border-2 border-subtle text-content-secondary hover:bg-surface-raised hover:border hover:text-content'
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                <span>{preset.toUpperCase()}</span>
+                <span>{preset === 'low' ? '低' : preset === 'mid' ? '中' : preset === 'high' ? '高' : '常开'}</span>
                 <span className={`text-[9px] ${isSelected ? '' : 'text-content-secondary'}`}>{hints[preset]}</span>
               </button>
             );
@@ -325,11 +325,11 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
       <div className="space-y-2">
         <div className="flex justify-between items-center px-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-content-secondary">Start:</span>
+            <span className="text-xs text-content-secondary">起点:</span>
             <span className="px-2 py-0.5 bg-surface-raised rounded font-mono text-sm text-content">{rangeStart}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-content-secondary">End:</span>
+            <span className="text-xs text-content-secondary">终点:</span>
             <span className="px-2 py-0.5 bg-surface-raised rounded font-mono text-sm text-content">{rangeEnd}</span>
           </div>
         </div>
@@ -338,15 +338,15 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
         <div className="flex items-center justify-center gap-4 pt-1 border-t border-subtle">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full bg-gradient-to-b from-zinc-200 to-zinc-300 border border-zinc-400/50" />
-            <span className="text-[10px] text-content-secondary">Drag handles</span>
+            <span className="text-[10px] text-content-secondary">拖动手柄</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-0.5 h-3 bg-yellow-400 rounded-full" />
-            <span className="text-[10px] text-content-secondary">Your transmitter</span>
+            <span className="text-[10px] text-content-secondary">你的遥控器</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-400" />
-            <span className="text-[10px] text-content-secondary">Active range</span>
+            <span className="text-[10px] text-content-secondary">激活范围</span>
           </div>
         </div>
       </div>

@@ -39,32 +39,32 @@ export function MissionStatusBar() {
         {multiMission ? (
           <>
             <span>
-              <span className="text-content font-medium">{groups.length}</span> missions
+              <span className="text-content font-medium">{groups.length}</span> 个任务
             </span>
             <span className="text-content-tertiary">|</span>
             <span>
-              <span className="text-content font-medium">{waypointCount}</span> WPs total
+              共 <span className="text-content font-medium">{waypointCount}</span> 个航点
             </span>
             <span className="text-content-tertiary">|</span>
             <span>
-              <span className="text-content font-medium">{formatDistanceFromMeters(totalDistanceMeters, distanceUnit)}</span> total
+              总计 <span className="text-content font-medium">{formatDistanceFromMeters(totalDistanceMeters, distanceUnit)}</span>
             </span>
             {selectedGroup ? (
               <>
                 <span className="text-content-tertiary">|</span>
                 <span className="truncate max-w-[260px]">
-                  <span className="text-content font-medium">{selectedGroup.name}</span>: {groupItems.length} WPs
-                  {' · '}{formatDistanceFromMeters(groupDistanceMeters, distanceUnit)}{' · '}~{groupTimeMin} min
+                  <span className="text-content font-medium">{selectedGroup.name}</span>:{groupItems.length} 个航点
+                  {' · '}{formatDistanceFromMeters(groupDistanceMeters, distanceUnit)}{' · '}约 {groupTimeMin} 分钟
                 </span>
               </>
             ) : (
-              <span className="text-content-tertiary">select a mission for its distance/time</span>
+              <span className="text-content-tertiary">选择一个任务查看其距离/时间</span>
             )}
           </>
         ) : (
           <>
             <span>
-              <span className="text-content font-medium">{waypointCount}</span> waypoints
+              <span className="text-content font-medium">{waypointCount}</span> 个航点
             </span>
             {waypointCount > 0 && (
               <>
@@ -74,7 +74,7 @@ export function MissionStatusBar() {
                 </span>
                 <span className="text-content-tertiary">|</span>
                 <span>
-                  Est. <span className="text-content font-medium">~{Math.ceil(estimatedTimeSeconds / 60)}</span> min
+                  预计约 <span className="text-content font-medium">{Math.ceil(estimatedTimeSeconds / 60)}</span> 分钟
                 </span>
               </>
             )}
@@ -94,18 +94,18 @@ export function MissionStatusBar() {
         {/* Loading/progress indicator */}
         {isLoading && progress && (
           <span className="text-blue-400">
-            {progress.operation === 'download' ? 'Downloading' : 'Uploading'}: {progress.transferred}/{progress.total}
+            {progress.operation === 'download' ? '下载中' : '上传中'}: {progress.transferred}/{progress.total}
           </span>
         )}
 
         {/* Current waypoint during flight */}
         {!isLoading && currentSeq !== null ? (
           <span className="text-emerald-400">
-            Current: WP {currentSeq + 1} of {waypointCount}
+            当前:第 {currentSeq + 1}/{waypointCount} 个航点
           </span>
         ) : !isLoading && (
           <span className="text-content-secondary">
-            {waypointCount > 0 ? 'Ready to upload' : 'No active mission'}
+            {waypointCount > 0 ? '可上传' : '无活动任务'}
           </span>
         )}
       </div>

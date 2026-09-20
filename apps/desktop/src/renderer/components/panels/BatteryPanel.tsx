@@ -64,7 +64,7 @@ function BatteryInstanceRow({ inst, selected, stale, onSelect }: {
   return (
     <button
       onClick={onSelect}
-      data-tip={selected ? 'Primary battery' : 'Show this battery everywhere'}
+      data-tip={selected ? '主电池' : '在所有位置显示此电池'}
       className={`w-full flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors border ${
         selected
           ? 'border-[color:var(--border-strong,rgba(148,163,184,0.4))]'
@@ -139,7 +139,7 @@ export function BatteryPanel() {
       <div className="flex items-center justify-between text-xs">
         <span className="inline-flex items-center gap-1.5 text-content-secondary">
           <Zap className="w-3 h-3" />
-          Current
+          电流
         </span>
         <span className="font-mono text-content">
           {formatNumber(Math.abs(battery.current), 1)}

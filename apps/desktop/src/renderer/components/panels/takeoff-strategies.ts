@@ -108,43 +108,43 @@ export function presentTakeoff(
   // GUIDED or TKOFF_ALT. Surface vehicles still read "n/a" regardless.
   if (firmware === 'px4' && vehicleClass !== 'rover' && vehicleClass !== 'sub') {
     return {
-      buttonLabel: 'Auto Takeoff…',
-      buttonHint:  'Arm, switch to AUTO_TAKEOFF, climb to MIS_TAKEOFF_ALT',
-      dialogPrompt: 'Climb to',
-      dialogNote:  'PX4 auto-takeoff: sets MIS_TAKEOFF_ALT and switches to AUTO_TAKEOFF at the current position.',
+      buttonLabel: '自动起飞…',
+      buttonHint:  '解锁,切换到 AUTO_TAKEOFF,爬升至 MIS_TAKEOFF_ALT',
+      dialogPrompt: '爬升至',
+      dialogNote:  'PX4 自动起飞:设置 MIS_TAKEOFF_ALT 并在当前位置切换到 AUTO_TAKEOFF。',
     };
   }
   switch (vehicleClass) {
     case 'copter':
       return {
-        buttonLabel: 'Takeoff…',
-        buttonHint:  'Arm, switch to GUIDED, climb vertically (NAV_TAKEOFF)',
-        dialogPrompt: 'Climb to',
+        buttonLabel: '起飞…',
+        buttonHint:  '解锁,切换到 GUIDED,垂直爬升(NAV_TAKEOFF)',
+        dialogPrompt: '爬升至',
       };
     case 'plane':
       return {
-        buttonLabel: 'Auto-Launch…',
-        buttonHint:  'Set TKOFF_ALT, switch to TAKEOFF mode, hand-launch / runway',
-        dialogPrompt: 'Auto-launch and climb to',
-        dialogNote:  'Plane goes into TAKEOFF mode. Needs hand-launch, runway, or catapult to start the roll.',
+        buttonLabel: '自动起飞…',
+        buttonHint:  '设置 TKOFF_ALT,切换到 TAKEOFF 模式,手抛 / 跑道起飞',
+        dialogPrompt: '自动起飞并爬升至',
+        dialogNote:  '固定翼将进入 TAKEOFF 模式,需要手抛、跑道或弹射开始滑跑。',
       };
     case 'vtol':
       return {
-        buttonLabel: 'Vertical Takeoff…',
-        buttonHint:  'Arm in QSTABILIZE, switch to GUIDED with Q_GUIDED_MODE, hover up (NAV_VTOL_TAKEOFF)',
-        dialogPrompt: 'Climb vertically to',
-        dialogNote:  'Hovers up using Q-modes (NAV_VTOL_TAKEOFF). Forward-flight transition is manual after.',
+        buttonLabel: '垂直起飞…',
+        buttonHint:  '在 QSTABILIZE 解锁,切换到启用 Q_GUIDED_MODE 的 GUIDED,垂直爬升(NAV_VTOL_TAKEOFF)',
+        dialogPrompt: '垂直爬升至',
+        dialogNote:  '使用 Q 模式垂直爬升(NAV_VTOL_TAKEOFF),之后手动转换为平飞。',
       };
     case 'rover':
       return {
-        buttonLabel: 'Takeoff (n/a)',
-        buttonHint:  'Rover does not support takeoff',
+        buttonLabel: '起飞(不适用)',
+        buttonHint:  '地面车不支持起飞',
         dialogPrompt: '-',
       };
     case 'sub':
       return {
-        buttonLabel: 'Takeoff (n/a)',
-        buttonHint:  'Sub does not use a takeoff command',
+        buttonLabel: '起飞(不适用)',
+        buttonHint:  '潜水器不使用起飞命令',
         dialogPrompt: '-',
       };
   }
@@ -156,7 +156,7 @@ export function presentTakeoff(
 
 export async function executeTakeoff(ctx: TakeoffContext): Promise<TakeoffOutcome> {
   if (!ctx.capabilities.takeoff.supported) {
-    return { ok: false, reason: `${ctx.vehicleClass} does not support takeoff` };
+    return { ok: false, reason: `${ctx.vehicleClass} 不支持起飞` };
   }
   // PX4 vehicles use a separate, standard-MAVLink takeoff path. The ArduPilot
   // strategies below send ArduPilot mode numbers and AP-specific logic which is
@@ -170,7 +170,7 @@ export async function executeTakeoff(ctx: TakeoffContext): Promise<TakeoffOutcom
     case 'vtol':   return takeoffVtol(ctx);
     case 'rover':
     case 'sub':
-      return { ok: false, reason: `${ctx.vehicleClass} does not take off` };
+      return { ok: false, reason: `${ctx.vehicleClass} 不会起飞` };
   }
 }
 
@@ -199,7 +199,7 @@ async function ensureGpsReady(ctx: TakeoffContext): Promise<TakeoffOutcome> {
       lastShown = waited;
       const g = ctx.getGps();
       ctx.setStatus({
-        text: `Waiting for GPS/EKF (${waited}s): fix=${g.fixType} sats=${g.satellites} hdop=${g.hdop.toFixed(1)}`,
+        text: `等待 GPS/EKF(${waited}s):fix=${g.fixType} sats=${g.satellites} hdop=${g.hdop.toFixed(1)}`,
         type: 'info',
       });
     }
@@ -208,7 +208,7 @@ async function ensureGpsReady(ctx: TakeoffContext): Promise<TakeoffOutcome> {
   clearInterval(tick);
   return ok
     ? { ok: true }
-    : { ok: false, reason: 'GPS/EKF not ready, check sats/HDOP' };
+    : { ok: false, reason: 'GPS/EKF 未就绪,请检查卫星数/HDOP' };
 }
 
 /** Switch to a target mode with one retry. Used for the pre-arm prep phase
@@ -217,7 +217,7 @@ async function switchMode(
   ctx: TakeoffContext, modeNum: number, label: string,
 ): Promise<TakeoffOutcome> {
   if (ctx.getFlight().modeNum === modeNum) return { ok: true };
-  ctx.setStatus({ text: `Switching to ${label}...`, type: 'info' });
+  ctx.setStatus({ text: `正在切换到 ${label}…`, type: 'info' });
   await ctx.api.mavlinkSetMode(modeNum);
   if (await ctx.waitForState(() => ctx.getFlight().modeNum === modeNum, MODE_TIMEOUT_MS)) {
     return { ok: true };
@@ -227,18 +227,18 @@ async function switchMode(
   if (await ctx.waitForState(() => ctx.getFlight().modeNum === modeNum, MODE_TIMEOUT_MS)) {
     return { ok: true };
   }
-  return { ok: false, reason: `Failed to switch to ${label}` };
+  return { ok: false, reason: `切换到 ${label} 失败` };
 }
 
 async function armIfNeeded(ctx: TakeoffContext): Promise<TakeoffOutcome> {
   if (ctx.getFlight().armed) return { ok: true };
-  ctx.setStatus({ text: 'Arming...', type: 'info' });
+  ctx.setStatus({ text: '解锁中…', type: 'info' });
   const sent = await ctx.api.mavlinkArmDisarm(true, ctx.forceArm);
-  if (!sent) return { ok: false, reason: 'Arm failed: not connected' };
+  if (!sent) return { ok: false, reason: '解锁失败:未连接' };
   const armed = await ctx.waitForState(() => ctx.getFlight().armed, ARM_TIMEOUT_MS);
   return armed
     ? { ok: true }
-    : { ok: false, reason: 'Arm timed out, check pre-arm' };
+    : { ok: false, reason: '解锁超时,请检查解锁前状态' };
 }
 
 // =============================================================================
@@ -265,14 +265,14 @@ async function takeoffCopter(ctx: TakeoffContext): Promise<TakeoffOutcome> {
   if (!guided.ok) return guided;
 
   if (!ctx.getFlight().armed) {
-    return { ok: false, reason: 'Auto-disarmed before takeoff, retry' };
+    return { ok: false, reason: '起飞前自动上锁,请重试' };
   }
 
-  ctx.setStatus({ text: `Taking off to ${takeoffAltitudeLabel(ctx)}...`, type: 'info' });
+  ctx.setStatus({ text: `正在起飞至 ${takeoffAltitudeLabel(ctx)}…`, type: 'info' });
   const ok = await ctx.api.mavlinkTakeoff(ctx.altitudeM);
   return ok
     ? { ok: true }
-    : { ok: false, reason: 'Takeoff command failed' };
+    : { ok: false, reason: '起飞命令失败' };
 }
 
 /**
@@ -290,11 +290,11 @@ async function takeoffPlane(ctx: TakeoffContext): Promise<TakeoffOutcome> {
 
   const cap = ctx.capabilities.takeoff;
   if (cap.method !== 'mode' || cap.modeNum === undefined) {
-    return { ok: false, reason: 'Plane takeoff misconfigured: no TAKEOFF mode set' };
+    return { ok: false, reason: '固定翼起飞配置错误:未设置 TAKEOFF 模式' };
   }
 
   if (cap.altParam) {
-    ctx.setStatus({ text: `Setting ${cap.altParam}=${takeoffAltitudeLabel(ctx)}...`, type: 'info' });
+    ctx.setStatus({ text: `正在设置 ${cap.altParam}=${takeoffAltitudeLabel(ctx)}…`, type: 'info' });
     try {
       // MAV_PARAM_TYPE_REAL32 = 9
       await ctx.api.setParameter(cap.altParam, ctx.altitudeM, 9);
@@ -307,7 +307,7 @@ async function takeoffPlane(ctx: TakeoffContext): Promise<TakeoffOutcome> {
   const into = await switchMode(ctx, cap.modeNum, 'TAKEOFF');
   if (!into.ok) return into;
 
-  ctx.setStatus({ text: `Taking off to ${takeoffAltitudeLabel(ctx)}...`, type: 'success' });
+  ctx.setStatus({ text: `正在起飞至 ${takeoffAltitudeLabel(ctx)}…`, type: 'success' });
   return { ok: true };
 }
 
@@ -352,7 +352,7 @@ async function takeoffVtolRealHw(ctx: TakeoffContext): Promise<TakeoffOutcome> {
   const cur = ctx.getParam('Q_GUIDED_MODE');
   const isOn = cur && typeof cur.value === 'number' && cur.value >= 1;
   if (!isOn) {
-    ctx.setStatus({ text: 'Enabling Q_GUIDED_MODE…', type: 'info' });
+    ctx.setStatus({ text: '正在启用 Q_GUIDED_MODE…', type: 'info' });
     try {
       await ctx.api.setParameter('Q_GUIDED_MODE', 1, 2); // MAV_PARAM_TYPE_INT8
       await new Promise((r) => setTimeout(r, 250));
@@ -362,14 +362,14 @@ async function takeoffVtolRealHw(ctx: TakeoffContext): Promise<TakeoffOutcome> {
   }
 
   if (!ctx.getFlight().armed) {
-    return { ok: false, reason: 'Auto-disarmed before takeoff, retry' };
+    return { ok: false, reason: '起飞前自动上锁,请重试' };
   }
 
-  ctx.setStatus({ text: `Vertical takeoff to ${takeoffAltitudeLabel(ctx)}…`, type: 'info' });
+  ctx.setStatus({ text: `垂直起飞至 ${takeoffAltitudeLabel(ctx)}…`, type: 'info' });
   const ok = await ctx.api.mavlinkVtolTakeoff(ctx.altitudeM);
   return ok
     ? { ok: true }
-    : { ok: false, reason: 'VTOL takeoff command failed' };
+    : { ok: false, reason: 'VTOL 起飞命令失败' };
 }
 
 /**
@@ -410,11 +410,11 @@ async function takeoffVtolSitl(ctx: TakeoffContext): Promise<TakeoffOutcome> {
   if (!qhover.ok) return qhover;
 
   if (!ctx.getFlight().armed) {
-    return { ok: false, reason: 'Auto-disarmed before takeoff, retry' };
+    return { ok: false, reason: '起飞前自动上锁,请重试' };
   }
 
   // Climb. ~0.7 normalized = ~1850 PWM = strong climb command in QHOVER.
-  ctx.setStatus({ text: `Climbing to ${takeoffAltitudeLabel(ctx)}…`, type: 'info' });
+  ctx.setStatus({ text: `正在爬升至 ${takeoffAltitudeLabel(ctx)}…`, type: 'info' });
   await ctx.api.sitlRcSend(sticks({ throttle: 0.7 }));
 
   // Wait for relative altitude to reach 90% of target. Reads from
@@ -433,7 +433,7 @@ async function takeoffVtolSitl(ctx: TakeoffContext): Promise<TakeoffOutcome> {
   if (!reached) {
     return {
       ok: false,
-      reason: `Did not reach ${takeoffAltitudeLabel(ctx)}: vehicle still armed in QHover, take RC control`,
+      reason: `未到达 ${takeoffAltitudeLabel(ctx)}:飞行器仍在 QHover 中保持解锁,请接管 RC 控制`,
     };
   }
   return { ok: true };
@@ -474,7 +474,7 @@ async function takeoffPx4(ctx: TakeoffContext): Promise<TakeoffOutcome> {
   // PX4 AUTO_TAKEOFF climbs to MIS_TAKEOFF_ALT. Push the UI altitude there so
   // the firmware-agnostic altitude selector stays meaningful. MAV_PARAM_TYPE
   // for PX4 floats is REAL32 = 9.
-  ctx.setStatus({ text: `Setting MIS_TAKEOFF_ALT=${ctx.altitudeM}m...`, type: 'info' });
+  ctx.setStatus({ text: `正在设置 MIS_TAKEOFF_ALT=${ctx.altitudeM}m…`, type: 'info' });
   try {
     await ctx.api.setParameter('MIS_TAKEOFF_ALT', ctx.altitudeM, 9);
   } catch (err) {
@@ -486,13 +486,13 @@ async function takeoffPx4(ctx: TakeoffContext): Promise<TakeoffOutcome> {
   if (!arm.ok) return arm;
 
   if (!ctx.getFlight().armed) {
-    return { ok: false, reason: 'Auto-disarmed before takeoff, retry' };
+    return { ok: false, reason: '起飞前自动上锁,请重试' };
   }
 
   // AUTO_TAKEOFF: PX4 main mode AUTO (4), sub mode TAKEOFF (2). The mode switch
   // itself initiates the auto-takeoff on PX4.
   const takeoffMode = encodePx4CustomMode(4, 2);
-  ctx.setStatus({ text: `PX4 auto-takeoff to ${ctx.altitudeM}m...`, type: 'info' });
+  ctx.setStatus({ text: `PX4 自动起飞至 ${ctx.altitudeM}m…`, type: 'info' });
   const into = await switchMode(ctx, takeoffMode, 'Takeoff');
   if (!into.ok) return into;
 

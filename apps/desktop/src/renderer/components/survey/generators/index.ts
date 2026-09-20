@@ -19,9 +19,9 @@ import { generatePanorama } from './panorama-generator';
 registerSurveyGenerator({
   id: 'builtin.grid',
   version: '1.0.0',
-  displayName: 'Grid',
+  displayName: '网格',
   description:
-    'Boustrophedon lawnmower pattern. Parallel scan lines across the polygon with overshoot for turns.',
+    '牛耕式割草机图案。平行扫描线横跨多边形,转弯带过冲。',
   capabilities: {
     supportsHoles: true,
     supportsWorkspace: false,
@@ -35,9 +35,9 @@ registerSurveyGenerator({
 registerSurveyGenerator({
   id: 'builtin.crosshatch',
   version: '1.0.0',
-  displayName: 'Crosshatch',
+  displayName: '交叉网格',
   description:
-    'Two perpendicular grid passes. Higher photo density and improved 3D reconstruction over a single grid.',
+    '两组互相垂直的网格。照片密度更高,3D 重建效果优于单组网格。',
   capabilities: {
     supportsHoles: true,
     supportsWorkspace: false,
@@ -51,8 +51,8 @@ registerSurveyGenerator({
 registerSurveyGenerator({
   id: 'builtin.circular',
   version: '1.0.0',
-  displayName: 'Circular',
-  description: 'Orbit a point of interest at fixed radius.',
+  displayName: '环形',
+  description: '以固定半径环绕兴趣点。',
   capabilities: {
     supportsHoles: false,
     supportsWorkspace: false,
@@ -66,8 +66,8 @@ registerSurveyGenerator({
 registerSurveyGenerator({
   id: 'builtin.spiral',
   version: '1.0.0',
-  displayName: 'Spiral',
-  description: 'Inward or outward spiral within the polygon.',
+  displayName: '螺旋',
+  description: '多边形内的内向或外向螺旋。',
   capabilities: {
     supportsHoles: false,
     supportsWorkspace: false,
@@ -81,9 +81,9 @@ registerSurveyGenerator({
 registerSurveyGenerator({
   id: 'builtin.corridor',
   version: '1.0.0',
-  displayName: 'Corridor',
+  displayName: '走廊',
   description:
-    'Linear survey along a centerline (roads, rail, power lines, pipelines). Parallel strips with plane racetrack turns or copter on-the-spot turns.',
+    '沿中心线的线状勘测(道路、铁路、电力线、管道)。平行条带,固定翼采用跑道式转弯或多旋翼原地转向。',
   capabilities: {
     supportsHoles: false,
     supportsWorkspace: false,
@@ -97,9 +97,9 @@ registerSurveyGenerator({
 registerSurveyGenerator({
   id: 'builtin.panorama',
   version: '1.0.0',
-  displayName: 'Panorama',
+  displayName: '全景',
   description:
-    'Capture a line (shoreline, cliff, frontage): the drawn line is the subject, the flight path is derived to the side, and the camera yaws onto the subject the whole way.',
+    '拍摄一条线(海岸线、悬崖、立面):绘制的线即主体,航线在其侧推算得出,相机全程朝向主体。',
   capabilities: {
     supportsHoles: false,
     supportsWorkspace: false,
@@ -113,8 +113,8 @@ registerSurveyGenerator({
 registerSurveyGenerator({
   id: 'builtin.perimeter-fill',
   version: '1.0.0',
-  displayName: 'Perimeter Fill',
-  description: 'N perimeter passes followed by a grid fill of the interior.',
+  displayName: '轮廓填充',
+  description: '先沿轮廓飞行 N 圈,再以网格填充内部。',
   capabilities: {
     supportsHoles: false,
     supportsWorkspace: false,

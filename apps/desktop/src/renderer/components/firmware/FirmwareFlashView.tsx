@@ -19,7 +19,7 @@ function getSuggestedBoards(mcuType: string): BoardInfo[] {
     if (board.mcuType?.includes(mcuFamily) && !board.inBootloader && board.boardId !== 'unknown') {
       suggested.push({
         id: board.boardId || key,
-        name: board.name || 'Unknown',
+        name: board.name || '未知',
         category: getCategoryFromBoard(board.name || ''),
         isPopular: isPopularBoard(board.name || ''),
       });
@@ -38,8 +38,8 @@ function getCategoryFromBoard(name: string): string {
   if (name.includes('SpeedyBee')) return 'SpeedyBee';
   if (name.includes('Matek')) return 'Matek';
   if (name.includes('Kakute')) return 'Holybro';
-  if (name.includes('APM')) return 'Legacy (AVR)';
-  return 'Other';
+  if (name.includes('APM')) return '旧式(AVR)';
+  return '其他';
 }
 
 /**
@@ -77,7 +77,7 @@ function SuggestedBoards({
             />
           </svg>
           <span>
-            Detected {mcuType} but no known boards in database. Please select manually.
+            已检测到 {mcuType},但数据库中没有已知的板子。请手动选择。
           </span>
         </div>
       </div>
@@ -96,7 +96,7 @@ function SuggestedBoards({
           />
         </svg>
         <span>
-          Detected {mcuType}, select your board:
+          已检测到 {mcuType},请选择你的板子:
         </span>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -141,19 +141,19 @@ function SerialPortPicker({
   return (
     <div className="mb-4 p-3 bg-surface-raised rounded-lg border border">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-content-secondary text-sm font-medium">Serial Ports</span>
+        <span className="text-content-secondary text-sm font-medium">串口</span>
         <button
           onClick={onRefresh}
           disabled={isLoading || disabled}
           className="px-2 py-1 text-xs text-content-secondary hover:text-content bg-surface-raised hover:bg-surface-raised rounded transition-colors disabled:opacity-50"
         >
-          {isLoading ? 'Scanning...' : 'Refresh'}
+          {isLoading ? '扫描中…' : '刷新'}
         </button>
       </div>
 
       {ports.length === 0 ? (
         <div className="text-content-secondary text-sm">
-          {isLoading ? 'Scanning for ports...' : 'No serial ports found'}
+          {isLoading ? '正在扫描端口…' : '未找到串口'}
         </div>
       ) : (
         <div className="space-y-2">
@@ -182,7 +182,7 @@ function SerialPortPicker({
                     />
                   </svg>
                 )}
-                Probe STM32
+                探测 STM32
               </button>
             </div>
           ))}
@@ -190,7 +190,7 @@ function SerialPortPicker({
       )}
 
       <div className="mt-2 text-content-tertiary text-xs">
-        Probe will attempt to detect STM32 chip via bootloader
+        探测将尝试通过 bootloader 检测 STM32 芯片
       </div>
     </div>
   );
@@ -220,11 +220,11 @@ function BootloaderChecklist({
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        Board in Bootloader Mode
+        板子处于 Bootloader 模式
       </div>
 
       <p className="text-content-secondary text-sm mb-4">
-        Your board is ready for flashing. Complete this checklist before proceeding:
+        你的板子已准备好烧录。请先完成以下检查项:
       </p>
 
       <div className="space-y-3 mb-4">
@@ -237,10 +237,10 @@ function BootloaderChecklist({
           />
           <div>
             <span className="text-content group-hover:text-content transition-colors">
-              I have selected the correct board from the dropdown
+              我已在下拉列表中选择了正确的板子
             </span>
             <p className="text-content-secondary text-xs mt-0.5">
-              In bootloader mode we can only detect the chip (e.g., STM32F303), not the board model
+              在 bootloader 模式下只能检测芯片型号(如 STM32F303),无法识别板子型号
             </p>
           </div>
         </label>
@@ -254,10 +254,10 @@ function BootloaderChecklist({
           />
           <div>
             <span className="text-content group-hover:text-content transition-colors">
-              I have removed the boot jumper / released the boot pads
+              我已取下 boot 跳线 / 松开 boot 焊盘
             </span>
             <p className="text-content-secondary text-xs mt-0.5">
-              The board will reboot after flashing. Remove the jumper so it boots into new firmware.
+              烧录后板子将重启。请取下跳线,以便启动到新固件。
             </p>
           </div>
         </label>
@@ -271,8 +271,8 @@ function BootloaderChecklist({
           </svg>
           <div>
             <p className="text-xs text-blue-200/80">
-              <strong className="text-blue-300">Recovery is always possible!</strong> If the new firmware doesn't work,
-              put the board back in bootloader mode (boot pads/button) and flash again. You can always return to any firmware.
+              <strong className="text-blue-300">随时可以恢复!</strong>如果新固件无法工作,
+              让板子重新进入 bootloader 模式(boot 焊盘/按钮)再次烧录即可。你随时可以刷回任意固件。
             </p>
           </div>
         </div>
@@ -293,15 +293,15 @@ function BootloaderChecklist({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
         {!allChecked
-          ? 'Complete checklist to continue'
+          ? '完成检查项以继续'
           : isConnected
-            ? 'Disconnect from the board first'
-            : 'Start Flashing'}
+            ? '请先断开与板子的连接'
+            : '开始烧录'}
       </button>
 
       {allChecked && isConnected && (
         <p className="mt-2 text-xs text-amber-300/90 text-center">
-          The board is still connected on the left. Disconnect it (banner above) to enable flashing.
+          板子仍在左侧保持连接。请先断开(上方横幅)以启用烧录。
         </p>
       )}
     </div>
@@ -362,12 +362,12 @@ const VEHICLE_ICONS: Record<FirmwareVehicleType, React.ReactNode> = {
 };
 
 const VEHICLE_TYPE_NAMES: Record<FirmwareVehicleType, string> = {
-  copter: 'Copter',
-  plane: 'Plane',
+  copter: '多旋翼',
+  plane: '固定翼',
   vtol: 'VTOL',
-  rover: 'Rover',
-  boat: 'Boat',
-  sub: 'Sub',
+  rover: '地面车',
+  boat: '船',
+  sub: '潜航器',
 };
 
 // Supported vehicle types per firmware source
@@ -512,12 +512,12 @@ export function FirmwareFlashView() {
     const unsubProgress = window.electronAPI?.onFlashProgress?.(setFlashProgress);
     const unsubComplete = window.electronAPI?.onFlashComplete?.((result) => {
       if (result.success) {
-        setFlashProgress({ state: 'complete', progress: 100, message: 'Flash complete!' });
+        setFlashProgress({ state: 'complete', progress: 100, message: '烧录完成!' });
         // Trigger post-flash configuration for iNav plane firmware
         // The startPostFlashConfig will check if it should run based on source/vehicleType
         startPostFlashConfig();
       } else {
-        setFlashError(result.error || 'Flash failed');
+        setFlashError(result.error || '烧录失败');
       }
     });
     const unsubError = window.electronAPI?.onFlashError?.(setFlashError);
@@ -650,19 +650,19 @@ export function FirmwareFlashView() {
                 d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
               />
             </svg>
-            <h1 className="text-xl font-semibold text-content">Firmware Flash</h1>
+            <h1 className="text-xl font-semibold text-content">固件烧录</h1>
             <div className="flex items-center bg-surface-raised border border-subtle rounded-lg p-0.5 ml-2">
               <button
                 onClick={() => setActiveTab('fc')}
                 className={`px-3 py-1 text-xs rounded-md transition-colors ${activeTab === 'fc' ? 'bg-surface-input text-content' : 'text-content-secondary hover:text-content'}`}
               >
-                Flight Controller
+                飞控
               </button>
               <button
                 onClick={() => setActiveTab('radio')}
                 className={`px-3 py-1 text-xs rounded-md transition-colors ${activeTab === 'radio' ? 'bg-surface-input text-content' : 'text-content-secondary hover:text-content'}`}
               >
-                Radio (EdgeTX)
+                遥控器(EdgeTX)
               </button>
             </div>
           </div>
@@ -675,13 +675,13 @@ export function FirmwareFlashView() {
                 onChange={(e) => setAdvancedMode(e.target.checked)}
                 className="rounded border bg-surface-raised text-blue-500 focus:ring-blue-500"
               />
-              Advanced
+              高级
             </label>
             <button
               onClick={reset}
               className="px-3 py-1.5 text-sm text-content-secondary hover:text-content hover:bg-surface-raised rounded-lg transition-colors"
             >
-              Reset
+              重置
             </button>
           </div>
           )}
@@ -703,24 +703,24 @@ export function FirmwareFlashView() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <div className="flex-1">
-                  <h4 className="text-amber-300 font-medium">Connected to {connectedBoardId || 'board'}</h4>
+                  <h4 className="text-amber-300 font-medium">已连接到 {connectedBoardId || '板子'}</h4>
                   <p className="text-sm text-content-secondary mt-1">
-                    Flashing requires disconnecting from the board first. The board will reboot into bootloader mode for flashing.
+                    烧录前需要先断开与板子的连接。板子将重启进入 bootloader 模式进行烧录。
                   </p>
                   <p className="text-xs text-content-secondary mt-2">
                     {connectedProtocol === 'msp' && connectedFcVariant ? (
-                      <>Currently running: <span className="text-purple-400">{connectedFcVariant}</span> firmware</>
+                      <>当前运行:<span className="text-purple-400">{connectedFcVariant}</span> 固件</>
                     ) : connectedProtocol === 'mavlink' ? (
-                      <>Currently running: <span className="text-blue-400">ArduPilot/MAVLink</span> firmware</>
+                      <>当前运行:<span className="text-blue-400">ArduPilot/MAVLink</span> 固件</>
                     ) : (
-                      'Board info auto-detected from active connection'
+                      '板子信息已从当前连接自动检测'
                     )}
                   </p>
                   <button
                     onClick={() => { void disconnect(); }}
                     className="mt-3 px-3 py-1.5 text-sm font-medium bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 rounded-lg transition-colors"
                   >
-                    Disconnect now to enable flashing
+                    立即断开连接以启用烧录
                   </button>
                 </div>
               </div>
@@ -744,7 +744,7 @@ export function FirmwareFlashView() {
                 />
               </svg>
               <span className="text-content font-medium">
-                Connect your flight controller via USB
+                通过 USB 连接你的飞控
               </span>
             </div>
 
@@ -752,7 +752,7 @@ export function FirmwareFlashView() {
             {detectedBoard && (
               <div className="flex items-center gap-2 p-2 bg-surface-raised rounded-lg border border mb-3 text-sm overflow-hidden">
                 <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                <span className="text-content shrink-0">Connected:</span>
+                <span className="text-content shrink-0">已连接:</span>
                 <span className="text-content-secondary truncate min-w-0">{detectedBoard.port || 'USB'}</span>
                 {/* Show detected board info with protocol badge */}
                 {detectedBoard.name && detectedBoard.name !== 'unknown' && detectedBoard.name !== 'Unknown' && (
@@ -793,7 +793,7 @@ export function FirmwareFlashView() {
 
             {/* Board Selection - Primary control */}
             <label className="block text-sm font-medium text-content-secondary mb-2">
-              Select Board
+              选择板子
             </label>
             <div className="flex gap-2 mb-3">
               <div className="flex-1">
@@ -803,7 +803,7 @@ export function FirmwareFlashView() {
                   onSelectBoard={setSelectedBoard}
                   isLoading={isFetchingBoards}
                   error={boardsError}
-                  placeholder="Search or select your board..."
+                  placeholder="搜索或选择你的板子…"
                   initialSearchQuery={boardSearchQuery}
                 />
               </div>
@@ -815,7 +815,7 @@ export function FirmwareFlashView() {
                 <button
                   onClick={detectBoard}
                   disabled={isDetecting || isFlashing}
-                  title={selectedBoard ? "Connect to board" : "Auto-detect board"}
+                  title={selectedBoard ? "连接到板子" : "自动检测板子"}
                   className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${
                     selectedBoard
                       ? 'bg-blue-600 hover:bg-blue-500 text-white'
@@ -833,7 +833,7 @@ export function FirmwareFlashView() {
                       } />
                     </svg>
                   )}
-                  {selectedBoard ? 'Connect' : 'Auto-detect'}
+                  {selectedBoard ? '连接' : '自动检测'}
                 </button>
               )}
             </div>
@@ -866,7 +866,7 @@ export function FirmwareFlashView() {
           {/* Firmware Source */}
           <div>
             <label className="block text-sm font-medium text-content-secondary mb-3">
-              Firmware Source
+              固件源
             </label>
             <div className="flex flex-wrap gap-2">
               {(['ardupilot', 'px4', 'betaflight', 'inav', 'custom'] as const).map(
@@ -899,12 +899,12 @@ export function FirmwareFlashView() {
                   </svg>
                   <div>
                     <p className="text-xs text-amber-200/80">
-                      <strong className="text-amber-300">Settings will be reset!</strong> Switching firmware
-                      (e.g., Betaflight → iNav) erases all configuration. You'll need to set up PIDs, modes,
-                      and receivers again. Save your current settings first if needed.
+                      <strong className="text-amber-300">设置将被重置!</strong>切换固件
+                      (如 Betaflight → iNav)会清除所有配置。你需要重新设置 PID、模式
+                      和接收机。如有需要,请先保存当前设置。
                     </p>
                     <p className="text-xs text-amber-200/60 mt-1">
-                      <strong>Recovery:</strong> If issues occur, put the board in bootloader mode and flash again.
+                      <strong>恢复:</strong>如遇问题,让板子进入 bootloader 模式重新烧录即可。
                     </p>
                   </div>
                 </div>
@@ -920,21 +920,20 @@ export function FirmwareFlashView() {
                   </svg>
                   <div className="flex-1">
                     <p className="text-xs text-red-200/90">
-                      <strong className="text-red-300">No exact iNav target found for "{unmatchedBoardWarning}"</strong>
+                      <strong className="text-red-300">未找到与 "{unmatchedBoardWarning}" 完全匹配的 iNav 目标</strong>
                     </p>
                     <p className="text-xs text-red-200/70 mt-1">
-                      If you select a different board target, the <strong>pin assignments may not match</strong> your
-                      hardware. Motors, servos, and sensors could be on different pins. Check the iNav wiki for
-                      your specific board before flashing.
+                      如果你选择其他板子目标,<strong>引脚分配可能与你的硬件不符</strong>。
+                      电机、舵机和传感器可能位于不同引脚。烧录前请查阅 iNav wiki 中你这块板子的说明。
                     </p>
                     <p className="text-xs text-content-secondary mt-2">
-                      If your exact board is available with the same name, the pinout will be identical.
+                      如果列表中有同名且完全一致的板子,引脚分配将完全相同。
                     </p>
                     <button
                       onClick={clearUnmatchedBoardWarning}
                       className="mt-2 text-xs text-content-secondary hover:text-content underline"
                     >
-                      Dismiss warning
+                      忽略警告
                     </button>
                   </div>
                 </div>
@@ -945,15 +944,15 @@ export function FirmwareFlashView() {
           {/* Vehicle Type */}
           <div>
             <label className="block text-sm font-medium text-content-secondary mb-3">
-              Vehicle Type
+              飞行器类型
               {selectedSource === 'betaflight' && (
                 <span className="ml-2 text-xs text-amber-400/80 font-normal">
-                  (Betaflight only supports multirotors)
+                  (Betaflight 仅支持多旋翼)
                 </span>
               )}
               {selectedSource === 'inav' && (
                 <span className="ml-2 text-xs text-cyan-400/80 font-normal">
-                  (iNav supports copters, planes, rovers, boats)
+                  (iNav 支持多旋翼、固定翼、地面车和船)
                 </span>
               )}
             </label>
@@ -968,7 +967,7 @@ export function FirmwareFlashView() {
                     key={type}
                     onClick={() => isAvailable && setSelectedVehicleType(type)}
                     disabled={isDisabled}
-                    title={!isAvailable ? `${VEHICLE_TYPE_NAMES[type]} not supported by ${FIRMWARE_SOURCE_NAMES[selectedSource]}` : undefined}
+                    title={!isAvailable ? `${VEHICLE_TYPE_NAMES[type]} 不受 ${FIRMWARE_SOURCE_NAMES[selectedSource]} 支持` : undefined}
                     className={`
                       px-3 py-2 rounded-lg border transition-all flex items-center gap-2 relative
                       ${isSelected
@@ -999,13 +998,13 @@ export function FirmwareFlashView() {
           {selectedSource !== 'custom' && selectedBoard && (
             <div>
               <label className="block text-sm font-medium text-content-secondary mb-3">
-                Version
+                版本
               </label>
 
               {isFetchingVersions ? (
                 <div className="flex items-center gap-2 text-content-secondary py-2">
                   <div className="w-4 h-4 border-2 border-zinc-500 border-t-transparent rounded-full animate-spin" />
-                  Loading versions...
+                  正在加载版本…
                 </div>
               ) : versionsError ? (
                 <div className="text-red-400 text-sm py-2">{versionsError}</div>
@@ -1022,7 +1021,7 @@ export function FirmwareFlashView() {
                           disabled={isFlashing}
                           className="rounded border bg-surface-raised text-blue-500 focus:ring-blue-500"
                         />
-                        Include Beta
+                        包含 Beta
                       </label>
                       <label className="flex items-center gap-1.5 text-xs text-content-secondary cursor-pointer">
                         <input
@@ -1032,7 +1031,7 @@ export function FirmwareFlashView() {
                           disabled={isFlashing}
                           className="rounded border bg-surface-raised text-blue-500 focus:ring-blue-500"
                         />
-                        Include Dev
+                        包含 Dev
                       </label>
                     </div>
                   )}
@@ -1057,14 +1056,14 @@ export function FirmwareFlashView() {
                         >
                           {group.label}
                           {group.isLatest && (
-                            <span className="ml-1.5 text-emerald-400 text-xs">Latest</span>
+                            <span className="ml-1.5 text-emerald-400 text-xs">最新</span>
                           )}
                         </button>
                       ))}
                     </div>
                   ) : (
                     <div className="text-content-secondary text-sm py-2">
-                      No stable releases available for this board. Enable Beta or Dev in Advanced mode to see pre-release versions.
+                      此板子没有可用的稳定版。在高级模式中启用 Beta 或 Dev 可查看预发布版本。
                     </div>
                   )}
 
@@ -1093,13 +1092,13 @@ export function FirmwareFlashView() {
                     </div>
                   ) : selectedVersionGroup && filteredVersions.length === 0 ? (
                     <div className="text-content-secondary text-sm py-2">
-                      No versions match current filters for {selectedVersionGroup.label}. Enable Beta or Dev to see more.
+                      {selectedVersionGroup.label} 中没有符合当前筛选的版本。启用 Beta 或 Dev 可查看更多。
                     </div>
                   ) : null}
                 </div>
               ) : (
                 <div className="text-content-secondary text-sm py-2">
-                  No firmware found for {selectedBoard?.name} ({VEHICLE_TYPE_NAMES[selectedVehicleType]})
+                  未找到适用于 {selectedBoard?.name}({VEHICLE_TYPE_NAMES[selectedVehicleType]})的固件
                 </div>
               )}
             </div>
@@ -1109,7 +1108,7 @@ export function FirmwareFlashView() {
           {selectedSource === 'custom' && (
             <div>
               <label className="block text-sm font-medium text-content-secondary mb-3">
-                Firmware File
+                固件文件
               </label>
               <button
                 onClick={selectCustomFirmware}
@@ -1121,7 +1120,7 @@ export function FirmwareFlashView() {
                     {customFirmwarePath.split(/[\\/]/).pop()}
                   </span>
                 ) : (
-                  <span>Click to select .apj, .bin, or .hex file</span>
+                  <span>点击选择 .apj、.bin 或 .hex 文件</span>
                 )}
               </button>
             </div>
@@ -1134,10 +1133,10 @@ export function FirmwareFlashView() {
               <div className="flex justify-between text-sm mb-1.5">
                 <span className={flashState === 'error' ? 'text-red-400' : 'text-content-secondary'}>
                   {flashState === 'error'
-                    ? 'Flash failed'
+                    ? '烧录失败'
                     : flashState === 'complete'
-                      ? 'Flash complete!'
-                      : flashProgress?.message || 'Ready to flash'}
+                      ? '烧录完成!'
+                      : flashProgress?.message || '准备烧录'}
                 </span>
                 {flashState !== 'error' && flashState !== 'idle' && (
                   <span className="text-content-secondary">{flashProgress?.progress || 0}%</span>
@@ -1167,7 +1166,7 @@ export function FirmwareFlashView() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div>
-                      <p className="text-emerald-300 font-medium">Firmware flashed successfully!</p>
+                      <p className="text-emerald-300 font-medium">固件烧录成功!</p>
                     </div>
                   </div>
                 </div>
@@ -1205,13 +1204,13 @@ export function FirmwareFlashView() {
                               : 'text-blue-300'
                         }`}>
                           {postFlashState === 'error'
-                            ? 'Platform configuration failed'
+                            ? '平台配置失败'
                             : postFlashState === 'complete'
-                              ? 'Platform configured as Airplane'
-                              : 'Configuring for Airplane mode...'}
+                              ? '已配置为固定翼(Airplane)平台'
+                              : '正在配置为固定翼(Airplane)平台…'}
                         </p>
                         <p className="text-content-secondary text-sm mt-1">
-                          {postFlashError || postFlashMessage || 'Processing...'}
+                          {postFlashError || postFlashMessage || '处理中…'}
                         </p>
                       </div>
                     </div>
@@ -1221,7 +1220,7 @@ export function FirmwareFlashView() {
                 {/* Final message */}
                 {(postFlashState === 'complete' || postFlashState === 'skipped' || postFlashState === 'idle') && (
                   <p className="text-content-secondary text-sm">
-                    Unplug and reconnect your board to start using the new firmware.
+                    拔下并重新连接你的板子,即可开始使用新固件。
                   </p>
                 )}
               </div>
@@ -1247,13 +1246,13 @@ export function FirmwareFlashView() {
                         </svg>
                       </div>
                       <div>
-                        <h3 className="text-amber-300 font-semibold">Boot Pads Required</h3>
-                        <p className="text-content-secondary text-sm">This board needs manual bootloader entry</p>
+                        <h3 className="text-amber-300 font-semibold">需要短接 Boot 焊盘</h3>
+                        <p className="text-content-secondary text-sm">此板子需要手动进入 bootloader</p>
                       </div>
                     </div>
                     <p className="text-content text-sm mb-4">
-                      Your <span className="text-content font-medium">{selectedBoard.name}</span> uses a USB-serial chip
-                      and can't enter bootloader via software. Don't worry - the wizard will guide you through it!
+                      你的 <span className="text-content font-medium">{selectedBoard.name}</span> 使用 USB 串口芯片,
+                      无法通过软件进入 bootloader。别担心——向导会一步步引导你完成!
                     </p>
                     <button
                       onClick={openBootPadWizard}
@@ -1262,7 +1261,7 @@ export function FirmwareFlashView() {
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
-                      Start Flash Wizard
+                      启动烧录向导
                     </button>
                   </div>
                 );
@@ -1303,8 +1302,8 @@ export function FirmwareFlashView() {
                     disabled={isFlashing}
                     className="rounded border bg-surface-raised text-blue-500 focus:ring-blue-500"
                   />
-                  No reboot sequence
-                  <span className="text-xs text-content-secondary">(board already in bootloader)</span>
+                  无重启序列
+                  <span className="text-xs text-content-secondary">(板子已在 bootloader 中)</span>
                 </label>
                 <label className="flex items-center gap-2 text-sm text-content-secondary cursor-pointer">
                   <input
@@ -1314,7 +1313,7 @@ export function FirmwareFlashView() {
                     disabled={isFlashing}
                     className="rounded border bg-surface-raised text-blue-500 focus:ring-blue-500"
                   />
-                  Full chip erase
+                  全片擦除
                 </label>
               </div>
             )}
@@ -1356,7 +1355,7 @@ export function FirmwareFlashView() {
                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                       />
                     </svg>
-                    Flash Firmware
+                    烧录固件
                   </button>
 
                   {isFlashing && (
@@ -1364,7 +1363,7 @@ export function FirmwareFlashView() {
                       onClick={abortFlash}
                       className="px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
                     >
-                      Cancel
+                      取消
                     </button>
                   )}
                 </div>
@@ -1376,21 +1375,21 @@ export function FirmwareFlashView() {
               <div className="mt-4 pt-3 border-t border-subtle text-sm text-content-secondary">
                 {selectedSource === 'custom' ? (
                   <>
-                    Custom firmware{' '}
+                    自定义固件{' '}
                     {customFirmwarePath && (
                       <span className="text-content">
                         ({customFirmwarePath.split(/[\\/]/).pop()})
                       </span>
                     )}{' '}
-                    to {detectedBoard?.name || selectedBoard?.name || 'board'}
+                    烧录到 {detectedBoard?.name || selectedBoard?.name || '板子'}
                   </>
                 ) : (
                   <>
-                    {FIRMWARE_SOURCE_NAMES[selectedSource]}{' '}
+                    将 {FIRMWARE_SOURCE_NAMES[selectedSource]}{' '}
                     <span className="text-amber-300 font-medium">
                       {VEHICLE_TYPE_NAMES[selectedVehicleType]}
                     </span>{' '}
-                    <span className="text-content">{selectedVersion?.version}</span> for{' '}
+                    <span className="text-content">{selectedVersion?.version}</span> 烧录到{' '}
                     <span className="text-content">
                       {selectedBoard?.name || detectedBoard?.name}
                     </span>
@@ -1406,7 +1405,7 @@ export function FirmwareFlashView() {
       <BootPadWizard
         isOpen={showBootPadWizard}
         onClose={closeBootPadWizard}
-        boardName={wizardBoardName || selectedBoard?.name || 'Unknown Board'}
+        boardName={wizardBoardName || selectedBoard?.name || '未知板子'}
         firmwareVersion={wizardFirmwareVersion || selectedVersion?.version || ''}
         firmwareSource={FIRMWARE_SOURCE_NAMES[wizardFirmwareSource as keyof typeof FIRMWARE_SOURCE_NAMES] || wizardFirmwareSource || ''}
       />

@@ -60,7 +60,7 @@ export const AuxChannelPicker: React.FC<AuxChannelPickerProps> = ({
           <div className="flex items-center gap-3">
             {/* Live RC value */}
             <div className="text-right">
-              <div className="text-xs text-content-secondary">Current</div>
+              <div className="text-xs text-content-secondary">当前</div>
               <div className="font-mono text-sm text-yellow-400">{currentRcValue}</div>
             </div>
             {/* Dropdown arrow */}

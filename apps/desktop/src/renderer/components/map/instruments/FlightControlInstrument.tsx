@@ -92,7 +92,7 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
   const isPx4 = connectionState.firmware === 'px4';
   const activeModes = isPx4 ? PX4_FLIGHT_MODES : FLIGHT_MODES[vehicleClass];
   const missionModes = isPx4
-    ? { auto: encodePx4CustomMode(4, 4), pause: encodePx4CustomMode(4, 3), pauseLabel: 'Hold', abort: encodePx4CustomMode(4, 5), abortLabel: 'Return' }
+    ? { auto: encodePx4CustomMode(4, 4), pause: encodePx4CustomMode(4, 3), pauseLabel: '保持', abort: encodePx4CustomMode(4, 5), abortLabel: '返航' }
     : MISSION_MODES[vehicleClass];
   const capabilities = VEHICLE_CAPABILITIES[vehicleClass];
   const isInAuto = flight.modeNum === missionModes.auto;
@@ -205,7 +205,7 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
     });
     setTakeoffBusy(false);
     if (result.ok) {
-      flashStatus({ text: `Taking off to ${formatAltitudeFromMeters(takeoffAltM, altitudeUnit)}...`, type: 'success' });
+      flashStatus({ text: `正在起飞至 ${formatAltitudeFromMeters(takeoffAltM, altitudeUnit)}…`, type: 'success' });
     } else {
       flashStatus({ text: result.reason, type: 'error' });
     }
@@ -260,7 +260,7 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
   const pendingMeta = mode.pendingCommit != null ? modeMetaFor(vehicleClass, mode.pendingCommit, connectionState.firmware) : undefined;
   const requestedMeta = mode.requestedMode != null ? modeMetaFor(vehicleClass, mode.requestedMode, connectionState.firmware) : undefined;
 
-  const modeName = (flight.mode || 'Unknown').toUpperCase();
+  const modeName = (flight.mode || '未知').toUpperCase();
   const modeColor = categoryColor(flight.mode);
 
   const btnBase = 'rounded text-[11px] font-semibold leading-none px-2.5 py-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap';
@@ -289,7 +289,7 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
       }}
     >
       {variant === 'full' && <div className="flex items-center">
-        <span className="text-[9px] font-semibold tracking-[0.14em] leading-none text-[var(--gauge-text-dim)]">FLIGHT CONTROL</span>
+        <span className="text-[9px] font-semibold tracking-[0.14em] leading-none text-[var(--gauge-text-dim)]">飞行控制</span>
         <span
           className="ml-auto text-[8px] font-semibold tracking-wider px-1.5 py-[3px] rounded-full leading-none"
           style={
@@ -298,7 +298,7 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
               : { color: GAUGE_COLORS.textDim, border: `1px solid ${GAUGE_COLORS.bezelEdge}` }
           }
         >
-          {!connected ? 'NO LINK' : flight.armed ? 'ARMED' : 'DISARMED'}
+          {!connected ? '无链路' : flight.armed ? '已解锁' : '已上锁'}
         </span>
       </div>}
 
@@ -307,18 +307,18 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
           type="button"
           onClick={onArmClick}
           disabled={!connected || armBusy}
-          data-tip={armPending ? 'Press again to confirm' : flight.armed ? 'Disarm motors' : 'Arm motors'}
+          data-tip={armPending ? '再次按下确认' : flight.armed ? '电机上锁' : '电机解锁'}
           className={btnBase}
           style={armStyle}
         >
-          {armBusy ? '...' : armPending ? 'CONFIRM' : flight.armed ? 'DISARM' : 'ARM'}
+          {armBusy ? '...' : armPending ? '确认' : flight.armed ? '上锁' : '解锁'}
         </button>
         <button
           ref={pillRef}
           type="button"
           onClick={() => setPickerOpen((v) => !v)}
           disabled={!connected}
-          data-tip="Change flight mode"
+          data-tip="切换飞行模式"
           className={btnBase + ' flex-1 flex items-center gap-1.5 min-w-0'}
           style={{ border: `1px solid ${GAUGE_COLORS.bezelEdge}`, color: GAUGE_COLORS.text }}
         >
@@ -343,7 +343,7 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
             type="button"
             onClick={() => mode.requestMode(missionModes.abort)}
             disabled={!connected}
-            data-tip={`Abort to ${missionModes.abortLabel}`}
+            data-tip={`中止至 ${missionModes.abortLabel}`}
             className={btnBase}
             style={{ color: GAUGE_COLORS.red, border: '1px solid rgba(248,113,113,0.5)' }}
           >
@@ -358,7 +358,7 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
             type="button"
             onClick={() => setTakeoffOpen((v) => !v)}
             disabled={!connected || takeoffBusy}
-            data-tip={takeoffOpen ? 'Cancel takeoff' : takeoffPresentation.buttonHint}
+            data-tip={takeoffOpen ? '取消起飞' : takeoffPresentation.buttonHint}
             className={btnBase}
             style={{
               color: GAUGE_COLORS.green,
@@ -366,7 +366,7 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
               background: takeoffOpen ? 'rgba(52,211,153,0.18)' : undefined,
             }}
           >
-            {takeoffBusy ? '...' : 'TAKEOFF'}
+            {takeoffBusy ? '...' : '起飞'}
           </button>
         )}
         {takeoffOpen ? (
@@ -391,7 +391,7 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
               data-tip={`${takeoffPresentation.dialogPrompt}: ${formatAltitudeFromMeters(takeoffAltM, altitudeUnit)}`}
               className={btnBase + ' flex-1 bg-blue-600 text-white hover:bg-blue-500'}
             >
-              {takeoffBusy ? '...' : 'GO'}
+              {takeoffBusy ? '...' : '执行'}
             </button>
           </>
         ) : isInAuto ? (
@@ -400,17 +400,17 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
               type="button"
               onClick={() => mode.requestMode(missionModes.pause, { skipConfirm: true })}
               disabled={!connected}
-              data-tip={`Pause mission (${missionModes.pauseLabel})`}
+              data-tip={`暂停任务(${missionModes.pauseLabel})`}
               className={btnBase + ' flex-1'}
               style={{ color: GAUGE_COLORS.amber, background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.5)' }}
             >
-              PAUSE
+              暂停
             </button>
             <button
               type="button"
               onClick={() => mode.requestMode(missionModes.abort)}
               disabled={!connected}
-              data-tip={`Abort to ${missionModes.abortLabel}`}
+              data-tip={`中止至 ${missionModes.abortLabel}`}
               className={btnBase}
               style={{ color: GAUGE_COLORS.red, border: '1px solid rgba(248,113,113,0.5)' }}
             >
@@ -423,16 +423,16 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
               type="button"
               onClick={startMission}
               disabled={!connected}
-              data-tip="Resume mission (back to Auto)"
+              data-tip="继续任务(切回 Auto)"
               className={btnBase + ' flex-1 bg-blue-600 text-white hover:bg-blue-500'}
             >
-              RESUME
+              继续
             </button>
             <button
               type="button"
               onClick={() => mode.requestMode(missionModes.abort)}
               disabled={!connected}
-              data-tip={`Abort to ${missionModes.abortLabel}`}
+              data-tip={`中止至 ${missionModes.abortLabel}`}
               className={btnBase}
               style={{ color: GAUGE_COLORS.red, border: '1px solid rgba(248,113,113,0.5)' }}
             >
@@ -446,19 +446,19 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
               onClick={onStart}
               disabled={!connected || missionCount === 0}
               data-tip={
-                missionCount === 0 ? 'No mission loaded'
-                  : missionDirty ? 'Mission not uploaded to the vehicle yet'
-                  : `Start mission (${missionCount} wp)`
+                missionCount === 0 ? '未加载任务'
+                  : missionDirty ? '任务尚未上传到飞行器'
+                  : `开始任务(${missionCount} 个航点)`
               }
               className={btnBase + ' flex-1 bg-blue-600 text-white hover:bg-blue-500'}
             >
-              START{missionDirty && missionCount > 0 ? ' !' : ''}
+              开始{missionDirty && missionCount > 0 ? ' !' : ''}
             </button>
             <button
               type="button"
               onClick={() => mode.requestMode(missionModes.abort)}
               disabled={!connected}
-              data-tip={`Abort to ${missionModes.abortLabel}`}
+              data-tip={`中止至 ${missionModes.abortLabel}`}
               className={btnBase}
               style={{ color: GAUGE_COLORS.red, border: '1px solid rgba(248,113,113,0.5)' }}
             >
@@ -484,13 +484,13 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
       {mode.pendingCommit != null && inlineRow(
         <>
           <span className="text-[10px] leading-none flex-1 min-w-0 truncate">
-            Engage {pendingMeta?.name ?? 'mode'}?
+            切入 {pendingMeta?.name ?? '模式'}?
           </span>
           <button type="button" onClick={mode.confirmCommit} className="text-[10px] font-semibold px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-500">
-            Engage
+            切入
           </button>
           <button type="button" onClick={mode.cancelCommit} className="text-[10px] px-2 py-1 rounded text-[var(--gauge-text-dim)] hover:text-[var(--gauge-text)]">
-            Cancel
+            取消
           </button>
         </>,
       )}
@@ -498,7 +498,7 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
       {startGate && inlineRow(
         <>
           <span className="text-[10px] leading-none flex-1 min-w-0" style={{ color: GAUGE_COLORS.amber }}>
-            Mission not on vehicle
+            任务未上传到飞行器
           </span>
           <button
             type="button"
@@ -506,7 +506,7 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
             disabled={uploading}
             className="text-[10px] font-semibold px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 whitespace-nowrap"
           >
-            {uploading ? 'Uploading...' : 'Upload & Start'}
+            {uploading ? '上传中…' : '上传并开始'}
           </button>
           <button
             type="button"
@@ -515,7 +515,7 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
             className="text-[10px] px-2 py-1 rounded whitespace-nowrap"
             style={{ color: GAUGE_COLORS.amber }}
           >
-            Start anyway
+            仍要开始
           </button>
           <button type="button" onClick={() => setStartGate(false)} className="text-[10px] px-1.5 py-1 rounded text-[var(--gauge-text-dim)] hover:text-[var(--gauge-text)]">
             ✕
@@ -561,7 +561,7 @@ export function FlightControlInstrument({ variant = 'full' }: { variant?: Flight
                               style={{ background: active ? '#fff' : categoryColor(m.name) }}
                             />
                             <span className="truncate">{m.name}</span>
-                            {m.commit && !active && <span className="ml-auto text-[9px] text-content-tertiary">confirm</span>}
+                            {m.commit && !active && <span className="ml-auto text-[9px] text-content-tertiary">需确认</span>}
                           </button>
                         );
                       })}

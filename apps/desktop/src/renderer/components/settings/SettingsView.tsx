@@ -119,17 +119,17 @@ function clampSpeedMetersPerSecondToRules(mps: number, rules: FieldValidation): 
 function validateSpeedField(value: string, rules: FieldValidation, unit: SpeedUnit): string | null {
   const trimmed = value.trim();
   if (trimmed === '') {
-    return rules.required ? 'Required' : null;
+    return rules.required ? '必填' : null;
   }
   const displayValue = Number(trimmed);
-  if (!Number.isFinite(displayValue)) return 'Invalid number';
+  if (!Number.isFinite(displayValue)) return '无效数字';
 
   const metersPerSecond = toMetersPerSecondFromSpeedUnit(displayValue, unit);
   if (rules.min !== undefined && metersPerSecond < rules.min) {
-    return `Min: ${speedInputValueFromMetersPerSecond(rules.min, unit)} ${UNIT_LABELS.speed[unit]}`;
+    return `最小: ${speedInputValueFromMetersPerSecond(rules.min, unit)} ${UNIT_LABELS.speed[unit]}`;
   }
   if (rules.max !== undefined && metersPerSecond > rules.max) {
-    return `Max: ${speedInputValueFromMetersPerSecond(rules.max, unit)} ${UNIT_LABELS.speed[unit]}`;
+    return `最大: ${speedInputValueFromMetersPerSecond(rules.max, unit)} ${UNIT_LABELS.speed[unit]}`;
   }
   return null;
 }
@@ -239,12 +239,12 @@ const VEHICLE_ICONS: Record<VehicleType, React.ReactNode> = {
 };
 
 const VEHICLE_TYPE_NAMES: Record<VehicleType, string> = {
-  copter: 'Multicopter',
-  plane: 'Fixed Wing',
+  copter: '多旋翼',
+  plane: '固定翼',
   vtol: 'VTOL',
-  rover: 'Rover',
-  boat: 'Boat',
-  sub: 'Submarine',
+  rover: '漫游车',
+  boat: '船',
+  sub: '潜艇',
 };
 
 // Firmware display names
@@ -271,7 +271,7 @@ function checkProfileCompatibility(
     if (supportedTypes && !supportedTypes.includes(profileType)) {
       return {
         compatible: false,
-        message: `Your ${VEHICLE_TYPE_NAMES[profileType]} profile is not compatible with ${FIRMWARE_NAMES[fcVariant] || fcVariant}`,
+        message: `你的 ${VEHICLE_TYPE_NAMES[profileType]} 配置与 ${FIRMWARE_NAMES[fcVariant] || fcVariant} 不兼容`,
         supportedTypes,
       };
     }
@@ -306,14 +306,14 @@ function ProfileCompatibilityBanner({
 
         {/* Message Content */}
         <div className="flex-1">
-          <h3 className="text-lg font-medium text-amber-300">Profile Compatibility Issue</h3>
+          <h3 className="text-lg font-medium text-amber-300">配置兼容性问题</h3>
           <p className="text-sm text-content mt-1">
-            Your current profile is configured for <span className="font-medium text-amber-400">{VEHICLE_TYPE_NAMES[profileType]}</span>,
-            but you're connected to a <span className="font-medium text-blue-400">{FIRMWARE_NAMES[fcVariant] || fcVariant}</span> board
-            {boardId && <span className="text-content-secondary"> ({boardId})</span>}.
+            当前配置面向 <span className="font-medium text-amber-400">{VEHICLE_TYPE_NAMES[profileType]}</span>,
+            但你连接的是 <span className="font-medium text-blue-400">{FIRMWARE_NAMES[fcVariant] || fcVariant}</span> 板卡
+            {boardId && <span className="text-content-secondary">（{boardId}）</span>}.
           </p>
           <p className="text-sm text-content-secondary mt-2">
-            {FIRMWARE_NAMES[fcVariant] || fcVariant} only supports: {supportedTypes.map(t => VEHICLE_TYPE_NAMES[t]).join(', ')}.
+            {FIRMWARE_NAMES[fcVariant] || fcVariant} 仅支持：{supportedTypes.map(t => VEHICLE_TYPE_NAMES[t]).join('、')}。
           </p>
 
           {/* Quick Actions */}
@@ -325,7 +325,7 @@ function ProfileCompatibilityBanner({
                 className="flex items-center gap-2 px-3 py-2 bg-amber-600/30 hover:bg-amber-600/50 border border-amber-500/50 rounded-lg text-sm text-amber-200 transition-colors"
               >
                 <div className="w-5 h-5">{VEHICLE_ICONS[type]}</div>
-                Create {VEHICLE_TYPE_NAMES[type]} Profile
+                创建 {VEHICLE_TYPE_NAMES[type]} 配置
               </button>
             ))}
           </div>
@@ -588,14 +588,14 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
 
         if (data.current) {
           const weatherCode = data.current.weather_code;
-          let condition = 'Clear';
+          let condition = '晴';
           // WMO Weather interpretation codes
-          if (weatherCode >= 95) condition = 'Thunderstorm';       // 95, 96, 99
-          else if (weatherCode >= 71 && weatherCode <= 77) condition = 'Snow';  // 71-77
-          else if (weatherCode >= 51) condition = 'Rain';          // 51-67, 80-82
-          else if (weatherCode >= 45) condition = 'Fog';           // 45, 48
-          else if (weatherCode >= 3) condition = 'Cloudy';         // 3
-          else if (weatherCode >= 1) condition = 'Partly Cloudy';  // 1, 2
+          if (weatherCode >= 95) condition = '雷暴';       // 95, 96, 99
+          else if (weatherCode >= 71 && weatherCode <= 77) condition = '雪';  // 71-77
+          else if (weatherCode >= 51) condition = '雨';          // 51-67, 80-82
+          else if (weatherCode >= 45) condition = '雾';           // 45, 48
+          else if (weatherCode >= 3) condition = '多云';         // 3
+          else if (weatherCode >= 1) condition = '局部多云';  // 1, 2
 
           const weatherData: WeatherData = {
             temp: Math.round(data.current.temperature_2m),
@@ -650,15 +650,15 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
           <svg className="w-5 h-5 text-content-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
           </svg>
-          <span className="text-sm font-medium text-content-secondary">Weather</span>
+          <span className="text-sm font-medium text-content-secondary">天气</span>
         </div>
         <div className="text-center py-6">
           <svg className="w-12 h-12 text-content-tertiary mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <div className="text-content-secondary text-sm">Getting location...</div>
-          <div className="text-content-tertiary text-xs mt-1">Connect vehicle or allow location access</div>
+          <div className="text-content-secondary text-sm">正在获取位置...</div>
+          <div className="text-content-tertiary text-xs mt-1">请连接飞行器或允许位置访问</div>
         </div>
       </div>
     );
@@ -671,11 +671,11 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
           <svg className="w-5 h-5 text-content-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
           </svg>
-          <span className="text-sm font-medium text-content-secondary">Weather</span>
+          <span className="text-sm font-medium text-content-secondary">天气</span>
         </div>
         <div className="text-center py-6">
           <div className="animate-spin w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full mx-auto mb-2" />
-          <div className="text-content-secondary text-sm">Loading weather...</div>
+          <div className="text-content-secondary text-sm">正在加载天气...</div>
         </div>
       </div>
     );
@@ -688,10 +688,10 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
           <svg className="w-5 h-5 text-content-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
           </svg>
-          <span className="text-sm font-medium text-content-secondary">Weather</span>
+          <span className="text-sm font-medium text-content-secondary">天气</span>
         </div>
         <div className="text-center py-6">
-          <div className="text-content-secondary text-sm">Unavailable</div>
+          <div className="text-content-secondary text-sm">不可用</div>
         </div>
       </div>
     );
@@ -704,22 +704,22 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
   const gustLimit = isAirVehicle ? 35 : 50;
   const visibilityLimit = isAirVehicle ? 3 : 1;
 
-  const isBad = weather.windSpeed >= windLimit || weather.windGusts >= gustLimit || weather.condition === 'Rain' || weather.condition === 'Thunderstorm' || weather.visibility < visibilityLimit;
-  const isCaution = weather.windSpeed >= windLimit * 0.6 || weather.windGusts >= gustLimit * 0.7 || weather.condition === 'Fog' || weather.condition === 'Snow' || weather.visibility < visibilityLimit * 2;
+  const isBad = weather.windSpeed >= windLimit || weather.windGusts >= gustLimit || weather.condition === '雨' || weather.condition === '雷暴' || weather.visibility < visibilityLimit;
+  const isCaution = weather.windSpeed >= windLimit * 0.6 || weather.windGusts >= gustLimit * 0.7 || weather.condition === '雾' || weather.condition === '雪' || weather.visibility < visibilityLimit * 2;
 
   // Weather-based gradient colors
   const getWeatherGradient = () => {
     if (isBad) return 'from-red-900/50 via-red-800/30 to-surface-base';
     if (isCaution) return 'from-amber-900/50 via-amber-800/30 to-surface-base';
-    if (weather.condition === 'Clear') return 'from-blue-900/50 via-cyan-900/30 to-surface-base';
-    if (weather.condition === 'Partly Cloudy') return 'from-slate-800/50 via-blue-900/30 to-surface-base';
+    if (weather.condition === '晴') return 'from-blue-900/50 via-cyan-900/30 to-surface-base';
+    if (weather.condition === '局部多云') return 'from-slate-800/50 via-blue-900/30 to-surface-base';
     return 'from-surface via-surface to-surface-base';
   };
 
   const getBorderColor = () => {
     if (isBad) return 'border-red-500/40';
     if (isCaution) return 'border-amber-500/40';
-    if (weather.condition === 'Clear') return 'border-blue-500/40';
+    if (weather.condition === '晴') return 'border-blue-500/40';
     return 'border-border';
   };
 
@@ -731,34 +731,34 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
 
   // Weather icon based on condition
   const WeatherIcon = () => {
-    const iconClass = `w-10 h-10 ${isBad ? 'text-red-400' : isCaution ? 'text-amber-400' : weather.condition === 'Clear' ? 'text-yellow-400' : 'text-blue-400'}`;
+    const iconClass = `w-10 h-10 ${isBad ? 'text-red-400' : isCaution ? 'text-amber-400' : weather.condition === '晴' ? 'text-yellow-400' : 'text-blue-400'}`;
 
-    if (weather.condition === 'Thunderstorm') return (
+    if (weather.condition === '雷暴') return (
       <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M13 11L10 16H15L12 21M6 16.4438C4.22194 15.5683 3 13.7502 3 11.6493C3 9.20008 4.8 6.9375 7.5 6.5C8.34694 4.48637 10.3514 3 12.6893 3C15.684 3 18.1317 5.32251 18.3 8.25C19.8893 8.94488 21 10.6503 21 12.4969C21 14.0582 20.206 15.4339 19 16.2417" />
       </svg>
     );
-    if (weather.condition === 'Rain') return (
+    if (weather.condition === '雨') return (
       <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 14.7519C3.37037 13.8768 3 12.8059 3 11.6493C3 9.20008 4.8 6.9375 7.5 6.5C8.34694 4.48637 10.3514 3 12.6893 3C15.684 3 18.1317 5.32251 18.3 8.25C19.8893 8.94488 21 10.6503 21 12.4969C21 13.5693 20.6254 14.5541 20 15.3275M12.5 12.9995L10.5 21.0008M8.5 11.9995L6.5 20.0008M16.5 12L14.5 20.0013" />
       </svg>
     );
-    if (weather.condition === 'Snow') return (
+    if (weather.condition === '雪') return (
       <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M9.5 15H9.51M15.5 15H15.51M9.5 19H9.51M12.5 17H12.51M12.5 21H12.51M15.5 19H15.51M6 16.4438C4.22194 15.5683 3 13.7502 3 11.6493C3 9.20008 4.8 6.9375 7.5 6.5C8.34694 4.48637 10.3514 3 12.6893 3C15.684 3 18.1317 5.32251 18.3 8.25C19.8893 8.94488 21 10.6503 21 12.4969C21 14.0582 20.206 15.4339 19 16.2417" />
       </svg>
     );
-    if (weather.condition === 'Cloudy') return (
+    if (weather.condition === '多云') return (
       <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24">
         <path d="M12 4C8.68 4 6 6.68 6 10c0 .34.03.67.08 1H6c-2.21 0-4 1.79-4 4s1.79 4 4 4h12c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96C17.45 6.19 15.02 4 12 4z"/>
       </svg>
     );
-    if (weather.condition === 'Partly Cloudy') return (
+    if (weather.condition === '局部多云') return (
       <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M11.0947 8.02658C11.5476 5.73111 13.5717 4 16 4C18.7614 4 21 6.23858 21 9C21 11.0345 19.7849 12.7852 18.0408 13.5659M11.0947 8.02658C9.24194 8.21766 7.68947 9.4193 7 11C4.6 11.375 3 13.3144 3 15.4137C3 17.9466 5.14903 20 7.8 20L15 20C17.2091 20 19 18.2719 19 16.1402C19 15.1829 18.6388 14.2698 18.0408 13.5659M11.0947 8.02658C11.265 8.00902 11.4378 8 11.6127 8C14.2747 8 16.4504 9.99072 16.6 12.5C17.1583 12.7354 17.6501 13.106 18.0408 13.5659" />
       </svg>
     );
-    if (weather.condition === 'Fog') return (
+    if (weather.condition === '雾') return (
       <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24">
         <path d="M3 15h18v2H3v-2zm0 4h18v2H3v-2zm0-8h18v2H3v-2zm0-4h18v2H3V7z"/>
       </svg>
@@ -773,15 +773,15 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
 
   // Get vehicle-specific label
   const getVehicleLabel = () => {
-    if (!vehicleType) return 'Flight';
+    if (!vehicleType) return '飞行';
     switch (vehicleType) {
       case 'copter':
       case 'plane':
-      case 'vtol': return 'Flight';
-      case 'boat': return 'Maritime';
-      case 'sub': return 'Dive';
-      case 'rover': return 'Drive';
-      default: return 'Operation';
+      case 'vtol': return '飞行';
+      case 'boat': return '航行';
+      case 'sub': return '下潜';
+      case 'rover': return '行驶';
+      default: return '作业';
     }
   };
 
@@ -798,7 +798,7 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
         </div>
         <div className="text-right">
           <span className={`text-xs px-2.5 py-1 rounded-full font-medium border ${getStatusColor()}`}>
-            {isBad ? 'No Go' : isCaution ? 'Caution' : 'Good'}
+            {isBad ? '不宜飞行' : isCaution ? '需谨慎' : '适宜'}
           </span>
           <div className="text-[10px] text-content-secondary mt-1 flex items-center justify-end gap-1">
             {locationSource === 'device' && (
@@ -811,15 +811,15 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               </svg>
             )}
-            {getVehicleLabel()} conditions
+            {getVehicleLabel()}条件
           </div>
           {briefingAvailable && (
             <button
               onClick={() => setView('weather')}
               className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-content-secondary hover:text-content transition-colors"
-              data-tip="Open the full pre-flight weather briefing"
+              data-tip="打开完整的飞行前天气简报"
             >
-              View in detail
+              查看详情
               <ArrowRight className="w-3 h-3" />
             </button>
           )}
@@ -837,12 +837,12 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
               {isMaritime ? (
                 <>
                   <div className="text-lg font-semibold text-content">{kmhToKnots(weather.windSpeed)} <span className="text-sm font-normal text-content-secondary">kts</span></div>
-                  <div className="text-xs text-content-secondary">Wind from {getWindDirection(weather.windDir)}</div>
+                  <div className="text-xs text-content-secondary">风向 {getWindDirection(weather.windDir)}</div>
                 </>
               ) : (
                 <>
                   <WindSpeedValue kmh={weather.windSpeed} unit={speedUnit} className="text-lg font-semibold text-content" />
-                  <div className="text-xs text-content-secondary">Wind from {getWindDirection(weather.windDir)}</div>
+                  <div className="text-xs text-content-secondary">风向 {getWindDirection(weather.windDir)}</div>
                 </>
               )}
             </div>
@@ -853,7 +853,7 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
                 <div className={`text-lg font-semibold ${weather.windGusts > weather.windSpeed * 1.3 ? 'text-amber-400' : 'text-content'}`}>
                   {kmhToKnots(weather.windGusts)} <span className="text-sm font-normal text-content-secondary">kts</span>
                 </div>
-                <div className="text-xs text-content-secondary">Gusts</div>
+                <div className="text-xs text-content-secondary">阵风</div>
               </>
             ) : (
               <>
@@ -862,7 +862,7 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
                   unit={speedUnit}
                   className={`text-lg font-semibold ${weather.windGusts > weather.windSpeed * 1.3 ? 'text-amber-400' : 'text-content'}`}
                 />
-                <div className="text-xs text-content-secondary">Gusts</div>
+                <div className="text-xs text-content-secondary">阵风</div>
               </>
             )}
           </div>
@@ -882,7 +882,7 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
                 <div className={`text-lg font-semibold ${(weather.waveHeight || 0) > 1.5 ? 'text-amber-400' : 'text-content'}`}>
                   {weather.waveHeight?.toFixed(1) || '-'} <span className="text-sm font-normal text-content-secondary">m</span>
                 </div>
-                <div className="text-xs text-content-secondary">Wave Height</div>
+                <div className="text-xs text-content-secondary">浪高</div>
               </div>
             </div>
             {weather.swellHeight !== undefined && (
@@ -891,7 +891,7 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
                   {weather.swellHeight?.toFixed(1)} <span className="text-sm font-normal text-content-secondary">m</span>
                 </div>
                 <div className="text-xs text-content-secondary">
-                  Swell {weather.swellDirection !== undefined ? getWindDirection(weather.swellDirection) : ''}
+                  涌浪 {weather.swellDirection !== undefined ? getWindDirection(weather.swellDirection) : ''}
                   {weather.swellPeriod ? ` ${weather.swellPeriod.toFixed(0)}s` : ''}
                 </div>
               </div>
@@ -908,7 +908,7 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
               <div className={`text-sm font-semibold ${weather.visibility < 5 ? 'text-amber-400' : 'text-content'}`}>
                 {weather.visibility}km
               </div>
-              <div className="text-[10px] text-content-secondary uppercase">Visibility</div>
+              <div className="text-[10px] text-content-secondary uppercase">能见度</div>
             </div>
             <div className="bg-surface-overlay-subtle rounded-lg py-2 px-1">
               <div className="text-sm font-semibold text-content">{weather.pressure}</div>
@@ -916,7 +916,7 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
             </div>
             <div className="bg-surface-overlay-subtle rounded-lg py-2 px-1">
               <div className="text-sm font-semibold text-content">{weather.temp}°</div>
-              <div className="text-[10px] text-content-secondary uppercase">Air Temp</div>
+              <div className="text-[10px] text-content-secondary uppercase">气温</div>
             </div>
           </>
         ) : (
@@ -925,11 +925,11 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
               <div className={`text-sm font-semibold ${weather.visibility < 5 ? 'text-amber-400' : 'text-content'}`}>
                 {weather.visibility}km
               </div>
-              <div className="text-[10px] text-content-secondary uppercase">Visibility</div>
+              <div className="text-[10px] text-content-secondary uppercase">能见度</div>
             </div>
             <div className="bg-surface-overlay-subtle rounded-lg py-2 px-1">
               <div className="text-sm font-semibold text-content">{weather.cloudCover}%</div>
-              <div className="text-[10px] text-content-secondary uppercase">Clouds</div>
+              <div className="text-[10px] text-content-secondary uppercase">云量</div>
             </div>
             <div className="bg-surface-overlay-subtle rounded-lg py-2 px-1">
               <div className="text-sm font-semibold text-content">{weather.pressure}</div>
@@ -947,18 +947,18 @@ function WeatherWidget({ vehicleType }: { vehicleType?: VehicleType }) {
           </svg>
           <p className={`text-[11px] leading-relaxed ${isBad ? 'text-red-400' : 'text-amber-400'}`}>
             {weather.windGusts >= gustLimit
-              ? `Gusts of ${weather.windGusts} km/h exceed safe limit (${gustLimit} km/h). Risk of loss of control.`
+              ? `阵风 ${weather.windGusts} km/h 超过安全限制（${gustLimit} km/h），有失控风险。`
               : weather.windSpeed >= windLimit
-                ? `Sustained wind of ${weather.windSpeed} km/h exceeds safe limit (${windLimit} km/h).`
-                : weather.condition === 'Thunderstorm'
-                  ? 'Thunderstorm activity detected. Do not fly.'
-                  : weather.condition === 'Rain'
-                    ? 'Rain detected. Electronics at risk.'
+                ? `持续风速 ${weather.windSpeed} km/h 超过安全限制（${windLimit} km/h）。`
+                : weather.condition === '雷暴'
+                  ? '检测到雷暴活动，请勿飞行。'
+                  : weather.condition === '雨'
+                    ? '检测到降雨，电子设备有风险。'
                     : weather.visibility < visibilityLimit
-                      ? `Low visibility (${weather.visibility} km). Maintain visual line of sight.`
-                      : weather.condition === 'Fog'
-                        ? 'Fog detected. Reduced visibility likely.'
-                        : `Wind approaching limits. Monitor conditions closely.`}
+                      ? `能见度低（${weather.visibility} km），请保持目视范围。`
+                      : weather.condition === '雾'
+                        ? '检测到雾，能见度可能下降。'
+                        : `风速接近限制，请密切留意天气状况。`}
           </p>
         </div>
       )}
@@ -975,24 +975,24 @@ function TipsSection({ vehicle }: { vehicle: VehicleProfile | null }) {
   if (vehicle) {
     // Performance tips
     if ((vehicle._avgPowerDraw ?? 0) > 500) {
-      tips.push({ type: 'info', message: 'High power draw - consider larger battery for longer flights' });
+      tips.push({ type: 'info', message: '功耗偏高 — 如需更长飞行时间请考虑更大容量电池' });
     }
     if ((vehicle._cruiseSpeed ?? 0) > 15 && vehicle.type === 'copter') {
-      tips.push({ type: 'info', message: 'High cruise speed reduces efficiency on multirotors' });
+      tips.push({ type: 'info', message: '多旋翼的高巡航速度会降低效率' });
     }
     if (vehicle.batteryCapacity < 3000 && vehicle.weight > 2000) {
-      tips.push({ type: 'warning', message: 'Small battery for vehicle weight - flight time may be limited' });
+      tips.push({ type: 'warning', message: '相对机体重量电池偏小 — 飞行时间可能受限' });
     }
   }
 
   // Mission tips
   if (missionDefaults.safeAltitudeBuffer < 20) {
-    tips.push({ type: 'warning', message: 'Low safe altitude buffer - increase for mountainous terrain' });
+    tips.push({ type: 'warning', message: '安全高度余量偏低 — 山地地形请调大' });
   }
 
   // General tips
   if (tips.length === 0) {
-    tips.push({ type: 'success', message: 'Your settings look good! Ready for flight planning.' });
+    tips.push({ type: 'success', message: '设置看起来不错！可以开始规划飞行了。' });
   }
 
   const getIcon = (type: string) => {
@@ -1042,9 +1042,9 @@ function formatTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
   if (hours > 0) {
-    return `${hours}h ${mins}m`;
+    return `${hours} 小时 ${mins} 分`;
   }
-  return `${mins} min`;
+  return `${mins} 分钟`;
 }
 
 // Format distance helper
@@ -1069,30 +1069,30 @@ function ArduPilotFlightStats() {
 
   return (
     <section className="bg-gradient-to-br from-surface to-surface-base rounded-xl border border-subtle p-4">
-      <h3 className="text-xs font-medium text-content-secondary uppercase tracking-wider mb-3">Flight Statistics (from FC)</h3>
+      <h3 className="text-xs font-medium text-content-secondary uppercase tracking-wider mb-3">飞行统计（来自 FC）</h3>
       <div className="grid grid-cols-2 gap-2">
         <StatCard
           icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
           value={formatTime(statFlightTime)}
-          label="Total Flight Time"
+          label="总飞行时间"
           color="bg-blue-500/20 text-blue-400"
         />
         <StatCard
           icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
           value={formatTime(statRuntime)}
-          label="Total Powered Time"
+          label="总通电时间"
           color="bg-emerald-500/20 text-emerald-400"
         />
         <StatCard
           icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>}
           value={statBootCount.toString()}
-          label="Boot Count"
+          label="启动次数"
           color="bg-purple-500/20 text-purple-400"
         />
         <StatCard
           icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
           value={statFlightTime > 0 ? `${Math.round((statFlightTime / statRuntime) * 100)}%` : '--'}
-          label="Flight Ratio"
+          label="飞行占比"
           color="bg-amber-500/20 text-amber-400"
         />
       </div>
@@ -1106,11 +1106,11 @@ function ArduPilotFlightStats() {
 type SettingsCategoryId = 'vehicle' | 'configuration' | 'maps' | 'advanced' | 'about';
 
 const SETTINGS_CATEGORIES: { id: SettingsCategoryId; label: string; icon: LucideIcon }[] = [
-  { id: 'vehicle', label: 'Vehicle', icon: Gauge },
-  { id: 'configuration', label: 'Configuration', icon: SlidersHorizontal },
-  { id: 'maps', label: 'Maps', icon: MapIcon },
-  { id: 'advanced', label: 'Advanced', icon: FlaskConical },
-  { id: 'about', label: 'About', icon: Info },
+  { id: 'vehicle', label: '飞行器', icon: Gauge },
+  { id: 'configuration', label: '配置', icon: SlidersHorizontal },
+  { id: 'maps', label: '地图', icon: MapIcon },
+  { id: 'advanced', label: '高级', icon: FlaskConical },
+  { id: 'about', label: '关于', icon: Info },
 ];
 
 // Per-tab colour coding, same convention as the Parameters group tabs: the icon
@@ -1236,7 +1236,7 @@ export function SettingsView() {
 
   // Handler to create a new profile with the compatible type
   const handleCreateCompatibleProfile = (type: VehicleType) => {
-    const boardId = connectionState.boardId || 'Unknown';
+    const boardId = connectionState.boardId || '未知';
     const newVehicleData = {
       name: `${boardId} ${VEHICLE_TYPE_NAMES[type]}`,
       type,
@@ -1335,9 +1335,9 @@ export function SettingsView() {
       {/* Header */}
       <div className="shrink-0 px-6 pt-6 pb-4">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-2xl font-semibold text-content">Settings</h1>
+          <h1 className="text-2xl font-semibold text-content">设置</h1>
           <p className="text-content-secondary text-sm mt-1">
-            Configure mission defaults and vehicle profiles
+            配置任务默认值与飞行器配置
           </p>
         </div>
       </div>
@@ -1389,7 +1389,7 @@ export function SettingsView() {
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1.5 h-5 bg-blue-500 rounded-full" />
-            <h2 className="text-sm font-medium text-content uppercase tracking-wider">Vehicle & Status</h2>
+            <h2 className="text-sm font-medium text-content uppercase tracking-wider">飞行器与状态</h2>
           </div>
 
           {/* Top row - Active Vehicle + Performance + Weather */}
@@ -1404,7 +1404,7 @@ export function SettingsView() {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-lg font-medium text-content truncate">
-                        {activeVehicle?.name || 'No vehicle'}
+                        {activeVehicle?.name || '暂无飞行器'}
                       </div>
                       <div className="text-sm text-content-secondary flex items-center gap-2">
                         <span>{activeVehicle ? VEHICLE_TYPE_NAMES[activeVehicle.type] : ''}</span>
@@ -1419,7 +1419,7 @@ export function SettingsView() {
                       <button
                         onClick={() => setEditingVehicleId(activeVehicle.id)}
                         className="p-1.5 text-content-secondary hover:text-content hover:bg-surface-raised rounded transition-colors"
-                        title="Edit vehicle"
+                        title="编辑飞行器"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -1435,36 +1435,36 @@ export function SettingsView() {
                     {/* Type-specific primary spec */}
                     <div className="bg-surface-overlay-subtle rounded-lg p-2">
                       <div className="text-xs text-content-secondary">
-                        {activeVehicle.type === 'copter' && 'Frame'}
-                        {activeVehicle.type === 'plane' && 'Wingspan'}
-                        {activeVehicle.type === 'vtol' && 'Wingspan'}
-                        {activeVehicle.type === 'rover' && 'Drive'}
-                        {activeVehicle.type === 'boat' && 'Hull'}
-                        {activeVehicle.type === 'sub' && 'Depth'}
+                        {activeVehicle.type === 'copter' && '机架'}
+                        {activeVehicle.type === 'plane' && '翼展'}
+                        {activeVehicle.type === 'vtol' && '翼展'}
+                        {activeVehicle.type === 'rover' && '驱动'}
+                        {activeVehicle.type === 'boat' && '船体'}
+                        {activeVehicle.type === 'sub' && '深度'}
                       </div>
                       <div className="text-sm text-content font-medium">
-                        {activeVehicle.type === 'copter' && `${fmtLength(activeVehicle.frameSize || 127, dimensionUnit)} ${activeVehicle.motorCount === 6 ? 'Hex' : activeVehicle.motorCount === 8 ? 'Octo' : 'Quad'}`}
+                        {activeVehicle.type === 'copter' && `${fmtLength(activeVehicle.frameSize || 127, dimensionUnit)} ${activeVehicle.motorCount === 6 ? '六轴' : activeVehicle.motorCount === 8 ? '八轴' : '四轴'}`}
                         {activeVehicle.type === 'plane' && fmtLength(activeVehicle.wingspan || 1200, dimensionUnit)}
                         {activeVehicle.type === 'vtol' && fmtLength(activeVehicle.wingspan || 1500, dimensionUnit)}
-                        {activeVehicle.type === 'rover' && (activeVehicle.driveType === 'ackermann' ? 'Car' : activeVehicle.driveType === 'skid' ? 'Skid' : 'Tank')}
-                        {activeVehicle.type === 'boat' && (activeVehicle.hullType ? `${activeVehicle.hullType.charAt(0).toUpperCase()}${activeVehicle.hullType.slice(1)}` : 'Displacement')}
+                        {activeVehicle.type === 'rover' && (activeVehicle.driveType === 'ackermann' ? '阿克曼' : activeVehicle.driveType === 'skid' ? '滑移' : '差速')}
+                        {activeVehicle.type === 'boat' && (activeVehicle.hullType ? `${activeVehicle.hullType.charAt(0).toUpperCase()}${activeVehicle.hullType.slice(1)}` : '排水型')}
                         {activeVehicle.type === 'sub' && formatAltitudeFromMeters(activeVehicle.maxDepth ?? 100, altitudeUnit)}
                       </div>
                     </div>
                     {/* Weight */}
                     <div className="bg-surface-overlay-subtle rounded-lg p-2">
-                      <div className="text-xs text-content-secondary">Weight</div>
+                      <div className="text-xs text-content-secondary">重量</div>
                       <div className="text-sm text-content font-medium">{fmtWeight(activeVehicle.weight, weightUnit)}</div>
                     </div>
                     {/* Battery */}
                     <div className="bg-surface-overlay-subtle rounded-lg p-2">
-                      <div className="text-xs text-content-secondary">Battery</div>
+                      <div className="text-xs text-content-secondary">电池</div>
                       <div className="text-sm text-content font-medium">{activeVehicle.batteryCells}S{activeVehicle.batteryChemistry && activeVehicle.batteryChemistry !== 'lipo' ? ` ${({ lihv: 'LiHV', lion: 'Li-Ion', life: 'LiFe' } as Record<string, string>)[activeVehicle.batteryChemistry] ?? ''}` : ''} {fmtCapacity(activeVehicle.batteryCapacity, electricCapacityUnit)}</div>
                     </div>
                     {/* Type-specific secondary spec */}
                     <div className="bg-surface-overlay-subtle rounded-lg p-2">
                       <div className="text-xs text-content-secondary">
-                        {['copter', 'plane', 'vtol'].includes(activeVehicle.type) ? 'Est. Cruise' : 'Est. Speed'}
+                        {['copter', 'plane', 'vtol'].includes(activeVehicle.type) ? '预估巡航' : '预估速度'}
                       </div>
                       <div className="text-sm text-cyan-400 font-medium">
                         {formatSpeedFromMetersPerSecond(cruiseSpeed, speedUnit)}
@@ -1474,35 +1474,35 @@ export function SettingsView() {
                   {/* Board Stats (from STAT_* parameters) */}
                   {activeVehicle.boardStats && (activeVehicle.boardStats.totalFlightCount != null || activeVehicle.boardStats.totalFlightTime != null) && (
                     <div className="mt-3 pt-3 border-t border-subtle">
-                      <div className="text-[10px] text-content-secondary uppercase tracking-wider mb-2">Board Stats</div>
+                      <div className="text-[10px] text-content-secondary uppercase tracking-wider mb-2">板载统计</div>
                       <div className="grid grid-cols-3 gap-2">
                         {activeVehicle.boardStats.totalFlightCount != null && (
                           <div className="bg-surface-overlay-subtle rounded-lg p-2">
-                            <div className="text-[10px] text-content-secondary">Flights</div>
+                            <div className="text-[10px] text-content-secondary">飞行次数</div>
                             <div className="text-xs text-content font-medium">{activeVehicle.boardStats.totalFlightCount}</div>
                           </div>
                         )}
                         {activeVehicle.boardStats.totalFlightTime != null && (
                           <div className="bg-surface-overlay-subtle rounded-lg p-2">
-                            <div className="text-[10px] text-content-secondary">Flight Time</div>
+                            <div className="text-[10px] text-content-secondary">飞行时间</div>
                             <div className="text-xs text-content font-medium">{formatTime(activeVehicle.boardStats.totalFlightTime)}</div>
                           </div>
                         )}
                         {activeVehicle.boardStats.totalRunTime != null && (
                           <div className="bg-surface-overlay-subtle rounded-lg p-2">
-                            <div className="text-[10px] text-content-secondary">Run Time</div>
+                            <div className="text-[10px] text-content-secondary">运行时间</div>
                             <div className="text-xs text-content font-medium">{formatTime(activeVehicle.boardStats.totalRunTime)}</div>
                           </div>
                         )}
                         {activeVehicle.boardStats.totalDistance != null && (
                           <div className="bg-surface-overlay-subtle rounded-lg p-2">
-                            <div className="text-[10px] text-content-secondary">Distance</div>
+                            <div className="text-[10px] text-content-secondary">距离</div>
                             <div className="text-xs text-content font-medium">{formatDistance(activeVehicle.boardStats.totalDistance)}</div>
                           </div>
                         )}
                         {activeVehicle.boardStats.bootCount != null && (
                           <div className="bg-surface-overlay-subtle rounded-lg p-2">
-                            <div className="text-[10px] text-content-secondary">Boots</div>
+                            <div className="text-[10px] text-content-secondary">启动次数</div>
                             <div className="text-xs text-content font-medium">{activeVehicle.boardStats.bootCount}</div>
                           </div>
                         )}
@@ -1519,15 +1519,15 @@ export function SettingsView() {
                 <CircularGauge
                   value={Math.round(estimatedFlightTime / 60)}
                   max={60}
-                  label="Flight Time"
-                  unit="min"
+                  label="飞行时间"
+                  unit="分"
                   color="#3b82f6"
                   size={85}
                 />
                 <CircularGauge
                   value={Math.round(estimatedRange / 1000)}
                   max={50}
-                  label="Range"
+                  label="航程"
                   unit="km"
                   color="#10b981"
                   size={85}
@@ -1536,14 +1536,14 @@ export function SettingsView() {
               {/* Multi-level estimates table */}
               <div className="bg-surface-overlay-subtle rounded-lg overflow-hidden">
                 <div className="grid grid-cols-3 text-[10px] text-content-secondary uppercase tracking-wider px-2 py-1.5 border-b border-subtle">
-                  <span>Usage</span>
-                  <span className="text-center">Time</span>
-                  <span className="text-right">Range</span>
+                  <span>用量</span>
+                  <span className="text-center">时间</span>
+                  <span className="text-right">航程</span>
                 </div>
                 {[
-                  { pct: 60, label: '60%', color: 'text-green-400', note: 'Safe' },
-                  { pct: 80, label: '80%', color: 'text-blue-400', note: 'Normal' },
-                  { pct: 95, label: '95%', color: 'text-red-400', note: 'Max' },
+                  { pct: 60, label: '60%', color: 'text-green-400', note: '安全' },
+                  { pct: 80, label: '80%', color: 'text-blue-400', note: '常规' },
+                  { pct: 95, label: '95%', color: 'text-red-400', note: '极限' },
                 ].map(({ pct, label, color, note }) => {
                   const scaledTime = Math.round(estimatedFlightTime * (pct / 80));
                   const scaledRange = Math.round(estimatedRange * (pct / 80));
@@ -1562,7 +1562,7 @@ export function SettingsView() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p className="text-[11px] text-content-secondary leading-relaxed">
-                  Rough estimates. Better profile = better predictions.
+                  粗略估算。配置越完善，预测越准确。
                 </p>
               </div>
             </section>
@@ -1576,13 +1576,13 @@ export function SettingsView() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <ArduPilotFlightStats />
               <section className="bg-gradient-to-br from-surface to-surface-base rounded-xl border border-subtle p-4">
-                <h3 className="text-xs font-medium text-content-secondary uppercase tracking-wider mb-3">Tips & Recommendations</h3>
+                <h3 className="text-xs font-medium text-content-secondary uppercase tracking-wider mb-3">提示与建议</h3>
                 <TipsSection vehicle={activeVehicle} />
               </section>
             </div>
           ) : (
             <section className="bg-gradient-to-br from-surface to-surface-base rounded-xl border border-subtle p-4">
-              <h3 className="text-xs font-medium text-content-secondary uppercase tracking-wider mb-3">Tips & Recommendations</h3>
+              <h3 className="text-xs font-medium text-content-secondary uppercase tracking-wider mb-3">提示与建议</h3>
               <TipsSection vehicle={activeVehicle} />
             </section>
           )}
@@ -1598,7 +1598,7 @@ export function SettingsView() {
         <div>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1.5 h-5 bg-emerald-500 rounded-full" />
-            <h2 className="text-sm font-medium text-content uppercase tracking-wider">Configuration</h2>
+            <h2 className="text-sm font-medium text-content uppercase tracking-wider">配置</h2>
           </div>
 
           <UnitSelectionCard />
@@ -1612,8 +1612,8 @@ export function SettingsView() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
                 <div>
-                  <div className="text-sm font-medium text-content">Experience Level</div>
-                  <div className="text-[11px] text-content-secondary">Presets control all options below</div>
+                  <div className="text-sm font-medium text-content">经验等级</div>
+                  <div className="text-[11px] text-content-secondary">预设会控制下方所有选项</div>
                 </div>
               </div>
               <div className="flex bg-surface-input rounded-lg border border-subtle overflow-hidden">
@@ -1628,7 +1628,7 @@ export function SettingsView() {
                       : 'text-content-secondary hover:text-content'
                   }`}
                 >
-                  Beginner
+                  初级
                 </button>
                 <button
                   onClick={async () => {
@@ -1641,7 +1641,7 @@ export function SettingsView() {
                       : 'text-content-secondary hover:text-content'
                   }`}
                 >
-                  Advanced
+                  高级
                 </button>
               </div>
             </div>
@@ -1649,12 +1649,12 @@ export function SettingsView() {
             {/* Granular checkbox grid */}
             <div className="grid grid-cols-2 gap-x-6 gap-y-3">
               {([
-                { key: 'showInfoCards' as const, label: 'Info Cards', desc: '"What are PIDs?" panels' },
-                { key: 'showQuickPresets' as const, label: 'Quick Presets', desc: 'Tuning style selectors' },
-                { key: 'showExplanationCards' as const, label: 'Explanation Cards', desc: '"What is X?" breakdowns' },
-                { key: 'showSectionDescriptions' as const, label: 'Section Descriptions', desc: 'Header subtitle text' },
-                { key: 'showTips' as const, label: 'Inline Tips', desc: 'Compact hint text' },
-                { key: 'defaultAdvancedViews' as const, label: 'Default Advanced Views', desc: 'Start in advanced mode' },
+                { key: 'showInfoCards' as const, label: '信息卡片', desc: '"什么是 PID？" 面板' },
+                { key: 'showQuickPresets' as const, label: '快速预设', desc: '调参风格选择器' },
+                { key: 'showExplanationCards' as const, label: '解释卡片', desc: '"什么是 X？" 详解' },
+                { key: 'showSectionDescriptions' as const, label: '分区描述', desc: '标题副文本' },
+                { key: 'showTips' as const, label: '行内提示', desc: '简短提示文本' },
+                { key: 'defaultAdvancedViews' as const, label: '默认高级视图', desc: '以高级模式启动' },
               ] as const).map(({ key, label, desc }) => (
                 <label key={key} className="flex items-start gap-2.5 cursor-pointer group">
                   <input
@@ -1679,13 +1679,13 @@ export function SettingsView() {
                 <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
-                Mission Planning Defaults
+                任务规划默认值
               </h2>
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-content-secondary mb-1.5">
-                    Safe Alt Buffer
+                    安全高度余量
                   </label>
                   <div className="flex items-center gap-2">
                     <input
@@ -1704,13 +1704,13 @@ export function SettingsView() {
                   </div>
                   {missionErrors.safeAltitudeBuffer
                     ? <div className="text-[10px] text-red-400 mt-1">{missionErrors.safeAltitudeBuffer}</div>
-                    : <div className="text-[10px] text-content-tertiary mt-1">Above terrain for warnings</div>
+                    : <div className="text-[10px] text-content-tertiary mt-1">超出地形高度以触发警告</div>
                   }
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-content-secondary mb-1.5">
-                    Waypoint Alt
+                    航点高度
                   </label>
                   <div className="flex items-center gap-2">
                     <input
@@ -1729,13 +1729,13 @@ export function SettingsView() {
                   </div>
                   {missionErrors.defaultWaypointAltitude
                     ? <div className="text-[10px] text-red-400 mt-1">{missionErrors.defaultWaypointAltitude}</div>
-                    : <div className="text-[10px] text-content-tertiary mt-1">Default for new waypoints</div>
+                    : <div className="text-[10px] text-content-tertiary mt-1">新航点的默认高度</div>
                   }
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-content-secondary mb-1.5">
-                    Takeoff Alt
+                    起飞高度
                   </label>
                   <div className="flex items-center gap-2">
                     <input
@@ -1754,13 +1754,13 @@ export function SettingsView() {
                   </div>
                   {missionErrors.defaultTakeoffAltitude
                     ? <div className="text-[10px] text-red-400 mt-1">{missionErrors.defaultTakeoffAltitude}</div>
-                    : <div className="text-[10px] text-content-tertiary mt-1">Altitude after launch</div>
+                    : <div className="text-[10px] text-content-tertiary mt-1">起飞爬升后的高度</div>
                   }
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-content-secondary mb-1.5">
-                    Alt Reference
+                    高度基准
                   </label>
                   <select
                     value={missionDefaults.defaultAltitudeReference ?? 'relative'}
@@ -1769,11 +1769,11 @@ export function SettingsView() {
                     })}
                     className="w-full px-2 py-1.5 bg-surface-input border border-border rounded text-content text-sm focus:outline-none focus:border-blue-500"
                   >
-                    <option value="relative">Relative to Home</option>
-                    <option value="terrain">Above Terrain (AGL)</option>
-                    <option value="asl">Above Sea Level</option>
+                    <option value="relative">相对 Home 点</option>
+                    <option value="terrain">离地高度（AGL）</option>
+                    <option value="asl">海拔高度</option>
                   </select>
-                  <div className="text-[10px] text-content-tertiary mt-1">Default altitude reference</div>
+                  <div className="text-[10px] text-content-tertiary mt-1">默认高度基准</div>
                 </div>
               </div>
             </section>
@@ -1787,16 +1787,16 @@ export function SettingsView() {
                 <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                 </svg>
-                Survey &amp; Map Performance
+                测绘与地图性能
               </h2>
               <p className="text-[11px] text-content-tertiary mb-4">
-                Guardrails that keep the map responsive with large imported boundaries and big missions. Applies everywhere.
+                在导入大范围边界和大型任务时保持地图流畅的防护限制，全局生效。
               </p>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-content-secondary mb-1.5">
-                    Max editable vertices
+                    最大可编辑顶点数
                   </label>
                   <DraftNumberInput
                     value={surveyPerformance.maxEditableVertices}
@@ -1806,12 +1806,12 @@ export function SettingsView() {
                     min={0}
                     max={5000}
                   />
-                  <div className="text-[10px] text-content-tertiary mt-1">Above this, drag handles are hidden</div>
+                  <div className="text-[10px] text-content-tertiary mt-1">超过此数量时隐藏拖拽手柄</div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-content-secondary mb-1.5">
-                    Max photo markers
+                    最大拍照标记数
                   </label>
                   <DraftNumberInput
                     value={surveyPerformance.maxPhotoMarkers}
@@ -1821,12 +1821,12 @@ export function SettingsView() {
                     min={0}
                     max={50000}
                   />
-                  <div className="text-[10px] text-content-tertiary mt-1">Above this, photo dots aren't drawn</div>
+                  <div className="text-[10px] text-content-tertiary mt-1">超过此数量时不绘制拍照圆点</div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-content-secondary mb-1.5">
-                    Max waypoint markers
+                    最大航点标记数
                   </label>
                   <DraftNumberInput
                     value={surveyPerformance.maxWaypointMarkers}
@@ -1836,12 +1836,12 @@ export function SettingsView() {
                     min={0}
                     max={50000}
                   />
-                  <div className="text-[10px] text-content-tertiary mt-1">Markers thinned above this (path still drawn)</div>
+                  <div className="text-[10px] text-content-tertiary mt-1">超过此数量时抽稀标记（路径仍完整绘制）</div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-content-secondary mb-1.5">
-                    Max interactive waypoints
+                    最大可交互航点数
                   </label>
                   <input
                     type="number"
@@ -1854,7 +1854,7 @@ export function SettingsView() {
                     min="0"
                     max="2000"
                   />
-                  <div className="text-[10px] text-content-tertiary mt-1">Draggable markers appear when this few waypoints are in view</div>
+                  <div className="text-[10px] text-content-tertiary mt-1">视野内航点不多于此数时才显示可拖拽标记</div>
                 </div>
               </div>
             </section>
@@ -1866,7 +1866,7 @@ export function SettingsView() {
                   <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
-                  Vehicle Profiles
+                  飞行器配置
                 </h2>
                 <button
                   onClick={() => setShowTemplatePicker(true)}
@@ -1875,7 +1875,7 @@ export function SettingsView() {
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  Add Vehicle
+                  添加飞行器
                 </button>
               </div>
 
@@ -1946,7 +1946,7 @@ export function SettingsView() {
         <div className="mt-8 mb-8">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1.5 h-5 bg-emerald-500 rounded-full" />
-            <h2 className="text-sm font-medium text-content uppercase tracking-wider">Offline Maps</h2>
+            <h2 className="text-sm font-medium text-content uppercase tracking-wider">离线地图</h2>
           </div>
           <TileCacheCard />
         </div>
@@ -1957,7 +1957,7 @@ export function SettingsView() {
         <div className="mt-8 mb-8">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1.5 h-5 bg-emerald-500 rounded-full" />
-            <h2 className="text-sm font-medium text-content uppercase tracking-wider">Map Overlays</h2>
+            <h2 className="text-sm font-medium text-content uppercase tracking-wider">地图叠加层</h2>
           </div>
           <div className="bg-surface rounded-xl border border-subtle p-5">
             <div className="flex items-center gap-3 mb-4">
@@ -1967,8 +1967,8 @@ export function SettingsView() {
                 </svg>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-content">Map Overlays</h3>
-                <p className="text-xs text-content-secondary">API keys for airspace and airport data</p>
+                <h3 className="text-sm font-medium text-content">地图叠加层</h3>
+                <p className="text-xs text-content-secondary">空域与机场数据的 API 密钥</p>
               </div>
             </div>
 
@@ -2023,8 +2023,8 @@ function OpenAipKeyInput() {
   return (
     <div>
       <label className="block text-xs text-content-secondary mb-1.5">
-        OpenAIP API Key
-        <span className="text-content-tertiary ml-1">- free at</span>{' '}
+        OpenAIP API 密钥
+        <span className="text-content-tertiary ml-1">— 免费获取：</span>{' '}
         <a href="https://www.openaip.net" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
           openaip.net
         </a>
@@ -2034,18 +2034,18 @@ function OpenAipKeyInput() {
           type="password"
           value={key}
           onChange={(e) => { setKey(e.target.value); setSaved(false); }}
-          placeholder={hasKey ? '••••••••••••••••' : 'Paste your API key'}
+          placeholder={hasKey ? '••••••••••••••••' : '粘贴你的 API 密钥'}
           className="flex-1 px-3 py-1.5 bg-surface-input border border-border rounded-lg text-sm text-content placeholder-content-tertiary focus:outline-none focus:border-blue-500"
         />
         <button
           onClick={handleSave}
           className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
         >
-          {saved ? 'Saved' : 'Save'}
+          {saved ? '已保存' : '保存'}
         </button>
       </div>
       {hasKey && !saved && (
-        <p className="text-xs text-emerald-400 mt-1">Key configured</p>
+        <p className="text-xs text-emerald-400 mt-1">密钥已配置</p>
       )}
     </div>
   );
@@ -2075,17 +2075,16 @@ function MavlinkSettingsSection() {
         <div className="space-y-3">
           <div className="flex items-center justify-between bg-surface-input rounded-lg p-3">
             <div className="flex-1 mr-3">
-              <div className="text-sm text-content font-medium">GCS System ID</div>
+              <div className="text-sm text-content font-medium">地面站系统 ID</div>
               <div className="text-xs text-content-secondary mt-0.5">
-                The MAVLink system id this station transmits as (1 to 255, default 255).
-                Give each station on a shared link its own id, or parameter and mission
-                transfers interleave between stations.
+                本地面站对外发送时使用的 MAVLink 系统 ID（1 到 255，默认 255）。
+                共享链路上的每个地面站应使用各自不同的 ID，否则参数和任务传输会在各地面站之间交错。
               </div>
               {gcsSysid !== 255 && (
                 <div className="text-xs text-amber-500 mt-1">
-                  The vehicle only accepts joystick / RC override from, and runs its GCS
-                  failsafe against, the id in SYSID_MYGCS (MAV_GCS_SYSID on ArduPilot 4.6+).
-                  Keep the station that flies the vehicle matched to that parameter.
+                  飞行器只接受来自 SYSID_MYGCS（ArduPilot 4.6+ 为 MAV_GCS_SYSID）所设 ID 的
+                  摇杆 / RC 超控，并据此执行地面站失控保护。
+                  请让实际操控飞行器的地面站与该参数保持一致。
                 </div>
               )}
             </div>
@@ -2114,16 +2113,16 @@ function ConsoleSettingsSection() {
     <div className="mt-8">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-1.5 h-5 bg-content-secondary rounded-full" />
-        <h2 className="text-sm font-medium text-content uppercase tracking-wider">Console</h2>
+        <h2 className="text-sm font-medium text-content uppercase tracking-wider">控制台</h2>
       </div>
 
       <section className="bg-gradient-to-br from-surface to-surface-base rounded-xl border border-subtle p-5">
         <div className="space-y-3">
           <div className="flex items-center justify-between bg-surface-input rounded-lg p-3">
             <div className="flex-1 mr-3">
-              <div className="text-sm text-content font-medium">Verbose Logging</div>
+              <div className="text-sm text-content font-medium">详细日志</div>
               <div className="text-xs text-content-secondary mt-0.5">
-                Show debug and packet-level messages in the console. When off, only info, warnings, and errors are shown.
+                在控制台中显示调试和报文级消息。关闭时仅显示信息、警告和错误。
               </div>
             </div>
             <button
@@ -2194,13 +2193,13 @@ function AiAnalysisSection() {
     <div className="mt-8">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-1.5 h-5 bg-purple-500 rounded-full" />
-        <h2 className="text-sm font-medium text-content uppercase tracking-wider">AI Flight Analysis</h2>
+        <h2 className="text-sm font-medium text-content uppercase tracking-wider">AI 飞行分析</h2>
       </div>
 
       <section className="bg-gradient-to-br from-surface to-surface-base rounded-xl border border-subtle p-5">
         <div className="space-y-4">
           <p className="text-xs text-content-secondary">
-            Enable AI-powered analysis of your flight logs. Your API key is encrypted and stored locally.
+            启用 AI 驱动的飞行日志分析。你的 API 密钥会加密并存储在本地。
           </p>
 
           <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
@@ -2208,15 +2207,15 @@ function AiAnalysisSection() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <div className="text-[11px] text-amber-300/80 leading-relaxed space-y-1">
-              <p><strong className="text-amber-300">Experimental feature.</strong></p>
-              <p>AI suggestions are not a substitute for your own judgement.</p>
-              <p>Always verify recommendations against ArduPilot documentation and your vehicle's specific configuration before applying changes. Incorrect parameters can cause loss of control.</p>
+              <p><strong className="text-amber-300">实验性功能。</strong></p>
+              <p>AI 建议不能替代你自己的判断。</p>
+              <p>应用更改前，请务必对照 ArduPilot 文档和你的飞行器具体配置核实建议。错误的参数可能导致失控。</p>
             </div>
           </div>
 
           {/* Provider selection */}
           <div>
-            <div className="text-xs text-content-secondary mb-2">Provider</div>
+            <div className="text-xs text-content-secondary mb-2">提供商</div>
             <div className="flex gap-2">
               {providers.map((p) => (
                 <button
@@ -2238,18 +2237,18 @@ function AiAnalysisSection() {
           {/* API key input */}
           {aiProvider && (
             <div>
-              <div className="text-xs text-content-secondary mb-2">API Key</div>
+              <div className="text-xs text-content-secondary mb-2">API 密钥</div>
               {hasKey ? (
                 <div className="flex items-center gap-2 bg-surface-input rounded-lg p-3">
                   <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
-                  <span className="text-sm text-content flex-1">Key configured and encrypted</span>
+                  <span className="text-sm text-content flex-1">密钥已配置并加密</span>
                   <button
                     onClick={handleRemoveKey}
                     className="text-xs text-red-400 hover:text-red-300 transition-colors"
                   >
-                    Remove
+                    移除
                   </button>
                 </div>
               ) : (
@@ -2258,7 +2257,7 @@ function AiAnalysisSection() {
                     type="password"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    placeholder={`Enter ${providers.find((p) => p.id === aiProvider)?.name} API key...`}
+                    placeholder={`输入 ${providers.find((p) => p.id === aiProvider)?.name} API 密钥...`}
                     className="flex-1 bg-surface-input border border-subtle rounded-lg px-3 py-2 text-sm text-content placeholder-content-tertiary focus:outline-none focus:border-purple-500/50"
                   />
                   <button
@@ -2266,7 +2265,7 @@ function AiAnalysisSection() {
                     disabled={!apiKey.trim() || saving}
                     className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {saving ? 'Saving...' : 'Save'}
+                    {saving ? '正在保存...' : '保存'}
                   </button>
                 </div>
               )}
@@ -2293,7 +2292,7 @@ function ExperimentalFeaturesSection() {
     <div className="mt-8">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-1.5 h-5 bg-purple-500 rounded-full" />
-        <h2 className="text-sm font-medium text-content uppercase tracking-wider">Experimental</h2>
+        <h2 className="text-sm font-medium text-content uppercase tracking-wider">实验性</h2>
       </div>
 
       <section className="bg-gradient-to-br from-surface to-surface-base rounded-xl border border-subtle p-5">
@@ -2301,19 +2300,19 @@ function ExperimentalFeaturesSection() {
           <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
           </svg>
-          Experimental Features
+          实验性功能
         </h2>
         <p className="text-xs text-content-secondary mb-4">
-          These features are under active development and may have rough edges. ArduPilot/MAVLink only.
+          这些功能仍在积极开发中，可能不够完善。仅支持 ArduPilot/MAVLink。
         </p>
 
         <div className="space-y-3">
           {/* Companion Computer */}
           <div className="flex items-center justify-between bg-surface-input rounded-lg p-3">
             <div className="flex-1 mr-3">
-              <div className="text-sm text-content font-medium">Companion Computer</div>
+              <div className="text-sm text-content font-medium">伴飞计算机</div>
               <div className="text-xs text-content-secondary mt-0.5">
-                Monitor and manage companion boards (Raspberry Pi, ESP32, Jetson) with remote terminal, metrics, and service control
+                监控和管理伴飞板（Raspberry Pi、ESP32、Jetson），提供远程终端、指标和服务控制
               </div>
             </div>
             <button
@@ -2333,18 +2332,18 @@ function ExperimentalFeaturesSection() {
             <div className="flex items-center justify-between">
               <div className="flex-1 mr-3">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <div className="text-sm text-content font-medium">Advanced map commands</div>
+                  <div className="text-sm text-content font-medium">高级地图指令</div>
                   <span className="px-1.5 py-0 text-[9px] font-bold tracking-wider rounded bg-rose-600/20 text-rose-400 border border-rose-600/40">
-                    RISKY
+                    高风险
                   </span>
                 </div>
                 <div className="text-xs text-content-secondary mt-0.5">
-                  Unlocks <strong>Orbit</strong> and <strong>Land at point</strong> in the map command popup
-                  (the popup defaults to <strong>Move</strong> only). Also enables the optional <strong>Lua script
-                  installer</strong> for flight controllers that lack native CIRCLE mode - ArduDeck can write a
-                  small script to the FC's SD card after explicit consent and source-code preview.
+                  解锁地图指令弹窗中的<strong>环绕（Orbit）</strong>和<strong>定点降落（Land at point）</strong>
+                  （弹窗默认仅有<strong>移动</strong>）。同时为缺少原生 CIRCLE 模式的飞控启用可选的
+                  <strong>Lua 脚本安装器</strong> — ArduDeck 可在你明确同意并预览源码后，
+                  向飞控的 SD 卡写入一个小脚本。
                   <span className="block mt-1 text-rose-400">
-                    Triggers flight-mode changes and may modify parameters. Bench-test every command before flight.
+                    会触发飞行模式切换并可能修改参数。飞行前请在地面逐项测试。
                   </span>
                 </div>
               </div>
@@ -2367,9 +2366,9 @@ function ExperimentalFeaturesSection() {
           <div className="bg-surface-input rounded-lg p-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex-1">
-                <div className="text-sm text-content font-medium mb-0.5">Feature tour prompts</div>
+                <div className="text-sm text-content font-medium mb-0.5">功能导览提示</div>
                 <div className="text-xs text-content-secondary">
-                  Offer guided walkthroughs when opening a view for the first time.
+                  首次打开某个视图时提供引导式操作讲解。
                 </div>
               </div>
               <button
@@ -2394,17 +2393,16 @@ function ExperimentalFeaturesSection() {
           <div className="bg-surface-input rounded-lg p-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex-1">
-                <div className="text-sm text-content font-medium mb-0.5">Default altitude reference</div>
+                <div className="text-sm text-content font-medium mb-0.5">默认高度基准</div>
                 <div className="text-xs text-content-secondary">
-                  What the altitude you enter in the map command popup is measured against. Terrain needs
-                  terrain data or a rangefinder on the vehicle.
+                  地图指令弹窗中输入的高度以此为基准。地形模式需要地形数据或飞行器上的测距仪。
                 </div>
               </div>
               <div className="flex items-stretch overflow-hidden rounded-lg border border-subtle flex-shrink-0 h-8">
                 {([
-                  { id: 'relative', label: 'Home' },
-                  { id: 'terrain', label: 'Terrain' },
-                  { id: 'asl', label: 'Sea' },
+                  { id: 'relative', label: 'Home 点' },
+                  { id: 'terrain', label: '地形' },
+                  { id: 'asl', label: '海平面' },
                 ] as const).map((o, i) => (
                   <button
                     key={o.id}
@@ -2437,13 +2435,13 @@ function ScriptInstallerActions() {
   return (
     <div className="mt-3 pt-3 border-t border-subtle/50 flex items-center justify-between">
       <span className="text-[11px] text-content-tertiary">
-        Manage and review ArduDeck-installed scripts on the connected vehicle
+        管理和查看已安装到所连飞行器上的 ArduDeck 脚本
       </span>
       <button
         onClick={() => setModalOpen(true)}
         className="px-3 py-1.5 text-xs bg-purple-600/80 hover:bg-purple-600 text-white rounded"
       >
-        Open installer…
+        打开安装器…
       </button>
       <ScriptInstallModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
@@ -2506,7 +2504,7 @@ function AboutSection() {
     <div className="mt-8">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-1.5 h-5 bg-content-secondary rounded-full" />
-        <h2 className="text-sm font-medium text-content uppercase tracking-wider">About</h2>
+        <h2 className="text-sm font-medium text-content uppercase tracking-wider">关于</h2>
       </div>
 
       <section className="bg-gradient-to-br from-surface to-surface-base rounded-xl border border-subtle p-5">
@@ -2537,7 +2535,7 @@ function AboutSection() {
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                Check for Updates
+                检查更新
               </button>
             )}
 
@@ -2547,7 +2545,7 @@ function AboutSection() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Checking...
+                正在检查...
               </span>
             )}
 
@@ -2556,7 +2554,7 @@ function AboutSection() {
                 onClick={() => downloadUpdate()}
                 className="px-3 py-1.5 bg-blue-600/80 hover:bg-blue-500/80 text-white text-xs font-medium rounded-lg transition-colors"
               >
-                Download v{latestVersion}
+                下载 v{latestVersion}
               </button>
             )}
 
@@ -2565,7 +2563,7 @@ function AboutSection() {
                 onClick={openReleaseUrl}
                 className="px-3 py-1.5 bg-blue-600/80 hover:bg-blue-500/80 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
               >
-                View Release v{latestVersion}
+                查看版本 v{latestVersion}
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
@@ -2577,7 +2575,7 @@ function AboutSection() {
                 onClick={() => installUpdate()}
                 className="px-3 py-1.5 bg-emerald-600/80 hover:bg-emerald-500/80 text-white text-xs font-medium rounded-lg transition-colors"
               >
-                Restart to Update
+                重启以更新
               </button>
             )}
           </div>
@@ -2590,7 +2588,7 @@ function AboutSection() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              You're up to date
+              已是最新版本
             </div>
           )}
 
@@ -2598,11 +2596,11 @@ function AboutSection() {
             <div className="flex items-center justify-between bg-blue-500/10 rounded-lg p-3">
               <div>
                 <p className="text-sm text-blue-300 font-medium">
-                  v{latestVersion} is available
+                  v{latestVersion} 可用
                 </p>
                 {publishedAt && (
                   <p className="text-xs text-content-secondary mt-0.5">
-                    Released {new Date(publishedAt).toLocaleDateString()}
+                    发布于 {new Date(publishedAt).toLocaleDateString()}
                   </p>
                 )}
               </div>
@@ -2612,7 +2610,7 @@ function AboutSection() {
           {status === 'downloading' && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-content-secondary">
-                <span>Downloading v{latestVersion}...</span>
+                <span>正在下载 v{latestVersion}...</span>
                 <span className="tabular-nums">
                   {totalBytes > 0
                     ? `${(bytesDownloaded / (1024 * 1024)).toFixed(1)} / ${(totalBytes / (1024 * 1024)).toFixed(1)} MB`
@@ -2633,7 +2631,7 @@ function AboutSection() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              Update downloaded and ready to install
+              更新已下载，可以安装
             </div>
           )}
 
@@ -2651,30 +2649,30 @@ function AboutSection() {
       <section className="mt-4 bg-surface rounded-xl border border-subtle p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-content">
-            Release notes{notes ? ` · ${notes.name}` : ''}
+            发布说明{notes ? ` · ${notes.name}` : ''}
           </h3>
           {notes && (
             <span className="text-xs text-content-tertiary">{new Date(notes.date).toLocaleDateString()}</span>
           )}
         </div>
         {notesState === 'loading' && (
-          <p className="text-sm text-content-tertiary">Loading release notes…</p>
+          <p className="text-sm text-content-tertiary">正在加载发布说明…</p>
         )}
         {notesState === 'empty' && (
-          <p className="text-sm text-content-tertiary">No published releases yet.</p>
+          <p className="text-sm text-content-tertiary">暂无已发布的版本。</p>
         )}
         {notesState === 'error' && (
           <p className="text-sm text-content-tertiary">
-            Couldn't reach GitHub for release notes.{' '}
+            无法访问 GitHub 获取发布说明。{' '}
             <a href="https://github.com/rubenCodeforges/ardudeck/releases" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400">
-              View on GitHub
+              在 GitHub 上查看
             </a>
           </p>
         )}
         {notesState === 'ready' && notes && (
           notes.body
             ? <div className="max-w-none">{renderMarkdown(notes.body)}</div>
-            : <p className="text-sm text-content-tertiary">This release has no notes.</p>
+            : <p className="text-sm text-content-tertiary">此版本暂无说明。</p>
         )}
       </section>
     </div>
@@ -2726,33 +2724,33 @@ const MISSION_FIELD_RULES: Record<string, FieldValidation> = {
 function validateField(value: string, rules: FieldValidation, isText?: boolean): string | null {
   const trimmed = value.trim();
   if (trimmed === '') {
-    return rules.required ? 'Required' : null;
+    return rules.required ? '必填' : null;
   }
   if (isText) return null;
   const num = Number(trimmed);
-  if (isNaN(num)) return 'Invalid number';
-  if (rules.min !== undefined && num < rules.min) return `Min: ${rules.min}`;
-  if (rules.max !== undefined && num > rules.max) return `Max: ${rules.max}`;
-  if (rules.integer && !Number.isInteger(num)) return 'Must be whole number';
+  if (isNaN(num)) return '无效数字';
+  if (rules.min !== undefined && num < rules.min) return `最小: ${rules.min}`;
+  if (rules.max !== undefined && num > rules.max) return `最大: ${rules.max}`;
+  if (rules.integer && !Number.isInteger(num)) return '必须为整数';
   return null;
 }
 
 function validateAltitudeField(value: string, rules: FieldValidation, unit: AltitudeUnit): string | null {
   const trimmed = value.trim();
   if (trimmed === '') {
-    return rules.required ? 'Required' : null;
+    return rules.required ? '必填' : null;
   }
   const displayValue = Number(trimmed);
-  if (!Number.isFinite(displayValue)) return 'Invalid number';
-  if (rules.integer && unit === 'm' && !Number.isInteger(displayValue)) return 'Must be whole number';
+  if (!Number.isFinite(displayValue)) return '无效数字';
+  if (rules.integer && unit === 'm' && !Number.isInteger(displayValue)) return '必须为整数';
 
   const displayMin = rules.min === undefined ? undefined : Number(altitudeInputValueFromMeters(rules.min, unit));
   const displayMax = rules.max === undefined ? undefined : Number(altitudeInputValueFromMeters(rules.max, unit));
   if (displayMin !== undefined && displayValue < displayMin) {
-    return `Min: ${displayMin} ${UNIT_LABELS.altitude[unit]}`;
+    return `最小: ${displayMin} ${UNIT_LABELS.altitude[unit]}`;
   }
   if (displayMax !== undefined && displayValue > displayMax) {
-    return `Max: ${displayMax} ${UNIT_LABELS.altitude[unit]}`;
+    return `最大: ${displayMax} ${UNIT_LABELS.altitude[unit]}`;
   }
   return null;
 }
@@ -2778,12 +2776,12 @@ function PropSizeInput({
 
   const validate = (v: string): string | null => {
     if (!v) return null;
-    if (!/^\d+(?:\.\d+)?x\d+(?:\.\d+)?$/.test(v)) return 'Use DxP format (e.g. 10x5)';
+    if (!/^\d+(?:\.\d+)?x\d+(?:\.\d+)?$/.test(v)) return '请使用 DxP 格式（如 10x5）';
     const parts = v.split('x').map(Number);
     const diam = parts[0];
     const pitch = parts[1];
-    if (!diam || diam < 1 || diam > 40) return 'Diameter: 1-40"';
-    if (!pitch || pitch < 1 || pitch > 20) return 'Pitch: 1-20"';
+    if (!diam || diam < 1 || diam > 40) return '直径范围：1-40 英寸';
+    if (!pitch || pitch < 1 || pitch > 20) return '螺距范围：1-20 英寸';
     return null;
   };
 
@@ -2820,17 +2818,17 @@ function PropSizeInput({
 
   return (
     <div>
-      <label className="block text-xs text-content-secondary mb-1">Propeller</label>
+      <label className="block text-xs text-content-secondary mb-1">螺旋桨</label>
       <select
         value={showCustomInput ? '__custom__' : (value || '')}
         onChange={(e) => handleSelect(e.target.value)}
         className="w-full px-3 py-2 bg-surface-input border border-border rounded-lg text-content text-sm focus:outline-none focus:border-blue-500"
       >
-        <option value="">None</option>
+        <option value="">无</option>
         {presets.map((p) => (
           <option key={p.size} value={p.size}>{p.label || `${p.size}"`}</option>
         ))}
-        <option value="__custom__">Custom size...</option>
+        <option value="__custom__">自定义尺寸...</option>
       </select>
       {showCustomInput && (
         <input
@@ -2838,7 +2836,7 @@ function PropSizeInput({
           value={customMode ? customValue : (value || '')}
           onChange={(e) => handleCustom(e.target.value)}
           onBlur={handleCustomBlur}
-          placeholder="DxP (e.g. 9.5x4.7)"
+          placeholder="DxP（如 9.5x4.7）"
           autoFocus={customMode}
           className={`w-full mt-1.5 px-3 py-2 bg-surface-input border rounded-lg text-sm focus:outline-none ${
             error ? 'border-red-500/60 text-content' : 'border-border text-content focus:border-blue-500'
@@ -2864,20 +2862,20 @@ function clampDimensionMillimetersToRules(millimeters: number, rules: FieldValid
 function validateDimensionField(value: string, rules: FieldValidation, unit: DimensionUnit): string | null {
   const trimmed = value.trim();
   if (trimmed === '') {
-    return rules.required ? 'Required' : null;
+    return rules.required ? '必填' : null;
   }
   const displayValue = Number(trimmed);
-  if (!Number.isFinite(displayValue)) return 'Must be a valid number';
+  if (!Number.isFinite(displayValue)) return '请输入有效数字';
 
   const millimeters = toMillimetersFromDimensionUnit(displayValue, unit);
   if (rules.min !== undefined && millimeters < rules.min) {
-    return `Min: ${dimensionInputValueFromMillimeters(rules.min, unit)} ${UNIT_LABELS.dimensions[unit]}`;
+    return `最小: ${dimensionInputValueFromMillimeters(rules.min, unit)} ${UNIT_LABELS.dimensions[unit]}`;
   }
   if (rules.max !== undefined && millimeters > rules.max) {
-    return `Max: ${dimensionInputValueFromMillimeters(rules.max, unit)} ${UNIT_LABELS.dimensions[unit]}`;
+    return `最大: ${dimensionInputValueFromMillimeters(rules.max, unit)} ${UNIT_LABELS.dimensions[unit]}`;
   }
   if (unit === 'mm' && rules.integer && !Number.isInteger(displayValue)) {
-    return 'Must be a whole number';
+    return '必须为整数';
   }
   return null;
 }
@@ -2979,17 +2977,17 @@ function clampAreaSquareCentimetersToRules(squareCentimeters: number, rules: Fie
 function validateAreaSquareCentimetersField(value: string, rules: FieldValidation, unit: AreaUnit): string | null {
   const trimmed = value.trim();
   if (trimmed === '') {
-    return rules.required ? 'Required' : null;
+    return rules.required ? '必填' : null;
   }
   const displayValue = Number(trimmed);
-  if (!Number.isFinite(displayValue)) return 'Must be a valid number';
+  if (!Number.isFinite(displayValue)) return '请输入有效数字';
 
   const squareCentimeters = toSquareCentimetersFromAreaUnit(displayValue, unit);
   if (rules.min !== undefined && squareCentimeters < rules.min) {
-    return `Min: ${areaInputValueFromSquareCentimeters(rules.min, unit)} ${UNIT_LABELS.area[unit]}`;
+    return `最小: ${areaInputValueFromSquareCentimeters(rules.min, unit)} ${UNIT_LABELS.area[unit]}`;
   }
   if (rules.max !== undefined && squareCentimeters > rules.max) {
-    return `Max: ${areaInputValueFromSquareCentimeters(rules.max, unit)} ${UNIT_LABELS.area[unit]}`;
+    return `最大: ${areaInputValueFromSquareCentimeters(rules.max, unit)} ${UNIT_LABELS.area[unit]}`;
   }
   return null;
 }
@@ -3221,20 +3219,20 @@ function clampWeightGramsToRules(grams: number, rules: FieldValidation): number 
 function validateWeightField(value: string, rules: FieldValidation, unit: WeightUnit): string | null {
   const trimmed = value.trim();
   if (trimmed === '') {
-    return rules.required ? 'Required' : null;
+    return rules.required ? '必填' : null;
   }
   const displayValue = Number(trimmed);
-  if (!Number.isFinite(displayValue)) return 'Must be a valid number';
+  if (!Number.isFinite(displayValue)) return '请输入有效数字';
 
   const grams = toGramsFromWeightUnit(displayValue, unit);
   if (rules.min !== undefined && grams < rules.min) {
-    return `Min: ${weightInputValueFromGrams(rules.min, unit)} ${UNIT_LABELS.weight[unit]}`;
+    return `最小: ${weightInputValueFromGrams(rules.min, unit)} ${UNIT_LABELS.weight[unit]}`;
   }
   if (rules.max !== undefined && grams > rules.max) {
-    return `Max: ${weightInputValueFromGrams(rules.max, unit)} ${UNIT_LABELS.weight[unit]}`;
+    return `最大: ${weightInputValueFromGrams(rules.max, unit)} ${UNIT_LABELS.weight[unit]}`;
   }
   if (unit === 'g' && rules.integer && !Number.isInteger(displayValue)) {
-    return 'Must be a whole number';
+    return '必须为整数';
   }
   return null;
 }
@@ -3334,21 +3332,21 @@ function capacityInputStep(unit: ElectricCapacityUnit): string {
 
 function validateCapacityField(value: string, rules: FieldValidation, unit: ElectricCapacityUnit): string | null {
   if (value.trim() === '') {
-    return rules.required ? 'Required' : null;
+    return rules.required ? '必填' : null;
   }
 
   const displayValue = Number(value);
-  if (!Number.isFinite(displayValue)) return 'Must be a valid number';
+  if (!Number.isFinite(displayValue)) return '请输入有效数字';
 
   const mah = toMahFromCapacityUnit(displayValue, unit);
   if (rules.min !== undefined && mah < rules.min) {
-    return `Min: ${capacityInputValueFromMah(rules.min, unit)} ${UNIT_LABELS.electricCapacity[unit]}`;
+    return `最小: ${capacityInputValueFromMah(rules.min, unit)} ${UNIT_LABELS.electricCapacity[unit]}`;
   }
   if (rules.max !== undefined && mah > rules.max) {
-    return `Max: ${capacityInputValueFromMah(rules.max, unit)} ${UNIT_LABELS.electricCapacity[unit]}`;
+    return `最大: ${capacityInputValueFromMah(rules.max, unit)} ${UNIT_LABELS.electricCapacity[unit]}`;
   }
   if (unit === 'mah' && rules.integer && !Number.isInteger(displayValue)) {
-    return 'Must be a whole number';
+    return '必须为整数';
   }
   return null;
 }
@@ -3658,7 +3656,7 @@ function VehicleEditModal({
             <div className="w-8 h-8 text-blue-400">
               {VEHICLE_ICONS[vehicle.type]}
             </div>
-            <h2 className="text-lg font-semibold text-content">Edit {VEHICLE_TYPE_NAMES[vehicle.type]}</h2>
+            <h2 className="text-lg font-semibold text-content">编辑{VEHICLE_TYPE_NAMES[vehicle.type]}</h2>
           </div>
           <button onClick={onClose} className="text-content-secondary hover:text-content">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -3672,13 +3670,13 @@ function VehicleEditModal({
           {/* Basic Info - Common to all */}
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 sm:col-span-1">
-              <label className="block text-sm font-medium text-content mb-1.5">Vehicle Name</label>
+              <label className="block text-sm font-medium text-content mb-1.5">飞行器名称</label>
               <input
                 type="text"
                 value={nameValue}
                 onChange={(e) => handleChange('name', e.target.value.slice(0, 50), true)}
                 onBlur={() => handleBlur('name', true)}
-                placeholder="My Vehicle"
+                placeholder="我的飞行器"
                 className={`w-full px-3 py-2 bg-surface-input border rounded-lg text-content focus:outline-none ${
                   nameError ? 'border-red-500/60 focus:border-red-500' : 'border-border focus:border-blue-500'
                 }`}
@@ -3686,7 +3684,7 @@ function VehicleEditModal({
               {nameError && <div className="text-[10px] text-red-400 mt-0.5">{nameError}</div>}
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <label className="block text-sm font-medium text-content mb-1.5">Vehicle Type</label>
+              <label className="block text-sm font-medium text-content mb-1.5">飞行器类型</label>
               <select
                 value={vehicle.type}
                 onChange={(e) => onUpdate({ type: e.target.value as VehicleType })}
@@ -3713,7 +3711,7 @@ function VehicleEditModal({
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <DimensionInputField
-                  label="Frame Size"
+                  label="机架尺寸"
                   valueMillimeters={vehicle.frameSize}
                   onCommit={(millimeters) => onUpdate({ frameSize: millimeters })}
                   unit={dimensionUnit}
@@ -3721,18 +3719,18 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.frameSize!}
                 />
                 <VehicleSelectField
-                  label="Motor Count"
+                  label="电机数量"
                   value={vehicle.motorCount || 4}
                   onChange={(v) => onUpdate({ motorCount: Number(v) })}
                   options={[
-                    { value: 3, label: 'Tricopter (3)' },
-                    { value: 4, label: 'Quadcopter (4)' },
-                    { value: 6, label: 'Hexacopter (6)' },
-                    { value: 8, label: 'Octocopter (8)' },
+                    { value: 3, label: '三旋翼（3）' },
+                    { value: 4, label: '四旋翼（4）' },
+                    { value: 6, label: '六旋翼（6）' },
+                    { value: 8, label: '八旋翼（8）' },
                   ]}
                 />
                 <WeightInputField
-                  label="All-Up Weight"
+                  label="起飞全重"
                   valueGrams={vehicle.weight}
                   onCommit={(grams) => { if (grams !== undefined) onUpdate({ weight: grams }); }}
                   unit={weightUnit}
@@ -3760,11 +3758,11 @@ function VehicleEditModal({
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
-                Airframe
+                机体
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <DimensionInputField
-                  label="Wingspan"
+                  label="翼展"
                   valueMillimeters={vehicle.wingspan}
                   onCommit={(millimeters) => onUpdate({ wingspan: millimeters })}
                   unit={dimensionUnit}
@@ -3772,7 +3770,7 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.wingspan!}
                 />
                 <WeightInputField
-                  label="All-Up Weight"
+                  label="起飞全重"
                   valueGrams={vehicle.weight}
                   onCommit={(grams) => { if (grams !== undefined) onUpdate({ weight: grams }); }}
                   unit={weightUnit}
@@ -3780,7 +3778,7 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.weight!}
                 />
                 <AreaInputField
-                  label="Wing Area"
+                  label="机翼面积"
                   valueSquareCentimeters={vehicle.wingArea}
                   onCommit={(squareCentimeters) => onUpdate({ wingArea: squareCentimeters })}
                   unit={areaUnit}
@@ -3789,7 +3787,7 @@ function VehicleEditModal({
                 />
                 <div>
                   <div className="flex items-center justify-between mb-1 min-h-[18px]">
-                    <label className="text-xs text-content-secondary">Stall Speed</label>
+                    <label className="text-xs text-content-secondary">失速速度</label>
                     <StallSpeedCalcButton
                       vehicle={vehicle}
                       onCompute={(mps) => onUpdate({ stallSpeed: mps })}
@@ -3825,11 +3823,11 @@ function VehicleEditModal({
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
-                VTOL Airframe
+                VTOL 机架
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <DimensionInputField
-                  label="Wingspan"
+                  label="翼展"
                   valueMillimeters={vehicle.wingspan}
                   onCommit={(millimeters) => onUpdate({ wingspan: millimeters })}
                   unit={dimensionUnit}
@@ -3837,17 +3835,17 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.wingspan!}
                 />
                 <VehicleSelectField
-                  label="VTOL Motors"
+                  label="VTOL 电机"
                   value={vehicle.vtolMotorCount || 4}
                   onChange={(v) => onUpdate({ vtolMotorCount: Number(v) })}
                   options={[
-                    { value: 2, label: 'Bicopter (2)' },
-                    { value: 4, label: 'Quadplane (4)' },
-                    { value: 6, label: 'Hexaplane (6)' },
+                    { value: 2, label: '双桨（2）' },
+                    { value: 4, label: '四旋翼复合翼（4）' },
+                    { value: 6, label: '六旋翼复合翼（6）' },
                   ]}
                 />
                 <WeightInputField
-                  label="All-Up Weight"
+                  label="起飞全重"
                   valueGrams={vehicle.weight}
                   onCommit={(grams) => { if (grams !== undefined) onUpdate({ weight: grams }); }}
                   unit={weightUnit}
@@ -3855,7 +3853,7 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.weight!}
                 />
                 <SpeedInputField
-                  label="Transition Speed"
+                  label="过渡速度"
                   valueMps={vehicle.transitionSpeed}
                   onCommit={(mps) => onUpdate({ transitionSpeed: mps })}
                   unit={speedUnit}
@@ -3882,21 +3880,21 @@ function VehicleEditModal({
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Chassis
+                底盘
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <VehicleSelectField
-                  label="Drive Type"
+                  label="驱动类型"
                   value={vehicle.driveType || 'differential'}
                   onChange={(v) => onUpdate({ driveType: v as 'differential' | 'ackermann' | 'skid' })}
                   options={[
-                    { value: 'differential', label: 'Differential (tank)' },
-                    { value: 'ackermann', label: 'Ackermann (car)' },
-                    { value: 'skid', label: 'Skid Steer' },
+                    { value: 'differential', label: '差速（履带）' },
+                    { value: 'ackermann', label: '阿克曼（轿车）' },
+                    { value: 'skid', label: '滑移转向' },
                   ]}
                 />
                 <WeightInputField
-                  label="Total Weight"
+                  label="总重量"
                   valueGrams={vehicle.weight}
                   onCommit={(grams) => { if (grams !== undefined) onUpdate({ weight: grams }); }}
                   unit={weightUnit}
@@ -3904,7 +3902,7 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.weight!}
                 />
                 <DimensionInputField
-                  label="Wheelbase"
+                  label="轴距"
                   valueMillimeters={vehicle.wheelbase}
                   onCommit={(millimeters) => onUpdate({ wheelbase: millimeters })}
                   unit={dimensionUnit}
@@ -3912,7 +3910,7 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.wheelbase!}
                 />
                 <DimensionInputField
-                  label="Wheel Diameter"
+                  label="轮径"
                   valueMillimeters={vehicle.wheelDiameter}
                   onCommit={(millimeters) => onUpdate({ wheelDiameter: millimeters })}
                   unit={dimensionUnit}
@@ -3920,7 +3918,7 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.wheelDiameter!}
                 />
                 <SpeedInputField
-                  label="Max Speed"
+                  label="最大速度"
                   valueMps={vehicle.maxSpeed}
                   onCommit={(mps) => onUpdate({ maxSpeed: mps })}
                   unit={speedUnit}
@@ -3938,32 +3936,32 @@ function VehicleEditModal({
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Hull
+                船体
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <VehicleSelectField
-                  label="Hull Type"
+                  label="船体类型"
                   value={vehicle.hullType || 'displacement'}
                   onChange={(v) => onUpdate({ hullType: v as 'displacement' | 'planing' | 'catamaran' | 'pontoon' })}
                   options={[
-                    { value: 'displacement', label: 'Displacement' },
-                    { value: 'planing', label: 'Planing' },
-                    { value: 'catamaran', label: 'Catamaran' },
-                    { value: 'pontoon', label: 'Pontoon' },
+                    { value: 'displacement', label: '排水型' },
+                    { value: 'planing', label: '滑行型' },
+                    { value: 'catamaran', label: '双体船' },
+                    { value: 'pontoon', label: '浮筒船' },
                   ]}
                 />
                 <VehicleSelectField
-                  label="Propulsion"
+                  label="推进方式"
                   value={vehicle.propellerType || 'prop'}
                   onChange={(v) => onUpdate({ propellerType: v as 'prop' | 'jet' | 'paddle' })}
                   options={[
-                    { value: 'prop', label: 'Propeller' },
-                    { value: 'jet', label: 'Water Jet' },
-                    { value: 'paddle', label: 'Paddle Wheel' },
+                    { value: 'prop', label: '螺旋桨' },
+                    { value: 'jet', label: '喷水' },
+                    { value: 'paddle', label: '明轮' },
                   ]}
                 />
                 <DimensionInputField
-                  label="Hull Length"
+                  label="船体长度"
                   valueMillimeters={vehicle.hullLength}
                   onCommit={(millimeters) => onUpdate({ hullLength: millimeters })}
                   unit={dimensionUnit}
@@ -3971,7 +3969,7 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.hullLength!}
                 />
                 <WeightInputField
-                  label="Total Weight"
+                  label="总重量"
                   valueGrams={vehicle.weight}
                   onCommit={(grams) => { if (grams !== undefined) onUpdate({ weight: grams }); }}
                   unit={weightUnit}
@@ -3979,7 +3977,7 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.weight!}
                 />
                 <WeightInputField
-                  label="Displacement"
+                  label="排水量"
                   valueGrams={vehicle.displacement}
                   onCommit={(grams) => onUpdate({ displacement: grams })}
                   unit={weightUnit}
@@ -3987,7 +3985,7 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.displacement!}
                 />
                 <SpeedInputField
-                  label="Max Speed"
+                  label="最大速度"
                   valueMps={vehicle.maxSpeed}
                   onCommit={(mps) => onUpdate({ maxSpeed: mps })}
                   unit={speedUnit}
@@ -4005,11 +4003,11 @@ function VehicleEditModal({
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Hull & Thrusters
+                船体与推进器
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <DimensionInputField
-                  label="Hull Length"
+                  label="船体长度"
                   valueMillimeters={vehicle.hullLength}
                   onCommit={(millimeters) => onUpdate({ hullLength: millimeters })}
                   unit={dimensionUnit}
@@ -4017,18 +4015,18 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.hullLength!}
                 />
                 <VehicleSelectField
-                  label="Thruster Count"
+                  label="推进器数量"
                   value={vehicle.thrusterCount || 4}
                   onChange={(v) => onUpdate({ thrusterCount: Number(v) })}
                   options={[
-                    { value: 2, label: '2 Thrusters' },
-                    { value: 4, label: '4 Thrusters' },
-                    { value: 6, label: '6 Thrusters' },
-                    { value: 8, label: '8 Thrusters' },
+                    { value: 2, label: '2 个推进器' },
+                    { value: 4, label: '4 个推进器' },
+                    { value: 6, label: '6 个推进器' },
+                    { value: 8, label: '8 个推进器' },
                   ]}
                 />
                 <WeightInputField
-                  label="Dry Weight"
+                  label="干重"
                   valueGrams={vehicle.weight}
                   onCommit={(grams) => { if (grams !== undefined) onUpdate({ weight: grams }); }}
                   unit={weightUnit}
@@ -4036,7 +4034,7 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.weight!}
                 />
                 <AltitudeInputField
-                  label="Max Depth Rating"
+                  label="最大深度等级"
                   valueMeters={vehicle.maxDepth}
                   onCommit={(meters) => onUpdate({ maxDepth: meters })}
                   unit={altitudeUnit}
@@ -4044,17 +4042,17 @@ function VehicleEditModal({
                   rules={VEHICLE_FIELD_RULES.maxDepth!}
                 />
                 <VehicleSelectField
-                  label="Buoyancy"
+                  label="浮力"
                   value={vehicle.buoyancy || 'neutral'}
                   onChange={(v) => onUpdate({ buoyancy: v as 'positive' | 'neutral' | 'negative' })}
                   options={[
-                    { value: 'positive', label: 'Positive (floats)' },
-                    { value: 'neutral', label: 'Neutral' },
-                    { value: 'negative', label: 'Negative (sinks)' },
+                    { value: 'positive', label: '正浮力（上浮）' },
+                    { value: 'neutral', label: '中性' },
+                    { value: 'negative', label: '负浮力（下沉）' },
                   ]}
                 />
                 <SpeedInputField
-                  label="Max Speed"
+                  label="最大速度"
                   valueMps={vehicle.maxSpeed}
                   onCommit={(mps) => onUpdate({ maxSpeed: mps })}
                   unit={speedUnit}
@@ -4071,22 +4069,22 @@ function VehicleEditModal({
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              Battery
+              电池
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <VehicleSelectField
-                label="Chemistry"
+                label="电池类型"
                 value={vehicle.batteryChemistry || 'lipo'}
                 onChange={(v) => onUpdate({ batteryChemistry: v as VehicleProfile['batteryChemistry'] })}
                 options={[
-                  { value: 'lipo', label: 'LiPo (3.7V)' },
-                  { value: 'lihv', label: 'LiHV (3.8V)' },
-                  { value: 'lion', label: 'Li-Ion (3.6V)' },
-                  { value: 'life', label: 'LiFePO4 (3.3V)' },
+                  { value: 'lipo', label: 'LiPo（3.7V）' },
+                  { value: 'lihv', label: 'LiHV（3.8V）' },
+                  { value: 'lion', label: 'Li-Ion（3.6V）' },
+                  { value: 'life', label: 'LiFePO4（3.3V）' },
                 ]}
               />
               <VehicleSelectField
-                label="Cell Count"
+                label="电芯数量"
                 value={vehicle.batteryCells || 4}
                 onChange={(v) => onUpdate({ batteryCells: Number(v) })}
                 options={[
@@ -4103,7 +4101,7 @@ function VehicleEditModal({
                 ]}
               />
               <CapacityInputField
-                label="Capacity"
+                label="容量"
                 valueMah={vehicle.batteryCapacity}
                 onCommit={(mah) => onUpdate({ batteryCapacity: mah })}
                 unit={electricCapacityUnit}
@@ -4123,14 +4121,14 @@ function VehicleEditModal({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              Advanced (optional)
+              高级（可选）
             </summary>
             <div className="mt-3 space-y-3">
               {/* Copter Advanced */}
               {isCopter && (
                 <div className="grid grid-cols-2 gap-3">
                   <VehicleInputField
-                    label="Motor KV"
+                    label="电机 KV"
                     value={getDisplayValue('motorKv')}
                     onChange={(v) => handleChange('motorKv', v)}
                     onBlur={() => handleBlur('motorKv')}
@@ -4138,7 +4136,7 @@ function VehicleEditModal({
                     placeholder="2400"
                   />
                   <VehicleInputField
-                    label="ESC Rating"
+                    label="ESC 电流"
                     value={getDisplayValue('escRating')}
                     onChange={(v) => handleChange('escRating', v)}
                     onBlur={() => handleBlur('escRating')}
@@ -4147,7 +4145,7 @@ function VehicleEditModal({
                     placeholder="30"
                   />
                   <VehicleInputField
-                    label="Battery C-Rating"
+                    label="电池 C 值"
                     value={getDisplayValue('batteryDischarge')}
                     onChange={(v) => handleChange('batteryDischarge', v)}
                     onBlur={() => handleBlur('batteryDischarge')}
@@ -4162,7 +4160,7 @@ function VehicleEditModal({
               {(isPlane || isVtol) && (
                 <div className="grid grid-cols-2 gap-3">
                   <VehicleInputField
-                    label="Motor KV"
+                    label="电机 KV"
                     value={getDisplayValue('motorKv')}
                     onChange={(v) => handleChange('motorKv', v)}
                     onBlur={() => handleBlur('motorKv')}
@@ -4170,7 +4168,7 @@ function VehicleEditModal({
                     placeholder="1000"
                   />
                   <VehicleInputField
-                    label="ESC Rating"
+                    label="ESC 电流"
                     value={getDisplayValue('escRating')}
                     onChange={(v) => handleChange('escRating', v)}
                     onBlur={() => handleBlur('escRating')}
@@ -4185,7 +4183,7 @@ function VehicleEditModal({
               {(isRover || isBoat || isSub) && (
                 <div className="grid grid-cols-2 gap-3">
                   <VehicleInputField
-                    label="Motor KV"
+                    label="电机 KV"
                     value={getDisplayValue('motorKv')}
                     onChange={(v) => handleChange('motorKv', v)}
                     onBlur={() => handleBlur('motorKv')}
@@ -4193,7 +4191,7 @@ function VehicleEditModal({
                     placeholder="1200"
                   />
                   <VehicleInputField
-                    label="ESC Rating"
+                    label="ESC 电流"
                     value={getDisplayValue('escRating')}
                     onChange={(v) => handleChange('escRating', v)}
                     onBlur={() => handleBlur('escRating')}
@@ -4206,11 +4204,11 @@ function VehicleEditModal({
 
               {/* Notes - Common to all */}
               <div>
-                <label className="block text-xs text-content-secondary mb-1">Notes</label>
+                <label className="block text-xs text-content-secondary mb-1">备注</label>
                 <textarea
                   value={vehicle.notes || ''}
                   onChange={(e) => onUpdate({ notes: e.target.value || undefined })}
-                  placeholder="Additional notes about this vehicle..."
+                  placeholder="关于此飞行器的其他备注..."
                   rows={2}
                   className="w-full px-3 py-2 bg-surface-input border border-border rounded-lg text-content text-sm focus:outline-none focus:border-blue-500 resize-none"
                 />
@@ -4233,9 +4231,9 @@ function VehicleEditModal({
               className="mt-1"
             />
             <span>
-              <span className="text-content">Auto-apply to SITL on start</span>
+              <span className="text-content">启动时自动应用到 SITL</span>
               <span className="block text-xs text-content-tertiary mt-0.5">
-                When you launch SITL, this profile's params are reapplied automatically.
+                启动 SITL 时会自动重新应用此配置的参数。
               </span>
             </span>
           </label>
@@ -4247,7 +4245,7 @@ function VehicleEditModal({
             onClick={onClose}
             className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
           >
-            Done
+            完成
           </button>
         </div>
       </div>
@@ -4304,28 +4302,28 @@ function VehicleCard({
       case 'copter':
         if (vehicle.frameSize) parts.push(fmtLength(vehicle.frameSize, dimensionUnit));
         if (vehicle.motorCount) {
-          const motorNames: Record<number, string> = { 3: 'Tri', 4: 'Quad', 6: 'Hex', 8: 'Octo' };
+          const motorNames: Record<number, string> = { 3: '三旋', 4: '四旋', 6: '六旋', 8: '八旋' };
           parts.push(motorNames[vehicle.motorCount] || `${vehicle.motorCount}M`);
         }
         parts.push(batteryStr);
         parts.push(fmtWeight(vehicle.weight, weightUnit));
         break;
       case 'plane':
-        if (vehicle.wingspan) parts.push(`${fmtLength(vehicle.wingspan, dimensionUnit)} span`);
+        if (vehicle.wingspan) parts.push(`${fmtLength(vehicle.wingspan, dimensionUnit)} 翼展`);
         parts.push(batteryStr);
         parts.push(fmtWeight(vehicle.weight, weightUnit));
         break;
       case 'vtol':
         if (vehicle.wingspan) parts.push(fmtLength(vehicle.wingspan, dimensionUnit));
-        if (vehicle.vtolMotorCount) parts.push(`${vehicle.vtolMotorCount} VTOL motors`);
+        if (vehicle.vtolMotorCount) parts.push(`${vehicle.vtolMotorCount} 个 VTOL 电机`);
         parts.push(batteryStr);
         break;
       case 'rover':
         if (vehicle.driveType) {
-          const driveNames: Record<string, string> = { differential: 'Tank', ackermann: 'Car', skid: 'Skid' };
+          const driveNames: Record<string, string> = { differential: '履带', ackermann: '轿车', skid: '滑移' };
           parts.push(driveNames[vehicle.driveType] || vehicle.driveType);
         }
-        if (vehicle.wheelDiameter) parts.push(`${fmtLength(vehicle.wheelDiameter, dimensionUnit)} wheels`);
+        if (vehicle.wheelDiameter) parts.push(`${fmtLength(vehicle.wheelDiameter, dimensionUnit)} 轮径`);
         parts.push(batteryStr);
         break;
       case 'boat':
@@ -4337,7 +4335,7 @@ function VehicleCard({
         break;
       case 'sub':
         if (vehicle.thrusterCount) parts.push(`${vehicle.thrusterCount}T`);
-        if (vehicle.maxDepth) parts.push(`${formatAltitudeFromMeters(vehicle.maxDepth, altitudeUnit)} rated`);
+        if (vehicle.maxDepth) parts.push(`${formatAltitudeFromMeters(vehicle.maxDepth, altitudeUnit)} 额定深度`);
         parts.push(batteryStr);
         break;
       default:
@@ -4368,10 +4366,10 @@ function VehicleCard({
               <div className="flex items-center gap-2">
                 <span className="text-content font-medium text-sm">{vehicle.name}</span>
                 {isActive && (
-                  <span className="text-[10px] text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded">Active</span>
+                  <span className="text-[10px] text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded">当前使用</span>
                 )}
                 {vehicle.boardUid && (
-                  <span className="text-[10px] text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded" title={`Board UID: ${vehicle.boardUid}`}>
+                  <span className="text-[10px] text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded" title={`板卡 UID：${vehicle.boardUid}`}>
                     {vehicle.boardId || vehicle.boardName || vehicle.boardUid.slice(0, 8)}
                   </span>
                 )}
@@ -4389,11 +4387,11 @@ function VehicleCard({
                 await saveParmToFile(vehicle, tpl, { includeSim: false });
               }}
               className="p-1.5 text-content-secondary hover:text-content transition-colors"
-              title="Export .parm file"
+              title="导出 .parm 文件"
             >
               <Download className="w-4 h-4" />
             </button>
-            <button onClick={onEdit} className="p-1.5 text-content-secondary hover:text-content transition-colors" title="Edit">
+            <button onClick={onEdit} className="p-1.5 text-content-secondary hover:text-content transition-colors" title="编辑">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
               </svg>
@@ -4410,10 +4408,10 @@ function VehicleCard({
                 className={confirmDelete
                   ? 'px-2 py-1 rounded text-[11px] font-medium text-red-400 bg-red-500/10 transition-colors'
                   : 'p-1.5 text-content-secondary hover:text-red-400 transition-colors'}
-                title={confirmDelete ? 'Click again to delete' : 'Delete'}
+                title={confirmDelete ? '再次点击确认删除' : '删除'}
               >
                 {confirmDelete ? (
-                  'Delete?'
+                  '删除？'
                 ) : (
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

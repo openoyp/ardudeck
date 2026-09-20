@@ -30,79 +30,79 @@ export const MODE_COLORS: Record<string, string> = {
 
 /** ArduPilot LogErrorSubsystem ids (AP_Logger). */
 const ERR_SUBSYSTEMS: Record<number, string> = {
-  1: 'Main', 2: 'Radio', 3: 'Compass', 4: 'Optical flow',
-  5: 'Radio failsafe', 6: 'Battery failsafe', 8: 'GCS failsafe',
-  9: 'Fence failsafe', 10: 'Flight mode', 11: 'GPS', 12: 'Crash check',
-  13: 'Flip', 15: 'Parachute', 16: 'EKF check', 17: 'EKF failsafe',
-  18: 'Baro', 19: 'CPU load', 20: 'ADSB failsafe', 21: 'Terrain',
-  22: 'Navigation', 23: 'Terrain failsafe', 24: 'EKF primary',
-  25: 'Thrust loss check', 26: 'Sensor failsafe', 27: 'Leak failsafe',
-  28: 'Pilot input', 29: 'Vibration failsafe', 30: 'Internal error',
-  31: 'Dead-reckoning failsafe',
+  1: '主系统', 2: '无线电', 3: '罗盘', 4: '光流',
+  5: '无线电失控保护', 6: '电池失控保护', 8: '地面站失控保护',
+  9: '围栏失控保护', 10: '飞行模式', 11: 'GPS', 12: '坠机检查',
+  13: '翻转', 15: '降落伞', 16: 'EKF 检查', 17: 'EKF 失控保护',
+  18: '气压计', 19: 'CPU 负载', 20: 'ADSB 失控保护', 21: '地形',
+  22: '导航', 23: '地形失控保护', 24: 'EKF 主源',
+  25: '推力损失检查', 26: '传感器失控保护', 27: '进水失控保护',
+  28: '飞手输入', 29: '振动失控保护', 30: '内部错误',
+  31: '航位推算失控保护',
 };
 
 /** Per-subsystem error-code meanings; generic fallbacks below. */
 const ERR_CODES_BY_SUBSYS: Record<number, Record<number, string>> = {
-  2: { 2: 'late frame' },
-  11: { 2: 'GPS glitch', 0: 'glitch cleared' },
-  12: { 1: 'CRASH DETECTED', 2: 'loss of control' },
-  16: { 2: 'bad variance', 0: 'variance cleared' },
-  18: { 2: 'baro glitch', 0: 'glitch cleared' },
-  25: { 1: 'THRUST LOSS' },
+  2: { 2: '数据帧延迟' },
+  11: { 2: 'GPS 故障', 0: '故障已清除' },
+  12: { 1: '检测到坠机', 2: '失控' },
+  16: { 2: '方差过大', 0: '方差已恢复' },
+  18: { 2: '气压计故障', 0: '故障已清除' },
+  25: { 1: '推力损失' },
 };
 
 const ERR_CODES_GENERIC: Record<number, string> = {
-  0: 'resolved',
-  1: 'triggered',
-  4: 'unhealthy',
+  0: '已解决',
+  1: '已触发',
+  4: '状态异常',
 };
 
 /** ArduPilot LogEvent ids (AP_Logger LogEvent enum). */
 const EV_NAMES: Record<number, string> = {
-  10: 'Armed', 11: 'Disarmed', 15: 'Auto armed',
-  17: 'Land complete (maybe)', 18: 'Land complete', 19: 'Lost GPS',
-  21: 'Flip start', 22: 'Flip end', 25: 'Home set',
-  26: 'Simple mode on', 27: 'Simple mode off', 28: 'Not landed',
-  29: 'Super simple mode on',
-  30: 'AutoTune initialised', 31: 'AutoTune off', 32: 'AutoTune restart',
-  33: 'AutoTune success', 34: 'AutoTune failed', 35: 'AutoTune reached limit',
-  36: 'AutoTune pilot testing', 37: 'AutoTune gains saved',
-  38: 'Trim saved', 39: 'Waypoint saved',
-  41: 'Fence enabled', 42: 'Fence disabled',
-  43: 'Acro trainer off', 44: 'Acro trainer leveling', 45: 'Acro trainer limited',
-  46: 'Gripper grab', 47: 'Gripper release',
-  49: 'Parachute disabled', 50: 'Parachute enabled', 51: 'PARACHUTE RELEASED',
-  52: 'Landing gear deployed', 53: 'Landing gear retracted',
-  54: 'MOTORS EMERGENCY STOPPED', 55: 'Motors emergency stop cleared',
-  56: 'Motors interlock disabled', 57: 'Motors interlock enabled',
-  58: 'Rotor runup complete', 59: 'ROTOR SPEED BELOW CRITICAL',
-  60: 'EKF altitude reset', 61: 'Land cancelled by pilot', 62: 'EKF yaw reset',
-  63: 'ADSB avoidance enabled', 64: 'ADSB avoidance disabled',
-  65: 'Proximity avoidance enabled', 66: 'Proximity avoidance disabled',
-  67: 'GPS primary changed',
-  71: 'ZigZag point A stored', 72: 'ZigZag point B stored',
-  73: 'Land repositioning active', 74: 'Standby enabled', 75: 'Standby disabled',
+  10: '已解锁', 11: '已上锁', 15: '自动模式已解锁',
+  17: '降落可能已完成', 18: '降落完成', 19: 'GPS 丢失',
+  21: '翻转开始', 22: '翻转结束', 25: '已设置 Home 点',
+  26: '简单模式开启', 27: '简单模式关闭', 28: '尚未降落',
+  29: '超级简单模式开启',
+  30: 'AutoTune 已初始化', 31: 'AutoTune 已关闭', 32: 'AutoTune 重启',
+  33: 'AutoTune 成功', 34: 'AutoTune 失败', 35: 'AutoTune 达到限制',
+  36: 'AutoTune 飞手测试', 37: 'AutoTune 参数已保存',
+  38: '微调已保存', 39: '航点已保存',
+  41: '围栏已启用', 42: '围栏已禁用',
+  43: 'Acro 教练关闭', 44: 'Acro 教练自动回平', 45: 'Acro 教练受限',
+  46: '夹爪抓取', 47: '夹爪释放',
+  49: '降落伞已禁用', 50: '降落伞已启用', 51: '降落伞已开伞',
+  52: '起落架已放下', 53: '起落架已收起',
+  54: '电机紧急停止', 55: '电机紧急停止已解除',
+  56: '电机互锁已禁用', 57: '电机互锁已启用',
+  58: '旋翼加速完成', 59: '旋翼转速低于临界值',
+  60: 'EKF 高度重置', 61: '降落被飞手取消', 62: 'EKF 偏航重置',
+  63: 'ADSB 避让已启用', 64: 'ADSB 避让已禁用',
+  65: '近距避让已启用', 66: '近距避让已禁用',
+  67: 'GPS 主源已切换',
+  71: 'ZigZag A 点已存储', 72: 'ZigZag B 点已存储',
+  73: '降落重定位已激活', 74: '待机已启用', 75: '待机已禁用',
 };
 
 /** ArduPilot ModeReason enum: why the vehicle changed flight mode. */
 const MODE_REASONS: Record<number, string> = {
-  0: 'unknown', 1: 'RC command', 2: 'GCS command', 3: 'radio failsafe',
-  4: 'battery failsafe', 5: 'GCS failsafe', 6: 'EKF failsafe', 7: 'GPS glitch',
-  8: 'mission end', 9: 'throttle land escape', 10: 'fence breach',
-  11: 'terrain failsafe', 12: 'brake timeout', 13: 'flip complete',
-  14: 'avoidance', 15: 'avoidance recovery', 16: 'throw complete',
-  17: 'terminate', 18: 'toy mode', 19: 'crash failsafe', 20: 'soaring FBW-B',
-  21: 'soaring thermal detected', 22: 'soaring in thermal', 23: 'unavailable',
-  24: 'autorotation start', 25: 'autorotation bailout',
-  26: 'soaring drift exceeded', 27: 'rtl complete switching to vtol land',
-  28: 'rtl complete switching to fixed wing autoland', 29: 'mission cmd',
-  30: 'frsky command', 31: 'fence return previous mode',
-  32: 'QRTL instead of RTL', 33: 'auto rtl exit', 34: 'loiter alt reached QLand',
-  35: 'loiter alt in vtol land', 36: 'radio failsafe recovery',
-  37: 'QLand instead of RTL', 38: 'deadreckon failsafe',
-  39: 'mode takeoff failsafe', 40: 'DDS command', 41: 'aux function',
-  42: 'lua command', 43: 'auto landing pattern', 44: 'rc emergency stop',
-  45: 'crow mode switch',
+  0: '未知', 1: 'RC 指令', 2: '地面站指令', 3: '无线电失控保护',
+  4: '电池失控保护', 5: '地面站失控保护', 6: 'EKF 失控保护', 7: 'GPS 故障',
+  8: '任务结束', 9: '油门降落脱离', 10: '越出围栏',
+  11: '地形失控保护', 12: '刹车超时', 13: '翻转完成',
+  14: '避让', 15: '避让恢复', 16: '抛飞完成',
+  17: '终止', 18: '玩具模式', 19: '坠机失控保护', 20: '翱翔 FBW-B',
+  21: '翱翔检测到热气流', 22: '翱翔进入热气流', 23: '不可用',
+  24: '自转开始', 25: '自转改出',
+  26: '翱翔漂移超限', 27: 'RTL 完成后切换到 VTOL 降落',
+  28: 'RTL 完成后切换到固定翼自动降落', 29: '任务指令',
+  30: 'FrSky 指令', 31: '围栏返回上一模式',
+  32: '以 QRTL 代替 RTL', 33: '自动 RTL 退出', 34: '悬停高度达到后 QLand',
+  35: 'VTOL 降落中的悬停高度', 36: '无线电失控保护恢复',
+  37: '以 QLand 代替 RTL', 38: '航位推算失控保护',
+  39: '模式起飞失控保护', 40: 'DDS 指令', 41: '辅助功能',
+  42: 'Lua 指令', 43: '自动降落航线', 44: 'RC 紧急停止',
+  45: 'Crow 模式切换',
 };
 
 /** Event ids that deserve attention even though they are "events" not errors. */
@@ -125,19 +125,19 @@ export interface LogEventEntry {
 type LogMessages = Record<string, LogColumns>;
 
 export function decodeErr(subsys: number, ecode: number, vehicleType?: string): { label: string; detail: string; severity: LogEventSeverity } {
-  const label = ERR_SUBSYSTEMS[subsys] ?? `Subsystem ${subsys}`;
+  const label = ERR_SUBSYSTEMS[subsys] ?? `子系统 ${subsys}`;
   let detail: string;
   if (subsys === 10) {
     // Flight mode subsystem: the code is the mode number that was refused.
-    detail = `cannot enter ${getModeName(ecode, vehicleType)}`;
+    detail = `无法进入 ${getModeName(ecode, vehicleType)}`;
   } else {
-    detail = ERR_CODES_BY_SUBSYS[subsys]?.[ecode] ?? ERR_CODES_GENERIC[ecode] ?? `code ${ecode}`;
+    detail = ERR_CODES_BY_SUBSYS[subsys]?.[ecode] ?? ERR_CODES_GENERIC[ecode] ?? `代码 ${ecode}`;
   }
   return { label, detail, severity: ecode === 0 ? 'info' : 'error' };
 }
 
 export function decodeEv(id: number): { label: string; severity: LogEventSeverity } {
-  return { label: EV_NAMES[id] ?? `Event ${id}`, severity: EV_WARN_IDS.has(id) ? 'warn' : 'info' };
+  return { label: EV_NAMES[id] ?? `事件 ${id}`, severity: EV_WARN_IDS.has(id) ? 'warn' : 'info' };
 }
 
 /**
@@ -181,19 +181,19 @@ export function extractLogEvents(log: { messages: LogMessages; metadata?: { vehi
       timeS: m.timeUs / 1_000_000,
       kind: 'MODE',
       severity: 'info',
-      label: `Mode: ${name}`,
-      detail: typeof rsn === 'number' ? `reason: ${MODE_REASONS[rsn] ?? rsn}` : undefined,
+      label: `模式: ${name}`,
+      detail: typeof rsn === 'number' ? `原因: ${MODE_REASONS[rsn] ?? rsn}` : undefined,
     });
   }
 
   for (const m of logRows(log, 'CMD')) {
     const num = m.fields['CNum'];
-    const name = typeof m.fields['CName'] === 'string' ? m.fields['CName'] : `cmd ${m.fields['CId'] ?? '?'}`;
+    const name = typeof m.fields['CName'] === 'string' ? m.fields['CName'] : `命令 ${m.fields['CId'] ?? '?'}`;
     out.push({
       timeS: m.timeUs / 1_000_000,
       kind: 'CMD',
       severity: 'info',
-      label: typeof num === 'number' ? `WP ${num}: ${name}` : String(name),
+      label: typeof num === 'number' ? `航点 ${num}: ${name}` : String(name),
     });
   }
 

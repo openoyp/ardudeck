@@ -8,10 +8,10 @@ import { useCalibrationStore } from '../../stores/calibration-store';
 import { CALIBRATION_TYPES, type CalibrationStep } from '../../../shared/calibration-types';
 
 const STEPS: { id: CalibrationStep; label: string }[] = [
-  { id: 'select', label: 'Select' },
-  { id: 'prepare', label: 'Prepare' },
-  { id: 'calibrating', label: 'Calibrate' },
-  { id: 'complete', label: 'Complete' },
+  { id: 'select', label: '选择' },
+  { id: 'prepare', label: '准备' },
+  { id: 'calibrating', label: '校准' },
+  { id: 'complete', label: '完成' },
 ];
 
 export function CalibrationHeader() {
@@ -36,7 +36,7 @@ export function CalibrationHeader() {
 
           <div>
             <h2 className="text-lg font-semibold text-content">
-              {calTypeInfo ? calTypeInfo.name : 'Calibration'}
+              {calTypeInfo ? calTypeInfo.name : '校准'}
             </h2>
             <div className="flex items-center gap-2 mt-0.5">
               {/* FC variant badge - show variant name, or protocol as fallback */}

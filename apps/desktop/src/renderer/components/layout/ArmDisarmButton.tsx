@@ -131,7 +131,7 @@ export function ArmDisarmButton() {
               : 'bg-surface border border-border text-content-secondary hover:bg-surface-raised hover:text-content'
           }
         `}
-        title={`${isArmed ? 'Disarm' : forceArm && isMavlink ? 'Force arm (bypasses checks)' : 'Arm'} - Right-click for options`}
+        title={`${isArmed ? '上锁' : forceArm && isMavlink ? '强制解锁(跳过检查)' : '解锁'} - 右键查看选项`}
       >
         {/* Pulsing dot for armed state */}
         <div className={`w-1.5 h-1.5 rounded-full ${
@@ -144,7 +144,7 @@ export function ArmDisarmButton() {
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
         ) : (
-          <span>{isArmed ? 'DISARM' : forceArm && isMavlink ? 'FORCE ARM' : 'ARM'}</span>
+          <span>{isArmed ? '上锁' : forceArm && isMavlink ? '强制解锁' : '解锁'}</span>
         )}
 
         {/* Chevron */}
@@ -170,15 +170,15 @@ export function ArmDisarmButton() {
                 className="w-3.5 h-3.5 rounded border-border bg-surface-raised text-amber-500 focus:ring-amber-500/50 focus:ring-offset-0"
               />
               <div>
-                <div className="text-xs text-content font-medium">Force ARM</div>
-                <div className="text-[10px] text-content-secondary">Bypass pre-arm safety checks</div>
+                <div className="text-xs text-content font-medium">强制解锁</div>
+                <div className="text-[10px] text-content-secondary">跳过解锁前安全检查</div>
               </div>
             </label>
           )}
 
           {isMsp && !mspCanArm && modeMappingsLoaded && (
             <div className="px-3 py-2.5 text-[10px] text-content-secondary">
-              ARM mode not configured on FC. Set an AUX channel for ARM in the Modes tab.
+              飞控未配置 ARM 模式,请在模式选项卡中为 ARM 设置 AUX 通道。
             </div>
           )}
 
@@ -186,7 +186,7 @@ export function ArmDisarmButton() {
           {hasBlockedReasons && (
             <div className={`px-3 py-2.5 ${isMavlink ? 'border-t border-subtle' : ''}`}>
               <div className="text-[10px] font-medium text-red-400 uppercase tracking-wider mb-1">
-                {isMavlink ? 'Pre-arm Checks Failed' : 'Arming Blocked'}
+                {isMavlink ? '解锁前检查未通过' : '解锁被阻止'}
               </div>
               <div className="flex flex-col gap-0.5">
                 {preArmReasons.map((reason, i) => (
@@ -200,7 +200,7 @@ export function ArmDisarmButton() {
 
           {/* Protocol info */}
           <div className="px-3 py-2 border-t border-subtle text-[10px] text-content-secondary">
-            {isMavlink ? 'MAVLink' : `MSP (${connectionState.fcVariant || 'Unknown'})`}
+            {isMavlink ? 'MAVLink' : `MSP (${connectionState.fcVariant || '未知'})`}
           </div>
         </div>
       )}

@@ -10,15 +10,15 @@ export type YMode = 'shared' | 'unit' | 'field';
 export const Y_MODE_ORDER: YMode[] = ['unit', 'shared', 'field'];
 
 export const Y_MODE_LABEL: Record<YMode, string> = {
-  unit: 'Y: Unit',
-  shared: 'Y: Shared',
-  field: 'Y: Field',
+  unit: 'Y: 按单位',
+  shared: 'Y: 共享',
+  field: 'Y: 按字段',
 };
 
 export const Y_MODE_TIP: Record<YMode, string> = {
-  unit: 'One axis per unit: fields measured in the same unit share a scale and stay comparable. Click for one shared axis.',
-  shared: 'One axis for every field, whatever its unit. Click to give each field its own scale.',
-  field: 'Every field on its own auto-scaled axis, for comparing shapes rather than values. Click to group by unit again.',
+  unit: '每种单位一个轴：同单位字段共享刻度、可直接对比。点击切换为单一共享轴。',
+  shared: '所有字段共用一个轴，不论单位。点击为每个字段分配独立刻度。',
+  field: '每个字段使用独立自动缩放的轴，适合比较波形而非数值。点击恢复按单位分组。',
 };
 
 /** Unit suffix the log's UNIT records leave on a series label, e.g. "Alt (m)". */

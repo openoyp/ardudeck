@@ -67,9 +67,9 @@ function ModeAnnunciatorImpl({
     : 'success';
   const dotAnim = phase === 'requesting' ? 'animate-pulse' : '';
   const badgeText =
-    phase === 'requesting' ? 'Requesting…'
+    phase === 'requesting' ? '请求中…'
     : phase === 'rejected' ? rejectLabel
-    : 'Engaged';
+    : '已生效';
   const modeText = phase === 'requesting' && requestedName ? requestedName : currentName;
   const modeCls = phase === 'requesting' ? 'text-content-secondary' : 'text-content';
 
@@ -78,13 +78,13 @@ function ModeAnnunciatorImpl({
       <button
         onClick={onToggle}
         aria-expanded={open}
-        data-tip="Change flight mode"
+        data-tip="切换飞行模式"
         style={mounted && justConfirmed ? { boxShadow: `0 0 0 2px var(--status-success)` } : undefined}
         className={`h-full w-full flex items-center gap-2 rounded-lg border ${phase === 'active' ? 'border-subtle' : ''} bg-surface hover:border-default px-3 transition-all`}
       >
         <span className={`w-2 h-2 rounded-full shrink-0 ${dotAnim}`} style={{ background: `var(--status-${statusVar})` }} />
         <span className={`text-sm font-bold font-mono tracking-wide truncate ${modeCls}`}>
-          {(modeText || 'Unknown').toUpperCase()}
+          {(modeText || '未知').toUpperCase()}
         </span>
         <span
           className="ml-auto shrink-0 text-[9px] font-bold font-mono uppercase tracking-[0.12em] px-2 py-[3px] rounded-full"
@@ -108,7 +108,7 @@ function ModeAnnunciatorImpl({
       <div className="flex items-center gap-2.5">
         <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotAnim}`} style={{ background: `var(--status-${statusVar})` }} />
         <span className={`text-lg font-bold font-mono tracking-wide truncate ${modeCls}`}>
-          {(modeText || 'Unknown').toUpperCase()}
+          {(modeText || '未知').toUpperCase()}
         </span>
         <span
           className="ml-auto text-[9px] font-bold font-mono uppercase tracking-[0.13em] px-2 py-[3px] rounded-full"
@@ -122,12 +122,12 @@ function ModeAnnunciatorImpl({
       <div className="mt-1 text-[11px] font-mono text-content-secondary min-h-[15px]">
         {phase === 'requesting' ? (
           <>
-            still <span className="text-content font-semibold">{currentName.toUpperCase()}</span>
+            仍为 <span className="text-content font-semibold">{currentName.toUpperCase()}</span>
             <span style={{ color: 'var(--status-warn)' }}> → </span>
             {(requestedName || '').toUpperCase()}
           </>
         ) : phase === 'rejected' ? (
-          <><span className="font-semibold" style={{ color: 'var(--status-danger-fg)' }}>{rejectLabel}</span> · still {currentName.toUpperCase()}</>
+          <><span className="font-semibold" style={{ color: 'var(--status-danger-fg)' }}>{rejectLabel}</span> · 仍为 {currentName.toUpperCase()}</>
         ) : (
           currentSubline
         )}

@@ -20,11 +20,11 @@ import { PanelContainer, SectionTitle, StatRow } from './panel-utils';
 const BAUD_RATES = [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];
 
 const STATE_LABEL: Record<NtripStatus['state'], string> = {
-  disconnected: 'Disconnected',
-  connecting: 'Connecting',
-  connected: 'Connected',
-  reconnecting: 'Reconnecting',
-  error: 'Error',
+  disconnected: '已断开连接',
+  connecting: '连接中',
+  connected: '已连接',
+  reconnecting: '正在重连',
+  error: '错误',
 };
 
 const STATE_DOT: Record<NtripStatus['state'], string> = {
@@ -133,7 +133,7 @@ export function NtripPanel() {
       setStatus((s) => ({
         ...s,
         state: 'error',
-        error: `"${host}" is a mountpoint, not a caster host. Put the caster server name in Host and "${host}" in Mountpoint.`,
+        error: `"${host}" 是挂载点,不是 Caster 主机。请在"主机"一栏填写 Caster 服务器名,在"挂载点"一栏填写 "${host}"。`,
       }));
       return;
     }
@@ -154,7 +154,7 @@ export function NtripPanel() {
       setMountpoints(result.mountpoints);
     } else {
       setMountpoints([]);
-      setTableError(result.error ?? 'Failed to fetch mountpoint list');
+      setTableError(result.error ?? '获取挂载点列表失败');
     }
   };
 
@@ -173,11 +173,11 @@ export function NtripPanel() {
               className="text-[10px] px-1.5 py-0.5 rounded bg-surface-raised text-content-secondary whitespace-nowrap"
               data-tip={
                 status.owner === 'orchestrator'
-                  ? 'The multi-vehicle engine runs the NTRIP client and injects corrections into every vehicle'
-                  : 'This desktop runs the NTRIP client and injects into the connected vehicle'
+                  ? '多机引擎运行 NTRIP 客户端,并向每架飞行器注入改正数'
+                  : '本机运行 NTRIP 客户端,并向已连接的飞行器注入改正数'
               }
             >
-              {status.owner === 'orchestrator' ? 'Via orchestrator (fleet)' : 'Direct link'}
+              {status.owner === 'orchestrator' ? '经编排器(机队)' : '直连'}
             </span>
           )}
           {status.state === 'connected' && (
@@ -191,7 +191,7 @@ export function NtripPanel() {
                 : 'bg-blue-500/15 text-blue-400 hover:bg-blue-500/25'
             }`}
           >
-            {busy ? 'Disconnect' : 'Connect'}
+            {busy ? '断开连接' : '连接'}
           </button>
         </div>
         {errorText && <div className="text-xs text-red-400">{errorText}</div>}
@@ -208,7 +208,7 @@ export function NtripPanel() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
           <span className="text-[10px] font-medium text-content-secondary uppercase tracking-wider group-hover:text-content">
-            Settings
+            设置
           </span>
           {!settingsOpen && config.source === 'serial' && config.serialPath && (
             <span className="text-[11px] text-content-tertiary font-mono truncate">
@@ -226,11 +226,11 @@ export function NtripPanel() {
         {settingsOpen && (<>
         {/* Corrections source */}
         <div>
-          <SectionTitle>Source</SectionTitle>
+          <SectionTitle>改正源</SectionTitle>
           <div className="flex rounded overflow-hidden border border-default w-fit">
             {([
-              { id: 'ntrip', label: 'NTRIP caster', tip: 'Corrections from an internet caster' },
-              { id: 'serial', label: 'Local base (serial)', tip: 'Corrections from a base receiver plugged into this computer. Works fully offline.' },
+              { id: 'ntrip', label: 'NTRIP Caster', tip: '来自互联网 Caster 的改正数' },
+              { id: 'serial', label: '本地基准站(串口)', tip: '来自插在本机的基准接收机的改正数,完全离线可用。' },
             ] as Array<{ id: RtkSource; label: string; tip: string }>).map((s) => (
               <button
                 key={s.id}
@@ -253,18 +253,18 @@ export function NtripPanel() {
 
         {config.source === 'serial' && (
         <div>
-          <SectionTitle>Base Station</SectionTitle>
+          <SectionTitle>基准站</SectionTitle>
           <div className="flex gap-2 items-end">
-            <Field label="Serial port" className="flex-1">
+            <Field label="串口" className="flex-1">
               <select
                 value={config.serialPath}
                 onChange={(e) => persist({ serialPath: e.target.value })}
                 className={`${INPUT_CLASS} font-mono`}
               >
-                <option value="">Select a port ({serialPorts.length} found)</option>
+                <option value="">选择串口(找到 {serialPorts.length} 个)</option>
                 {/* Keep a vanished configured port selectable so the choice survives replug. */}
                 {config.serialPath && !serialPorts.some((p) => p.path === config.serialPath) && (
-                  <option value={config.serialPath}>{config.serialPath} (not present)</option>
+                  <option value={config.serialPath}>{config.serialPath}(当前不存在)</option>
                 )}
                 {serialPorts.map((p) => (
                   <option key={p.path} value={p.path}>
@@ -274,7 +274,7 @@ export function NtripPanel() {
                 ))}
               </select>
             </Field>
-            <Field label="Baud" className="w-24">
+            <Field label="波特率" className="w-24">
               <select
                 value={config.serialBaud}
                 onChange={(e) => persist({ serialBaud: Number(e.target.value) })}
@@ -287,14 +287,14 @@ export function NtripPanel() {
             </Field>
             <button
               onClick={() => void refreshSerialPorts()}
-              data-tip="Rescan serial ports. Ports used by an active vehicle connection are not listed."
+              data-tip="重新扫描串口。已被活跃飞行器连接占用的串口不会列出。"
               className="px-2.5 py-1.5 rounded text-xs bg-surface-raised text-content-secondary hover:text-content transition-colors"
             >
-              Rescan
+              重新扫描
             </button>
           </div>
           <p className="mt-1.5 text-[11px] text-content-tertiary">
-            The receiver must be configured as a base (surveyed-in or fixed position) and output RTCM3 on this port.
+            接收机必须配置为基准站(已测量或固定位置),并在该端口输出 RTCM3。
           </p>
         </div>
         )}
@@ -305,17 +305,17 @@ export function NtripPanel() {
           <SectionTitle>Caster</SectionTitle>
           <div className="space-y-2">
             <div className="flex gap-2 items-end">
-              <Field label="Host" className="flex-1">
+              <Field label="主机" className="flex-1">
                 <input
                   type="text"
-                  placeholder="e.g. rtk2go.com"
+                  placeholder="例如 rtk2go.com"
                   value={config.host}
                   onChange={(e) => setConfig({ ...config, host: e.target.value })}
                   onBlur={(e) => persist({ host: e.target.value.trim() })}
                   className={INPUT_CLASS}
                 />
               </Field>
-              <Field label="Port" className="w-16">
+              <Field label="端口" className="w-16">
                 <DraftNumberInput
                   value={config.port}
                   min={1}
@@ -325,14 +325,14 @@ export function NtripPanel() {
                   className={INPUT_CLASS}
                 />
               </Field>
-              <Field label="Protocol" className="w-20">
+              <Field label="协议" className="w-20">
                 <select
                   value={config.protocol ?? 'auto'}
                   onChange={(e) => persist({ protocol: e.target.value as NtripConfig['protocol'] })}
-                  data-tip="NTRIP revision. Auto tries v2 and falls back to v1"
+                  data-tip="NTRIP 版本。自动模式先尝试 v2,失败后回退到 v1"
                   className={INPUT_CLASS}
                 >
-                  <option value="auto">Auto</option>
+                  <option value="auto">自动</option>
                   <option value="v1">v1</option>
                   <option value="v2">v2</option>
                 </select>
@@ -348,10 +348,10 @@ export function NtripPanel() {
               </label>
             </div>
             <div className="flex gap-2">
-              <Field label="Username" className="flex-1">
+              <Field label="用户名" className="flex-1">
                 <input
                   type="text"
-                  placeholder="Empty if anonymous"
+                  placeholder="匿名时留空"
                   autoComplete="off"
                   value={config.username}
                   onChange={(e) => setConfig({ ...config, username: e.target.value })}
@@ -359,7 +359,7 @@ export function NtripPanel() {
                   className={INPUT_CLASS}
                 />
               </Field>
-              <Field label="Password" className="flex-1">
+              <Field label="密码" className="flex-1">
                 <input
                   type="password"
                   autoComplete="new-password"
@@ -371,10 +371,10 @@ export function NtripPanel() {
               </Field>
             </div>
             <div className="flex gap-2 items-end">
-              <Field label="Mountpoint" className="flex-1">
+              <Field label="挂载点" className="flex-1">
                 <input
                   type="text"
-                  placeholder="e.g. MOUNT1 (use List)"
+                  placeholder="例如 MOUNT1(可用列表获取)"
                   value={config.mountpoint}
                   onChange={(e) => setConfig({ ...config, mountpoint: e.target.value })}
                   onBlur={(e) => persist({ mountpoint: e.target.value.trim() })}
@@ -384,10 +384,10 @@ export function NtripPanel() {
               <button
                 onClick={() => void handleFetchSourcetable()}
                 disabled={fetchingTable || !config.host}
-                data-tip="Fetch the caster's mountpoint list"
+                data-tip="获取 Caster 的挂载点列表"
                 className="px-2.5 py-1.5 rounded text-xs bg-surface-raised text-content-secondary hover:text-content transition-colors disabled:opacity-50"
               >
-                {fetchingTable ? 'Fetching...' : 'List'}
+                {fetchingTable ? '获取中…' : '列表'}
               </button>
             </div>
             {tableError && <div className="text-xs text-red-400">{tableError}</div>}
@@ -397,7 +397,7 @@ export function NtripPanel() {
                 onChange={(e) => persist({ mountpoint: e.target.value })}
                 className={INPUT_CLASS}
               >
-                <option value="">Select a mountpoint ({mountpoints.length} found)</option>
+                <option value="">选择挂载点(找到 {mountpoints.length} 个)</option>
                 {mountpoints.map((m) => (
                   <option key={m.name} value={m.name}>
                     {m.name}
@@ -412,11 +412,11 @@ export function NtripPanel() {
 
         {/* Position upload */}
         <div>
-          <SectionTitle>Position Upload</SectionTitle>
+          <SectionTitle>位置上传</SectionTitle>
           <div className="flex items-center gap-3">
             <label
               className="flex items-center gap-1.5 text-xs text-content-secondary"
-              data-tip="Uploads the vehicle's GPS position as NMEA GGA. Required by VRS / network mountpoints."
+              data-tip="将飞行器的 GPS 位置以 NMEA GGA 上传。VRS / 网络挂载点需要。"
             >
               <input
                 type="checkbox"
@@ -424,11 +424,11 @@ export function NtripPanel() {
                 onChange={(e) => persist({ sendPosition: e.target.checked })}
                 className="accent-blue-500"
               />
-              Send vehicle position (GGA)
+              上传飞行器位置(GGA)
             </label>
             {config.sendPosition && (
               <label className="flex items-center gap-1.5 text-xs text-content-secondary">
-                Interval (s)
+                间隔(秒)
                 <DraftNumberInput
                   min={1}
                   max={30}
@@ -447,42 +447,42 @@ export function NtripPanel() {
         {/* Stream stats */}
         {(busy || status.bytesReceived > 0) && (
           <div>
-            <SectionTitle>Corrections</SectionTitle>
+            <SectionTitle>改正数</SectionTitle>
             <div className="space-y-1">
-              {status.mountpoint && <StatRow label="Mountpoint" value={status.mountpoint} />}
-              <StatRow label="Received" value={formatBytes(status.bytesReceived)} />
-              <StatRow label="Data rate" value={`${formatBytes(status.dataRateBps)}/s`} />
+              {status.mountpoint && <StatRow label="挂载点" value={status.mountpoint} />}
+              <StatRow label="已接收" value={formatBytes(status.bytesReceived)} />
+              <StatRow label="数据速率" value={`${formatBytes(status.dataRateBps)}/s`} />
               <StatRow
-                label={status.owner === 'orchestrator' ? 'Forwarded to fleet' : 'Forwarded to vehicle'}
+                label={status.owner === 'orchestrator' ? '已转发到机队' : '已转发到飞行器'}
                 value={status.rtcmForwarded}
               />
               {status.owner === 'orchestrator' &&
                 status.perVehicleForwarded &&
                 Object.keys(status.perVehicleForwarded).length > 0 && (
-                  <StatRow label="Vehicles receiving" value={Object.keys(status.perVehicleForwarded).length} />
+                  <StatRow label="接收中的飞行器" value={Object.keys(status.perVehicleForwarded).length} />
                 )}
-              {status.rtcmDropped > 0 && <StatRow label="Dropped" value={status.rtcmDropped} />}
+              {status.rtcmDropped > 0 && <StatRow label="已丢弃" value={status.rtcmDropped} />}
               {status.basePosition && (
                 <StatRow
-                  label="Base position"
+                  label="基准站位置"
                   value={`${status.basePosition.lat.toFixed(7)}, ${status.basePosition.lon.toFixed(7)} (${status.basePosition.altM.toFixed(1)} m)`}
                 />
               )}
               {status.source !== 'serial' && (
                 <StatRow
-                  label="GGA upload"
+                  label="GGA 上传"
                   value={
                     status.ggaState === 'off'
-                      ? 'Off'
+                      ? '关闭'
                       : status.ggaState === 'waiting-for-fix'
-                        ? 'Waiting for fix'
-                        : `Sent ${status.ggaSentCount}`
+                        ? '等待定位'
+                        : `已发送 ${status.ggaSentCount}`
                   }
                 />
               )}
               {typesSummary && (
                 <div className="pt-1">
-                  <div className="text-content-secondary text-xs mb-0.5">RTCM messages</div>
+                  <div className="text-content-secondary text-xs mb-0.5">RTCM 消息</div>
                   <div className="font-mono text-[11px] text-content-tertiary break-words">{typesSummary}</div>
                 </div>
               )}

@@ -78,8 +78,8 @@ export function Detachable({
         <button
           onClick={handlePopOut}
           className="absolute top-2 right-2 z-30 p-1.5 rounded-md bg-surface-raised/80 hover:bg-surface-raised backdrop-blur-sm border border-subtle text-content-secondary hover:text-content opacity-0 group-hover:opacity-100 transition-opacity"
-          title={`Open ${title} in new window`}
-          aria-label={`Open ${title} in new window`}
+          title={`在独立窗口中打开 ${title}`}
+          aria-label={`在独立窗口中打开 ${title}`}
         >
           <PopOutIcon />
         </button>
@@ -104,12 +104,12 @@ function DetachedPlaceholder({
           </svg>
         </div>
         <div className="text-sm font-medium text-content mb-1">{title}</div>
-        <div className="text-xs text-content-secondary mb-3">Open in separate window</div>
+        <div className="text-xs text-content-secondary mb-3">已在独立窗口中打开</div>
         <button
           onClick={onReDock}
           className="px-3 py-1.5 text-xs bg-blue-500/15 hover:bg-blue-500/25 text-blue-500 border border-blue-500/40 rounded-md transition-colors"
         >
-          Dock back here
+          在此处重新停靠
         </button>
       </div>
     </div>

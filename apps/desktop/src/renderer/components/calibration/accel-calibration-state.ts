@@ -55,7 +55,7 @@ export function accelCalibrationState(
 export function accelCalibrationNote(state: AccelCalibrationState): string | null {
   if (state.unknown || state.calibrated) return null;
   const which = state.missing.length > 1
-    ? `Accelerometers ${state.missing.join(' and ')} have`
-    : `Accelerometer ${state.missing[0]} has`;
-  return `${which} no stored 3D calibration. Run the Quick calibration (one position, vehicle level) or the 6-point one: the Level calibration only sets trims and will not clear "3D Accel calibration needed".`;
+    ? `加速度计 ${state.missing.join('、')}`
+    : `加速度计 ${state.missing[0]}`;
+  return `${which}没有存储 3D 校准。请运行快速校准（单位置，飞行器水平）或六面校准：水平校准只写入配平，无法清除 "3D Accel calibration needed"。`;
 }

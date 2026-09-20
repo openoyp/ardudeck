@@ -17,10 +17,10 @@ import { Rocket, Target, Radio, ClipboardList, type LucideIcon } from 'lucide-re
 
 // Step info for progress display
 const STEPS = [
-  { id: 'welcome', label: 'Select', icon: Target },
-  { id: 'transmitter', label: 'Check', icon: Radio },
-  { id: 'review', label: 'Review', icon: ClipboardList },
-  { id: 'apply', label: 'Apply', icon: Rocket },
+  { id: 'welcome', label: '选择', icon: Target },
+  { id: 'transmitter', label: '检查', icon: Radio },
+  { id: 'review', label: '预览', icon: ClipboardList },
+  { id: 'apply', label: '应用', icon: Rocket },
 ] as const;
 
 export const QuickSetupWizard: React.FC = () => {
@@ -85,13 +85,13 @@ export const QuickSetupWizard: React.FC = () => {
               <Rocket className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-content">Quick Setup Wizard</h2>
-              <p className="text-xs text-content-secondary">Configure everything in one go</p>
+              <h2 className="text-lg font-semibold text-content">快速设置向导</h2>
+              <p className="text-xs text-content-secondary">一次性配置所有项目</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {confirmClose && (
-              <span className="text-xs text-amber-400">Press again to discard setup</span>
+              <span className="text-xs text-amber-400">再按一次将放弃设置</span>
             )}
             <button
               onClick={handleClose}

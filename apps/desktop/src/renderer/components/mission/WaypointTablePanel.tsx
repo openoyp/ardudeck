@@ -202,84 +202,84 @@ interface CommandGroup {
 }
 const COMMAND_GROUPS: CommandGroup[] = [
   {
-    group: 'Navigation',
+    group: '导航',
     commands: [
-      { value: MAV_CMD.NAV_TAKEOFF, label: 'Takeoff', desc: 'Launch and climb to altitude' },
-      { value: MAV_CMD.NAV_WAYPOINT, label: 'Waypoint', desc: 'Fly to this location' },
-      { value: MAV_CMD.NAV_SPLINE_WAYPOINT, label: 'Spline WP', desc: 'Fly through smoothly' },
-      { value: MAV_CMD.NAV_ARC_WAYPOINT, label: 'Arc WP', desc: 'Curved arc path' },
-      { value: MAV_CMD.NAV_LOITER_UNLIM, label: 'Loiter', desc: 'Circle until commanded' },
-      { value: MAV_CMD.NAV_LOITER_TIME, label: 'Loiter Time', desc: 'Circle for set duration' },
-      { value: MAV_CMD.NAV_LOITER_TURNS, label: 'Loiter Turns', desc: 'Circle N times' },
-      { value: MAV_CMD.NAV_LOITER_TO_ALT, label: 'Loiter to Alt', desc: 'Loiter and change alt' },
-      { value: MAV_CMD.NAV_ALTITUDE_WAIT, label: 'Altitude Wait', desc: 'Wait at altitude (Plane)' },
-      { value: MAV_CMD.NAV_CONTINUE_AND_CHANGE_ALT, label: 'Continue/Alt', desc: 'Continue and change alt' },
-      { value: MAV_CMD.NAV_LAND, label: 'Land', desc: 'Land at this location' },
-      { value: MAV_CMD.NAV_RETURN_TO_LAUNCH, label: 'Return Home', desc: 'Fly back to launch' },
-      { value: MAV_CMD.NAV_VTOL_TAKEOFF, label: 'VTOL Takeoff', desc: 'VTOL vertical takeoff' },
-      { value: MAV_CMD.NAV_VTOL_LAND, label: 'VTOL Land', desc: 'VTOL vertical landing' },
-      { value: MAV_CMD.NAV_DELAY, label: 'Wait', desc: 'Pause mission for time' },
-      { value: MAV_CMD.NAV_PAYLOAD_PLACE, label: 'Payload Place', desc: 'Descend and release' },
-      { value: MAV_CMD.NAV_GUIDED_ENABLE, label: 'Guided Enable', desc: 'Enable guided mode' },
+      { value: MAV_CMD.NAV_TAKEOFF, label: '起飞', desc: '起飞并爬升到指定高度' },
+      { value: MAV_CMD.NAV_WAYPOINT, label: '航点', desc: '飞到该位置' },
+      { value: MAV_CMD.NAV_SPLINE_WAYPOINT, label: '样条航点', desc: '平滑飞过' },
+      { value: MAV_CMD.NAV_ARC_WAYPOINT, label: '弧线航点', desc: '弧线路径' },
+      { value: MAV_CMD.NAV_LOITER_UNLIM, label: '悬停', desc: '盘旋直至新指令' },
+      { value: MAV_CMD.NAV_LOITER_TIME, label: '定时悬停', desc: '盘旋指定时长' },
+      { value: MAV_CMD.NAV_LOITER_TURNS, label: '定圈悬停', desc: '盘旋 N 圈' },
+      { value: MAV_CMD.NAV_LOITER_TO_ALT, label: '悬停变高', desc: '悬停并改变高度' },
+      { value: MAV_CMD.NAV_ALTITUDE_WAIT, label: '高度等待', desc: '在高度处等待(固定翼)' },
+      { value: MAV_CMD.NAV_CONTINUE_AND_CHANGE_ALT, label: '继续/变高', desc: '继续飞行并改变高度' },
+      { value: MAV_CMD.NAV_LAND, label: '降落', desc: '在该位置降落' },
+      { value: MAV_CMD.NAV_RETURN_TO_LAUNCH, label: '返航', desc: '飞回起飞点' },
+      { value: MAV_CMD.NAV_VTOL_TAKEOFF, label: 'VTOL 起飞', desc: 'VTOL 垂直起飞' },
+      { value: MAV_CMD.NAV_VTOL_LAND, label: 'VTOL 降落', desc: 'VTOL 垂直降落' },
+      { value: MAV_CMD.NAV_DELAY, label: '等待', desc: '暂停任务一段时间' },
+      { value: MAV_CMD.NAV_PAYLOAD_PLACE, label: '载荷投放', desc: '下降并释放' },
+      { value: MAV_CMD.NAV_GUIDED_ENABLE, label: '启用引导', desc: '启用引导模式' },
     ],
   },
   {
-    group: 'Conditions',
+    group: '条件',
     commands: [
-      { value: MAV_CMD.CONDITION_DELAY, label: 'Delay', desc: 'Wait seconds' },
-      { value: MAV_CMD.CONDITION_DISTANCE, label: 'Distance', desc: 'Wait until near next WP' },
-      { value: MAV_CMD.CONDITION_CHANGE_ALT, label: 'Change Alt', desc: 'Reach alt then continue' },
-      { value: MAV_CMD.CONDITION_YAW, label: 'Yaw', desc: 'Reach heading then continue' },
+      { value: MAV_CMD.CONDITION_DELAY, label: '延时', desc: '等待秒数' },
+      { value: MAV_CMD.CONDITION_DISTANCE, label: '距离', desc: '接近下一航点时等待' },
+      { value: MAV_CMD.CONDITION_CHANGE_ALT, label: '变高', desc: '到达高度后继续' },
+      { value: MAV_CMD.CONDITION_YAW, label: '偏航', desc: '到达航向后继续' },
     ],
   },
   {
-    group: 'Camera / Gimbal',
+    group: '相机 / 云台',
     commands: [
-      { value: MAV_CMD.DO_SET_CAM_TRIGG_DIST, label: 'Camera Trigger', desc: 'Trigger at distance' },
-      { value: MAV_CMD.DO_SET_CAM_TRIGG_INTERVAL, label: 'Camera Interval', desc: 'Trigger at time interval' },
-      { value: MAV_CMD.DO_DIGICAM_CONTROL, label: 'Digicam Control', desc: 'Take a photo' },
-      { value: MAV_CMD.DO_DIGICAM_CONFIGURE, label: 'Digicam Config', desc: 'Configure camera' },
-      { value: MAV_CMD.IMAGE_START_CAPTURE, label: 'Start Capture', desc: 'Start taking photos' },
-      { value: MAV_CMD.IMAGE_STOP_CAPTURE, label: 'Stop Capture', desc: 'Stop taking photos' },
-      { value: MAV_CMD.VIDEO_START_CAPTURE, label: 'Start Video', desc: 'Start recording' },
-      { value: MAV_CMD.VIDEO_STOP_CAPTURE, label: 'Stop Video', desc: 'Stop recording' },
-      { value: MAV_CMD.SET_CAMERA_ZOOM, label: 'Camera Zoom', desc: 'Set zoom level' },
-      { value: MAV_CMD.SET_CAMERA_FOCUS, label: 'Camera Focus', desc: 'Set focus' },
-      { value: MAV_CMD.SET_CAMERA_SOURCE, label: 'Camera Source', desc: 'Set video source' },
-      { value: MAV_CMD.DO_SET_ROI, label: 'Set ROI', desc: 'Point camera at location' },
-      { value: MAV_CMD.DO_SET_ROI_LOCATION, label: 'ROI Location', desc: 'Point camera at GPS' },
-      { value: MAV_CMD.DO_SET_ROI_NONE, label: 'ROI None', desc: 'Stop camera tracking' },
-      { value: MAV_CMD.DO_MOUNT_CONTROL, label: 'Mount Control', desc: 'Set gimbal angles' },
-      { value: MAV_CMD.DO_GIMBAL_MANAGER_PITCHYAW, label: 'Gimbal Pitch/Yaw', desc: 'Set gimbal pitch and yaw' },
+      { value: MAV_CMD.DO_SET_CAM_TRIGG_DIST, label: '相机触发', desc: '按距离触发' },
+      { value: MAV_CMD.DO_SET_CAM_TRIGG_INTERVAL, label: '相机间隔', desc: '按时间间隔触发' },
+      { value: MAV_CMD.DO_DIGICAM_CONTROL, label: '相机控制', desc: '拍摄一张照片' },
+      { value: MAV_CMD.DO_DIGICAM_CONFIGURE, label: '相机配置', desc: '配置相机' },
+      { value: MAV_CMD.IMAGE_START_CAPTURE, label: '开始拍照', desc: '开始连续拍照' },
+      { value: MAV_CMD.IMAGE_STOP_CAPTURE, label: '停止拍照', desc: '停止连续拍照' },
+      { value: MAV_CMD.VIDEO_START_CAPTURE, label: '开始录像', desc: '开始录制' },
+      { value: MAV_CMD.VIDEO_STOP_CAPTURE, label: '停止录像', desc: '停止录制' },
+      { value: MAV_CMD.SET_CAMERA_ZOOM, label: '相机变焦', desc: '设置变焦倍数' },
+      { value: MAV_CMD.SET_CAMERA_FOCUS, label: '相机对焦', desc: '设置对焦' },
+      { value: MAV_CMD.SET_CAMERA_SOURCE, label: '相机源', desc: '设置视频源' },
+      { value: MAV_CMD.DO_SET_ROI, label: '设置 ROI', desc: '相机指向该位置' },
+      { value: MAV_CMD.DO_SET_ROI_LOCATION, label: 'ROI 位置', desc: '相机指向 GPS 坐标' },
+      { value: MAV_CMD.DO_SET_ROI_NONE, label: '取消 ROI', desc: '停止相机跟踪' },
+      { value: MAV_CMD.DO_MOUNT_CONTROL, label: '云台控制', desc: '设置云台角度' },
+      { value: MAV_CMD.DO_GIMBAL_MANAGER_PITCHYAW, label: '云台俯仰/偏航', desc: '设置云台俯仰与偏航' },
     ],
   },
   {
-    group: 'Actions',
+    group: '动作',
     commands: [
-      { value: MAV_CMD.DO_CHANGE_SPEED, label: 'Set Speed', desc: 'Change flight speed' },
-      { value: MAV_CMD.DO_SET_HOME, label: 'Set Home', desc: 'Set new home position' },
-      { value: MAV_CMD.DO_JUMP, label: 'Jump', desc: 'Jump to WP and repeat' },
-      { value: MAV_CMD.JUMP_TAG, label: 'Jump Tag', desc: 'Mark a tag label' },
-      { value: MAV_CMD.DO_JUMP_TAG, label: 'Do Jump Tag', desc: 'Jump to tag label' },
-      { value: MAV_CMD.DO_SET_SERVO, label: 'Set Servo', desc: 'Set servo PWM' },
-      { value: MAV_CMD.DO_REPEAT_SERVO, label: 'Repeat Servo', desc: 'Cycle servo output' },
-      { value: MAV_CMD.DO_SET_RELAY, label: 'Set Relay', desc: 'Set relay on/off' },
-      { value: MAV_CMD.DO_REPEAT_RELAY, label: 'Repeat Relay', desc: 'Cycle relay on/off' },
-      { value: MAV_CMD.DO_CHANGE_ALTITUDE, label: 'Change Alt', desc: 'Change altitude' },
-      { value: MAV_CMD.DO_FENCE_ENABLE, label: 'Fence Enable', desc: 'Enable/disable geofence' },
-      { value: MAV_CMD.DO_PARACHUTE, label: 'Parachute', desc: 'Deploy parachute' },
-      { value: MAV_CMD.DO_GRIPPER, label: 'Gripper', desc: 'Open/close gripper' },
-      { value: MAV_CMD.DO_SPRAYER, label: 'Sprayer', desc: 'Enable/disable sprayer' },
-      { value: MAV_CMD.DO_WINCH, label: 'Winch', desc: 'Control winch motor' },
-      { value: MAV_CMD.DO_VTOL_TRANSITION, label: 'VTOL Transition', desc: 'Switch VTOL/FW mode' },
-      { value: MAV_CMD.DO_LAND_START, label: 'Land Start', desc: 'Begin landing sequence' },
-      { value: MAV_CMD.DO_ENGINE_CONTROL, label: 'Engine Control', desc: 'Start/stop engine' },
-      { value: MAV_CMD.DO_AUX_FUNCTION, label: 'Aux Function', desc: 'Trigger RC aux function' },
-      { value: MAV_CMD.DO_SEND_SCRIPT_MESSAGE, label: 'Script Message', desc: 'Send to Lua script' },
-      { value: MAV_CMD.SET_YAW_SPEED, label: 'Yaw Speed', desc: 'Set yaw speed (Rover)' },
-      { value: MAV_CMD.DO_SET_RESUME_REPEAT_DIST, label: 'Resume Repeat', desc: 'Resume dist after RTL' },
-      { value: MAV_CMD.DO_AUTOTUNE_ENABLE, label: 'Autotune', desc: 'Enable/disable autotune' },
-      { value: MAV_CMD.DO_INVERTED_FLIGHT, label: 'Inverted Flight', desc: 'Inverted flight on/off' },
+      { value: MAV_CMD.DO_CHANGE_SPEED, label: '变速', desc: '改变飞行速度' },
+      { value: MAV_CMD.DO_SET_HOME, label: '设置家', desc: '设置新的家位置' },
+      { value: MAV_CMD.DO_JUMP, label: '跳转', desc: '跳转到航点并重复' },
+      { value: MAV_CMD.JUMP_TAG, label: '跳转标签', desc: '标记一个标签' },
+      { value: MAV_CMD.DO_JUMP_TAG, label: '跳转到标签', desc: '跳转到标签' },
+      { value: MAV_CMD.DO_SET_SERVO, label: '设置舵机', desc: '设置舵机 PWM' },
+      { value: MAV_CMD.DO_REPEAT_SERVO, label: '重复舵机', desc: '循环舵机输出' },
+      { value: MAV_CMD.DO_SET_RELAY, label: '设置继电器', desc: '设置继电器开关' },
+      { value: MAV_CMD.DO_REPEAT_RELAY, label: '重复继电器', desc: '循环继电器开关' },
+      { value: MAV_CMD.DO_CHANGE_ALTITUDE, label: '变高', desc: '改变高度' },
+      { value: MAV_CMD.DO_FENCE_ENABLE, label: '启用围栏', desc: '启用/禁用地理围栏' },
+      { value: MAV_CMD.DO_PARACHUTE, label: '降落伞', desc: '释放降落伞' },
+      { value: MAV_CMD.DO_GRIPPER, label: '夹爪', desc: '打开/关闭夹爪' },
+      { value: MAV_CMD.DO_SPRAYER, label: '喷洒', desc: '启用/禁用喷洒' },
+      { value: MAV_CMD.DO_WINCH, label: '绞盘', desc: '控制绞盘电机' },
+      { value: MAV_CMD.DO_VTOL_TRANSITION, label: 'VTOL 模式切换', desc: '切换 VTOL/固定翼模式' },
+      { value: MAV_CMD.DO_LAND_START, label: '降落起点', desc: '开始降落序列' },
+      { value: MAV_CMD.DO_ENGINE_CONTROL, label: '发动机控制', desc: '启动/停止发动机' },
+      { value: MAV_CMD.DO_AUX_FUNCTION, label: '辅助功能', desc: '触发遥控辅助通道' },
+      { value: MAV_CMD.DO_SEND_SCRIPT_MESSAGE, label: '脚本消息', desc: '发送到 Lua 脚本' },
+      { value: MAV_CMD.SET_YAW_SPEED, label: '偏航速度', desc: '设置偏航速度(车艇)' },
+      { value: MAV_CMD.DO_SET_RESUME_REPEAT_DIST, label: '恢复重复', desc: '返航后恢复重复距离' },
+      { value: MAV_CMD.DO_AUTOTUNE_ENABLE, label: '自调参', desc: '启用/禁用自调参' },
+      { value: MAV_CMD.DO_INVERTED_FLIGHT, label: '倒飞', desc: '倒飞开/关' },
     ],
   },
 ];
@@ -287,31 +287,31 @@ const COMMAND_GROUPS: CommandGroup[] = [
 // Simple mode: only the most common commands
 const SIMPLE_COMMAND_GROUPS: CommandGroup[] = [
   {
-    group: 'Navigation',
+    group: '导航',
     commands: [
-      { value: MAV_CMD.NAV_TAKEOFF, label: 'Takeoff', desc: 'Launch and climb to altitude' },
-      { value: MAV_CMD.NAV_WAYPOINT, label: 'Waypoint', desc: 'Fly to this location' },
-      { value: MAV_CMD.NAV_LOITER_UNLIM, label: 'Loiter', desc: 'Circle until commanded' },
-      { value: MAV_CMD.NAV_LOITER_TIME, label: 'Loiter Time', desc: 'Circle for set duration' },
-      { value: MAV_CMD.NAV_LAND, label: 'Land', desc: 'Land at this location' },
-      { value: MAV_CMD.NAV_RETURN_TO_LAUNCH, label: 'Return Home', desc: 'Fly back to launch' },
+      { value: MAV_CMD.NAV_TAKEOFF, label: '起飞', desc: '起飞并爬升到指定高度' },
+      { value: MAV_CMD.NAV_WAYPOINT, label: '航点', desc: '飞到该位置' },
+      { value: MAV_CMD.NAV_LOITER_UNLIM, label: '悬停', desc: '盘旋直至新指令' },
+      { value: MAV_CMD.NAV_LOITER_TIME, label: '定时悬停', desc: '盘旋指定时长' },
+      { value: MAV_CMD.NAV_LAND, label: '降落', desc: '在该位置降落' },
+      { value: MAV_CMD.NAV_RETURN_TO_LAUNCH, label: '返航', desc: '飞回起飞点' },
     ],
   },
   {
-    group: 'Camera',
+    group: '相机',
     commands: [
-      { value: MAV_CMD.DO_SET_CAM_TRIGG_DIST, label: 'Camera Trigger', desc: 'Trigger at distance' },
-      { value: MAV_CMD.DO_DIGICAM_CONTROL, label: 'Take Photo', desc: 'Trigger camera shutter' },
-      { value: MAV_CMD.IMAGE_START_CAPTURE, label: 'Start Capture', desc: 'Start taking photos' },
-      { value: MAV_CMD.IMAGE_STOP_CAPTURE, label: 'Stop Capture', desc: 'Stop taking photos' },
+      { value: MAV_CMD.DO_SET_CAM_TRIGG_DIST, label: '相机触发', desc: '按距离触发' },
+      { value: MAV_CMD.DO_DIGICAM_CONTROL, label: '拍照', desc: '触发相机快门' },
+      { value: MAV_CMD.IMAGE_START_CAPTURE, label: '开始拍照', desc: '开始连续拍照' },
+      { value: MAV_CMD.IMAGE_STOP_CAPTURE, label: '停止拍照', desc: '停止连续拍照' },
     ],
   },
   {
-    group: 'Actions',
+    group: '动作',
     commands: [
-      { value: MAV_CMD.DO_CHANGE_SPEED, label: 'Set Speed', desc: 'Change flight speed' },
-      { value: MAV_CMD.DO_JUMP, label: 'Jump', desc: 'Jump to WP and repeat' },
-      { value: MAV_CMD.DO_SET_SERVO, label: 'Set Servo', desc: 'Set servo PWM' },
+      { value: MAV_CMD.DO_CHANGE_SPEED, label: '变速', desc: '改变飞行速度' },
+      { value: MAV_CMD.DO_JUMP, label: '跳转', desc: '跳转到航点并重复' },
+      { value: MAV_CMD.DO_SET_SERVO, label: '设置舵机', desc: '设置舵机 PWM' },
     ],
   },
 ];
@@ -319,21 +319,21 @@ const SIMPLE_COMMAND_GROUPS: CommandGroup[] = [
 // iNav MSP: only 8 waypoint types supported
 const INAV_COMMAND_GROUPS: CommandGroup[] = [
   {
-    group: 'Navigation',
+    group: '导航',
     commands: [
-      { value: MAV_CMD.NAV_WAYPOINT, label: 'Waypoint', desc: 'Fly to location' },
-      { value: MAV_CMD.NAV_LOITER_UNLIM, label: 'Poshold', desc: 'Hold position indefinitely' },
-      { value: MAV_CMD.NAV_LOITER_TIME, label: 'Poshold Time', desc: 'Hold position for duration' },
-      { value: MAV_CMD.NAV_LAND, label: 'Land', desc: 'Land at location' },
-      { value: MAV_CMD.NAV_RETURN_TO_LAUNCH, label: 'RTH', desc: 'Return to home' },
+      { value: MAV_CMD.NAV_WAYPOINT, label: '航点', desc: '飞到该位置' },
+      { value: MAV_CMD.NAV_LOITER_UNLIM, label: '定点保持', desc: '无限期保持位置' },
+      { value: MAV_CMD.NAV_LOITER_TIME, label: '定时定点保持', desc: '定时保持位置' },
+      { value: MAV_CMD.NAV_LAND, label: '降落', desc: '在该位置降落' },
+      { value: MAV_CMD.NAV_RETURN_TO_LAUNCH, label: '返航', desc: '返回起飞点' },
     ],
   },
   {
-    group: 'Actions',
+    group: '动作',
     commands: [
-      { value: MAV_CMD.DO_SET_ROI, label: 'Set POI', desc: 'Point of interest for camera' },
-      { value: MAV_CMD.DO_JUMP, label: 'Jump', desc: 'Jump to WP and repeat' },
-      { value: MAV_CMD.CONDITION_YAW, label: 'Set Heading', desc: 'Lock heading direction' },
+      { value: MAV_CMD.DO_SET_ROI, label: '设置 POI', desc: '相机兴趣点' },
+      { value: MAV_CMD.DO_JUMP, label: '跳转', desc: '跳转到航点并重复' },
+      { value: MAV_CMD.CONDITION_YAW, label: '设置航向', desc: '锁定航向' },
     ],
   },
 ];
@@ -351,59 +351,59 @@ const INAV_COMMAND_GROUPS: CommandGroup[] = [
  */
 const PX4_COMMAND_GROUPS: CommandGroup[] = [
   {
-    group: 'Navigation',
+    group: '导航',
     commands: [
-      { value: MAV_CMD.NAV_TAKEOFF, label: 'Takeoff', desc: 'Launch and climb to altitude' },
-      { value: MAV_CMD.NAV_WAYPOINT, label: 'Waypoint', desc: 'Fly to this location' },
-      { value: MAV_CMD.NAV_LOITER_UNLIM, label: 'Loiter', desc: 'Circle until commanded' },
-      { value: MAV_CMD.NAV_LOITER_TIME, label: 'Loiter Time', desc: 'Circle for set duration' },
-      { value: MAV_CMD.NAV_LOITER_TO_ALT, label: 'Loiter to Alt', desc: 'Loiter and change alt' },
-      { value: MAV_CMD.NAV_LAND, label: 'Land', desc: 'Land at this location' },
-      { value: MAV_CMD.NAV_RETURN_TO_LAUNCH, label: 'Return Home', desc: 'Fly back to launch' },
-      { value: MAV_CMD.NAV_DELAY, label: 'Delay', desc: 'Wait before the next item' },
-      { value: MAV_CMD.DO_LAND_START, label: 'Land Start', desc: 'Marks the landing sequence' },
+      { value: MAV_CMD.NAV_TAKEOFF, label: '起飞', desc: '起飞并爬升到指定高度' },
+      { value: MAV_CMD.NAV_WAYPOINT, label: '航点', desc: '飞到该位置' },
+      { value: MAV_CMD.NAV_LOITER_UNLIM, label: '悬停', desc: '盘旋直至新指令' },
+      { value: MAV_CMD.NAV_LOITER_TIME, label: '定时悬停', desc: '盘旋指定时长' },
+      { value: MAV_CMD.NAV_LOITER_TO_ALT, label: '悬停变高', desc: '悬停并改变高度' },
+      { value: MAV_CMD.NAV_LAND, label: '降落', desc: '在该位置降落' },
+      { value: MAV_CMD.NAV_RETURN_TO_LAUNCH, label: '返航', desc: '飞回起飞点' },
+      { value: MAV_CMD.NAV_DELAY, label: '延时', desc: '在下一项前等待' },
+      { value: MAV_CMD.DO_LAND_START, label: '降落起点', desc: '标记降落序列' },
     ],
   },
   {
     group: 'VTOL',
     commands: [
-      { value: MAV_CMD.NAV_VTOL_TAKEOFF, label: 'VTOL Takeoff', desc: 'Vertical takeoff' },
-      { value: MAV_CMD.NAV_VTOL_LAND, label: 'VTOL Land', desc: 'Vertical landing' },
-      { value: MAV_CMD.DO_VTOL_TRANSITION, label: 'VTOL Transition', desc: 'Switch hover/forward flight' },
+      { value: MAV_CMD.NAV_VTOL_TAKEOFF, label: 'VTOL 起飞', desc: '垂直起飞' },
+      { value: MAV_CMD.NAV_VTOL_LAND, label: 'VTOL 降落', desc: '垂直降落' },
+      { value: MAV_CMD.DO_VTOL_TRANSITION, label: 'VTOL 模式切换', desc: '切换悬停/前飞' },
     ],
   },
   {
-    group: 'Camera',
+    group: '相机',
     commands: [
-      { value: MAV_CMD.DO_SET_CAM_TRIGG_DIST, label: 'Camera Trigger', desc: 'Trigger at distance' },
-      { value: MAV_CMD.DO_DIGICAM_CONTROL, label: 'Take Photo', desc: 'Trigger camera shutter' },
-      { value: MAV_CMD.SET_CAMERA_MODE, label: 'Camera Mode', desc: 'Photo or video mode' },
-      { value: MAV_CMD.IMAGE_START_CAPTURE, label: 'Start Capture', desc: 'Start taking photos' },
-      { value: MAV_CMD.IMAGE_STOP_CAPTURE, label: 'Stop Capture', desc: 'Stop taking photos' },
-      { value: MAV_CMD.VIDEO_START_CAPTURE, label: 'Start Video', desc: 'Start recording' },
-      { value: MAV_CMD.VIDEO_STOP_CAPTURE, label: 'Stop Video', desc: 'Stop recording' },
+      { value: MAV_CMD.DO_SET_CAM_TRIGG_DIST, label: '相机触发', desc: '按距离触发' },
+      { value: MAV_CMD.DO_DIGICAM_CONTROL, label: '拍照', desc: '触发相机快门' },
+      { value: MAV_CMD.SET_CAMERA_MODE, label: '相机模式', desc: '拍照或录像模式' },
+      { value: MAV_CMD.IMAGE_START_CAPTURE, label: '开始拍照', desc: '开始连续拍照' },
+      { value: MAV_CMD.IMAGE_STOP_CAPTURE, label: '停止拍照', desc: '停止连续拍照' },
+      { value: MAV_CMD.VIDEO_START_CAPTURE, label: '开始录像', desc: '开始录制' },
+      { value: MAV_CMD.VIDEO_STOP_CAPTURE, label: '停止录像', desc: '停止录制' },
     ],
   },
   {
-    group: 'Gimbal / ROI',
+    group: '云台 / ROI',
     commands: [
-      { value: MAV_CMD.DO_SET_ROI_LOCATION, label: 'ROI Location', desc: 'Point camera at a location' },
-      { value: MAV_CMD.DO_SET_ROI_WPNEXT_OFFSET, label: 'ROI Next WP', desc: 'Point at the next waypoint' },
-      { value: MAV_CMD.DO_SET_ROI_NONE, label: 'ROI None', desc: 'Cancel region of interest' },
-      { value: MAV_CMD.DO_MOUNT_CONFIGURE, label: 'Mount Config', desc: 'Set gimbal mode' },
-      { value: MAV_CMD.DO_MOUNT_CONTROL, label: 'Mount Control', desc: 'Aim the gimbal' },
+      { value: MAV_CMD.DO_SET_ROI_LOCATION, label: 'ROI 位置', desc: '相机指向某位置' },
+      { value: MAV_CMD.DO_SET_ROI_WPNEXT_OFFSET, label: 'ROI 下一航点', desc: '指向下一航点' },
+      { value: MAV_CMD.DO_SET_ROI_NONE, label: '取消 ROI', desc: '取消兴趣区' },
+      { value: MAV_CMD.DO_MOUNT_CONFIGURE, label: '云台配置', desc: '设置云台模式' },
+      { value: MAV_CMD.DO_MOUNT_CONTROL, label: '云台控制', desc: '控制云台朝向' },
     ],
   },
   {
-    group: 'Actions',
+    group: '动作',
     commands: [
-      { value: MAV_CMD.DO_CHANGE_SPEED, label: 'Set Speed', desc: 'Change flight speed' },
-      { value: MAV_CMD.DO_JUMP, label: 'Jump', desc: 'Jump to WP and repeat' },
-      { value: MAV_CMD.DO_SET_HOME, label: 'Set Home', desc: 'Redefine the home position' },
-      { value: MAV_CMD.DO_SET_SERVO, label: 'Set Servo', desc: 'Set servo PWM' },
-      { value: MAV_CMD.DO_SET_ACTUATOR, label: 'Set Actuator', desc: 'Set an actuator output' },
-      { value: MAV_CMD.DO_GRIPPER, label: 'Gripper', desc: 'Open/close gripper' },
-      { value: MAV_CMD.CONDITION_YAW, label: 'Set Heading', desc: 'Lock heading direction' },
+      { value: MAV_CMD.DO_CHANGE_SPEED, label: '变速', desc: '改变飞行速度' },
+      { value: MAV_CMD.DO_JUMP, label: '跳转', desc: '跳转到航点并重复' },
+      { value: MAV_CMD.DO_SET_HOME, label: '设置家', desc: '重新定义家位置' },
+      { value: MAV_CMD.DO_SET_SERVO, label: '设置舵机', desc: '设置舵机 PWM' },
+      { value: MAV_CMD.DO_SET_ACTUATOR, label: '设置执行器', desc: '设置执行器输出' },
+      { value: MAV_CMD.DO_GRIPPER, label: '夹爪', desc: '打开/关闭夹爪' },
+      { value: MAV_CMD.CONDITION_YAW, label: '设置航向', desc: '锁定航向' },
     ],
   },
 ];
@@ -411,31 +411,31 @@ const PX4_COMMAND_GROUPS: CommandGroup[] = [
 /** The PX4 essentials, mirroring how SIMPLE_COMMAND_GROUPS trims ArduPilot's. */
 const PX4_SIMPLE_COMMAND_GROUPS: CommandGroup[] = [
   {
-    group: 'Navigation',
+    group: '导航',
     commands: [
-      { value: MAV_CMD.NAV_TAKEOFF, label: 'Takeoff', desc: 'Launch and climb to altitude' },
-      { value: MAV_CMD.NAV_WAYPOINT, label: 'Waypoint', desc: 'Fly to this location' },
-      { value: MAV_CMD.NAV_LOITER_UNLIM, label: 'Loiter', desc: 'Circle until commanded' },
-      { value: MAV_CMD.NAV_LOITER_TIME, label: 'Loiter Time', desc: 'Circle for set duration' },
-      { value: MAV_CMD.NAV_LAND, label: 'Land', desc: 'Land at this location' },
-      { value: MAV_CMD.NAV_RETURN_TO_LAUNCH, label: 'Return Home', desc: 'Fly back to launch' },
+      { value: MAV_CMD.NAV_TAKEOFF, label: '起飞', desc: '起飞并爬升到指定高度' },
+      { value: MAV_CMD.NAV_WAYPOINT, label: '航点', desc: '飞到该位置' },
+      { value: MAV_CMD.NAV_LOITER_UNLIM, label: '悬停', desc: '盘旋直至新指令' },
+      { value: MAV_CMD.NAV_LOITER_TIME, label: '定时悬停', desc: '盘旋指定时长' },
+      { value: MAV_CMD.NAV_LAND, label: '降落', desc: '在该位置降落' },
+      { value: MAV_CMD.NAV_RETURN_TO_LAUNCH, label: '返航', desc: '飞回起飞点' },
     ],
   },
   {
-    group: 'Camera',
+    group: '相机',
     commands: [
-      { value: MAV_CMD.DO_SET_CAM_TRIGG_DIST, label: 'Camera Trigger', desc: 'Trigger at distance' },
-      { value: MAV_CMD.DO_DIGICAM_CONTROL, label: 'Take Photo', desc: 'Trigger camera shutter' },
-      { value: MAV_CMD.IMAGE_START_CAPTURE, label: 'Start Capture', desc: 'Start taking photos' },
-      { value: MAV_CMD.IMAGE_STOP_CAPTURE, label: 'Stop Capture', desc: 'Stop taking photos' },
+      { value: MAV_CMD.DO_SET_CAM_TRIGG_DIST, label: '相机触发', desc: '按距离触发' },
+      { value: MAV_CMD.DO_DIGICAM_CONTROL, label: '拍照', desc: '触发相机快门' },
+      { value: MAV_CMD.IMAGE_START_CAPTURE, label: '开始拍照', desc: '开始连续拍照' },
+      { value: MAV_CMD.IMAGE_STOP_CAPTURE, label: '停止拍照', desc: '停止连续拍照' },
     ],
   },
   {
-    group: 'Actions',
+    group: '动作',
     commands: [
-      { value: MAV_CMD.DO_CHANGE_SPEED, label: 'Set Speed', desc: 'Change flight speed' },
-      { value: MAV_CMD.DO_JUMP, label: 'Jump', desc: 'Jump to WP and repeat' },
-      { value: MAV_CMD.DO_SET_SERVO, label: 'Set Servo', desc: 'Set servo PWM' },
+      { value: MAV_CMD.DO_CHANGE_SPEED, label: '变速', desc: '改变飞行速度' },
+      { value: MAV_CMD.DO_JUMP, label: '跳转', desc: '跳转到航点并重复' },
+      { value: MAV_CMD.DO_SET_SERVO, label: '设置舵机', desc: '设置舵机 PWM' },
     ],
   },
 ];
@@ -566,7 +566,7 @@ function CommandDropdown({
                     }
                   }
                 }}
-                placeholder="Search commands..."
+                placeholder="搜索命令..."
                 className="w-full bg-surface-input text-content text-xs pl-7 pr-2 py-1.5 rounded border border-subtle focus:border-blue-500/50 focus:outline-none placeholder-content-secondary"
               />
             </div>
@@ -575,7 +575,7 @@ function CommandDropdown({
           {/* Results */}
           <div className="overflow-auto flex-1 min-h-0">
             {filteredGroups.length === 0 ? (
-              <div className="px-3 py-4 text-xs text-content-secondary text-center">No commands match "{search}"</div>
+              <div className="px-3 py-4 text-xs text-content-secondary text-center">没有匹配"{search}"的命令</div>
             ) : (
               filteredGroups.map((group) => (
                 <div key={group.group}>
@@ -622,183 +622,183 @@ function getWaypointSummary(
   speedUnit: SpeedUnit,
   verticalSpeedUnit: VerticalSpeedUnit,
 ): string {
-  const radiusSuffix = wp.param3 > 0 ? ` (${formatDistanceFromMeters(wp.param3, distanceUnit)} radius)` : '';
+  const radiusSuffix = wp.param3 > 0 ? ` (半径 ${formatDistanceFromMeters(wp.param3, distanceUnit)})` : '';
 
   switch (wp.command) {
     // Navigation
     case MAV_CMD.NAV_TAKEOFF:
-      return `Takeoff to ${formatAltitudeFromMeters(wp.altitude, altitudeUnit)}`;
+      return `起飞到 ${formatAltitudeFromMeters(wp.altitude, altitudeUnit)}`;
     case MAV_CMD.NAV_WAYPOINT:
-      if (advanced) return wp.param1 > 0 ? `WP (hold ${wp.param1}s)` : 'WP';
-      return wp.param1 > 0 ? `Fly here, wait ${wp.param1}s` : 'Fly here';
+      if (advanced) return wp.param1 > 0 ? `WP (停留 ${wp.param1}s)` : 'WP';
+      return wp.param1 > 0 ? `飞到这里,等待 ${wp.param1} 秒` : '飞到这里';
     case MAV_CMD.NAV_SPLINE_WAYPOINT:
-      if (advanced) return wp.param1 > 0 ? `Spline WP (hold ${wp.param1}s)` : 'Spline WP';
-      return wp.param1 > 0 ? `Smooth path, wait ${wp.param1}s` : 'Smooth path';
+      if (advanced) return wp.param1 > 0 ? `Spline WP (停留 ${wp.param1}s)` : 'Spline WP';
+      return wp.param1 > 0 ? `平滑路径,等待 ${wp.param1} 秒` : '平滑路径';
     case MAV_CMD.NAV_LOITER_UNLIM:
       if (advanced) return `Loiter Unlim${radiusSuffix}`;
-      return `Circle here${radiusSuffix}`;
+      return `在这里盘旋${radiusSuffix}`;
     case MAV_CMD.NAV_LOITER_TIME:
       if (advanced) return `Loiter ${wp.param1}s${radiusSuffix}`;
-      return `Circle for ${wp.param1}s${radiusSuffix}`;
+      return `盘旋 ${wp.param1} 秒${radiusSuffix}`;
     case MAV_CMD.NAV_LOITER_TURNS:
       if (advanced) return `Loiter ${wp.param1}x${radiusSuffix}`;
-      return `Circle ${wp.param1}x${radiusSuffix}`;
+      return `盘旋 ${wp.param1} 圈${radiusSuffix}`;
     case MAV_CMD.NAV_LOITER_TO_ALT:
-      return `Loiter to ${formatAltitudeFromMeters(wp.altitude, altitudeUnit)}${radiusSuffix}`;
+      return `悬停变高到 ${formatAltitudeFromMeters(wp.altitude, altitudeUnit)}${radiusSuffix}`;
     case MAV_CMD.NAV_LAND:
       if (advanced) return 'Land';
-      return 'Land here';
+      return '在这里降落';
     case MAV_CMD.NAV_RETURN_TO_LAUNCH:
       if (advanced) return 'RTL';
-      return 'Return to home';
+      return '返航';
     case MAV_CMD.NAV_VTOL_TAKEOFF:
-      return `VTOL Takeoff to ${formatAltitudeFromMeters(wp.altitude, altitudeUnit)}`;
+      return `VTOL 起飞到 ${formatAltitudeFromMeters(wp.altitude, altitudeUnit)}`;
     case MAV_CMD.NAV_VTOL_LAND:
       if (advanced) return 'VTOL Land';
-      return 'VTOL Land here';
+      return 'VTOL 在这里降落';
     case MAV_CMD.NAV_DELAY:
-      return `Wait ${wp.param1}s`;
+      return `等待 ${wp.param1} 秒`;
     case MAV_CMD.NAV_PAYLOAD_PLACE:
-      return wp.param1 > 0 ? `Place payload (max ${formatAltitudeFromMeters(wp.param1, altitudeUnit)} desc)` : 'Place payload';
+      return wp.param1 > 0 ? `投放载荷(最多下降 ${formatAltitudeFromMeters(wp.param1, altitudeUnit)})` : '投放载荷';
     case MAV_CMD.NAV_CONTINUE_AND_CHANGE_ALT:
-      return `Continue, change to ${formatAltitudeFromMeters(wp.altitude, altitudeUnit)}`;
+      return `继续飞行,变高到 ${formatAltitudeFromMeters(wp.altitude, altitudeUnit)}`;
     case MAV_CMD.NAV_ARC_WAYPOINT:
       if (advanced) return 'Arc WP';
-      return 'Curved path';
+      return '弯曲路径';
     case MAV_CMD.NAV_ALTITUDE_WAIT:
-      return `Wait at ${formatAltitudeFromMeters(wp.altitude, altitudeUnit)}`;
+      return `在 ${formatAltitudeFromMeters(wp.altitude, altitudeUnit)} 等待`;
     case MAV_CMD.NAV_GUIDED_ENABLE:
-      return wp.param1 > 0 ? 'Enable guided mode' : 'Disable guided mode';
+      return wp.param1 > 0 ? '启用引导模式' : '禁用引导模式';
     case MAV_CMD.NAV_SCRIPT_TIME:
-      return `Script for ${wp.param1}s`;
+      return `执行脚本 ${wp.param1} 秒`;
     case MAV_CMD.NAV_ATTITUDE_TIME:
-      return `Hold attitude ${wp.param1}s`;
+      return `保持姿态 ${wp.param1} 秒`;
 
     // Conditions
     case MAV_CMD.CONDITION_DELAY:
-      return `Wait ${wp.param1}s`;
+      return `等待 ${wp.param1} 秒`;
     case MAV_CMD.CONDITION_CHANGE_ALT:
-      return `Climb/descend at ${formatVerticalSpeedFromMetersPerSecond(wp.param1, verticalSpeedUnit)}`;
+      return `以 ${formatVerticalSpeedFromMetersPerSecond(wp.param1, verticalSpeedUnit)} 爬升/下降`;
     case MAV_CMD.CONDITION_DISTANCE:
-      return `Wait until ${formatDistanceFromMeters(wp.param1, distanceUnit)} from next WP`;
+      return `距下一航点 ${formatDistanceFromMeters(wp.param1, distanceUnit)} 时等待`;
     case MAV_CMD.CONDITION_YAW: {
       const isRelative = wp.param4 !== 0;
       return isRelative
-        ? `Turn by ${wp.param1} deg`
-        : `Turn to ${wp.param1} deg`;
+        ? `偏转 ${wp.param1} 度`
+        : `转向 ${wp.param1} 度`;
     }
 
     // Camera / Gimbal
     case MAV_CMD.DO_SET_CAM_TRIGG_DIST:
       if (advanced) return wp.param1 > 0 ? `CAM_TRIGG_DIST ${formatDistanceFromMeters(wp.param1, distanceUnit)}` : 'CAM_TRIGG off';
-      return wp.param1 > 0 ? `Camera every ${formatDistanceFromMeters(wp.param1, distanceUnit)}` : 'Camera trigger off';
+      return wp.param1 > 0 ? `每 ${formatDistanceFromMeters(wp.param1, distanceUnit)} 拍照` : '关闭相机触发';
     case MAV_CMD.DO_DIGICAM_CONTROL:
       if (advanced) return 'DIGICAM_CONTROL';
-      return 'Take photo';
+      return '拍照';
     case MAV_CMD.DO_DIGICAM_CONFIGURE:
       if (advanced) return 'DIGICAM_CONFIGURE';
-      return 'Configure camera';
+      return '配置相机';
     case MAV_CMD.DO_SET_ROI:
     case MAV_CMD.DO_SET_ROI_LOCATION:
       if (advanced) return 'SET_ROI';
-      return 'Point camera here';
+      return '相机指向这里';
     case MAV_CMD.DO_SET_ROI_NONE:
       if (advanced) return 'ROI_NONE';
-      return 'Stop camera tracking';
+      return '停止相机跟踪';
     case MAV_CMD.DO_MOUNT_CONTROL:
       if (advanced) return 'MOUNT_CONTROL';
-      return 'Set gimbal angles';
+      return '设置云台角度';
     case MAV_CMD.DO_MOUNT_CONFIGURE:
       if (advanced) return 'MOUNT_CONFIGURE';
-      return 'Configure gimbal';
+      return '配置云台';
     case MAV_CMD.DO_CONTROL_VIDEO:
-      return 'Control video';
+      return '控制录像';
     case MAV_CMD.DO_SET_CAM_TRIGG_INTERVAL:
       if (advanced) return wp.param1 > 0 ? `CAM_TRIGG_INT ${wp.param1}s` : 'CAM_TRIGG_INT off';
-      return wp.param1 > 0 ? `Camera every ${wp.param1}s` : 'Camera interval off';
+      return wp.param1 > 0 ? `每 ${wp.param1} 秒拍照` : '关闭拍照间隔';
     case MAV_CMD.IMAGE_START_CAPTURE:
       if (advanced) return wp.param2 > 0 ? `IMG_START (${wp.param2}s int)` : 'IMG_START';
-      return wp.param2 > 0 ? `Start photos every ${wp.param2}s` : 'Start taking photos';
+      return wp.param2 > 0 ? `每 ${wp.param2} 秒拍照` : '开始连续拍照';
     case MAV_CMD.IMAGE_STOP_CAPTURE:
       if (advanced) return 'IMG_STOP';
-      return 'Stop taking photos';
+      return '停止拍照';
     case MAV_CMD.VIDEO_START_CAPTURE:
       if (advanced) return 'VID_START';
-      return 'Start recording video';
+      return '开始录像';
     case MAV_CMD.VIDEO_STOP_CAPTURE:
       if (advanced) return 'VID_STOP';
-      return 'Stop recording video';
+      return '停止录像';
     case MAV_CMD.SET_CAMERA_ZOOM:
-      return `Camera zoom ${wp.param2}`;
+      return `相机变焦 ${wp.param2}`;
     case MAV_CMD.SET_CAMERA_FOCUS:
-      return `Camera focus ${wp.param2}`;
+      return `相机对焦 ${wp.param2}`;
     case MAV_CMD.SET_CAMERA_SOURCE:
-      return 'Set camera source';
+      return '设置相机源';
     case MAV_CMD.DO_GIMBAL_MANAGER_PITCHYAW:
-      return `Gimbal pitch ${wp.param1} yaw ${wp.param2}`;
+      return `云台俯仰 ${wp.param1} 偏航 ${wp.param2}`;
 
     // Actions
     case MAV_CMD.DO_CHANGE_SPEED:
-      return `Set speed to ${formatSpeedFromMetersPerSecond(wp.param2, speedUnit)}`;
+      return `变速到 ${formatSpeedFromMetersPerSecond(wp.param2, speedUnit)}`;
     case MAV_CMD.DO_SET_HOME:
-      return wp.param1 === 1 ? 'Set home (current)' : 'Set home (location)';
+      return wp.param1 === 1 ? '设置家(当前位置)' : '设置家(指定位置)';
     case MAV_CMD.DO_JUMP:
-      return `Jump to WP ${wp.param1}` + (wp.param2 > 0 ? ` (${wp.param2}x)` : ' (forever)');
+      return `跳转到第 ${wp.param1} 个航点` + (wp.param2 > 0 ? `(${wp.param2} 次)` : '(无限次)');
     case MAV_CMD.DO_SET_SERVO:
-      return `Servo ${wp.param1} = ${wp.param2}`;
+      return `舵机 ${wp.param1} = ${wp.param2}`;
     case MAV_CMD.DO_REPEAT_SERVO:
-      return `Cycle servo ${wp.param1}`;
+      return `循环舵机 ${wp.param1}`;
     case MAV_CMD.DO_SET_RELAY:
-      return `Relay ${wp.param1} ${wp.param2 > 0 ? 'ON' : 'OFF'}`;
+      return `继电器 ${wp.param1} ${wp.param2 > 0 ? '开' : '关'}`;
     case MAV_CMD.DO_REPEAT_RELAY:
-      return `Cycle relay ${wp.param1}`;
+      return `循环继电器 ${wp.param1}`;
     case MAV_CMD.DO_FENCE_ENABLE:
-      return wp.param1 > 0 ? 'Enable geofence' : 'Disable geofence';
+      return wp.param1 > 0 ? '启用地理围栏' : '禁用地理围栏';
     case MAV_CMD.DO_PARACHUTE:
-      return 'Deploy parachute';
+      return '释放降落伞';
     case MAV_CMD.DO_GRIPPER:
-      return wp.param2 === 0 ? 'Release gripper' : 'Grab gripper';
+      return wp.param2 === 0 ? '松开夹爪' : '夹紧夹爪';
     case MAV_CMD.DO_VTOL_TRANSITION:
-      return wp.param1 === 3 ? 'Transition to FW' : 'Transition to MC';
+      return wp.param1 === 3 ? '切换到固定翼' : '切换到多旋翼';
     case MAV_CMD.DO_LAND_START:
-      return 'Begin landing sequence';
+      return '开始降落序列';
     case MAV_CMD.DO_CHANGE_ALTITUDE:
-      return `Change alt to ${formatAltitudeFromMeters(wp.param1, altitudeUnit)}`;
+      return `变高到 ${formatAltitudeFromMeters(wp.param1, altitudeUnit)}`;
     case MAV_CMD.DO_SET_MODE:
-      return `Set mode ${wp.param1}`;
+      return `设置模式 ${wp.param1}`;
     case MAV_CMD.DO_PAUSE_CONTINUE:
-      return wp.param1 > 0 ? 'Resume mission' : 'Pause mission';
+      return wp.param1 > 0 ? '继续任务' : '暂停任务';
     case MAV_CMD.DO_SET_REVERSE:
-      return wp.param1 > 0 ? 'Drive in reverse' : 'Drive forward';
+      return wp.param1 > 0 ? '倒车行驶' : '前进行驶';
     case MAV_CMD.DO_INVERTED_FLIGHT:
-      return wp.param1 > 0 ? 'Inverted flight ON' : 'Inverted flight OFF';
+      return wp.param1 > 0 ? '倒飞开' : '倒飞关';
     case MAV_CMD.DO_AUTOTUNE_ENABLE:
-      return wp.param1 > 0 ? 'Autotune ON' : 'Autotune OFF';
+      return wp.param1 > 0 ? '自调参开' : '自调参关';
     case MAV_CMD.DO_ENGINE_CONTROL:
-      return wp.param1 > 0 ? 'Start engine' : 'Stop engine';
+      return wp.param1 > 0 ? '启动发动机' : '停止发动机';
     case MAV_CMD.DO_FLIGHTTERMINATION:
-      return 'Flight termination';
+      return '飞行终止';
     case MAV_CMD.DO_SET_PARAMETER:
-      return `Set param ${wp.param1} = ${wp.param2}`;
+      return `设置参数 ${wp.param1} = ${wp.param2}`;
     case MAV_CMD.JUMP_TAG:
-      return `Tag ${wp.param1}`;
+      return `标签 ${wp.param1}`;
     case MAV_CMD.DO_JUMP_TAG:
-      return `Jump to tag ${wp.param1}` + (wp.param2 > 0 ? ` (${wp.param2}x)` : ' (forever)');
+      return `跳转到标签 ${wp.param1}` + (wp.param2 > 0 ? `(${wp.param2} 次)` : '(无限次)');
     case MAV_CMD.DO_SPRAYER:
-      return wp.param1 > 0 ? 'Sprayer ON' : 'Sprayer OFF';
+      return wp.param1 > 0 ? '喷洒开' : '喷洒关';
     case MAV_CMD.DO_WINCH:
-      return 'Control winch';
+      return '控制绞盘';
     case MAV_CMD.DO_SEND_SCRIPT_MESSAGE:
-      return `Script msg ${wp.param1}`;
+      return `脚本消息 ${wp.param1}`;
     case MAV_CMD.SET_YAW_SPEED:
-      return `Yaw ${wp.param1} at ${wp.param2} deg/s`;
+      return `偏航 ${wp.param1},速度 ${wp.param2} 度/秒`;
     case MAV_CMD.DO_SET_RESUME_REPEAT_DIST:
-      return `Resume repeat ${formatDistanceFromMeters(wp.param1, distanceUnit)}`;
+      return `恢复重复 ${formatDistanceFromMeters(wp.param1, distanceUnit)}`;
     case MAV_CMD.DO_AUX_FUNCTION:
-      return `Aux function ${wp.param1}`;
+      return `辅助功能 ${wp.param1}`;
 
     default:
-      return COMMAND_NAMES[wp.command] || `Unknown CMD ${wp.command}`;
+      return COMMAND_NAMES[wp.command] || `未知命令 ${wp.command}`;
   }
 }
 
@@ -816,151 +816,151 @@ type CommandParamConfig = {
 // Get the parameters config for each command type
 export function getCommandParams(cmd: number): CommandParamConfig[] {
   const baseLocation: CommandParamConfig[] = [
-    { key: 'altitude' as const, label: 'Altitude', unit: 'm', unitKind: 'altitude', min: 0, step: 5, show: true },
+    { key: 'altitude' as const, label: '高度', unit: 'm', unitKind: 'altitude', min: 0, step: 5, show: true },
   ];
 
   switch (cmd) {
     case MAV_CMD.NAV_TAKEOFF:
       return [
-        { key: 'altitude' as const, label: 'Target Altitude', unit: 'm', unitKind: 'altitude', min: 1, step: 5, show: true },
-        { key: 'param1' as const, label: 'Pitch Angle', unit: '°', min: 0, max: 90, step: 5, show: true },
+        { key: 'altitude' as const, label: '目标高度', unit: 'm', unitKind: 'altitude', min: 1, step: 5, show: true },
+        { key: 'param1' as const, label: '俯仰角', unit: '°', min: 0, max: 90, step: 5, show: true },
       ];
     case MAV_CMD.NAV_WAYPOINT:
       return [
         ...baseLocation,
-        { key: 'param1' as const, label: 'Wait Time', unit: 's', min: 0, max: 300, step: 1, show: true },
-        { key: 'param2' as const, label: 'Acceptance Radius', unit: 'm', unitKind: 'distance', min: 0, max: 50, step: 1, show: false },
+        { key: 'param1' as const, label: '等待时间', unit: 's', min: 0, max: 300, step: 1, show: true },
+        { key: 'param2' as const, label: '到达半径', unit: 'm', unitKind: 'distance', min: 0, max: 50, step: 1, show: false },
       ];
     case MAV_CMD.NAV_SPLINE_WAYPOINT:
       return [
         ...baseLocation,
-        { key: 'param1' as const, label: 'Wait Time', unit: 's', min: 0, max: 300, step: 1, show: true },
+        { key: 'param1' as const, label: '等待时间', unit: 's', min: 0, max: 300, step: 1, show: true },
       ];
     case MAV_CMD.NAV_LOITER_UNLIM:
       return [
         ...baseLocation,
-        { key: 'param3' as const, label: 'Radius', unit: 'm', unitKind: 'distance', min: 10, max: 500, step: 10, show: true },
+        { key: 'param3' as const, label: '半径', unit: 'm', unitKind: 'distance', min: 10, max: 500, step: 10, show: true },
       ];
     case MAV_CMD.NAV_LOITER_TIME:
       return [
         ...baseLocation,
-        { key: 'param1' as const, label: 'Duration', unit: 's', min: 1, max: 600, step: 5, show: true },
-        { key: 'param3' as const, label: 'Radius', unit: 'm', unitKind: 'distance', min: 10, max: 500, step: 10, show: true },
+        { key: 'param1' as const, label: '时长', unit: 's', min: 1, max: 600, step: 5, show: true },
+        { key: 'param3' as const, label: '半径', unit: 'm', unitKind: 'distance', min: 10, max: 500, step: 10, show: true },
       ];
     case MAV_CMD.NAV_LOITER_TURNS:
       return [
         ...baseLocation,
-        { key: 'param1' as const, label: 'Number of Turns', unit: '', min: 1, max: 100, step: 1, show: true },
-        { key: 'param3' as const, label: 'Radius', unit: 'm', unitKind: 'distance', min: 10, max: 500, step: 10, show: true },
+        { key: 'param1' as const, label: '圈数', unit: '', min: 1, max: 100, step: 1, show: true },
+        { key: 'param3' as const, label: '半径', unit: 'm', unitKind: 'distance', min: 10, max: 500, step: 10, show: true },
       ];
     case MAV_CMD.NAV_LAND:
       return [
-        { key: 'param1' as const, label: 'Abort Altitude', unit: 'm', unitKind: 'altitude', min: 0, max: 100, step: 5, show: true },
+        { key: 'param1' as const, label: '中止高度', unit: 'm', unitKind: 'altitude', min: 0, max: 100, step: 5, show: true },
       ];
     case MAV_CMD.NAV_RETURN_TO_LAUNCH:
       return []; // No params needed
     case MAV_CMD.NAV_DELAY:
       return [
-        { key: 'param1' as const, label: 'Wait Time', unit: 's', min: 1, max: 3600, step: 1, show: true },
+        { key: 'param1' as const, label: '等待时间', unit: 's', min: 1, max: 3600, step: 1, show: true },
       ];
     case MAV_CMD.DO_CHANGE_SPEED:
       return [
-        { key: 'param2' as const, label: 'Target Speed', unit: 'm/s', unitKind: 'speed', min: 1, max: 50, step: 1, show: true },
+        { key: 'param2' as const, label: '目标速度', unit: 'm/s', unitKind: 'speed', min: 1, max: 50, step: 1, show: true },
       ];
     case MAV_CMD.NAV_LOITER_TO_ALT:
       return [
         ...baseLocation,
-        { key: 'param3' as const, label: 'Radius', unit: 'm', unitKind: 'distance', min: 10, max: 500, step: 10, show: true },
+        { key: 'param3' as const, label: '半径', unit: 'm', unitKind: 'distance', min: 10, max: 500, step: 10, show: true },
       ];
     case MAV_CMD.NAV_VTOL_TAKEOFF:
       return [
-        { key: 'altitude' as const, label: 'Target Altitude', unit: 'm', unitKind: 'altitude', min: 1, step: 5, show: true },
+        { key: 'altitude' as const, label: '目标高度', unit: 'm', unitKind: 'altitude', min: 1, step: 5, show: true },
       ];
     case MAV_CMD.NAV_VTOL_LAND:
       return [
-        { key: 'param3' as const, label: 'Approach Alt', unit: 'm', unitKind: 'altitude', min: 0, max: 200, step: 5, show: true },
+        { key: 'param3' as const, label: '进近高度', unit: 'm', unitKind: 'altitude', min: 0, max: 200, step: 5, show: true },
       ];
     case MAV_CMD.NAV_PAYLOAD_PLACE:
       return [
         ...baseLocation,
-        { key: 'param1' as const, label: 'Max Descend', unit: 'm', unitKind: 'altitude', min: 0, max: 50, step: 1, show: true },
+        { key: 'param1' as const, label: '最大下降', unit: 'm', unitKind: 'altitude', min: 0, max: 50, step: 1, show: true },
       ];
     case MAV_CMD.CONDITION_DELAY:
       return [
-        { key: 'param1' as const, label: 'Time', unit: 's', min: 0, max: 3600, step: 1, show: true },
+        { key: 'param1' as const, label: '时间', unit: 's', min: 0, max: 3600, step: 1, show: true },
       ];
     case MAV_CMD.CONDITION_CHANGE_ALT:
       return [
-        { key: 'param1' as const, label: 'Rate', unit: 'm/s', unitKind: 'verticalSpeed', min: 0, max: 10, step: 0.5, show: true },
-        { key: 'altitude' as const, label: 'Target Altitude', unit: 'm', unitKind: 'altitude', min: 0, step: 5, show: true },
+        { key: 'param1' as const, label: '速率', unit: 'm/s', unitKind: 'verticalSpeed', min: 0, max: 10, step: 0.5, show: true },
+        { key: 'altitude' as const, label: '目标高度', unit: 'm', unitKind: 'altitude', min: 0, step: 5, show: true },
       ];
     case MAV_CMD.CONDITION_DISTANCE:
       return [
-        { key: 'param1' as const, label: 'Distance', unit: 'm', unitKind: 'distance', min: 0, max: 10000, step: 10, show: true },
+        { key: 'param1' as const, label: '距离', unit: 'm', unitKind: 'distance', min: 0, max: 10000, step: 10, show: true },
       ];
     case MAV_CMD.CONDITION_YAW:
       return [
-        { key: 'param1' as const, label: 'Angle', unit: 'deg', min: 0, max: 360, step: 5, show: true },
-        { key: 'param2' as const, label: 'Speed', unit: 'deg/s', min: 0, max: 180, step: 5, show: true },
-        { key: 'param3' as const, label: 'Direction', unit: '-1=CCW 0=auto 1=CW', min: -1, max: 1, step: 1, show: true },
-        { key: 'param4' as const, label: 'Relative', unit: '0=abs 1=rel', min: 0, max: 1, step: 1, show: true },
+        { key: 'param1' as const, label: '角度', unit: 'deg', min: 0, max: 360, step: 5, show: true },
+        { key: 'param2' as const, label: '速度', unit: 'deg/s', min: 0, max: 180, step: 5, show: true },
+        { key: 'param3' as const, label: '方向', unit: '-1=CCW 0=auto 1=CW', min: -1, max: 1, step: 1, show: true },
+        { key: 'param4' as const, label: '相对', unit: '0=abs 1=rel', min: 0, max: 1, step: 1, show: true },
       ];
     case MAV_CMD.DO_JUMP:
       return [
-        { key: 'param1' as const, label: 'Waypoint #', unit: '', min: 1, max: 999, step: 1, show: true },
-        { key: 'param2' as const, label: 'Repeat Count', unit: '', min: -1, max: 100, step: 1, show: true },
+        { key: 'param1' as const, label: '航点 #', unit: '', min: 1, max: 999, step: 1, show: true },
+        { key: 'param2' as const, label: '重复次数', unit: '', min: -1, max: 100, step: 1, show: true },
       ];
     case MAV_CMD.DO_SET_CAM_TRIGG_DIST:
       return [
-        { key: 'param1' as const, label: 'Distance', unit: 'm', unitKind: 'distance', min: 0, max: 1000, step: 1, show: true },
+        { key: 'param1' as const, label: '距离', unit: 'm', unitKind: 'distance', min: 0, max: 1000, step: 1, show: true },
       ];
     case MAV_CMD.DO_SET_SERVO:
       return [
-        { key: 'param1' as const, label: 'Servo #', unit: '', min: 1, max: 16, step: 1, show: true },
+        { key: 'param1' as const, label: '舵机 #', unit: '', min: 1, max: 16, step: 1, show: true },
         { key: 'param2' as const, label: 'PWM', unit: 'us', min: 500, max: 2500, step: 10, show: true },
       ];
     case MAV_CMD.DO_SET_RELAY:
       return [
-        { key: 'param1' as const, label: 'Relay #', unit: '', min: 0, max: 15, step: 1, show: true },
-        { key: 'param2' as const, label: 'On/Off', unit: '', min: 0, max: 1, step: 1, show: true },
+        { key: 'param1' as const, label: '继电器 #', unit: '', min: 0, max: 15, step: 1, show: true },
+        { key: 'param2' as const, label: '开/关', unit: '', min: 0, max: 1, step: 1, show: true },
       ];
     case MAV_CMD.DO_REPEAT_SERVO:
       return [
-        { key: 'param1' as const, label: 'Servo #', unit: '', min: 1, max: 16, step: 1, show: true },
+        { key: 'param1' as const, label: '舵机 #', unit: '', min: 1, max: 16, step: 1, show: true },
         { key: 'param2' as const, label: 'PWM', unit: 'us', min: 500, max: 2500, step: 10, show: true },
-        { key: 'param3' as const, label: 'Count', unit: '', min: 1, max: 100, step: 1, show: true },
+        { key: 'param3' as const, label: '次数', unit: '', min: 1, max: 100, step: 1, show: true },
       ];
     case MAV_CMD.DO_REPEAT_RELAY:
       return [
-        { key: 'param1' as const, label: 'Relay #', unit: '', min: 0, max: 15, step: 1, show: true },
-        { key: 'param2' as const, label: 'Count', unit: '', min: 1, max: 100, step: 1, show: true },
+        { key: 'param1' as const, label: '继电器 #', unit: '', min: 0, max: 15, step: 1, show: true },
+        { key: 'param2' as const, label: '次数', unit: '', min: 1, max: 100, step: 1, show: true },
       ];
     case MAV_CMD.DO_SET_ROI:
     case MAV_CMD.DO_SET_ROI_LOCATION:
       return baseLocation;
     case MAV_CMD.DO_MOUNT_CONTROL:
       return [
-        { key: 'param1' as const, label: 'Pitch', unit: 'deg', min: -90, max: 90, step: 5, show: true },
-        { key: 'param2' as const, label: 'Roll', unit: 'deg', min: -90, max: 90, step: 5, show: true },
-        { key: 'param3' as const, label: 'Yaw', unit: 'deg', min: -180, max: 180, step: 5, show: true },
+        { key: 'param1' as const, label: '俯仰', unit: 'deg', min: -90, max: 90, step: 5, show: true },
+        { key: 'param2' as const, label: '横滚', unit: 'deg', min: -90, max: 90, step: 5, show: true },
+        { key: 'param3' as const, label: '偏航', unit: 'deg', min: -180, max: 180, step: 5, show: true },
       ];
     case MAV_CMD.DO_FENCE_ENABLE:
       return [
-        { key: 'param1' as const, label: 'Enable', unit: '', min: 0, max: 2, step: 1, show: true },
+        { key: 'param1' as const, label: '启用', unit: '', min: 0, max: 2, step: 1, show: true },
       ];
     case MAV_CMD.DO_GRIPPER:
       return [
-        { key: 'param1' as const, label: 'Gripper #', unit: '', min: 1, max: 4, step: 1, show: true },
-        { key: 'param2' as const, label: 'Action', unit: '', min: 0, max: 1, step: 1, show: true },
+        { key: 'param1' as const, label: '夹爪 #', unit: '', min: 1, max: 4, step: 1, show: true },
+        { key: 'param2' as const, label: '动作', unit: '', min: 0, max: 1, step: 1, show: true },
       ];
     case MAV_CMD.DO_VTOL_TRANSITION:
       return [
-        { key: 'param1' as const, label: 'State', unit: '', min: 1, max: 4, step: 1, show: true },
+        { key: 'param1' as const, label: '状态', unit: '', min: 1, max: 4, step: 1, show: true },
       ];
     case MAV_CMD.DO_CHANGE_ALTITUDE:
       return [
-        { key: 'param1' as const, label: 'Altitude', unit: 'm', unitKind: 'altitude', min: 0, step: 5, show: true },
-        { key: 'param2' as const, label: 'Frame', unit: '', min: 0, max: 10, step: 1, show: false },
+        { key: 'param1' as const, label: '高度', unit: 'm', unitKind: 'altitude', min: 0, step: 5, show: true },
+        { key: 'param2' as const, label: '坐标系', unit: '', min: 0, max: 10, step: 1, show: false },
       ];
     // New commands
     case MAV_CMD.NAV_ARC_WAYPOINT:
@@ -969,27 +969,27 @@ export function getCommandParams(cmd: number): CommandParamConfig[] {
       ];
     case MAV_CMD.NAV_ALTITUDE_WAIT:
       return [
-        { key: 'altitude' as const, label: 'Target Altitude', unit: 'm', unitKind: 'altitude', min: 0, step: 5, show: true },
-        { key: 'param1' as const, label: 'Climb Rate', unit: 'm/s', unitKind: 'verticalSpeed', min: 0, max: 10, step: 0.5, show: true },
+        { key: 'altitude' as const, label: '目标高度', unit: 'm', unitKind: 'altitude', min: 0, step: 5, show: true },
+        { key: 'param1' as const, label: '爬升速率', unit: 'm/s', unitKind: 'verticalSpeed', min: 0, max: 10, step: 0.5, show: true },
       ];
     case MAV_CMD.NAV_SCRIPT_TIME:
       return [
-        { key: 'param1' as const, label: 'Command', unit: '', min: 0, max: 999, step: 1, show: true },
-        { key: 'param2' as const, label: 'Timeout', unit: 's', min: 0, max: 3600, step: 1, show: true },
+        { key: 'param1' as const, label: '命令', unit: '', min: 0, max: 999, step: 1, show: true },
+        { key: 'param2' as const, label: '超时', unit: 's', min: 0, max: 3600, step: 1, show: true },
       ];
     case MAV_CMD.NAV_ATTITUDE_TIME:
       return [
-        { key: 'param1' as const, label: 'Time', unit: 's', min: 0, max: 3600, step: 1, show: true },
+        { key: 'param1' as const, label: '时间', unit: 's', min: 0, max: 3600, step: 1, show: true },
       ];
     case MAV_CMD.DO_SET_CAM_TRIGG_INTERVAL:
       return [
-        { key: 'param1' as const, label: 'Interval', unit: 's', min: 0, max: 3600, step: 1, show: true },
-        { key: 'param2' as const, label: 'Count', unit: '', min: 0, max: 999, step: 1, show: true },
+        { key: 'param1' as const, label: '间隔', unit: 's', min: 0, max: 3600, step: 1, show: true },
+        { key: 'param2' as const, label: '次数', unit: '', min: 0, max: 999, step: 1, show: true },
       ];
     case MAV_CMD.IMAGE_START_CAPTURE:
       return [
-        { key: 'param2' as const, label: 'Interval', unit: 's', min: 0, max: 3600, step: 1, show: true },
-        { key: 'param3' as const, label: 'Total Images', unit: '', min: 0, max: 999, step: 1, show: true },
+        { key: 'param2' as const, label: '间隔', unit: 's', min: 0, max: 3600, step: 1, show: true },
+        { key: 'param3' as const, label: '总照片数', unit: '', min: 0, max: 999, step: 1, show: true },
       ];
     case MAV_CMD.IMAGE_STOP_CAPTURE:
       return [];
@@ -999,72 +999,72 @@ export function getCommandParams(cmd: number): CommandParamConfig[] {
       return [];
     case MAV_CMD.SET_CAMERA_ZOOM:
       return [
-        { key: 'param1' as const, label: 'Zoom Type', unit: '', min: 0, max: 2, step: 1, show: true },
-        { key: 'param2' as const, label: 'Zoom Value', unit: '', min: 0, max: 100, step: 1, show: true },
+        { key: 'param1' as const, label: '变焦类型', unit: '', min: 0, max: 2, step: 1, show: true },
+        { key: 'param2' as const, label: '变焦值', unit: '', min: 0, max: 100, step: 1, show: true },
       ];
     case MAV_CMD.SET_CAMERA_FOCUS:
       return [
-        { key: 'param1' as const, label: 'Focus Type', unit: '', min: 0, max: 2, step: 1, show: true },
-        { key: 'param2' as const, label: 'Focus Value', unit: '', min: 0, max: 100, step: 1, show: true },
+        { key: 'param1' as const, label: '对焦类型', unit: '', min: 0, max: 2, step: 1, show: true },
+        { key: 'param2' as const, label: '对焦值', unit: '', min: 0, max: 100, step: 1, show: true },
       ];
     case MAV_CMD.DO_GIMBAL_MANAGER_PITCHYAW:
       return [
-        { key: 'param1' as const, label: 'Pitch', unit: 'deg', min: -90, max: 90, step: 5, show: true },
-        { key: 'param2' as const, label: 'Yaw', unit: 'deg', min: -180, max: 180, step: 5, show: true },
+        { key: 'param1' as const, label: '俯仰', unit: 'deg', min: -90, max: 90, step: 5, show: true },
+        { key: 'param2' as const, label: '偏航', unit: 'deg', min: -180, max: 180, step: 5, show: true },
       ];
     case MAV_CMD.JUMP_TAG:
       return [
-        { key: 'param1' as const, label: 'Tag #', unit: '', min: 1, max: 999, step: 1, show: true },
+        { key: 'param1' as const, label: '标签 #', unit: '', min: 1, max: 999, step: 1, show: true },
       ];
     case MAV_CMD.DO_JUMP_TAG:
       return [
-        { key: 'param1' as const, label: 'Tag #', unit: '', min: 1, max: 999, step: 1, show: true },
-        { key: 'param2' as const, label: 'Repeat Count', unit: '', min: -1, max: 100, step: 1, show: true },
+        { key: 'param1' as const, label: '标签 #', unit: '', min: 1, max: 999, step: 1, show: true },
+        { key: 'param2' as const, label: '重复次数', unit: '', min: -1, max: 100, step: 1, show: true },
       ];
     case MAV_CMD.DO_SPRAYER:
       return [
-        { key: 'param1' as const, label: 'Enable', unit: '', min: 0, max: 1, step: 1, show: true },
+        { key: 'param1' as const, label: '启用', unit: '', min: 0, max: 1, step: 1, show: true },
       ];
     case MAV_CMD.DO_WINCH:
       return [
-        { key: 'param1' as const, label: 'Instance', unit: '', min: 1, max: 4, step: 1, show: true },
-        { key: 'param2' as const, label: 'Action', unit: '', min: 0, max: 2, step: 1, show: true },
+        { key: 'param1' as const, label: '实例', unit: '', min: 1, max: 4, step: 1, show: true },
+        { key: 'param2' as const, label: '动作', unit: '', min: 0, max: 2, step: 1, show: true },
       ];
     case MAV_CMD.DO_SEND_SCRIPT_MESSAGE:
       return [
         { key: 'param1' as const, label: 'ID', unit: '', min: 0, max: 999, step: 1, show: true },
-        { key: 'param2' as const, label: 'Param 1', unit: '', min: -1000, max: 1000, step: 1, show: true },
-        { key: 'param3' as const, label: 'Param 2', unit: '', min: -1000, max: 1000, step: 1, show: true },
+        { key: 'param2' as const, label: '参数 1', unit: '', min: -1000, max: 1000, step: 1, show: true },
+        { key: 'param3' as const, label: '参数 2', unit: '', min: -1000, max: 1000, step: 1, show: true },
       ];
     case MAV_CMD.SET_YAW_SPEED:
       return [
-        { key: 'param1' as const, label: 'Yaw Angle', unit: 'deg', min: -180, max: 180, step: 5, show: true },
-        { key: 'param2' as const, label: 'Speed', unit: 'deg/s', min: 0, max: 180, step: 5, show: true },
+        { key: 'param1' as const, label: '偏航角', unit: 'deg', min: -180, max: 180, step: 5, show: true },
+        { key: 'param2' as const, label: '速度', unit: 'deg/s', min: 0, max: 180, step: 5, show: true },
       ];
     case MAV_CMD.DO_AUX_FUNCTION:
       return [
-        { key: 'param1' as const, label: 'Function', unit: '', min: 0, max: 999, step: 1, show: true },
-        { key: 'param2' as const, label: 'Switch Pos', unit: '', min: 0, max: 2, step: 1, show: true },
+        { key: 'param1' as const, label: '功能', unit: '', min: 0, max: 999, step: 1, show: true },
+        { key: 'param2' as const, label: '开关位置', unit: '', min: 0, max: 2, step: 1, show: true },
       ];
     case MAV_CMD.DO_SET_RESUME_REPEAT_DIST:
       return [
-        { key: 'param1' as const, label: 'Distance', unit: 'm', unitKind: 'distance', min: 0, max: 10000, step: 10, show: true },
+        { key: 'param1' as const, label: '距离', unit: 'm', unitKind: 'distance', min: 0, max: 10000, step: 10, show: true },
       ];
     case MAV_CMD.DO_ENGINE_CONTROL:
       return [
-        { key: 'param1' as const, label: 'Start/Stop', unit: '', min: 0, max: 1, step: 1, show: true },
+        { key: 'param1' as const, label: '启动/停止', unit: '', min: 0, max: 1, step: 1, show: true },
       ];
     case MAV_CMD.DO_AUTOTUNE_ENABLE:
       return [
-        { key: 'param1' as const, label: 'Enable', unit: '', min: 0, max: 1, step: 1, show: true },
+        { key: 'param1' as const, label: '启用', unit: '', min: 0, max: 1, step: 1, show: true },
       ];
     case MAV_CMD.DO_INVERTED_FLIGHT:
       return [
-        { key: 'param1' as const, label: 'Inverted', unit: '', min: 0, max: 1, step: 1, show: true },
+        { key: 'param1' as const, label: '倒飞', unit: '', min: 0, max: 1, step: 1, show: true },
       ];
     case MAV_CMD.NAV_CONTINUE_AND_CHANGE_ALT:
       return [
-        { key: 'altitude' as const, label: 'Target Altitude', unit: 'm', unitKind: 'altitude', min: 0, step: 5, show: true },
+        { key: 'altitude' as const, label: '目标高度', unit: 'm', unitKind: 'altitude', min: 0, step: 5, show: true },
       ];
     default:
       return baseLocation;
@@ -1503,7 +1503,7 @@ function GroupHeaderRow({
           }}
           onMouseDown={(e) => e.stopPropagation()}
           className="shrink-0 flex items-center justify-center w-5 h-5"
-          data-tip="Select this group for bulk actions"
+          data-tip="选中此分组进行批量操作"
         >
           <input
             type="checkbox"
@@ -1521,7 +1521,7 @@ function GroupHeaderRow({
           }}
           onMouseDown={(e) => e.stopPropagation()}
           className="shrink-0 flex items-center justify-center w-5 h-5"
-          data-tip={group.visible ? 'Visible on map (click to hide)' : 'Hidden on map (click to show)'}
+          data-tip={group.visible ? '地图上可见(点击隐藏)' : '地图上已隐藏(点击显示)'}
         >
           <input
             type="checkbox"
@@ -1537,7 +1537,7 @@ function GroupHeaderRow({
           onToggleCollapse();
         }}
         className="w-4 h-4 flex items-center justify-center text-content-secondary hover:text-content transition-colors shrink-0"
-        data-tip={group.collapsed ? `Expand (${count} items)` : 'Collapse group'}
+        data-tip={group.collapsed ? `展开(${count} 项)` : '收起分组'}
       >
         <ChevronRight
           className={`w-3 h-3 transition-transform ${group.collapsed ? '' : 'rotate-90'}`}
@@ -1559,8 +1559,8 @@ function GroupHeaderRow({
           }}
           className="w-3.5 h-3.5 rounded-sm border border-white/25 block"
           style={{ backgroundColor: group.color }}
-          data-tip={readOnly ? undefined : 'Change color'}
-          aria-label="Group color"
+          data-tip={readOnly ? undefined : '更改颜色'}
+          aria-label="分组颜色"
         />
         {colorOpen && !readOnly && colorPos &&
           createPortal(
@@ -1579,7 +1579,7 @@ function GroupHeaderRow({
                     }}
                     className={`w-5 h-5 rounded transition-transform hover:scale-110 ${c === group.color ? 'ring-2 ring-white' : ''}`}
                     style={{ backgroundColor: c }}
-                    aria-label={`Set color ${c}`}
+                    aria-label={`设置颜色 ${c}`}
                   />
                 ))}
               </div>
@@ -1604,44 +1604,44 @@ function GroupHeaderRow({
           <span
             className={`flex-1 min-w-0 text-xs font-medium text-content truncate ${readOnly ? '' : 'cursor-text hover:text-blue-300'}`}
             onDoubleClick={() => !readOnly && setEditing(true)}
-            title={readOnly ? group.name : 'Double-click to rename'}
+            title={readOnly ? group.name : '双击重命名'}
           >
             {group.name}
           </span>
         )}
         <span className="text-[10px] text-content-secondary shrink-0">
-          {count} {count === 1 ? 'WP' : 'WPs'}
+          {count} 个航点
         </span>
         {isStaleSurvey && (
           <span
             className="text-[10px] px-1.5 py-0 rounded bg-amber-500/15 text-amber-300 shrink-0"
-            title="Polygon or config changed since last generation"
+            title="多边形或配置在上次生成后有改动"
           >
-            modified
+            已修改
           </span>
         )}
         {onVehicleState === 'on-vehicle' && (
           <span
             className="text-[10px] px-1.5 py-0 rounded bg-emerald-500/15 text-emerald-300 shrink-0"
-            title="This group's waypoints are on the vehicle (matches last upload)"
+            title="该分组的航点已在无人机上(与上次上传一致)"
           >
-            on vehicle
+            已上机
           </span>
         )}
         {onVehicleState === 'stale-on-vehicle' && (
           <span
             className="text-[10px] px-1.5 py-0 rounded bg-yellow-500/15 text-yellow-300 shrink-0"
-            title="This group was uploaded earlier but has been edited since. The vehicle is out of date."
+            title="该分组此前已上传但之后有修改,无人机上的版本已过期。"
           >
-            stale on vehicle
+            机上过期
           </span>
         )}
         {isEditing && (
           <span
             className="text-[10px] px-1.5 py-0 rounded bg-emerald-500/15 text-emerald-300 shrink-0"
-            title="Survey panel is editing this group live; vertex / config changes flow into the mission"
+            title="勘测面板正在实时编辑该分组;顶点/配置改动会同步到任务"
           >
-            editing
+            编辑中
           </span>
         )}
       </div>
@@ -1656,13 +1656,13 @@ function GroupHeaderRow({
               setVehicleMenuOpen((o) => !o);
             }}
             className="shrink-0 flex items-center gap-1.5 px-1.5 h-6 rounded text-[11px] font-medium border border-subtle bg-surface-raised hover:bg-surface-solid text-content transition-colors max-w-[120px]"
-            data-tip="Assign this group to a fleet vehicle (sets its colour and upload target)"
+            data-tip="将该分组分配给机群无人机(设定其颜色与上传目标)"
           >
             <span
               className="w-2.5 h-2.5 rounded-full shrink-0"
               style={{ backgroundColor: assignedVehicle?.color ?? 'transparent', border: assignedVehicle ? 'none' : '1px solid var(--border-subtle, #555)' }}
             />
-            <span className="truncate">{assignedVehicle ? assignedVehicle.label : 'Assign'}</span>
+            <span className="truncate">{assignedVehicle ? assignedVehicle.label : '分配'}</span>
           </button>
           {vehicleMenuOpen && vehicleMenuPos &&
             createPortal(
@@ -1678,7 +1678,7 @@ function GroupHeaderRow({
                     className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-content hover:bg-surface-raised text-left"
                   >
                     <span className="w-2.5 h-2.5 rounded-full shrink-0 border border-subtle" />
-                    Unassigned
+                    未分配
                   </button>
                   {fleetVehicles!.map((v) => (
                     <button
@@ -1710,10 +1710,10 @@ function GroupHeaderRow({
           }`}
           data-tip={
             count === 0
-              ? 'No waypoints in this group'
+              ? '该分组没有航点'
               : connected
-                ? 'Upload only this group to the vehicle (replaces its mission)'
-                : 'Save only this group to a file'
+                ? '仅上传该分组到无人机(替换其任务)'
+                : '仅保存该分组到文件'
           }
         >
           {connected ? <Upload className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
@@ -1726,10 +1726,10 @@ function GroupHeaderRow({
             onEdit();
           }}
           className="shrink-0 flex items-center gap-1 px-1.5 h-6 rounded text-[11px] font-medium text-purple-300 bg-purple-500/15 hover:bg-purple-500/25 transition-colors"
-          data-tip="Edit this survey (loads its polygon + config back into the Survey panel)"
+          data-tip="编辑此勘测(将其多边形 + 配置加载回勘测面板)"
         >
           <Pencil className="w-3 h-3" />
-          Edit
+          编辑
         </button>
       )}
       {!readOnly && onReplay && (
@@ -1739,7 +1739,7 @@ function GroupHeaderRow({
             onReplay();
           }}
           className="shrink-0 w-6 h-6 flex items-center justify-center text-sky-300 hover:text-sky-200 hover:bg-sky-500/15 rounded transition-colors"
-          data-tip="Replay the coverage plan"
+          data-tip="回放覆盖规划"
         >
           <Play className="w-3.5 h-3.5" />
         </button>
@@ -1751,7 +1751,7 @@ function GroupHeaderRow({
             onRegenerate();
           }}
           className="shrink-0 w-6 h-6 flex items-center justify-center text-amber-300 hover:text-amber-200 hover:bg-amber-500/15 rounded transition-colors"
-          data-tip="Regenerate this survey from current polygon + config"
+          data-tip="按当前多边形 + 配置重新生成此勘测"
         >
           <RefreshCw className="w-3.5 h-3.5" />
         </button>
@@ -1771,7 +1771,7 @@ function GroupHeaderRow({
               setMenuOpen((v) => !v);
             }}
             className="w-5 h-5 flex items-center justify-center text-content-tertiary hover:text-content transition-colors rounded hover:bg-surface"
-            data-tip="Group actions"
+            data-tip="分组操作"
           >
             <MoreHorizontal className="w-3.5 h-3.5" />
           </button>
@@ -1790,7 +1790,7 @@ function GroupHeaderRow({
                     }}
                     className="w-full text-left px-3 py-1.5 text-xs text-content hover:bg-surface-raised transition-colors"
                   >
-                    Rename
+                    重命名
                   </button>
                   {onSelectWaypoints && (
                     <button
@@ -1800,7 +1800,7 @@ function GroupHeaderRow({
                       }}
                       className="w-full text-left px-3 py-1.5 text-xs text-content hover:bg-surface-raised transition-colors"
                     >
-                      Select waypoints
+                      选择航点
                     </button>
                   )}
                   {onDistribute && (
@@ -1811,7 +1811,7 @@ function GroupHeaderRow({
                       }}
                       className="w-full text-left px-3 py-1.5 text-xs text-content hover:bg-surface-raised transition-colors"
                     >
-                      Distribute to fleet ({fleetVehicles?.length})
+                      分配到机群({fleetVehicles?.length})
                     </button>
                   )}
                   <button
@@ -1821,7 +1821,7 @@ function GroupHeaderRow({
                     }}
                     className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-surface-raised hover:text-red-300 transition-colors"
                   >
-                    Delete group
+                    删除分组
                   </button>
                 </div>
               </>,
@@ -2189,7 +2189,7 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
     const changed = bulkSetAltitude([...multiSelected], bulkAltMeters);
     setBulkPopover(null);
     handleClearSelection();
-    showBulkNotice(`${changed} waypoint${changed === 1 ? '' : 's'} set to ${bulkAltMeters} m`);
+    showBulkNotice(`${changed} 个航点已设为 ${bulkAltMeters} m`);
   };
 
   const handleBulkSpeed = () => {
@@ -2198,8 +2198,8 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
     handleClearSelection();
     showBulkNotice(
       bulkSpeedMs <= 0
-        ? `${changed} speed command${changed === 1 ? '' : 's'} removed`
-        : `Speed set to ${bulkSpeedMs} m/s (${changed} change${changed === 1 ? '' : 's'})`,
+        ? `已移除 ${changed} 条变速命令`
+        : `速度已设为 ${bulkSpeedMs} m/s(${changed} 处修改)`,
     );
   };
 
@@ -2282,7 +2282,7 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
     setDropTargetSeq(null);
   };
 
-  const getCommandName = (cmd: number) => COMMAND_NAMES[cmd] || `Unknown CMD ${cmd}`;
+  const getCommandName = (cmd: number) => COMMAND_NAMES[cmd] || `未知命令 ${cmd}`;
   const getCommandInfo = (cmd: number) => ALL_AVAILABLE_COMMANDS.find(c => c.value === cmd);
 
   // Virtualization for large missions. Collapsed children don't render, so we
@@ -2356,62 +2356,62 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
           {!readOnly && bulkGroups.size > 0 ? (
             <>
               <span className="text-[10px] text-content-secondary">
-                {bulkGroups.size} group{bulkGroups.size === 1 ? '' : 's'} selected
+                已选中 {bulkGroups.size} 个分组
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setBulkGroups(new Set(groups.map((g) => g.id)))}
                   className="text-[10px] text-content-secondary hover:text-content transition-colors"
-                  title="Select every group"
+                  title="选中所有分组"
                 >
-                  Select all
+                  全选
                 </button>
                 <span className="text-content-tertiary text-[10px]">|</span>
                 <button
                   onClick={() => setBulkGroups(new Set())}
                   className="text-[10px] text-content-secondary hover:text-content transition-colors"
-                  title="Clear group selection"
+                  title="清除分组选择"
                 >
-                  Clear
+                  清除
                 </button>
                 <span className="text-content-tertiary text-[10px]">|</span>
                 <button
                   onClick={handleDeleteBulkGroups}
                   className="text-[10px] text-red-400 hover:text-red-300 transition-colors font-medium"
-                  title={`Delete ${bulkGroups.size} group${bulkGroups.size === 1 ? '' : 's'} and their waypoints`}
+                  title={`删除 ${bulkGroups.size} 个分组及其航点`}
                 >
-                  Delete groups
+                  删除分组
                 </button>
               </div>
             </>
           ) : !readOnly && multiSelected.size > 0 ? (
             <>
               <span className="text-[10px] text-content-secondary">
-                {multiSelected.size} of {missionItems.length} selected
+                已选中 {multiSelected.size}/{missionItems.length}
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleSelectAll}
                   className="text-[10px] text-content-secondary hover:text-content transition-colors"
-                  title="Select all waypoints"
+                  title="选中所有航点"
                 >
-                  Select all
+                  全选
                 </button>
                 <span className="text-content-tertiary text-[10px]">|</span>
                 <button
                   onClick={handleClearSelection}
                   className="text-[10px] text-content-secondary hover:text-content transition-colors"
-                  title="Clear selection"
+                  title="清除选择"
                 >
-                  Clear
+                  清除
                 </button>
                 <span className="text-content-tertiary text-[10px]">|</span>
                 <button
                   onClick={handleCopyCoords}
                   className="text-[10px] text-content-secondary hover:text-content transition-colors"
-                  data-tip="Copy lat, lng of selected waypoints (one per line)"
+                  data-tip="复制所选航点的纬度、经度(每行一个)"
                 >
-                  {coordsCopied ? 'Copied' : 'Copy coords'}
+                  {coordsCopied ? '已复制' : '复制坐标'}
                 </button>
                 <span className="text-content-tertiary text-[10px]">|</span>
                 <button
@@ -2419,9 +2419,9 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
                   className={`text-[10px] font-medium transition-colors ${
                     bulkPopover === 'altitude' ? 'text-blue-400' : 'text-blue-400/80 hover:text-blue-300'
                   }`}
-                  data-tip={`Set altitude on ${multiSelected.size} selected waypoint${multiSelected.size === 1 ? '' : 's'}`}
+                  data-tip={`为选中的 ${multiSelected.size} 个航点设置高度`}
                 >
-                  Altitude
+                  高度
                 </button>
                 <span className="text-content-tertiary text-[10px]">|</span>
                 <button
@@ -2429,48 +2429,48 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
                   className={`text-[10px] font-medium transition-colors ${
                     bulkPopover === 'speed' ? 'text-blue-400' : 'text-blue-400/80 hover:text-blue-300'
                   }`}
-                  data-tip="Set flight speed for the selection (0 removes its speed commands)"
+                  data-tip="为选中项设置飞行速度(0 表示移除其变速命令)"
                 >
-                  Speed
+                  速度
                 </button>
                 <span className="text-content-tertiary text-[10px]">|</span>
                 <button
                   onClick={handleDeleteSelected}
                   className="text-[10px] text-red-400 hover:text-red-300 transition-colors font-medium"
-                  title={`Delete ${multiSelected.size} selected waypoint${multiSelected.size === 1 ? '' : 's'}`}
+                  title={`删除选中的 ${multiSelected.size} 个航点`}
                 >
-                  Delete selected
+                  删除所选
                 </button>
               </div>
             </>
           ) : (
             <>
               <span className={`text-[10px] ${bulkNotice ? 'text-emerald-400' : 'text-content-secondary'}`}>
-                {bulkNotice ?? `${missionItems.length} items`}
+                {bulkNotice ?? `${missionItems.length} 项`}
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCopyCoords}
                   className="text-[10px] text-content-secondary hover:text-content transition-colors"
-                  data-tip="Copy lat, lng of all waypoints (one per line)"
+                  data-tip="复制所有航点的纬度、经度(每行一个)"
                 >
-                  {coordsCopied ? 'Copied' : 'Copy coords'}
+                  {coordsCopied ? '已复制' : '复制坐标'}
                 </button>
                 <span className="text-content-tertiary text-[10px]">|</span>
                 <button
                   onClick={collapseAll}
                   className="text-[10px] text-content-secondary hover:text-content transition-colors"
-                  title="Collapse all groups"
+                  title="收起所有分组"
                 >
-                  Collapse all
+                  全部收起
                 </button>
                 <span className="text-content-tertiary text-[10px]">|</span>
                 <button
                   onClick={expandAll}
                   className="text-[10px] text-content-secondary hover:text-content transition-colors"
-                  title="Expand all groups"
+                  title="展开所有分组"
                 >
-                  Expand all
+                  全部展开
                 </button>
                 {!readOnly && missionItems.length > 0 && (
                   <>
@@ -2488,11 +2488,11 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
                       }}
                       onBlur={() => setConfirmDeleteAll(false)}
                       className="text-[10px] text-red-400 hover:text-red-300 transition-colors font-medium"
-                      data-tip="Remove every waypoint from the planner. Does not touch the vehicle."
+                      data-tip="从规划器中移除所有航点。不会影响无人机上的任务。"
                     >
                       {confirmDeleteAll
-                        ? `Delete all ${missionItems.length}?`
-                        : 'Delete all'}
+                        ? `删除全部 ${missionItems.length} 项?`
+                        : '全部删除'}
                     </button>
                   </>
                 )}
@@ -2505,15 +2505,15 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
               <div className="absolute right-2 top-full mt-1 z-[9999] w-60 bg-surface-solid border border-subtle rounded-lg shadow-2xl p-3">
                 <div className="text-xs font-medium text-content mb-2">
                   {bulkPopover === 'altitude'
-                    ? `Altitude for ${multiSelected.size} waypoint${multiSelected.size === 1 ? '' : 's'}`
-                    : `Speed for ${multiSelected.size} waypoint${multiSelected.size === 1 ? '' : 's'}`}
+                    ? `${multiSelected.size} 个航点的高度`
+                    : `${multiSelected.size} 个航点的速度`}
                 </div>
                 <div className="flex items-center gap-2">
                   <div
                     className="flex-1 min-w-0"
                     data-tip={
                       bulkPopover === 'speed'
-                        ? "0 removes the selection's DO_CHANGE_SPEED commands"
+                        ? '0 表示移除选中项的 DO_CHANGE_SPEED 命令'
                         : undefined
                     }
                   >
@@ -2530,19 +2530,18 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
                     onClick={bulkPopover === 'altitude' ? handleBulkAltitude : handleBulkSpeed}
                     className="shrink-0 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/15 text-blue-400 border border-blue-500/30 hover:bg-blue-500/25 transition-colors"
                   >
-                    Apply
+                    应用
                   </button>
                 </div>
                 {bulkPopover === 'altitude' && (
                   <p className="mt-1.5 text-[10px] text-content-tertiary">
-                    Altitude frames are left as they are.
+                    高度坐标系保持不变。
                   </p>
                 )}
                 {selectionInSurvey && (
                   <p className="mt-1.5 text-[10px] text-amber-400">
-                    Selection includes survey waypoints. Regenerating the survey rebuilds
-                    them from its config and overwrites this edit; prefer the survey's own
-                    altitude setting for lasting changes.
+                    选中项包含勘测航点。重新生成勘测时会按其配置重建并覆盖此修改;
+                    如需长期生效,请优先使用勘测自身的高度设置。
                   </p>
                 )}
               </div>
@@ -2567,13 +2566,13 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
             </svg>
             {readOnly ? (
               <>
-                <p className="text-sm font-medium mb-1">No mission loaded</p>
-                <p className="text-xs text-content-tertiary text-center">No mission on flight controller</p>
+                <p className="text-sm font-medium mb-1">未加载任务</p>
+                <p className="text-xs text-content-tertiary text-center">飞控上没有任务</p>
               </>
             ) : (
               <>
-                <p className="text-sm font-medium mb-1">No waypoints yet</p>
-                <p className="text-xs text-content-tertiary text-center">Click "Add Waypoint" below, use the map's Add WP tool, or Shift+click the map</p>
+                <p className="text-sm font-medium mb-1">还没有航点</p>
+                <p className="text-xs text-content-tertiary text-center">点击下方“添加航点”、使用地图的添加航点工具,或按住 Shift 点击地图</p>
               </>
             )}
           </div>
@@ -2762,7 +2761,7 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
                       }}
                       onMouseDown={(e) => e.stopPropagation()}
                       className="shrink-0 flex items-center justify-center w-5 h-5"
-                      title="Shift+click to select range"
+                      title="Shift+点击以选择范围"
                     >
                       <input
                         type="checkbox"
@@ -2787,7 +2786,7 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
                     <button
                       onClick={(e) => toggleCollapse(wp.seq, e)}
                       className="w-4 h-4 flex items-center justify-center text-content-secondary hover:text-content transition-colors shrink-0"
-                      title={isCollapsed ? `Expand (${childCount} items)` : 'Collapse'}
+                      title={isCollapsed ? `展开(${childCount} 项)` : '收起'}
                     >
                       <svg className={`w-3 h-3 transition-transform ${isCollapsed ? '' : 'rotate-90'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
@@ -2890,7 +2889,7 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
                       className={`p-1 text-content-secondary hover:text-blue-400 hover:bg-blue-500/10 rounded transition-all shrink-0 ${
                         isSelected || multiSelected.has(wp.seq) ? '' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
                       }`}
-                      data-tip="Focus map on this waypoint"
+                      data-tip="将地图聚焦到此航点"
                     >
                       <Crosshair className="w-4 h-4" />
                     </button>
@@ -2906,7 +2905,7 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
                       className={`p-1 text-content-secondary hover:text-red-400 hover:bg-red-500/10 rounded transition-all shrink-0 ${
                         isSelected || multiSelected.has(wp.seq) ? '' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
                       }`}
-                      title="Delete"
+                      title="删除"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -2967,7 +2966,7 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
         <div className="border-t border-subtle bg-surface p-3">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-medium text-content-secondary">
-              Editing Waypoint {groupWaypointNumbers.get(selectedWaypoint.seq) ?? selectedWaypoint.seq + 1}
+              正在编辑航点 {groupWaypointNumbers.get(selectedWaypoint.seq) ?? selectedWaypoint.seq + 1}
             </span>
             <div className="flex items-center gap-2">
               {commandHasLocation(selectedWaypoint.command) && (
@@ -2978,7 +2977,7 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
                     window.setTimeout(() => setWpCoordCopied(false), 1200);
                   }}
                   className="text-content-secondary hover:text-content"
-                  data-tip="Copy lat, lng of this waypoint"
+                  data-tip="复制此航点的纬度、经度"
                 >
                   {wpCoordCopied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
@@ -2996,7 +2995,7 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
 
           {/* Command selector */}
           <div className="mb-3">
-            <label className="block text-[11px] text-content-secondary mb-1">Action</label>
+            <label className="block text-[11px] text-content-secondary mb-1">命令</label>
             <CommandDropdown
               value={selectedWaypoint.command}
               onChange={(cmd) => handleCommandChange(selectedWaypoint.seq, cmd)}
@@ -3044,7 +3043,7 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
             {commandHasLocation(selectedWaypoint.command) && (
               <>
                 <div>
-                  <label className="block text-[11px] text-content-secondary mb-1">Latitude</label>
+                  <label className="block text-[11px] text-content-secondary mb-1">纬度</label>
                   <DraftNumberInput
                     value={selectedWaypoint.latitude}
                     onCommit={(v) => handleParamChange(selectedWaypoint.seq, 'latitude', v)}
@@ -3054,7 +3053,7 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-content-secondary mb-1">Longitude</label>
+                  <label className="block text-[11px] text-content-secondary mb-1">经度</label>
                   <DraftNumberInput
                     value={selectedWaypoint.longitude}
                     onCommit={(v) => handleParamChange(selectedWaypoint.seq, 'longitude', v)}
@@ -3086,7 +3085,7 @@ function WaypointListContent({ readOnly = false }: { readOnly?: boolean }) {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Add Waypoint
+            添加航点
           </button>
         </div>
       )}

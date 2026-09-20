@@ -50,23 +50,23 @@ export const ConfigReviewStep: React.FC = () => {
   if (!selectedPreset) {
     return (
       <div className="text-center py-8">
-        <p className="text-content-secondary">No preset selected. Please go back and select a preset.</p>
+        <p className="text-content-secondary">未选择预设。请返回并选择一个预设。</p>
       </div>
     );
   }
 
   // Generate summary items
   const pidItems = [
-    `Roll: P=${selectedPreset.pids.roll.p} I=${selectedPreset.pids.roll.i} D=${selectedPreset.pids.roll.d}`,
-    `Pitch: P=${selectedPreset.pids.pitch.p} I=${selectedPreset.pids.pitch.i} D=${selectedPreset.pids.pitch.d}`,
-    `Yaw: P=${selectedPreset.pids.yaw.p} I=${selectedPreset.pids.yaw.i}`,
+    `横滚: P=${selectedPreset.pids.roll.p} I=${selectedPreset.pids.roll.i} D=${selectedPreset.pids.roll.d}`,
+    `俯仰: P=${selectedPreset.pids.pitch.p} I=${selectedPreset.pids.pitch.i} D=${selectedPreset.pids.pitch.d}`,
+    `偏航: P=${selectedPreset.pids.yaw.p} I=${selectedPreset.pids.yaw.i}`,
   ];
 
   const rateItems = [
-    `RC Rate: ${selectedPreset.rates.rcRate}`,
+    `RC 速率: ${selectedPreset.rates.rcRate}`,
     `Expo: ${selectedPreset.rates.rcExpo}%`,
-    `Roll/Pitch Rate: ${selectedPreset.rates.rollRate}`,
-    `Yaw Rate: ${selectedPreset.rates.yawRate}`,
+    `横滚/俯仰速率: ${selectedPreset.rates.rollRate}`,
+    `偏航速率: ${selectedPreset.rates.yawRate}`,
   ];
 
   // Mode names lookup (iNav permanent box IDs)
@@ -94,27 +94,27 @@ export const ConfigReviewStep: React.FC = () => {
   };
 
   const modeItems = selectedPreset.modes.map((mode) => {
-    const name = modeNames[mode.boxId] || `Mode ${mode.boxId}`;
+    const name = modeNames[mode.boxId] || `模式 ${mode.boxId}`;
     const channel = `AUX${mode.auxChannel + 1}`;
-    return `${name} on ${channel} (${mode.rangeStart}-${mode.rangeEnd})`;
+    return `${name} 于 ${channel}(${mode.rangeStart}-${mode.rangeEnd})`;
   });
 
   const failsafeItems = [
-    `Procedure: ${selectedPreset.failsafe.procedure}`,
-    `Delay: ${selectedPreset.failsafe.delay} seconds`,
-    `Landing timeout: ${selectedPreset.failsafe.offDelay} seconds`,
+    `程序: ${selectedPreset.failsafe.procedure}`,
+    `延迟: ${selectedPreset.failsafe.delay} 秒`,
+    `降落超时: ${selectedPreset.failsafe.offDelay} 秒`,
   ];
 
   const aircraftItems =
     selectedPreset.category === 'fixed_wing'
       ? [
-          'Platform: Airplane',
-          `Servo mixer: ${selectedPreset.aircraft.servoMixerRules.length} rules`,
-          `Motor mixer: ${selectedPreset.aircraft.motorMixerRules.length} motors`,
+          '平台:固定翼(飞机)',
+          `舵机混控: ${selectedPreset.aircraft.servoMixerRules.length} 条规则`,
+          `电机混控: ${selectedPreset.aircraft.motorMixerRules.length} 个电机`,
         ]
       : [
-          'Platform: Multirotor',
-          `Motor mixer: Quad X (${selectedPreset.aircraft.motorMixerRules.length} motors)`,
+          '平台:多旋翼',
+          `电机混控: Quad X(${selectedPreset.aircraft.motorMixerRules.length} 个电机)`,
         ];
 
   return (
@@ -125,11 +125,10 @@ export const ConfigReviewStep: React.FC = () => {
           <selectedPreset.icon className="w-8 h-8 text-content" />
         </div>
         <h2 className="text-xl font-semibold text-content">
-          Review: {selectedPreset.name}
+          预览:{selectedPreset.name}
         </h2>
         <p className="text-sm text-content-secondary mt-2 max-w-md mx-auto">
-          The following configuration will be applied to your flight controller.
-          Review the settings below before proceeding.
+          以下配置将应用到你的飞控。请在继续前确认下列设置。
         </p>
       </div>
 
@@ -142,7 +141,7 @@ export const ConfigReviewStep: React.FC = () => {
               : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
           }`}
         >
-          {boardType === 'msp' ? 'Via MSP Protocol' : 'Via CLI Commands'}
+          {boardType === 'msp' ? '通过 MSP 协议' : '通过 CLI 命令'}
         </span>
       </div>
 
@@ -151,7 +150,7 @@ export const ConfigReviewStep: React.FC = () => {
         {/* Aircraft Type */}
         <ConfigSection
           icon={<Plane className="w-5 h-5 text-sky-400" />}
-          title="Aircraft Type"
+          title="机型"
           items={aircraftItems}
           color="from-sky-500/10 to-blue-500/5 border-sky-500/20"
         />
@@ -159,7 +158,7 @@ export const ConfigReviewStep: React.FC = () => {
         {/* PIDs */}
         <ConfigSection
           icon={<SlidersHorizontal className="w-5 h-5 text-purple-400" />}
-          title="PID Tuning"
+          title="PID 调参"
           items={pidItems}
           color="from-purple-500/10 to-violet-500/5 border-purple-500/20"
         />
@@ -167,7 +166,7 @@ export const ConfigReviewStep: React.FC = () => {
         {/* Rates */}
         <ConfigSection
           icon={<Gauge className="w-5 h-5 text-blue-400" />}
-          title="Rates"
+          title="速率"
           items={rateItems}
           color="from-blue-500/10 to-cyan-500/5 border-blue-500/20"
         />
@@ -175,7 +174,7 @@ export const ConfigReviewStep: React.FC = () => {
         {/* Modes */}
         <ConfigSection
           icon={<Gamepad2 className="w-5 h-5 text-green-400" />}
-          title="Flight Modes"
+          title="飞行模式"
           items={modeItems}
           color="from-green-500/10 to-emerald-500/5 border-green-500/20"
         />
@@ -183,7 +182,7 @@ export const ConfigReviewStep: React.FC = () => {
         {/* Failsafe */}
         <ConfigSection
           icon={<Shield className="w-5 h-5 text-orange-400" />}
-          title="Failsafe"
+          title="失控保护"
           items={failsafeItems}
           color="from-orange-500/10 to-amber-500/5 border-orange-500/20"
         />
@@ -195,11 +194,10 @@ export const ConfigReviewStep: React.FC = () => {
           <AlertTriangle className="w-5 h-5 text-amber-400" />
           <div>
             <h4 className="font-medium text-amber-200 text-sm">
-              This will overwrite your current settings
+              这将覆盖你当前的设置
             </h4>
             <p className="text-xs text-amber-100/70 mt-1">
-              Make sure you've backed up your configuration if you want to preserve your
-              current settings. The changes will be saved to EEPROM immediately.
+              如果你想保留当前设置,请确保已备份配置。更改将立即保存到 EEPROM。
             </p>
           </div>
         </div>
@@ -212,14 +210,14 @@ export const ConfigReviewStep: React.FC = () => {
           className="flex items-center gap-2 px-4 py-2 text-sm text-content-secondary hover:text-content hover:bg-surface-raised rounded-lg transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          上一步
         </button>
 
         <button
           onClick={nextStep}
           className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors"
         >
-          Apply Configuration
+          应用配置
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>

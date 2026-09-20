@@ -44,9 +44,9 @@ const PANEL_W = 288;
 
 type StatusVar = 'success' | 'warn' | 'danger' | 'info';
 function tagFor(meta: FlightModeMeta): { label: string; status: StatusVar } | null {
-  if (meta.commit) return { label: 'commit', status: 'danger' };
-  if (meta.gps) return { label: 'gps', status: 'warn' };
-  if (meta.fly) return { label: 'fly', status: 'info' };
+  if (meta.commit) return { label: '需确认', status: 'danger' };
+  if (meta.gps) return { label: '需 GPS', status: 'warn' };
+  if (meta.fly) return { label: '需飞行', status: 'info' };
   return null;
 }
 function statusChipStyle(status: StatusVar): CSSProperties {
@@ -205,7 +205,7 @@ function ModePickerImpl({
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Filter modes…"
+          placeholder="筛选模式…"
           className="flex-1 bg-transparent text-content text-sm outline-none placeholder:text-content-tertiary"
         />
         <span className="text-[9px] font-mono text-content-tertiary border border-subtle rounded px-1 py-px">esc</span>
@@ -215,10 +215,10 @@ function ModePickerImpl({
       {pendingMeta && (
         <div className="m-2 shrink-0 flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-2">
           <span className="flex-1 text-[12px] text-content">
-            Engage <span className="text-red-300 font-semibold">{pendingMeta.name}</span>?
+            切换到 <span className="text-red-300 font-semibold">{pendingMeta.name}</span>?
           </span>
-          <button onClick={onCancelCommit} className="text-[11px] font-medium px-2.5 py-1 rounded-md border border-subtle text-content-secondary hover:text-content">Cancel</button>
-          <button onClick={onConfirmCommit} className="text-[11px] font-medium px-2.5 py-1 rounded-md bg-red-600 hover:bg-red-500 text-white border border-red-600">Confirm</button>
+          <button onClick={onCancelCommit} className="text-[11px] font-medium px-2.5 py-1 rounded-md border border-subtle text-content-secondary hover:text-content">取消</button>
+          <button onClick={onConfirmCommit} className="text-[11px] font-medium px-2.5 py-1 rounded-md bg-red-600 hover:bg-red-500 text-white border border-red-600">确认</button>
         </div>
       )}
 
@@ -226,7 +226,7 @@ function ModePickerImpl({
         {/* recents */}
         {!q && recentMetas.length > 0 && (
           <div className="px-1.5 pt-1 pb-2">
-            <div className="text-[9px] font-mono uppercase tracking-[0.14em] text-content-tertiary mb-1.5">Recent</div>
+            <div className="text-[9px] font-mono uppercase tracking-[0.14em] text-content-tertiary mb-1.5">最近使用</div>
             <div className="flex flex-wrap gap-1.5">
               {recentMetas.map((meta) => {
                 const reason = modeBlockedReason(meta, ctx);
@@ -265,7 +265,7 @@ function ModePickerImpl({
         ))}
 
         {groups.length === 0 && (
-          <div className="px-3 py-6 text-center text-content-tertiary text-xs">No modes match "{query}"</div>
+          <div className="px-3 py-6 text-center text-content-tertiary text-xs">没有匹配"{query}"的模式</div>
         )}
       </div>
     </div>,

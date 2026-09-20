@@ -8,11 +8,11 @@ import { ELRS_USB_BAUD } from '../../../shared/link-doctor-types';
 type Step = 'scan' | 'noradio' | 'switch' | 'connect' | 'vehicle' | 'done';
 
 const STEP_LABELS: Array<{ key: Step[]; label: string }> = [
-  { key: ['scan', 'noradio'], label: 'Find radio' },
-  { key: ['switch'], label: 'Radio mode' },
-  { key: ['connect'], label: 'Connect' },
-  { key: ['vehicle'], label: 'Vehicle' },
-  { key: ['done'], label: 'Done' },
+  { key: ['scan', 'noradio'], label: '查找电台' },
+  { key: ['switch'], label: '电台模式' },
+  { key: ['connect'], label: '连接' },
+  { key: ['vehicle'], label: '飞行器' },
+  { key: ['done'], label: '完成' },
 ];
 
 type FoundRadio =
@@ -96,7 +96,7 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
   }, [connectionState.isConnected, step, restarting]);
 
   const scanForRadio = async () => {
-    setScanStatus('Looking at your USB ports...');
+    setScanStatus('正在检查 USB 端口…');
     const all = await window.electronAPI.listPorts();
     // USB serial devices only - skips Bluetooth and debug consoles.
     const usb = all.filter((p) => p.vendorId);
@@ -106,7 +106,7 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
     for (const port of candidates) {
       if (!openRef.current) return;
       try {
-        setScanStatus(`Checking ${port}...`);
+        setScanStatus(`正在检查 ${port}…`);
         const info = await window.electronAPI.elrsDetect(port);
         if (info) {
           setRadio({ kind: 'serial', port, info });
@@ -128,7 +128,7 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
     // the only path for internal TX modules, which have no USB port at all.
     if (!openRef.current) return;
     try {
-      setScanStatus('Listening for a WiFi radio (TX Backpack)...');
+      setScanStatus('正在监听 WiFi 电台(TX Backpack)…');
       const { diagnosis, sender } = await window.electronAPI.linkDoctorProbeUdp(BACKPACK_UDP_PORT);
       if (!openRef.current) return;
       if (diagnosis.protocol === 'mavlink2' || diagnosis.protocol === 'mavlink1') {
@@ -153,11 +153,11 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
         setStep('connect');
       } else if (result.status === 'timeout') {
         setFailure(
-          'The module kept refusing the change - the receiver was still powered and linked. Unpower the vehicle completely (battery AND USB cable) and press Start again.',
+          '模块持续拒绝更改——接收机仍处于通电连接状态。请将飞行器完全断电(电池和 USB 线都拔掉),然后重新点击"开始"。',
         );
       }
     } catch (e) {
-      setFailure(e instanceof Error ? e.message : 'The module stopped responding.');
+      setFailure(e instanceof Error ? e.message : '模块停止响应。');
     } finally {
       setSwitching(false);
     }
@@ -173,8 +173,8 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
     if (!ok) {
       setFailure(
         radio.kind === 'serial'
-          ? 'Could not open the port. Is another program using it?'
-          : 'Could not listen on the WiFi port. Is another program using UDP 14550?',
+          ? '无法打开端口。是否有其他程序正在占用?'
+          : '无法监听 WiFi 端口。是否有其他程序正在占用 UDP 14550?',
       );
     }
     // Success advances via the isConnected effect.
@@ -198,7 +198,7 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
       setChecks(result);
       if (result.every((c) => c.status === 'pass')) setStep('done');
     } catch (e) {
-      setFailure(e instanceof Error ? e.message : 'Could not read vehicle settings.');
+      setFailure(e instanceof Error ? e.message : '无法读取飞行器设置。');
     } finally {
       setBusy(false);
     }
@@ -214,12 +214,12 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
         .map((f) => ({ paramId: f.param, value: f.value, type: paramTypes[f.param] ?? 6 }));
       const result = await window.electronAPI.setParameterBatch(batch);
       if ((result?.failed ?? []).length > 0) {
-        setFailure(`The vehicle rejected: ${result!.failed.join(', ')}`);
+        setFailure(`飞行器拒绝:${result!.failed.join(', ')}`);
       } else {
         setFixApplied(true);
       }
     } catch (e) {
-      setFailure(e instanceof Error ? e.message : 'Applying settings failed.');
+      setFailure(e instanceof Error ? e.message : '应用设置失败。');
     } finally {
       setBusy(false);
     }
@@ -232,7 +232,7 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
       await window.electronAPI.mavlinkReboot();
     } catch {
       setRestarting(false);
-      setFailure('The restart command was not accepted.');
+      setFailure('重启指令未被接受。');
     }
   };
 
@@ -259,8 +259,8 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
       <div className="card w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto">
         <div className="card-body space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-content">Radio Setup</h3>
-            <button onClick={close} className="text-content-secondary hover:text-content transition-colors" aria-label="Close">
+            <h3 className="text-base font-semibold text-content">无线电设置</h3>
+            <button onClick={close} className="text-content-secondary hover:text-content transition-colors" aria-label="关闭">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -302,29 +302,26 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
 
           {step === 'noradio' && (
             <div className="space-y-3">
-              <p className="text-sm text-content">No radio found - two ways to hook one up:</p>
+              <p className="text-sm text-content">未找到电台——两种连接方式:</p>
               <div className="p-3 bg-surface-raised rounded-lg space-y-1">
-                <p className="text-xs font-medium text-content">USB cable (external modules)</p>
+                <p className="text-xs font-medium text-content">USB 线(外置模块)</p>
                 <p className="text-xs text-content-secondary">
-                  Plug the radio module into this computer with a USB data cable. It can stay in the handset bay -
-                  it just also needs the cable to this computer.
+                  用 USB 数据线将电台模块连接到本电脑。它可以留在遥控器舱内——只需再连一根线到本电脑即可。
                   {scannedPorts.length > 0
-                    ? ` Checked: ${scannedPorts.join(', ')}.`
-                    : ' No USB serial devices were present.'}
+                    ? ` 已检查:${scannedPorts.join(', ')}。`
+                    : ' 未发现 USB 串口设备。'}
                 </p>
               </div>
               <div className="p-3 bg-surface-raised rounded-lg space-y-1">
-                <p className="text-xs font-medium text-content">WiFi (TX Backpack - required for internal modules)</p>
+                <p className="text-xs font-medium text-content">WiFi(TX Backpack——内置模块必需)</p>
                 <p className="text-xs text-content-secondary">
-                  Radios built into the handset (e.g. TX16S internal) have no USB - they stream over WiFi instead.
-                  Enable Backpack WiFi from the ELRS menu on the handset, then either join this computer to the
-                  "ExpressLRS TX Backpack" network (password: expresslrs) or put the backpack on your home WiFi.
-                  Note: WiFi streaming only works once the radio link is already in MAVLink mode - switching the
-                  mode itself needs USB or the handset menu.
+                  遥控器内置的电台(如 TX16S 内置模块)没有 USB——它们通过 WiFi 传输。在遥控器的 ELRS 菜单中开启
+                  Backpack WiFi,然后让本电脑加入"ExpressLRS TX Backpack"网络(密码:expresslrs),或将 Backpack
+                  接入家庭 WiFi。注意:WiFi 传输仅在无线链路已处于 MAVLink 模式时可用——切换模式本身需要 USB 或遥控器菜单。
                 </p>
               </div>
               <button onClick={() => { setStep('scan'); void scanForRadio(); }} className="btn btn-primary w-full text-sm">
-                Scan again (USB + WiFi)
+                重新扫描(USB + WiFi)
               </button>
             </div>
           )}
@@ -335,44 +332,43 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
                 <span className="text-content font-medium">{radio.info.name}</span>
                 {radio.info.firmware && <span className="text-content-secondary">v{radio.info.firmware}</span>}
                 <span className="px-2 py-0.5 rounded-full border text-amber-300 border-amber-500/30 bg-amber-500/10">
-                  {radio.info.linkMode?.value ?? 'Normal'} mode
+                  {radio.info.linkMode?.value ?? 'Normal'} 模式
                 </span>
               </div>
               {radio.info.firmware?.startsWith('4.0.0') && (
                 <p className="text-xs text-amber-300">
-                  This module runs ELRS 4.0.0, which corrupts stick positions in MAVLink mode. Update it (and the
-                  receiver) to 4.0.1 or newer before operating with sticks.
+                  此模块运行 ELRS 4.0.0,该版本在 MAVLink 模式下会损坏摇杆位置。在操控前,请将其(和接收机)升级到
+                  4.0.1 或更新版本。
                 </p>
               )}
               <p className="text-sm text-content">
-                The radio needs to switch to MAVLink mode to carry telemetry.
+                电台需要切换到 MAVLink 模式以传输遥测数据。
               </p>
               <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                <p className="text-xs text-amber-200 font-medium mb-1">First: power the receiver off</p>
+                <p className="text-xs text-amber-200 font-medium mb-1">第一步:关闭接收机电源</p>
                 <p className="text-xs text-content-secondary">
-                  The radio refuses this change while its receiver is linked. Unpower the vehicle completely -
-                  battery out AND USB cable unplugged. You can also press Start now and unpower the vehicle while
-                  ArduDeck keeps retrying.
+                  接收机仍连接时,电台会拒绝此更改。请将飞行器完全断电——取出电池并拔掉 USB 线。也可以先点击"开始",
+                  在 ArduDeck 持续重试期间为飞行器断电。
                 </p>
               </div>
               {switching ? (
                 <div className="p-3 bg-surface-raised rounded-lg space-y-2">
                   <div className="flex items-center gap-2 text-xs text-content">
                     {spinner}
-                    Switching{progress ? ` - attempt ${progress.attempt}` : ''}...
+                    切换中{progress ? ` - 第 ${progress.attempt} 次尝试` : ''}…
                   </div>
                   {progress?.currentMode && progress.currentMode !== 'MAVLink' && (
                     <p className="text-xs text-content-secondary">
-                      Module still reports {progress.currentMode} - waiting for the receiver to go dark.
+                      模块仍报告为 {progress.currentMode}——等待接收机断电。
                     </p>
                   )}
                   <button onClick={() => window.electronAPI.elrsCancel()} className="btn btn-secondary w-full text-xs">
-                    Cancel
+                    取消
                   </button>
                 </div>
               ) : (
                 <button onClick={startSwitch} className="btn btn-primary w-full text-sm">
-                  Start
+                  开始
                 </button>
               )}
             </div>
@@ -381,20 +377,20 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
           {step === 'connect' && (
             <div className="space-y-3">
               <p className="text-sm text-content">
-                The radio on {radioLabel} is ready and speaking MAVLink.
+                {radioLabel} 上的电台已就绪并使用 MAVLink 通信。
               </p>
               <p className="text-xs text-content-secondary">
-                Power the vehicle back on and give the link a few seconds to come up, then connect.
+                重新给飞行器上电,等待几秒让链路建立,然后连接。
               </p>
               {connectionError && <p className="text-xs text-red-300">{connectionError}</p>}
               {isConnecting || connectionState.isWaitingForHeartbeat ? (
                 <div className="flex items-center gap-2 text-xs text-content-secondary">
                   {spinner}
-                  Connecting through the radio...
+                  正在通过电台连接…
                 </div>
               ) : (
                 <button onClick={doConnect} className="btn btn-primary w-full text-sm">
-                  Connect through the radio
+                  通过电台连接
                 </button>
               )}
             </div>
@@ -402,17 +398,17 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
 
           {step === 'vehicle' && (
             <div className="space-y-3">
-              <p className="text-sm text-content">Connected. Checking the vehicle for radio-link readiness...</p>
+              <p className="text-sm text-content">已连接。正在检查飞行器的无线链路就绪状态…</p>
               {busy && (
                 <div className="flex items-center gap-2 text-xs text-content-secondary">
                   {spinner}
-                  Reading vehicle settings over the radio...
+                  正在通过电台读取飞行器设置…
                 </div>
               )}
               {restarting && (
                 <div className="flex items-center gap-2 text-xs text-content-secondary">
                   {spinner}
-                  Restarting the vehicle - the link reconnects by itself...
+                  正在重启飞行器——链路会自动重连…
                 </div>
               )}
               {checks && !busy && (
@@ -431,15 +427,15 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
               {checks && !busy && !restarting && (
                 fixApplied ? (
                   <button onClick={restartVehicle} className="btn btn-primary w-full text-sm">
-                    Restart vehicle to finish
+                    重启飞行器以完成
                   </button>
                 ) : fixable.length > 0 ? (
                   <button onClick={applyFixes} className="btn btn-primary w-full text-sm">
-                    Fix for me
+                    帮我修复
                   </button>
                 ) : failing.length > 0 ? (
                   <p className="text-xs text-content-secondary">
-                    The remaining item cannot be fixed from here (see above). Telemetry works regardless.
+                    剩余项无法在此修复(见上文)。遥测功能不受影响。
                   </p>
                 ) : null
               )}
@@ -449,14 +445,13 @@ export function RadioSetupWizard({ open, onClose, connectSerial, connectUdpListe
           {step === 'done' && (
             <div className="space-y-3">
               <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                <p className="text-sm text-emerald-300 font-medium">Radio link fully set up.</p>
+                <p className="text-sm text-emerald-300 font-medium">无线链路配置完成。</p>
                 <p className="text-xs text-content-secondary mt-1">
-                  Telemetry, stick control and signal strength all flow through the radio. The SiK-style modem
-                  workflow applies from here: just connect on {radioLabel} whenever you fly or drive.
+                  遥测、摇杆控制和信号强度都经由该电台传输。从此以后就像使用 SiK 数传电台一样:每次飞行或驾驶时,只需连接 {radioLabel}。
                 </p>
               </div>
               <button onClick={close} className="btn btn-primary w-full text-sm">
-                Close
+                关闭
               </button>
             </div>
           )}

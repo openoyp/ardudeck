@@ -45,20 +45,20 @@ const PANORAMA_ICON = (
 const SURVEY_TYPES: SurveyType[] = [
   {
     pattern: 'grid',
-    label: 'Area survey',
-    desc: 'Draw a polygon, fill it with a lawnmower grid',
+    label: '区域勘测',
+    desc: '绘制多边形,用割草机式网格填充',
     icon: AREA_ICON,
   },
   {
     pattern: 'corridor',
-    label: 'Corridor survey',
-    desc: 'Draw a centerline (roads, rail, power lines), strips run parallel',
+    label: '走廊勘测',
+    desc: '绘制中心线(道路、铁路、电力线),条带平行展开',
     icon: CORRIDOR_ICON,
   },
   {
     pattern: 'panorama',
-    label: 'Panorama capture',
-    desc: 'Draw the SUBJECT (shoreline, cliff, frontage); flight path, camera yaw and triggers are computed for you',
+    label: '全景拍摄',
+    desc: '绘制拍摄主体(海岸线、悬崖、立面);航线、相机偏航与触发会自动计算',
     icon: PANORAMA_ICON,
   },
 ];
@@ -112,12 +112,12 @@ export function SurveyStartButton() {
         data-tour="mission-survey"
         onClick={() => setOpen((o) => !o)}
         className="px-2.5 py-1.5 rounded text-xs font-medium bg-surface-solid border border-purple-400 shadow-sm text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1.5"
-        title="Plan a survey: area (polygon grid) or corridor (centerline strips)"
+        title="规划勘测:区域(多边形网格)或走廊(中心线条带)"
       >
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
         </svg>
-        Survey
+        勘测
         <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
@@ -153,7 +153,7 @@ export function SurveyStartButton() {
                   <span className="text-xs font-medium text-content">{gen.displayName}</span>
                   {gen.capabilities.isRemote && (
                     <span className="px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-teal-300 bg-teal-500/15 border border-teal-500/30 rounded">
-                      Remote
+                      远程
                     </span>
                   )}
                 </span>
@@ -180,10 +180,10 @@ export function SurveyStartButton() {
             </span>
             <span className="min-w-0">
               <span className="flex items-center gap-1.5">
-                <span className="text-xs font-medium text-content">Area Editor</span>
-                <span className="px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-teal-300 bg-teal-500/15 border border-teal-500/30 rounded">New</span>
+                <span className="text-xs font-medium text-content">区域编辑器</span>
+                <span className="px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-teal-300 bg-teal-500/15 border border-teal-500/30 rounded">新</span>
               </span>
-              <span className="block text-[10px] text-content-tertiary leading-snug">Full-window editor: multi-area, holes, KML import</span>
+              <span className="block text-[10px] text-content-tertiary leading-snug">全窗口编辑器:多区域、镂空、KML 导入</span>
             </span>
           </button>
         </div>

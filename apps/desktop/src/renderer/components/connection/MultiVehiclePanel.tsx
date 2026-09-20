@@ -20,11 +20,11 @@ import { STATE_COLORS, getModeCategoryVar } from '../map/tactical-icon-pool';
 /** Friendly label for a source's bearer, used in the vehicle list and source chips. */
 function bearerLabel(bearer: string): string {
   switch (bearer) {
-    case 'udp': return 'network';
-    case 'tcp': return 'internet';
-    case 'serial': return 'radio';
-    case 'cellular': return 'cellular';
-    case 'peer': return '2nd GCS';
+    case 'udp': return '网络';
+    case 'tcp': return '互联网';
+    case 'serial': return '无线电';
+    case 'cellular': return '蜂窝';
+    case 'peer': return '第二地面站';
     default: return bearer;
   }
 }
@@ -34,7 +34,7 @@ function DiscoveredVehicles({ bearerBySysid }: { bearerBySysid: Map<number, stri
   if (vehicles.length === 0) {
     return (
       <p className="text-xs text-content-tertiary">
-        Listening. Vehicles appear here the moment their heartbeats arrive.
+        正在监听。飞行器心跳一到就会出现在这里。
       </p>
     );
   }
@@ -58,7 +58,7 @@ function DiscoveredVehicles({ bearerBySysid }: { bearerBySysid: Map<number, stri
             <span className="text-[10px] uppercase tracking-wide text-content-tertiary w-12 shrink-0">{v.vehicleClass}</span>
             <span className="font-mono text-[11px] truncate flex-1" style={{ color: getModeCategoryVar(v.mode) }}>{v.mode}</span>
             {bearer && <span className="text-[10px] uppercase tracking-wide text-content-tertiary shrink-0">{bearerLabel(bearer)}</span>}
-            {v.armed && <span className="text-[10px] font-semibold text-orange-400">ARMED</span>}
+            {v.armed && <span className="text-[10px] font-semibold text-orange-400">已解锁</span>}
             <HeartbeatDot lastUpdate={v.lastUpdate} />
           </button>
         );
@@ -104,7 +104,7 @@ function AddVehicle({ onAdd, busy }: { onAdd: (s: OrchestratorSource) => void; b
         onClick={() => setOpen(true)}
         className="w-full rounded-lg border border-dashed border-subtle hover:border-cyan-500/40 hover:bg-surface-raised transition-colors px-3 py-2.5 text-sm text-content-secondary"
       >
-        + Add a vehicle <span className="text-content-tertiary">· radio · internet · cellular · 2nd ground station</span>
+        + 添加飞行器 <span className="text-content-tertiary">· 无线电 · 互联网 · 蜂窝 · 第二地面站</span>
       </button>
     );
   }
@@ -120,16 +120,16 @@ function AddVehicle({ onAdd, busy }: { onAdd: (s: OrchestratorSource) => void; b
   return (
     <div className="rounded-lg border border-subtle p-3 space-y-3">
       <div className="flex flex-wrap gap-1 bg-surface rounded-lg p-1">
-        {tab('serial', 'Radio')}
-        {tab('tcp', 'Internet')}
-        {tab('cellular', 'Cellular')}
-        {tab('peer', '2nd GCS')}
+        {tab('serial', '无线电')}
+        {tab('tcp', '互联网')}
+        {tab('cellular', '蜂窝')}
+        {tab('peer', '第二地面站')}
       </div>
 
       {kind === 'serial' && (
         <div className="flex gap-2">
           <select className={field} value={serialPath} onChange={(e) => setSerialPath(e.target.value)}>
-            {ports.length === 0 && <option value="">No radios found</option>}
+            {ports.length === 0 && <option value="">未找到无线电</option>}
             {ports.map((p) => <option key={p.path} value={p.path}>{p.friendlyName || p.path}</option>)}
           </select>
           <DraftNumberInput className={`${field} w-24`} value={baud} min={1200} integer onCommit={setBaud} />
@@ -138,10 +138,10 @@ function AddVehicle({ onAdd, busy }: { onAdd: (s: OrchestratorSource) => void; b
       {kind === 'tcp' && (
         <div className="space-y-1.5">
           <div className="flex gap-2">
-            <input className={field} placeholder="address (e.g. 10.0.0.5)" value={host} onChange={(e) => setHost(e.target.value)} />
+            <input className={field} placeholder="地址(例如 10.0.0.5)" value={host} onChange={(e) => setHost(e.target.value)} />
             <DraftNumberInput className={`${field} w-24`} value={tcpPort} min={1} max={65535} integer onCommit={setTcpPort} />
           </div>
-          <p className="text-[10px] text-content-tertiary">ArduDeck dials the drone&apos;s address. Use this when the drone has a reachable IP.</p>
+          <p className="text-[10px] text-content-tertiary">由 ArduDeck 主动连接无人机地址。当无人机具有可达 IP 时使用此方式。</p>
         </div>
       )}
       {kind === 'cellular' && (
@@ -159,7 +159,7 @@ function AddVehicle({ onAdd, busy }: { onAdd: (s: OrchestratorSource) => void; b
             <DraftNumberInput className={`${field} w-24`} value={cellPort} min={1} max={65535} integer onCommit={setCellPort} />
           </div>
           <p className="text-[10px] text-content-tertiary">
-            The drone dials in to this machine. Point its telemetry forwarder ({cellProto === 'udp' ? 'mavproxy/mavlink-router udpout' : 'a TCP client'}) at this machine&apos;s reachable address on port {cellPort || '…'}. The link recovers on its own across signal loss and carrier NAT changes.
+            由无人机主动接入本机。将其数传转发器({cellProto === 'udp' ? 'mavproxy/mavlink-router udpout' : 'TCP 客户端'})指向本机的可达地址和端口 {cellPort || '…'}。链路在信号丢失和运营商 NAT 变化后可自动恢复。
           </p>
         </div>
       )}
@@ -168,8 +168,8 @@ function AddVehicle({ onAdd, busy }: { onAdd: (s: OrchestratorSource) => void; b
       )}
 
       <div className="flex gap-2">
-        <button onClick={submit} disabled={busy} className="flex-1 rounded-md bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-sm py-1.5">Add</button>
-        <button onClick={() => setOpen(false)} className="rounded-md border border-subtle px-3 text-sm text-content-secondary hover:bg-surface-raised">Cancel</button>
+        <button onClick={submit} disabled={busy} className="flex-1 rounded-md bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-sm py-1.5">添加</button>
+        <button onClick={() => setOpen(false)} className="rounded-md border border-subtle px-3 text-sm text-content-secondary hover:bg-surface-raised">取消</button>
       </div>
     </div>
   );
@@ -203,12 +203,12 @@ export function MultiVehiclePanel() {
           disabled={busy}
           className="w-full rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 transition-colors px-4 py-5 text-center text-white shadow-lg shadow-cyan-900/20"
         >
-          <div className="text-base font-semibold">{busy ? 'Starting…' : 'Start multi-vehicle'}</div>
-          <div className="text-xs text-cyan-100/80 mt-1">Finds your vehicles automatically. No setup.</div>
+          <div className="text-base font-semibold">{busy ? '启动中…' : '启动多飞行器'}</div>
+          <div className="text-xs text-cyan-100/80 mt-1">自动发现你的飞行器。无需配置。</div>
         </button>
         {error && <p className="text-xs text-red-400">{error}</p>}
         <details className="group">
-          <summary className="cursor-pointer text-xs text-content-tertiary hover:text-content-secondary list-none">▸ Advanced (UDP / TCP / Server sources)</summary>
+          <summary className="cursor-pointer text-xs text-content-tertiary hover:text-content-secondary list-none">▸ 高级(UDP / TCP / 服务器源)</summary>
           <div className="mt-3"><LinksManager /></div>
         </details>
       </div>
@@ -225,17 +225,17 @@ export function MultiVehiclePanel() {
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-content">Multi-vehicle is on</div>
-          <div className="text-xs text-content-secondary">{vehicles.length} vehicle{vehicles.length === 1 ? '' : 's'} connected</div>
+          <div className="text-sm font-semibold text-content">多飞行器已开启</div>
+          <div className="text-xs text-content-secondary">{vehicles.length} 台飞行器已连接</div>
         </div>
-        <button onClick={stop} disabled={busy} className="rounded-md border border-subtle px-3 py-1.5 text-xs text-content-secondary hover:bg-surface-raised disabled:opacity-50">Stop</button>
+        <button onClick={stop} disabled={busy} className="rounded-md border border-subtle px-3 py-1.5 text-xs text-content-secondary hover:bg-surface-raised disabled:opacity-50">停止</button>
       </div>
 
       {error && <p className="text-xs text-red-400">{error}</p>}
 
       {/* Vehicles */}
       <div>
-        <div className="text-[11px] uppercase tracking-wide text-content-secondary mb-1.5">Vehicles ({vehicles.length})</div>
+        <div className="text-[11px] uppercase tracking-wide text-content-secondary mb-1.5">飞行器 ({vehicles.length})</div>
         <DiscoveredVehicles bearerBySysid={bearerBySysid} />
       </div>
 
@@ -251,7 +251,7 @@ export function MultiVehiclePanel() {
                   : s.kind === 'cellular' ? `${s.proto}in :${s.port}`
                   : s.kind === 'peer' ? s.url : ''}
               </span>
-              <button onClick={() => removeSource(i)} disabled={busy} className="text-content-tertiary hover:text-red-400 disabled:opacity-50">Remove</button>
+              <button onClick={() => removeSource(i)} disabled={busy} className="text-content-tertiary hover:text-red-400 disabled:opacity-50">移除</button>
             </div>
           ))}
         </div>
@@ -261,7 +261,7 @@ export function MultiVehiclePanel() {
 
       {/* Advanced: raw link management for power users */}
       <details className="group">
-        <summary className="cursor-pointer text-xs text-content-tertiary hover:text-content-secondary list-none">▸ Advanced (UDP / TCP / Server sources)</summary>
+        <summary className="cursor-pointer text-xs text-content-tertiary hover:text-content-secondary list-none">▸ 高级(UDP / TCP / 服务器源)</summary>
         <div className="mt-3"><LinksManager /></div>
       </details>
     </div>

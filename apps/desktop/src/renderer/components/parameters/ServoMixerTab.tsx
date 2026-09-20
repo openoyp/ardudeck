@@ -41,22 +41,22 @@ interface MSPServoMixerRule {
 
 // Human-readable input source names
 const INPUT_SOURCE_NAMES: Record<number, string> = {
-  0: 'Roll',
-  1: 'Pitch',
-  2: 'Yaw',
-  3: 'Throttle',
-  4: 'RC Roll (raw)',
-  5: 'RC Pitch (raw)',
-  6: 'RC Yaw (raw)',
-  7: 'RC Throttle (raw)',
+  0: '横滚',
+  1: '俯仰',
+  2: '偏航',
+  3: '油门',
+  4: 'RC 横滚（原始）',
+  5: 'RC 俯仰（原始）',
+  6: 'RC 偏航（原始）',
+  7: 'RC 油门（原始）',
   8: 'AUX 1',
   9: 'AUX 2',
   10: 'AUX 3',
   11: 'AUX 4',
-  12: 'Gimbal Pitch',
-  13: 'Gimbal Roll',
-  14: 'Flap input',
-  15: 'Headtracker',
+  12: '云台俯仰',
+  13: '云台横滚',
+  14: '襟翼输入',
+  15: '头部追踪',
 };
 
 // Servo function presets - what the servo is connected to
@@ -72,32 +72,32 @@ interface ServoFunction {
 const SERVO_FUNCTIONS: ServoFunction[] = [
   {
     id: 'aileron',
-    name: 'Aileron',
-    description: 'Responds to Roll',
+    name: '副翼',
+    description: '响应横滚',
     color: 'bg-gradient-to-br from-blue-500/25 to-blue-600/15 border-blue-500/40 hover:border-blue-400/60',
     activeColor: 'bg-gradient-to-br from-blue-500/40 to-blue-600/30 border-blue-400 text-blue-200',
     rules: [{ inputSource: 0, rate: 100 }],
   },
   {
     id: 'elevator',
-    name: 'Elevator',
-    description: 'Responds to Pitch',
+    name: '升降舵',
+    description: '响应俯仰',
     color: 'bg-gradient-to-br from-emerald-500/25 to-emerald-600/15 border-emerald-500/40 hover:border-emerald-400/60',
     activeColor: 'bg-gradient-to-br from-emerald-500/40 to-emerald-600/30 border-emerald-400 text-emerald-200',
     rules: [{ inputSource: 1, rate: 100 }],
   },
   {
     id: 'rudder',
-    name: 'Rudder',
-    description: 'Responds to Yaw',
+    name: '方向舵',
+    description: '响应偏航',
     color: 'bg-gradient-to-br from-purple-500/25 to-purple-600/15 border-purple-500/40 hover:border-purple-400/60',
     activeColor: 'bg-gradient-to-br from-purple-500/40 to-purple-600/30 border-purple-400 text-purple-200',
     rules: [{ inputSource: 2, rate: 100 }],
   },
   {
     id: 'elevon_l',
-    name: 'Elevon (Left)',
-    description: 'Roll + Pitch combined',
+    name: '升降副翼（左）',
+    description: '横滚 + 俯仰组合',
     color: 'bg-gradient-to-br from-cyan-500/25 to-cyan-600/15 border-cyan-500/40 hover:border-cyan-400/60',
     activeColor: 'bg-gradient-to-br from-cyan-500/40 to-cyan-600/30 border-cyan-400 text-cyan-200',
     rules: [
@@ -107,8 +107,8 @@ const SERVO_FUNCTIONS: ServoFunction[] = [
   },
   {
     id: 'elevon_r',
-    name: 'Elevon (Right)',
-    description: 'Roll (rev) + Pitch',
+    name: '升降副翼（右）',
+    description: '横滚（反）+ 俯仰',
     color: 'bg-gradient-to-br from-cyan-500/25 to-cyan-600/15 border-cyan-500/40 hover:border-cyan-400/60',
     activeColor: 'bg-gradient-to-br from-cyan-500/40 to-cyan-600/30 border-cyan-400 text-cyan-200',
     rules: [
@@ -118,8 +118,8 @@ const SERVO_FUNCTIONS: ServoFunction[] = [
   },
   {
     id: 'vtail_l',
-    name: 'V-Tail (Left)',
-    description: 'Pitch + Yaw mixed',
+    name: 'V 尾（左）',
+    description: '俯仰 + 偏航混合',
     color: 'bg-gradient-to-br from-amber-500/25 to-amber-600/15 border-amber-500/40 hover:border-amber-400/60',
     activeColor: 'bg-gradient-to-br from-amber-500/40 to-amber-600/30 border-amber-400 text-amber-200',
     rules: [
@@ -129,8 +129,8 @@ const SERVO_FUNCTIONS: ServoFunction[] = [
   },
   {
     id: 'vtail_r',
-    name: 'V-Tail (Right)',
-    description: 'Pitch + Yaw (rev)',
+    name: 'V 尾（右）',
+    description: '俯仰 + 偏航（反）',
     color: 'bg-gradient-to-br from-amber-500/25 to-amber-600/15 border-amber-500/40 hover:border-amber-400/60',
     activeColor: 'bg-gradient-to-br from-amber-500/40 to-amber-600/30 border-amber-400 text-amber-200',
     rules: [
@@ -140,8 +140,8 @@ const SERVO_FUNCTIONS: ServoFunction[] = [
   },
   {
     id: 'flaperon',
-    name: 'Flaperon',
-    description: 'Aileron + flap input',
+    name: '襟副翼',
+    description: '副翼 + 襟翼输入',
     color: 'bg-gradient-to-br from-rose-500/25 to-rose-600/15 border-rose-500/40 hover:border-rose-400/60',
     activeColor: 'bg-gradient-to-br from-rose-500/40 to-rose-600/30 border-rose-400 text-rose-200',
     rules: [
@@ -151,24 +151,24 @@ const SERVO_FUNCTIONS: ServoFunction[] = [
   },
   {
     id: 'gimbal_pan',
-    name: 'Gimbal Pan',
-    description: 'Camera left/right',
+    name: '云台平移',
+    description: '相机左右',
     color: 'bg-gradient-to-br from-indigo-500/25 to-indigo-600/15 border-indigo-500/40 hover:border-indigo-400/60',
     activeColor: 'bg-gradient-to-br from-indigo-500/40 to-indigo-600/30 border-indigo-400 text-indigo-200',
     rules: [{ inputSource: 13, rate: 100 }],
   },
   {
     id: 'gimbal_tilt',
-    name: 'Gimbal Tilt',
-    description: 'Camera up/down',
+    name: '云台俯仰',
+    description: '相机上下',
     color: 'bg-gradient-to-br from-indigo-500/25 to-indigo-600/15 border-indigo-500/40 hover:border-indigo-400/60',
     activeColor: 'bg-gradient-to-br from-indigo-500/40 to-indigo-600/30 border-indigo-400 text-indigo-200',
     rules: [{ inputSource: 12, rate: 100 }],
   },
   {
     id: 'aux_control',
-    name: 'AUX Channel',
-    description: 'Direct AUX 1 control',
+    name: 'AUX 通道',
+    description: '直接 AUX 1 控制',
     color: 'bg-gradient-to-br from-slate-400/25 to-slate-500/15 border-slate-400/40 hover:border-slate-300/60',
     activeColor: 'bg-gradient-to-br from-slate-400/40 to-slate-500/30 border-slate-300 text-slate-200',
     rules: [{ inputSource: 8, rate: 100 }],
@@ -207,7 +207,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
       const values = await window.electronAPI.mspGetServoValues();
       if (values) setServoValues(values);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load servo config');
+      setError(err instanceof Error ? err.message : '加载舵机配置失败');
     } finally {
       setLoading(false);
     }
@@ -268,7 +268,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
       for (let i = 0; i < servoConfigs.length; i++) {
         const success = await window.electronAPI.mspSetServoConfig(i, servoConfigs[i]);
         if (!success) {
-          setError(`Failed to save servo ${i} config`);
+          setError(`保存舵机 ${i} 配置失败`);
           return;
         }
       }
@@ -279,12 +279,12 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
 
       const eepromSuccess = await window.electronAPI.mspSaveEeprom();
       if (!eepromSuccess) {
-        setError('Config sent but EEPROM save failed');
+        setError('配置已发送但 EEPROM 保存失败');
         return;
       }
       setModified(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      setError(err instanceof Error ? err.message : '保存失败');
     }
   };
 
@@ -354,11 +354,11 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
   // Describe what a servo does based on its rules
   const describeServoFunction = (servoIndex: number): string => {
     const rules = getRulesForServo(servoIndex);
-    if (rules.length === 0) return 'Not configured';
+    if (rules.length === 0) return '未配置';
 
     const inputs = rules.map((r) => {
-      const name = INPUT_SOURCE_NAMES[r.inputSource] || `Input ${r.inputSource}`;
-      if (r.rate < 0) return `${name} (rev)`;
+      const name = INPUT_SOURCE_NAMES[r.inputSource] || `输入 ${r.inputSource}`;
+      if (r.rate < 0) return `${name}（反）`;
       return name;
     });
 
@@ -379,7 +379,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mb-2 mx-auto" />
-          <p className="text-content-secondary">Loading servo configuration...</p>
+          <p className="text-content-secondary">正在加载舵机配置...</p>
         </div>
       </div>
     );
@@ -395,9 +395,9 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
     <div className="space-y-4">
       {/* Header */}
       <div>
-        <h2 className="text-lg font-medium text-content">Servo Mixer</h2>
+        <h2 className="text-lg font-medium text-content">舵机混控</h2>
         <p className="text-sm text-content-secondary">
-          Tell the flight controller what each servo is connected to
+          告诉飞行控制器每个舵机连接的是什么
         </p>
       </div>
 
@@ -414,7 +414,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
       {/* Servo Selector */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-content-secondary uppercase tracking-wide">Select Servo</span>
+          <span className="text-xs text-content-secondary uppercase tracking-wide">选择舵机</span>
           {servoConfigs.length > 4 && (
             <button
               onClick={() => setShowAllServos(!showAllServos)}
@@ -427,12 +427,12 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
               {showAllServos ? (
                 <>
                   <ChevronDown className="w-3 h-3" />
-                  Hide unused
+                  隐藏未使用
                 </>
               ) : (
                 <>
                   <ChevronRight className="w-3 h-3" />
-                  Show all {servoConfigs.length}
+                  显示全部 {servoConfigs.length}
                 </>
               )}
             </button>
@@ -455,7 +455,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
                       : 'bg-surface border-subtle text-content-secondary hover:border'
                 }`}
               >
-                <div className="text-xs font-medium">Servo {idx}</div>
+                <div className="text-xs font-medium">舵机 {idx}</div>
                 <div className="text-[10px] opacity-70 truncate max-w-[100px]">{description}</div>
               </button>
             );
@@ -469,10 +469,10 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
           <div className="bg-gradient-to-br from-blue-500/10 to-indigo-600/5 rounded-xl border-blue-500/20 p-4 space-y-4">
             <div>
               <h3 className="text-sm font-medium text-blue-200">
-                What is Servo {selectedServo} connected to?
+                舵机 {selectedServo} 连接的是什么？
               </h3>
               <p className="text-xs text-blue-300/60 mt-0.5">
-                Select the control surface or function this servo controls
+                选择此舵机控制的翼面或功能
               </p>
             </div>
 
@@ -507,16 +507,16 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
                 onClick={clearServoRules}
                 className="w-full py-2 text-xs text-blue-300/50 hover:text-blue-200 hover:bg-blue-500/10 rounded transition-colors"
               >
-                Clear - this servo does nothing
+                清除 — 此舵机无功能
               </button>
             )}
 
             {/* Current configuration summary */}
             {currentRules.length > 0 && (
               <div className="p-3 bg-blue-500/10 border-blue-500/20 rounded-lg">
-                <p className="text-xs text-blue-300/60">Current configuration:</p>
+                <p className="text-xs text-blue-300/60">当前配置：</p>
                 <p className="text-sm text-blue-100 mt-1">
-                  Servo {selectedServo} responds to <strong className="text-blue-200">{describeServoFunction(selectedServo)}</strong>
+                  舵机 {selectedServo} 响应 <strong className="text-blue-200">{describeServoFunction(selectedServo)}</strong>
                 </p>
               </div>
             )}
@@ -531,8 +531,8 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
                   <Settings className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-emerald-200">Servo Limits</h3>
-                  <p className="text-xs text-emerald-300/60">Adjust travel range if needed</p>
+                  <h3 className="text-sm font-medium text-emerald-200">舵机行程</h3>
+                  <p className="text-xs text-emerald-300/60">如有需要调整行程范围</p>
                 </div>
               </div>
 
@@ -555,7 +555,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
 
               <div className="grid grid-cols-2 gap-3">
                 <CompactSlider
-                  label="Min"
+                  label="最小"
                   value={currentConfig.min}
                   onChange={(v) => updateServoConfig(selectedServo, { min: v })}
                   min={750}
@@ -564,7 +564,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
                   color="#3B82F6"
                 />
                 <CompactSlider
-                  label="Max"
+                  label="最大"
                   value={currentConfig.max}
                   onChange={(v) => updateServoConfig(selectedServo, { max: v })}
                   min={750}
@@ -576,7 +576,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
 
               <div className="grid grid-cols-2 gap-3">
                 <CompactSlider
-                  label="Center"
+                  label="中位"
                   value={currentConfig.middle}
                   onChange={(v) => updateServoConfig(selectedServo, { middle: v })}
                   min={750}
@@ -585,7 +585,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
                   color="#22C55E"
                 />
                 <CompactSlider
-                  label="Rate %"
+                  label="速率 %"
                   value={currentConfig.rate}
                   onChange={(v) => updateServoConfig(selectedServo, { rate: v })}
                   min={-125}
@@ -603,7 +603,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
                     onChange={(e) => setPollingEnabled(e.target.checked)}
                     className="w-4 h-4 rounded border-emerald-500/40 bg-emerald-900/30 text-emerald-500"
                   />
-                  <span className="text-xs text-emerald-300/60">Live position</span>
+                  <span className="text-xs text-emerald-300/60">实时位置</span>
                 </label>
                 <span className="text-xs text-emerald-300/50 font-mono">
                   {servoValues[selectedServo] || 1500} µs
@@ -617,7 +617,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
                 onClick={() => setShowAdvanced(!showAdvanced)}
                 className="w-full p-3 flex items-center justify-between text-left"
               >
-                <span className="text-xs text-purple-300/70">Advanced: Custom mixing rules</span>
+                <span className="text-xs text-purple-300/70">高级：自定义混控规则</span>
                 {showAdvanced ? (
                   <ChevronDown className="w-4 h-4 text-purple-400/60" />
                 ) : (
@@ -629,7 +629,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
                 <div className="p-4 pt-0 space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-purple-300/50">
-                      For complex setups. Most users don't need this.
+                      用于复杂配置，大多数用户无需使用。
                     </p>
                     <button
                       onClick={() => addMixerRule(selectedServo)}
@@ -640,7 +640,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
                   </div>
 
                   {currentRules.length === 0 ? (
-                    <p className="text-xs text-purple-300/50 text-center py-2">No rules</p>
+                    <p className="text-xs text-purple-300/50 text-center py-2">暂无规则</p>
                   ) : (
                     currentRules.map((rule) => (
                       <div key={rule.originalIndex} className="flex items-center gap-2">
@@ -691,7 +691,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
           className="flex items-center gap-2 px-3 py-1.5 text-xs text-content-secondary hover:text-content hover:bg-surface-raised rounded transition-colors"
         >
           <RefreshCw className="w-3.5 h-3.5" />
-          Refresh
+          刷新
         </button>
         <button
           onClick={saveAll}
@@ -703,7 +703,7 @@ export default function ServoMixerTab({ modified, setModified }: Props) {
           }`}
         >
           <Save className="w-4 h-4" />
-          Save
+          保存
         </button>
       </div>
     </div>

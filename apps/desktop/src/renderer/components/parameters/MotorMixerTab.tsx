@@ -47,9 +47,9 @@ const MOTOR_PRESETS: Record<string, {
 }> = {
   // === MULTIROTOR PRESETS ===
   quadX: {
-    name: 'Quad X',
-    description: 'Most common drone layout',
-    beginner: 'This is what most racing and freestyle drones use. The X shape gives balanced control in all directions.',
+    name: 'Quad X（四轴 X 型）',
+    description: '最常见的无人机布局',
+    beginner: '大多数竞速和自由飞无人机都使用这种布局。X 形在各方向控制均衡。',
     icon: Sparkles,
     recommended: true,
     platform: 'multirotor',
@@ -67,9 +67,9 @@ const MOTOR_PRESETS: Record<string, {
     ],
   },
   quadPlus: {
-    name: 'Quad +',
-    description: 'Plus-shaped layout',
-    beginner: 'Motors are arranged in a + shape. One motor points forward. Less common but works well for some frames.',
+    name: 'Quad +（四轴 + 型）',
+    description: '十字形布局',
+    beginner: '电机呈 + 形排列，其中一个电机朝前。较少见但适合部分机架。',
     icon: Plus,
     platform: 'multirotor',
     positions: [
@@ -86,9 +86,9 @@ const MOTOR_PRESETS: Record<string, {
     ],
   },
   hex: {
-    name: 'Hex X',
-    description: '6 motors for heavy lifting',
-    beginner: 'Six motors provide more power and redundancy. If one motor fails, you might still be able to land safely.',
+    name: 'Hex X（六轴 X 型）',
+    description: '6 电机，适合重载',
+    beginner: '六个电机提供更大的动力和冗余。即使一个电机失效，仍有机会安全降落。',
     icon: Cog,
     platform: 'multirotor',
     positions: [
@@ -111,9 +111,9 @@ const MOTOR_PRESETS: Record<string, {
 
   // === AIRPLANE PRESETS ===
   singleMotor: {
-    name: 'Single Motor',
-    description: 'Standard airplane with one motor',
-    beginner: 'Most airplanes have one motor at the front (tractor) or back (pusher). Control surfaces handle steering.',
+    name: '单电机',
+    description: '标准单电机固定翼',
+    beginner: '大多数固定翼在机头（拉力）或机尾（推力）装有一个电机，转向由控制翼面完成。',
     icon: Plane,
     recommended: true,
     platform: 'airplane',
@@ -125,9 +125,9 @@ const MOTOR_PRESETS: Record<string, {
     ],
   },
   twinMotorDiff: {
-    name: 'Twin Motor (Diff Thrust)',
-    description: 'Yaw via motor speed difference',
-    beginner: 'Two wing motors spinning opposite directions. Yaw is controlled by speeding up one motor and slowing the other.',
+    name: '双电机（差动推力）',
+    description: '通过电机速差控制偏航',
+    beginner: '两侧机翼电机反向旋转，通过一侧加速另一侧减速来控制偏航。',
     icon: Plane,
     platform: 'airplane',
     positions: [
@@ -140,9 +140,9 @@ const MOTOR_PRESETS: Record<string, {
     ],
   },
   twinMotorRudder: {
-    name: 'Twin Motor (Rudder)',
-    description: 'Yaw via rudder servo',
-    beginner: 'Two wing motors at equal speed. Use this if your plane has a rudder/tail for yaw control.',
+    name: '双电机（方向舵）',
+    description: '通过方向舵控制偏航',
+    beginner: '两侧机翼电机同速。若你的飞机有方向舵/尾翼控制偏航，请选择此项。',
     icon: Plane,
     platform: 'airplane',
     positions: [
@@ -155,9 +155,9 @@ const MOTOR_PRESETS: Record<string, {
     ],
   },
   quadPlaneVTOL: {
-    name: 'QuadPlane VTOL',
-    description: '4 quad motors + 1 pusher',
-    beginner: 'VTOL aircraft: 4 lifting motors (like a quad) plus 1 pusher motor for forward flight. Most popular VTOL setup.',
+    name: 'QuadPlane VTOL（垂起固定翼）',
+    description: '4 个旋翼电机 + 1 个推力电机',
+    beginner: '垂直起降飞行器：4 个升力电机（类似四轴）加 1 个前飞推力电机。最常见的 VTOL 配置。',
     icon: Plane,
     platform: 'airplane',
     positions: [
@@ -176,9 +176,9 @@ const MOTOR_PRESETS: Record<string, {
     ],
   },
   triVTOL: {
-    name: 'Tricopter VTOL',
-    description: '3 tilt/lift motors',
-    beginner: 'VTOL with 3 motors that tilt for transition. Lighter than QuadPlane but more complex mechanically.',
+    name: 'Tricopter VTOL（三旋翼垂起）',
+    description: '3 个可倾转升力电机',
+    beginner: '三电机倾转变换的垂直起降飞行器。比 QuadPlane 更轻，但机械结构更复杂。',
     icon: Plane,
     platform: 'airplane',
     positions: [
@@ -217,7 +217,7 @@ function MotorLayoutDiagram({
       {/* Front indicator */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 flex flex-col items-center">
         <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent border-b-emerald-500" />
-        <span className="text-[10px] text-emerald-400 font-semibold mt-1">FRONT</span>
+        <span className="text-[10px] text-emerald-400 font-semibold mt-1">前</span>
       </div>
 
       {/* Motors */}
@@ -355,7 +355,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
       }
     } catch (err) {
       console.error('[MotorMixer] Load failed:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load motor mixer');
+      setError(err instanceof Error ? err.message : '加载电机混控失败');
     } finally {
       setLoading(false);
     }
@@ -440,7 +440,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
       // Try MSP first, falls back to CLI internally
       const success = await window.electronAPI?.mspSetMotorMixer(rules);
       if (!success) {
-        throw new Error('Failed to save motor mixer');
+        throw new Error('保存电机混控失败');
       }
 
       // Save to EEPROM
@@ -461,7 +461,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
       setModified(false);
     } catch (err) {
       console.error('[MotorMixer] Save failed:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save motor mixer');
+      setError(err instanceof Error ? err.message : '保存电机混控失败');
       setSaveState('error');
     } finally {
       setSaving(false);
@@ -483,16 +483,16 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
         </div>
         <div className="text-center">
           <h3 className="text-lg font-semibold text-content mb-1">
-            {saveState === 'saving' && 'Saving Motor Mixer'}
-            {saveState === 'rebooting' && 'Rebooting Board'}
-            {saveState === 'reconnecting' && 'Reconnecting'}
-            {saveState === 'error' && 'Save Failed'}
+            {saveState === 'saving' && '正在保存电机混控'}
+            {saveState === 'rebooting' && '正在重启飞控'}
+            {saveState === 'reconnecting' && '正在重新连接'}
+            {saveState === 'error' && '保存失败'}
           </h3>
           <p className="text-sm text-content-secondary">
-            {saveState === 'saving' && 'Writing configuration...'}
-            {saveState === 'rebooting' && 'Waiting for board to restart...'}
-            {saveState === 'reconnecting' && 'Connecting to board...'}
-            {saveState === 'error' && (error || 'An error occurred')}
+            {saveState === 'saving' && '正在写入配置...'}
+            {saveState === 'rebooting' && '等待飞控重启...'}
+            {saveState === 'reconnecting' && '正在连接飞控...'}
+            {saveState === 'error' && (error || '发生错误')}
           </p>
         </div>
         {saveState !== 'error' && (
@@ -507,7 +507,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
             onClick={() => setSaveState('idle')}
             className="px-4 py-2 bg-surface-raised hover:bg-surface-raised text-content rounded-lg text-sm"
           >
-            Dismiss
+            忽略
           </button>
         )}
       </div>
@@ -518,7 +518,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-        <p className="text-sm text-content-secondary">Loading motor mixer...</p>
+        <p className="text-sm text-content-secondary">正在加载电机混控...</p>
       </div>
     );
   }
@@ -532,8 +532,8 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
             <Cog className="w-5 h-5 text-rose-400" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-content">Motor Mixer</h2>
-            <p className="text-sm text-content-secondary">Configure motor output mixing</p>
+            <h2 className="text-lg font-semibold text-content">电机混控</h2>
+            <p className="text-sm text-content-secondary">配置电机输出混控</p>
           </div>
         </div>
 
@@ -544,7 +544,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
             className="px-3 py-2 text-content-secondary hover:text-content hover:bg-surface-raised rounded-lg transition-colors flex items-center gap-2"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Reload
+            重新加载
           </button>
           <button
             onClick={saveToFC}
@@ -556,7 +556,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
             }`}
           >
             <Download className="w-4 h-4" />
-            {saving ? 'Saving...' : 'Save to FC'}
+            {saving ? '保存中...' : '保存到飞控'}
           </button>
         </div>
       </div>
@@ -564,7 +564,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
       {/* Error */}
       {error && saveState === 'idle' && (
         <div className="p-3 bg-red-500/10 border-red-500/30 rounded-lg text-sm text-red-300 flex items-center gap-2">
-          <span>Error:</span> {error}
+          <span>错误：</span> {error}
           <button onClick={() => setError(null)} className="ml-auto hover:text-red-200">×</button>
         </div>
       )}
@@ -575,11 +575,11 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
           <div className="flex items-start gap-3">
             <Lightbulb className="w-5 h-5 text-blue-400 mt-0.5 shrink-0" />
             <div>
-              <h3 className="font-medium text-blue-300 mb-1">What is Motor Mixer?</h3>
+              <h3 className="font-medium text-blue-300 mb-1">什么是电机混控？</h3>
               <p className="text-sm text-blue-200/70">
                 {currentPlatform === 'airplane'
-                  ? 'Motor mixer controls how your motor(s) respond to throttle. Most airplanes have one motor - control surfaces handle steering.'
-                  : 'Motor mixer tells your flight controller how each motor should respond when you move the sticks. Pick a preset that matches your frame shape.'}
+                  ? '电机混控控制电机对油门的响应。大多数固定翼只有一个电机 — 转向由控制翼面完成。'
+                  : '电机混控告诉飞行控制器每个电机如何响应你的打杆。请选择与机架形状匹配的预设。'}
               </p>
             </div>
           </div>
@@ -590,14 +590,14 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-content">
-            {currentPlatform === 'airplane' ? 'How many motors does your airplane have?' : 'What type of frame do you have?'}
+            {currentPlatform === 'airplane' ? '你的飞机有几个电机？' : '你使用什么机架类型？'}
           </h3>
           <button
             onClick={resetAll}
             className="px-3 py-1.5 text-xs bg-surface-raised hover:bg-red-500/20 rounded-lg text-content-tertiary hover:text-red-400 transition-colors flex items-center gap-1.5"
           >
             <RotateCcw className="w-3 h-3" />
-            Clear All
+            全部清除
           </button>
         </div>
 
@@ -640,7 +640,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
                     </span>
                     {preset.recommended && (
                       <span className="px-1.5 py-0.5 text-[10px] bg-amber-500/20 text-amber-400 rounded font-medium">
-                        Popular
+                        热门
                       </span>
                     )}
                   </div>
@@ -653,10 +653,10 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
                       isSelected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-surface-raised text-content-tertiary'
                     }`}>
-                      {preset.motors.length} {preset.motors.length === 1 ? 'motor' : 'motors'}
+                      {preset.motors.length} 个电机
                     </span>
                     {isSelected && (
-                      <span className="text-xs text-emerald-400 font-medium">Selected</span>
+                      <span className="text-xs text-emerald-400 font-medium">已选择</span>
                     )}
                   </div>
 
@@ -680,12 +680,12 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
               {showMorePresets ? (
                 <>
                   <ChevronUp className="w-4 h-4" />
-                  Show Less
+                  收起
                 </>
               ) : (
                 <>
                   <ChevronDown className="w-4 h-4" />
-                  Show More ({morePresets.length} more)
+                  显示更多（还有 {morePresets.length} 种）
                 </>
               )}
             </button>
@@ -698,12 +698,12 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
         <div className="text-center py-12 bg-surface rounded-xl border-subtle">
           <HelpCircle className="w-12 h-12 text-content-tertiary mx-auto mb-3" />
           <h3 className="text-lg font-medium text-content mb-2">
-            {currentPlatform === 'airplane' ? 'No Motor Configuration' : 'No Frame Selected'}
+            {currentPlatform === 'airplane' ? '未配置电机' : '未选择机架'}
           </h3>
           <p className="text-sm text-content-secondary max-w-md mx-auto mb-4">
             {currentPlatform === 'airplane'
-              ? 'Pick a motor setup above. Most airplanes have a single motor - control surfaces handle steering.'
-              : 'Pick a frame type above to get started. Most drones use "Quad X" - the standard layout with 4 motors in an X shape.'}
+              ? '请在上方选择电机配置。大多数固定翼为单电机 — 转向由控制翼面完成。'
+              : '请在上方选择机架类型开始。大多数无人机使用 "Quad X" — 4 个电机呈 X 形的标准布局。'}
           </p>
           <button
             onClick={() => applyPreset(defaultPreset)}
@@ -712,12 +712,12 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
             {currentPlatform === 'airplane' ? (
               <>
                 <Plane className="w-4 h-4" />
-                Use Single Motor (Recommended)
+                使用单电机（推荐）
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                Use Quad X (Recommended)
+                使用 Quad X（推荐）
               </>
             )}
           </button>
@@ -733,7 +733,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
                 </div>
                 <div>
                   <h3 className="font-medium text-emerald-300">
-                    {motors.length} Motor Configuration
+                    {motors.length} 电机配置
                   </h3>
                   <p className="text-sm text-emerald-200/60">
                     {Object.entries(MOTOR_PRESETS).find(([, p]) =>
@@ -744,13 +744,13 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
                         Math.abs(m.pitch - p.motors[i]!.pitch) < 0.01 &&
                         Math.abs(m.yaw - p.motors[i]!.yaw) < 0.01
                       )
-                    )?.[1]?.name || 'Custom configuration'}
+                    )?.[1]?.name || '自定义配置'}
                   </p>
                 </div>
               </div>
               {modified && (
                 <span className="px-3 py-1 text-xs bg-amber-500/20 text-amber-400 rounded-full">
-                  Unsaved changes
+                  未保存的更改
                 </span>
               )}
             </div>
@@ -764,8 +764,8 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
             >
               <div className="flex items-center gap-2">
                 <Cog className="w-4 h-4 text-content-secondary" />
-                <span className="text-sm font-medium text-content">Advanced: Individual Motor Values</span>
-                <span className="text-xs text-content-secondary">(for custom configurations)</span>
+                <span className="text-sm font-medium text-content">高级：单个电机数值</span>
+                <span className="text-xs text-content-secondary">（用于自定义配置）</span>
               </div>
               {showAdvanced ? (
                 <ChevronUp className="w-4 h-4 text-content-secondary" />
@@ -780,9 +780,9 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
                 <div className="flex items-start gap-2 p-3 bg-surface-raised rounded-lg text-xs text-content-secondary">
                   <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                   <p>
-                    <span className="text-content font-medium">Rotation direction</span> is inferred from mixing values:
-                    motors with positive roll mix spin CW (orange), negative roll spin CCW (blue).
-                    For airplanes, yaw mixing is used instead.
+                    <span className="text-content font-medium">旋转方向</span>由混控数值推断：
+                    横滚为正的电机顺时针旋转（橙色），为负逆时针旋转（蓝色）。
+                    固定翼则改用偏航混控判断。
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -819,13 +819,13 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
                             M{motor.index}
                           </div>
                           <div>
-                            <h3 className="font-semibold text-content">Motor {motor.index}</h3>
+                            <h3 className="font-semibold text-content">电机 {motor.index}</h3>
                             <div className={`flex items-center gap-1 text-xs ${
                               isCW ? 'text-orange-400' : 'text-blue-400'
                             }`}>
                               {isCW ? <RotateCw className="w-3 h-3" /> : <RotateCcw className="w-3 h-3" />}
                               <span className="font-medium">{rotation.toUpperCase()}</span>
-                              <span className="text-content-secondary ml-1">· Output {motor.index + 1}</span>
+                              <span className="text-content-secondary ml-1">· 输出 {motor.index + 1}</span>
                             </div>
                           </div>
                         </div>
@@ -839,16 +839,16 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
 
                       {/* Mix Bars */}
                       <div className="p-4 space-y-3">
-                        <MixBar value={motor.throttle} color="#F59E0B" label="Throttle" />
-                        <MixBar value={motor.roll} color="#EF4444" label="Roll" />
-                        <MixBar value={motor.pitch} color="#22C55E" label="Pitch" />
-                        <MixBar value={motor.yaw} color="#3B82F6" label="Yaw" />
+                        <MixBar value={motor.throttle} color="#F59E0B" label="油门" />
+                        <MixBar value={motor.roll} color="#EF4444" label="横滚" />
+                        <MixBar value={motor.pitch} color="#22C55E" label="俯仰" />
+                        <MixBar value={motor.yaw} color="#3B82F6" label="偏航" />
                       </div>
 
                       {/* Edit Controls */}
                       <div className="px-4 pb-4 space-y-3 border-t border-subtle pt-3">
                         <CompactSlider
-                          label="Throttle"
+                          label="油门"
                           value={motor.throttle * 1000}
                           onChange={(v) => updateMotor(motor.index, { throttle: v / 1000 })}
                           min={0}
@@ -857,7 +857,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
                           formatValue={(v: number) => (v / 1000).toFixed(2)}
                         />
                         <CompactSlider
-                          label="Roll"
+                          label="横滚"
                           value={(motor.roll + 1) * 500}
                           onChange={(v) => updateMotor(motor.index, { roll: (v / 500) - 1 })}
                           min={0}
@@ -866,7 +866,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
                           formatValue={(v: number) => ((v / 500) - 1).toFixed(2)}
                         />
                         <CompactSlider
-                          label="Pitch"
+                          label="俯仰"
                           value={(motor.pitch + 1) * 500}
                           onChange={(v) => updateMotor(motor.index, { pitch: (v / 500) - 1 })}
                           min={0}
@@ -875,7 +875,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
                           formatValue={(v: number) => ((v / 500) - 1).toFixed(2)}
                         />
                         <CompactSlider
-                          label="Yaw"
+                          label="偏航"
                           value={(motor.yaw + 1) * 500}
                           onChange={(v) => updateMotor(motor.index, { yaw: (v / 500) - 1 })}
                           min={0}
@@ -897,7 +897,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
                       className="px-4 py-2 bg-surface-raised hover:bg-surface-raised text-content rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2"
                     >
                       <Plus className="w-4 h-4" />
-                      Add Motor ({motors.length}/{MAX_MOTORS})
+                      添加电机（{motors.length}/{MAX_MOTORS}）
                     </button>
                   </div>
                 )}
@@ -909,7 +909,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
 
       {/* Legend */}
       <div className="bg-surface rounded-xl border-subtle p-4">
-        <h4 className="font-medium text-content mb-3">Understanding the Diagram</h4>
+        <h4 className="font-medium text-content mb-3">图例说明</h4>
         <div className="flex flex-wrap gap-6 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full border-2 border-orange-500 bg-orange-500/30 flex items-center justify-center">
@@ -919,7 +919,7 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
               <RotateCw className="w-3.5 h-3.5" />
               <span className="font-medium">CW</span>
             </div>
-            <span className="text-content-secondary">Clockwise</span>
+            <span className="text-content-secondary">顺时针</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full border-2 border-blue-500 bg-blue-500/30 flex items-center justify-center">
@@ -929,16 +929,16 @@ export default function MotorMixerTab({ modified, setModified }: Props) {
               <RotateCcw className="w-3.5 h-3.5" />
               <span className="font-medium">CCW</span>
             </div>
-            <span className="text-content-secondary">Counter-clockwise</span>
+            <span className="text-content-secondary">逆时针</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent border-b-emerald-500" />
-            <span className="text-emerald-400 font-medium">FRONT</span>
-            <span className="text-content-secondary">Front of aircraft</span>
+            <span className="text-emerald-400 font-medium">前</span>
+            <span className="text-content-secondary">飞行器前端</span>
           </div>
         </div>
         <p className="text-xs text-content-secondary mt-3">
-          Numbers in the diagram match motor outputs on your flight controller (M0, M1, etc.). Opposite motors spin in opposite directions to cancel torque.
+          图中的编号对应飞行控制器上的电机输出（M0、M1 等）。对角的电机反向旋转以抵消扭矩。
         </p>
       </div>
     </div>

@@ -140,8 +140,8 @@ export function SpectrumPanel() {
       scales: { x: { time: false }, y: { auto: true } },
       legend: { show: true },
       axes: [
-        { label: 'Frequency (Hz)', ...axisTheme },
-        { label: dbScale ? 'Amplitude (dB)' : 'Amplitude', ...axisTheme },
+        { label: '频率 (Hz)', ...axisTheme },
+        { label: dbScale ? '幅值 (dB)' : '幅值', ...axisTheme },
       ],
       series: [
         { label: 'Hz' },
@@ -198,7 +198,7 @@ export function SpectrumPanel() {
   }, [spectra, dbScale, isLight]);
 
   if (!currentLog) {
-    return <div className="h-full flex items-center justify-center text-content-tertiary text-xs">No log loaded</div>;
+    return <div className="h-full flex items-center justify-center text-content-tertiary text-xs">尚未加载日志</div>;
   }
 
   const first = spectra[0];
@@ -223,9 +223,9 @@ export function SpectrumPanel() {
                 ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
                 : 'bg-surface text-content-tertiary border-subtle hover:text-content-secondary'
           }`}
-          data-tip={syncZoomEnabled ? 'Analyse only the time window the charts are zoomed to' : 'Enable chart sync to follow zoom'}
+          data-tip={syncZoomEnabled ? '仅分析图表当前缩放的时间窗口' : '启用图表同步后才能跟随缩放'}
         >
-          Follow zoom
+          跟随缩放
         </button>
         <button
           onClick={() => setDbScale(!dbScale)}
@@ -234,19 +234,19 @@ export function SpectrumPanel() {
               ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
               : 'bg-surface text-content-tertiary border-subtle hover:text-content-secondary'
           }`}
-          data-tip="Logarithmic amplitude (dB)"
+          data-tip="对数幅值（dB）"
         >
           dB
         </button>
         {first && (
           <span className="text-[10px] text-content-tertiary ml-auto tabular-nums">
-            {first.rateHz.toFixed(0)} Hz sample rate · Δf {first.spec.resolutionHz.toFixed(2)} Hz · {first.spec.segments} seg
+            {first.rateHz.toFixed(0)} Hz 采样率 · Δf {first.spec.resolutionHz.toFixed(2)} Hz · {first.spec.segments} 段
           </span>
         )}
       </div>
       {spectra.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-content-tertiary text-xs px-6 text-center">
-          Not enough samples in this window - zoom out or pick a higher-rate message (IMU, ACC, GYR)
+          此窗口内样本不足 — 请缩小缩放范围或选择采样率更高的消息（IMU、ACC、GYR）
         </div>
       ) : (
         <div ref={chartRef} className="flex-1 min-h-0" />

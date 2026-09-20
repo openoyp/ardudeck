@@ -39,14 +39,14 @@ export const CAMERA_PRESET_GROUPS: CameraPresetGroup[] = [
     ],
   },
   {
-    group: 'Multispectral',
+    group: '多光谱',
     presets: [
       { name: 'MicaSense RedEdge-P', sensorWidth: 5.28, sensorHeight: 3.96, imageWidth: 1456, imageHeight: 1088, focalLength: 5.5 },
       { name: 'MicaSense Altum-PT', sensorWidth: 8.7, sensorHeight: 6.52, imageWidth: 4112, imageHeight: 3008, focalLength: 8 },
     ],
   },
   {
-    group: 'Other',
+    group: '其他',
     presets: [
       { name: 'senseFly S.O.D.A.', sensorWidth: 23.5, sensorHeight: 15.7, imageWidth: 5472, imageHeight: 3648, focalLength: 10.6 },
       { name: 'senseFly Aeria X', sensorWidth: 23.5, sensorHeight: 15.7, imageWidth: 6000, imageHeight: 4000, focalLength: 18.5 },

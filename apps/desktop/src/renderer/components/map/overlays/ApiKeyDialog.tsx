@@ -21,7 +21,7 @@ export function ApiKeyDialog() {
   const handleSave = async () => {
     const trimmed = key.trim();
     if (!trimmed) {
-      setError('API key is required');
+      setError('请输入 API 密钥');
       return;
     }
     setSaving(true);
@@ -36,16 +36,16 @@ export function ApiKeyDialog() {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="bg-surface-solid border border-subtle rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-        <h3 className="text-lg font-semibold text-content mb-2">OpenAIP API Key Required</h3>
+        <h3 className="text-lg font-semibold text-content mb-2">需要 OpenAIP API 密钥</h3>
         <p className="text-sm text-content-secondary mb-4">
-          Airspace and airport data is provided by OpenAIP. A free API key is required.
+          空域和机场数据由 OpenAIP 提供,需要免费 API 密钥。
         </p>
 
         <div className="bg-surface-input rounded-lg p-3 mb-4 text-sm text-content space-y-2">
-          <p className="font-medium text-content">How to get your free key:</p>
+          <p className="font-medium text-content">如何获取免费密钥:</p>
           <ol className="list-decimal list-inside space-y-1 text-content-secondary">
             <li>
-              Go to{' '}
+              前往{' '}
               <a
                 href="https://www.openaip.net"
                 target="_blank"
@@ -55,8 +55,8 @@ export function ApiKeyDialog() {
                 openaip.net
               </a>
             </li>
-            <li>Create a free account</li>
-            <li>Navigate to your account settings to find your API key</li>
+            <li>注册免费账户</li>
+            <li>进入账户设置查看你的 API 密钥</li>
           </ol>
         </div>
 
@@ -64,7 +64,7 @@ export function ApiKeyDialog() {
           type="text"
           value={key}
           onChange={(e) => { setKey(e.target.value); setError(''); }}
-          placeholder="Paste your OpenAIP API key"
+          placeholder="粘贴你的 OpenAIP API 密钥"
           className="w-full px-3 py-2 bg-surface-input border border rounded-lg text-sm text-content placeholder-content-tertiary focus:outline-none focus:border-blue-500 mb-2"
           onKeyDown={(e) => e.key === 'Enter' && handleSave()}
           autoFocus
@@ -76,14 +76,14 @@ export function ApiKeyDialog() {
             onClick={() => setShowApiKeyDialog(false)}
             className="px-4 py-2 text-sm text-content-secondary hover:text-content transition-colors"
           >
-            Cancel
+            取消
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
             className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
           >
-            {saving ? 'Saving...' : 'Save Key'}
+            {saving ? '保存中…' : '保存密钥'}
           </button>
         </div>
       </div>

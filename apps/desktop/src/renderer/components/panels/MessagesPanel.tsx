@@ -102,14 +102,14 @@ export function MessagesPanel() {
       {/* Header bar */}
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-subtle shrink-0">
         <span className="text-xs text-content-secondary font-medium">
-          {messages.length > 0 ? `${messages.length} message${messages.length !== 1 ? 's' : ''}` : 'No messages'}
+          {messages.length > 0 ? `${messages.length} 条消息` : '暂无消息'}
         </span>
         {messages.length > 0 && (
           <button
             onClick={clear}
             className="text-[10px] text-content-secondary hover:text-content transition-colors px-1.5 py-0.5 rounded hover:bg-surface-raised"
           >
-            Clear
+            清除
           </button>
         )}
       </div>
@@ -118,7 +118,7 @@ export function MessagesPanel() {
       <div ref={listRef} className="flex-1 overflow-auto">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-content-tertiary text-xs">
-            Waiting for messages...
+            等待消息中…
           </div>
         ) : (
           <div className="divide-y divide-subtle">
@@ -153,7 +153,7 @@ export function MessagesPanel() {
                     {/* Expand indicator for pre-arm messages */}
                     {prearmMatch && (
                       <span className="shrink-0 text-[10px] text-blue-400 mt-0.5">
-                        {isExpanded ? '▾' : 'Fix ›'}
+                        {isExpanded ? '▾' : '修复 ›'}
                       </span>
                     )}
 

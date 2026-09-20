@@ -83,7 +83,7 @@ function EditableValue({
     <button
       onClick={startEdit}
       className="font-mono text-content text-[10px] leading-none hover:text-blue-400 transition-colors border-b border-dashed border hover:border-blue-400/50"
-      title="Click to edit"
+      title="点击编辑"
     >
       {formatAltitudeFromMeters(valueMeters, altitudeUnit)}
     </button>
@@ -137,9 +137,9 @@ export function ElevationLegend({
                     ? 'bg-surface-raised text-content-secondary hover:text-content'
                     : 'bg-surface-raised text-content-tertiary cursor-not-allowed'
               }`}
-              title={hasCraftPosition ? 'Show height relative to craft' : 'No craft position available'}
+              title={hasCraftPosition ? '显示相对飞行器的高度' : '无飞行器位置'}
             >
-              Rel
+              相对
             </button>
           )}
           <button
@@ -150,7 +150,7 @@ export function ElevationLegend({
                 : 'bg-surface-raised text-content-secondary hover:text-content'
             }`}
           >
-            Auto
+            自动
           </button>
         </div>
       </div>

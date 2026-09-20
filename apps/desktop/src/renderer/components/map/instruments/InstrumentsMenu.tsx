@@ -30,11 +30,11 @@ export function InstrumentsMenu(): JSX.Element {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        data-tip="Map instruments"
+        data-tip="地图仪表"
         className="px-2 py-1 inline-flex items-center gap-1.5 rounded text-xs bg-surface text-content hover:bg-surface-raised shadow-lg transition-colors"
       >
         {gaugeIcon}
-        <span className="font-medium">Instruments{count > 0 ? ` (${count})` : ''}</span>
+        <span className="font-medium">仪表{count > 0 ? ` (${count})` : ''}</span>
       </button>
       {open && <InstrumentsCatalog onClose={() => setOpen(false)} />}
     </>

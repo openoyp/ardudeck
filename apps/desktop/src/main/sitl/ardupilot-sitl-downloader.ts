@@ -14,9 +14,9 @@
  */
 
 import { app, BrowserWindow } from 'electron';
-import { createWriteStream } from 'node:fs';
-import { mkdir, access, rm, rename, readdir, stat } from 'node:fs/promises';
+import { mkdir, access, rm, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
+import { robustGetBuffer, robustDownloadTo } from '../utils/robust-get.js';
 import type {
   ArduPilotVehicleType,
   ArduPilotReleaseTrack,
@@ -184,9 +184,6 @@ class ArduPilotSitlDownloader {
   ): Promise<{ success: boolean; path?: string; error?: string }> {
     const binaryPath = this.getBinaryPath(vehicleType, releaseTrack);
     const binaryDir = path.dirname(binaryPath);
-    const tempPath = `${binaryPath}.tmp`;
-
-    this.abortController = new AbortController();
 
     try {
       await mkdir(binaryDir, { recursive: true });
@@ -199,59 +196,31 @@ class ArduPilotSitlDownloader {
         status: 'downloading',
       });
 
-      const response = await fetch(url, {
-        signal: this.abortController.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText} — ${url}`);
-      }
-
-      const contentLength = response.headers.get('content-length');
-      const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
-      let bytesDownloaded = 0;
-
-      const writeStream = createWriteStream(tempPath);
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('No response body');
-      }
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        bytesDownloaded += value.length;
-        writeStream.write(value);
-
-        const progress = totalBytes > 0 ? Math.round((bytesDownloaded / totalBytes) * 100) : 0;
+      // Node-stack streaming download: Electron's net-backed fetch can throw
+      // uncatchable ERR_CONNECTION_CLOSED from internal callbacks on flaky
+      // links, which kills the main process. robustDownloadTo reports failure
+      // as a plain false here instead.
+      const ok = await robustDownloadTo(url, binaryPath, (done, total) => {
+        const progress = total > 0 ? Math.round((done / total) * 100) : 0;
         this.sendProgress({
           vehicleType, releaseTrack,
-          progress, bytesDownloaded, totalBytes,
+          progress, bytesDownloaded: done, totalBytes: total,
           status: 'downloading',
         });
-      }
-
-      await new Promise<void>((resolve, reject) => {
-        writeStream.on('finish', resolve);
-        writeStream.on('error', reject);
-        writeStream.end();
       });
 
-      try { await rm(binaryPath, { force: true }); } catch { /* ignore */ }
-      await rename(tempPath, binaryPath);
+      if (!ok) {
+        throw new Error(`Download failed: ${url}`);
+      }
 
       this.sendProgress({
         vehicleType, releaseTrack,
-        progress: 100, bytesDownloaded: totalBytes, totalBytes,
+        progress: 100, bytesDownloaded: 0, totalBytes: 0,
         status: 'complete',
       });
 
       return { success: true, path: binaryPath };
     } catch (err) {
-      try { await rm(tempPath, { force: true }); } catch { /* ignore */ }
-
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       this.sendProgress({
         vehicleType, releaseTrack,
@@ -259,8 +228,6 @@ class ArduPilotSitlDownloader {
         status: 'error', error: errorMessage,
       });
       return { success: false, error: errorMessage };
-    } finally {
-      this.abortController = null;
     }
   }
 
@@ -297,14 +264,12 @@ class ArduPilotSitlDownloader {
 
         try { await access(dllPath); continue; } catch { /* need download */ }
 
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`${dll}: HTTP ${response.status} ${response.statusText} — ${url}`);
+        const buf = await robustGetBuffer(url);
+        if (buf === null) {
+          throw new Error(`${dll}: download failed — ${url}`);
         }
-
-        const arrayBuffer = await response.arrayBuffer();
         const { writeFile } = await import('node:fs/promises');
-        await writeFile(dllPath, Buffer.from(arrayBuffer));
+        await writeFile(dllPath, buf);
       }
 
       return { success: true };

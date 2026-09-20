@@ -45,16 +45,16 @@ export function SurveyStatsPanel({ stats, batteries, dataSizeGb }: SurveyStatsPa
   return (
     <div className="grid grid-cols-3 gap-x-3 gap-y-1.5 text-xs">
       {!isManualMode && <StatItem label="GSD" value={`${stats.gsd.toFixed(1)} cm/px`} />}
-      {!isManualMode && <StatItem label="Photos" value={stats.photoCount.toLocaleString()} />}
-      <StatItem label="Lines" value={stats.lineCount.toString()} />
-      <StatItem label="Distance" value={formatDistanceFromMeters(stats.flightDistance, distanceUnit)} />
-      <StatItem label="Time" value={formatTime(stats.flightTime)} />
-      <StatItem label="Area" value={formatAreaFromSquareMeters(stats.areaCovered, areaUnit)} />
+      {!isManualMode && <StatItem label="照片" value={stats.photoCount.toLocaleString()} />}
+      <StatItem label="条带数" value={stats.lineCount.toString()} />
+      <StatItem label="距离" value={formatDistanceFromMeters(stats.flightDistance, distanceUnit)} />
+      <StatItem label="时间" value={formatTime(stats.flightTime)} />
+      <StatItem label="面积" value={formatAreaFromSquareMeters(stats.areaCovered, areaUnit)} />
       {batteries !== undefined && batteries > 0 && (
-        <StatItem label="Batteries" value={batteries.toString()} />
+        <StatItem label="电池数" value={batteries.toString()} />
       )}
       {!isManualMode && dataSizeGb !== undefined && dataSizeGb > 0 && (
-        <StatItem label="~Data" value={formatDataSize(dataSizeGb)} />
+        <StatItem label="约数据量" value={formatDataSize(dataSizeGb)} />
       )}
     </div>
   );

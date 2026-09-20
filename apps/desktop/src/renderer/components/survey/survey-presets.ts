@@ -44,8 +44,8 @@ export interface SurveyPreset {
 export const BUILTIN_SURVEY_PRESETS: SurveyPreset[] = [
   {
     id: 'map-ortho',
-    name: 'Map / Orthomosaic',
-    description: '2D map. Fast flight, single grid pass.',
+    name: '地图 / 正射影像',
+    description: '2D 地图。快速飞行,单次网格。',
     tag: 'Flying',
     config: {
       pattern: 'grid',
@@ -59,8 +59,8 @@ export const BUILTIN_SURVEY_PRESETS: SurveyPreset[] = [
   },
   {
     id: 'photogrammetry-3d',
-    name: '3D / Photogrammetry',
-    description: 'Buildings, terrain meshes. Crosshatch + high overlap.',
+    name: '3D / 摄影测量',
+    description: '建筑、地形网格。交叉网格 + 高重叠。',
     tag: 'Flying',
     config: {
       pattern: 'crosshatch',
@@ -74,8 +74,8 @@ export const BUILTIN_SURVEY_PRESETS: SurveyPreset[] = [
   },
   {
     id: 'inspection-detail',
-    name: 'Inspection / Detail',
-    description: 'Small areas, low altitude, high GSD.',
+    name: '巡检 / 细节',
+    description: '小面积、低空、高精度 GSD。',
     tag: 'Flying',
     config: {
       pattern: 'grid',
@@ -89,8 +89,8 @@ export const BUILTIN_SURVEY_PRESETS: SurveyPreset[] = [
   },
   {
     id: 'corridor-plane',
-    name: 'Corridor (Plane)',
-    description: 'Roads, rail, power lines. Fixed-wing strips with racetrack turns.',
+    name: '走廊(固定翼)',
+    description: '道路、铁路、电力线。固定翼条带带跑道式转弯。',
     tag: 'Flying',
     config: {
       pattern: 'corridor',
@@ -108,8 +108,8 @@ export const BUILTIN_SURVEY_PRESETS: SurveyPreset[] = [
   },
   {
     id: 'corridor-copter',
-    name: 'Corridor (Copter)',
-    description: 'Branched corridors. Multirotor turns on the spot.',
+    name: '走廊(多旋翼)',
+    description: '带支线的走廊。多旋翼原地转向。',
     tag: 'Flying',
     config: {
       pattern: 'corridor',
@@ -126,8 +126,8 @@ export const BUILTIN_SURVEY_PRESETS: SurveyPreset[] = [
   },
   {
     id: 'rover-mower',
-    name: 'Rover / Mower',
-    description: 'Ground vehicle. Set corridor width directly.',
+    name: '车 / 割草机',
+    description: '地面车辆。直接设置走廊宽度。',
     tag: 'Ground',
     camera: { ...MANUAL_CAMERA },
     config: {
@@ -151,7 +151,7 @@ export function makeUserPreset(
   return {
     id: `user-${Date.now().toString(36)}`,
     name,
-    description: 'Saved preset',
+    description: '已保存预设',
     tag: 'Custom',
     isUserDefined: true,
     config,

@@ -35,7 +35,7 @@ export const ModeConfigStep: React.FC = () => {
   if (!currentMode || !modeInfo) {
     return (
       <div className="text-center py-8">
-        <p className="text-content-secondary">No mode to configure</p>
+        <p className="text-content-secondary">没有可配置的模式</p>
       </div>
     );
   }
@@ -88,7 +88,7 @@ export const ModeConfigStep: React.FC = () => {
         <p className="text-sm text-content-secondary mt-1">{modeInfo.description}</p>
         {modeInfo.essential && (
           <span className="inline-block mt-2 px-2 py-0.5 text-xs bg-amber-500/20 text-amber-400 rounded">
-            ESSENTIAL MODE
+            必备模式
           </span>
         )}
       </div>
@@ -101,7 +101,7 @@ export const ModeConfigStep: React.FC = () => {
       {/* AUX Channel selection */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-content">
-          Which switch should activate this mode?
+          应由哪个开关激活此模式?
         </label>
         <AuxChannelPicker
           selected={currentMode.auxChannel}
@@ -113,7 +113,7 @@ export const ModeConfigStep: React.FC = () => {
       {/* Range slider */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-content">
-          When should it activate? (PWM range)
+          何时激活?(PWM 范围)
         </label>
         <div className="p-4 bg-surface rounded-xl border border">
           <RangeSlider
@@ -128,7 +128,7 @@ export const ModeConfigStep: React.FC = () => {
       {/* Live preview */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-content">
-          Test it! Flip your switch to see if it activates:
+          试一下!拨动开关,看它是否激活:
         </label>
         <div
           className={`p-4 rounded-xl border transition-all ${
@@ -152,9 +152,9 @@ export const ModeConfigStep: React.FC = () => {
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-6 h-6 text-green-400 shrink-0" />
             <div>
-              <h4 className="font-medium text-green-300">{modeInfo.name} is ACTIVE!</h4>
+              <h4 className="font-medium text-green-300">{modeInfo.name} 已激活!</h4>
               <p className="text-xs text-green-200/70">
-                Your switch is in the correct position. This mode would be active in flight.
+                开关位置正确。飞行中此模式将处于激活状态。
               </p>
             </div>
           </div>
@@ -164,11 +164,11 @@ export const ModeConfigStep: React.FC = () => {
           <div className="flex items-center gap-3">
             <Lightbulb className="w-6 h-6 text-amber-400 shrink-0" />
             <div>
-              <h4 className="font-medium text-content">Try it now!</h4>
+              <h4 className="font-medium text-content">现在就试试!</h4>
               <p className="text-xs text-content-secondary">
-                Move your {AUX_CHANNELS[currentMode.auxChannel]?.name || 'switch'} to
-                the {currentMode.rangeStart >= 1700 ? 'HIGH' : currentMode.rangeEnd <= 1300 ? 'LOW' : 'MID'} position
-                to see {modeInfo.name} activate.
+                将你的 {AUX_CHANNELS[currentMode.auxChannel]?.name || '开关'}拨到
+                {currentMode.rangeStart >= 1700 ? '高' : currentMode.rangeEnd <= 1300 ? '低' : '中'}位,
+                即可看到 {modeInfo.name} 激活。
               </p>
             </div>
           </div>
@@ -181,13 +181,13 @@ export const ModeConfigStep: React.FC = () => {
           onClick={prevStep}
           className="px-4 py-2.5 bg-surface-raised hover:bg-surface-raised text-content rounded-lg transition-colors"
         >
-          Back
+          上一步
         </button>
         <button
           onClick={nextStep}
           className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
         >
-          {isLastMode ? 'Review Configuration' : 'Next Mode'}
+          {isLastMode ? '检查配置' : '下一个模式'}
         </button>
       </div>
     </div>

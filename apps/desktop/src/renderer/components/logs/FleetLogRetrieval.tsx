@@ -99,15 +99,14 @@ export function FleetLogRetrieval({ onIngested }: { onIngested: () => void }) {
       >
         {open ? <ChevronDown className="w-4 h-4 text-content-secondary" /> : <ChevronRight className="w-4 h-4 text-content-secondary" />}
         <RadioTower className="w-4 h-4 text-blue-400" />
-        <span className="text-sm font-medium text-content">Pull logs from fleet</span>
-        <span className="text-[11px] text-content-tertiary">{vehicles.length} connected</span>
+        <span className="text-sm font-medium text-content">从机队拉取日志</span>
+        <span className="text-[11px] text-content-tertiary">{vehicles.length} 台已连接</span>
       </button>
 
       {open && (
         <div className="px-3 pb-3 space-y-2">
           <p className="text-[11px] text-content-secondary">
-            The orchestrator fetches each log over the vehicle's link (can take minutes on a radio)
-            and streams it back; finished logs are parsed into the history below.
+            编排器会通过飞行器链路拉取每个日志（电台链路可能需要数分钟）并流式传回；完成的日志将解析并归入下方的飞行历史。
           </p>
           {vehicles.map((v) => {
             const vs = state[v.sysid];
@@ -120,11 +119,11 @@ export function FleetLogRetrieval({ onIngested }: { onIngested: () => void }) {
                     disabled={vs?.listing}
                     className="px-2 py-1 text-[11px] bg-surface-input hover:bg-surface-raised border border-subtle rounded-md text-content transition-colors disabled:opacity-50"
                   >
-                    {vs?.listing ? <Loader2 className="w-3 h-3 animate-spin inline" /> : 'List logs'}
+                    {vs?.listing ? <Loader2 className="w-3 h-3 animate-spin inline" /> : '列出日志'}
                   </button>
                 </div>
                 {vs?.entries && vs.entries.length === 0 && (
-                  <p className="text-[11px] text-content-tertiary mt-1.5">No onboard logs.</p>
+                  <p className="text-[11px] text-content-tertiary mt-1.5">机上没有日志。</p>
                 )}
                 {vs?.entries && vs.entries.length > 0 && (
                   <div className="mt-2 space-y-1">
@@ -146,11 +145,11 @@ export function FleetLogRetrieval({ onIngested }: { onIngested: () => void }) {
                               <span className="text-content-tertiary tabular-nums w-9 text-right">{pct}%</span>
                             </div>
                           ) : done ? (
-                            <span className="flex-1 flex items-center gap-1 text-emerald-400"><Check className="w-3 h-3" /> fetched</span>
+                            <span className="flex-1 flex items-center gap-1 text-emerald-400"><Check className="w-3 h-3" /> 已拉取</span>
                           ) : failed ? (
                             <span className="flex-1 min-w-0 flex items-center gap-1 text-red-400" title={job?.message}>
                               <AlertTriangle className="w-3 h-3 shrink-0" />
-                              <span className="shrink-0">failed</span>
+                              <span className="shrink-0">失败</span>
                               {job?.message && <span className="truncate">: {job.message}</span>}
                             </span>
                           ) : (
@@ -158,7 +157,7 @@ export function FleetLogRetrieval({ onIngested }: { onIngested: () => void }) {
                               onClick={() => void fetchLog(v.sysid, e.id)}
                               className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
                             >
-                              <Download className="w-3 h-3" /> Fetch
+                              <Download className="w-3 h-3" /> 拉取
                             </button>
                           )}
                         </div>

@@ -54,7 +54,7 @@ export default function ServoTuningTab() {
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           ></path>
         </svg>
-        <p className="text-sm">Checking servo support...</p>
+        <p className="text-sm">正在检查舵机支持...</p>
       </div>
     );
   }
@@ -66,24 +66,24 @@ export default function ServoTuningTab() {
         <CircleSlash className="w-16 h-16 text-content-secondary" />
         <div>
           <h2 className="text-xl font-bold text-content mb-2">
-            {isMultirotor ? 'Board Configured as Multirotor' : 'Servo Setup Not Available'}
+            {isMultirotor ? '飞控已配置为多旋翼' : '舵机设置不可用'}
           </h2>
-          <p className="text-content-secondary">{supportError || 'Servo outputs are not available on this board configuration.'}</p>
+          <p className="text-content-secondary">{supportError || '当前板配置下没有可用的舵机输出。'}</p>
         </div>
 
         <div className="bg-surface border rounded-xl p-4 text-left">
-          <p className="text-sm text-content font-medium mb-2">Servo Tuning is used for:</p>
+          <p className="text-sm text-content font-medium mb-2">舵机调试用于：</p>
           <ul className="text-xs text-content-secondary space-y-1 list-disc list-inside">
-            <li><strong>Fixed-wing aircraft</strong> - ailerons, elevator, rudder</li>
-            <li><strong>Flying wings</strong> - elevon mixing</li>
-            <li><strong>Gimbal servos</strong> - camera pan/tilt (requires compatible board)</li>
+            <li><strong>固定翼</strong> — 副翼、升降舵、方向舵</li>
+            <li><strong>飞翼</strong> — 升降副翼混控</li>
+            <li><strong>云台舵机</strong> — 相机平移/俯仰（需要兼容的板）</li>
           </ul>
         </div>
 
         {isMultirotor && (
           <div className="bg-blue-500/10 border-blue-500/30 rounded-xl p-4 w-full">
             <p className="text-sm text-blue-300">
-              To configure this board as a plane, use the Servo Wizard from the aircraft type selection or change the platform type in iNav Configurator.
+              要将此板配置为固定翼，请在机型选择中使用舵机向导，或在 iNav Configurator 中更改机型。
             </p>
           </div>
         )}

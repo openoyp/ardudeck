@@ -194,7 +194,7 @@ function ensureDefaultManualGroup(groups: Group[]): {
 } {
   const existing = groups.find((g): g is ManualGroup => g.kind === 'manual');
   if (existing) return { groups, group: existing };
-  const fresh = createManualGroup({ name: 'Manual', order: 0 });
+  const fresh = createManualGroup({ name: '手动', order: 0 });
   return { groups: [...groups, fresh], group: fresh };
 }
 
@@ -225,7 +225,7 @@ function adoptOrphanItems(
 
   const order = groups.reduce((m, g) => Math.max(m, g.order), -1) + 1;
   const recovered = createManualGroup({
-    name: 'Recovered',
+    name: '已恢复',
     order,
     color: nextGroupColor(groups),
   });

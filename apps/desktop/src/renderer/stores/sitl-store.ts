@@ -133,19 +133,19 @@ export interface SitlStore {
 const STANDARD_PROFILES: SitlProfile[] = [
   {
     name: 'Default',
-    description: 'Fresh iNav install with factory defaults. Use for general testing.',
+    description: '全新 iNav 安装,出厂默认设置,适合常规测试。',
     eepromFileName: 'inav-default.bin',
     isStandard: true,
   },
   {
     name: 'Airplane',
-    description: 'Pre-configured for fixed-wing testing with airplane mixer.',
+    description: '预配置为固定翼测试(airplane 混控)。',
     eepromFileName: 'inav-airplane.bin',
     isStandard: true,
   },
   {
     name: 'Quadcopter',
-    description: 'Pre-configured for quad testing with X mixer.',
+    description: '预配置为四旋翼测试(X 混控)。',
     eepromFileName: 'inav-quadcopter.bin',
     isStandard: true,
   },

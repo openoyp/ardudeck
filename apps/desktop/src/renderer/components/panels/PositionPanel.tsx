@@ -11,15 +11,15 @@ export function PositionPanel() {
     <PanelContainer>
       <div className="space-y-2">
         <div className="flex justify-between items-baseline">
-          <span className="text-content-secondary text-xs">Latitude</span>
+          <span className="text-content-secondary text-xs">纬度</span>
           <span className="text-content font-mono text-sm">{formatNumber(position.lat, 6)}°</span>
         </div>
         <div className="flex justify-between items-baseline">
-          <span className="text-content-secondary text-xs">Longitude</span>
+          <span className="text-content-secondary text-xs">经度</span>
           <span className="text-content font-mono text-sm">{formatNumber(position.lon, 6)}°</span>
         </div>
         <div className="flex justify-between items-baseline">
-          <span className="text-content-secondary text-xs">Altitude</span>
+          <span className="text-content-secondary text-xs">高度</span>
           <span className="text-content font-mono text-sm">{formatAltitudeFromMeters(position.alt, altitudeUnit)}</span>
         </div>
       </div>

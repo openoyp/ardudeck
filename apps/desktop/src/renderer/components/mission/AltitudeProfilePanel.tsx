@@ -761,40 +761,40 @@ export function AltitudeProfilePanel({ readOnly = false }: AltitudeProfilePanelP
     <div ref={containerRef} data-tour="mission-altitude-panel" className="h-full w-full bg-surface overflow-hidden relative">
       {waypoints.length === 0 ? (
         <div className="h-full flex items-center justify-center text-content-secondary text-sm">
-          {readOnly ? 'No mission loaded' : 'No waypoints to display'}
+          {readOnly ? '未加载任务' : '没有可显示的航点'}
         </div>
       ) : (
         <>
         {/* Legend and status */}
         <div className="absolute top-1 right-2 flex items-center gap-3 text-[10px]">
           {terrainLoading && (
-            <span className="text-blue-400 pointer-events-none">Loading terrain...</span>
+            <span className="text-blue-400 pointer-events-none">正在加载地形...</span>
           )}
           {terrainData.length > 0 && !terrainLoading && (
             <>
               <span className="flex items-center gap-1 pointer-events-none">
                 <span className="w-2 h-2 rounded-sm bg-green-500/60" />
-                <span className="text-content-secondary">Terrain</span>
+                <span className="text-content-secondary">地形</span>
               </span>
               <span className="flex items-center gap-1 pointer-events-none">
                 <span className="w-3 h-0.5 bg-amber-500" style={{ borderStyle: 'dashed' }} />
-                <span className="text-content-secondary">Safe +{formatAltitudeFromMeters(safeAltitudeBuffer, altitudeUnit)}</span>
+                <span className="text-content-secondary">安全 +{formatAltitudeFromMeters(safeAltitudeBuffer, altitudeUnit)}</span>
               </span>
             </>
           )}
           {collisionSegments.length > 0 && (
             <span className="flex items-center gap-1 text-red-400 pointer-events-none">
               <span className="w-2 h-2 rounded-full bg-red-500" />
-              Collision!
+              碰撞!
             </span>
           )}
           {!readOnly && terrainData.length > 0 && !terrainLoading && collisionSegments.length > 0 && (
             <button
               onClick={() => setAutoAdjustOpen(true)}
               className="px-2 py-0.5 text-[10px] font-medium text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 rounded transition-colors"
-              title={`Keep flight path ${formatAltitudeFromMeters(safeAltitudeBuffer, altitudeUnit)} above terrain`}
+              title={`保持航线高于地形 ${formatAltitudeFromMeters(safeAltitudeBuffer, altitudeUnit)}`}
             >
-              Auto Adjust...
+              自动调整...
             </button>
           )}
           {viewRange && (
@@ -802,11 +802,11 @@ export function AltitudeProfilePanel({ readOnly = false }: AltitudeProfilePanelP
               onClick={() => setViewRange(null)}
               className="px-2 py-0.5 text-[10px] text-content-secondary bg-surface-raised hover:text-content rounded transition-colors"
             >
-              Reset zoom
+              重置缩放
             </button>
           )}
-          {!readOnly && showDots && <span className="text-content-secondary pointer-events-none">Drag points to edit, scroll to zoom</span>}
-          {!showDots && <span className="text-content-secondary pointer-events-none">Hover to inspect, click to select, scroll to zoom</span>}
+          {!readOnly && showDots && <span className="text-content-secondary pointer-events-none">拖动点可编辑,滚动可缩放</span>}
+          {!showDots && <span className="text-content-secondary pointer-events-none">悬停查看,点击选中,滚动缩放</span>}
         </div>
         <svg
           ref={svgRef}
@@ -1053,7 +1053,7 @@ export function AltitudeProfilePanel({ readOnly = false }: AltitudeProfilePanelP
                     fontSize={10}
                     fontWeight="bold"
                   >
-                    WP {p.wp.seq}: {formatAltitudeFromMeters(p.altitude, altitudeUnit)}
+                    航点 {p.wp.seq}:{formatAltitudeFromMeters(p.altitude, altitudeUnit)}
                     {agl !== null && (
                       <tspan fill={isBelowSafe ? '#ef4444' : '#22c55e'} fontSize={8}>
                         {' '}({formatAltitudeFromMeters(agl, altitudeUnit)} AGL)
@@ -1139,7 +1139,7 @@ export function AltitudeProfilePanel({ readOnly = false }: AltitudeProfilePanelP
               fill="var(--text-tertiary)"
               fontSize={10}
             >
-              Distance
+              距离
             </text>
 
             <text
@@ -1150,7 +1150,7 @@ export function AltitudeProfilePanel({ readOnly = false }: AltitudeProfilePanelP
               fontSize={10}
               transform="rotate(-90)"
             >
-              {hasTerrainRef ? 'Alt above home' : 'Altitude'} ({UNIT_LABELS.altitude[altitudeUnit]})
+              {hasTerrainRef ? '高于家的高度' : '高度'} ({UNIT_LABELS.altitude[altitudeUnit]})
             </text>
 
             {/* Gradient definitions */}
