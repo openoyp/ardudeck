@@ -25,8 +25,6 @@ import {
 } from 'lucide-react';
 import { useTelemetryStore } from '../../stores/telemetry-store';
 import { GpsOffsetSection } from './sensors/GpsOffsetSection';
-import { BoardOrientationCard } from './BoardOrientationCard';
-import { CompassCard } from './CompassCard';
 
 // Sensor status indicator
 function SensorStatus({
@@ -158,9 +156,6 @@ const SensorsTab: React.FC = () => {
           </div>
         )}
       </div>
-
-      <BoardOrientationCard />
-      <CompassCard />
 
       {/* Main telemetry grid */}
       <div className="grid grid-cols-2 gap-4">

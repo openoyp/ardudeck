@@ -11,6 +11,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { HardDrive, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useParameterStore } from '../../stores/parameter-store';
+import { useConnectionStore } from '../../stores/connection-store';
+import Px4LoggingConfig from './Px4LoggingConfig';
 import { DraggableSlider } from '../ui/DraggableSlider';
 import { InfoCard } from '../ui/InfoCard';
 
@@ -31,6 +33,7 @@ const DISARMED_OPTIONS = [
 
 export default function LoggingTab(): JSX.Element {
   const { parameters, setParameter, getParameterMetadata } = useParameterStore();
+  const firmware = useConnectionStore((s) => s.connectionState.firmware);
   const [busy, setBusy] = useState(false);
   // What the destinations were before they were switched off, so turning
   // logging back on restores the setup instead of guessing.
@@ -70,6 +73,8 @@ export default function LoggingTab(): JSX.Element {
 
   const toggleBackend = (bit: number) => write('LOG_BACKEND_TYPE', backend ^ bit);
   const toggleCategory = (bit: number) => write('LOG_BITMASK', bitmask ^ (1 << bit));
+
+  if (firmware === 'px4') return <Px4LoggingConfig />;
 
   if (!hasLogging) {
     return (

@@ -15,6 +15,7 @@ import { registerModuleSchemePrivileges, setupModuleProtocol } from './modules/m
 import { setupDeepLinks, handleStartupArgs, flushPendingDeepLink, deliverDeepLinkUrl } from './modules/deep-link.js';
 import { initWindowManager, restoreDetachedWindows, setupWindowManagerIpc } from './window-manager.js';
 import { createSplashWindow, splashSetStatus, closeSplash } from './splash-window.js';
+import { Worker } from 'node:worker_threads';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -178,6 +179,17 @@ function createWindow(splash?: BrowserWindow | null): BrowserWindow {
     mainWindow.show();
   });
 
+  // 'window-all-closed' needs EVERY window gone, so one detached panel left open
+  // means quit is never started at all.
+  mainWindow.on('closed', () => {
+    if (shuttingDown) return;
+    console.log('[Shutdown] main window closed, closing the rest');
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.destroy();
+    }
+    app.quit();
+  });
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
     return { action: 'deny' };
@@ -302,14 +314,41 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  console.log('[Shutdown] all windows closed');
+  armExitWatchdog();
   app.quit();
 });
 
 // Cleanup runs with the quit cancelled, so anything in it that never settles
 // (a dead TCP link whose FIN is never flushed) leaves a running process with no
 // window. Quit anyway once the deadline passes.
-const SHUTDOWN_DEADLINE_MS = 4000;
+const SHUTDOWN_DEADLINE_MS = 2500;
 let shuttingDown = false;
+
+/**
+ * Kill the process from a thread of its own.
+ *
+ * A native call that blocks the main loop (a serial port closing mid-write is
+ * the one seen in the wild) freezes every timer with it, so a setTimeout
+ * SIGKILL never fires: the guard needs its own event loop. A worker's timer
+ * runs regardless, and a signal is delivered to the whole process.
+ */
+let watchdogArmed = false;
+
+function armExitWatchdog(): void {
+  if (watchdogArmed) return;
+  watchdogArmed = true;
+  try {
+    const worker = new Worker(
+      `setTimeout(() => { try { process.kill(${process.pid}, 'SIGKILL'); } catch {} }, ${SHUTDOWN_DEADLINE_MS + 1500});`,
+      { eval: true },
+    );
+    // Never a reason for this thread to hold the app open by itself.
+    worker.unref();
+  } catch (err) {
+    console.warn('[App] Could not arm the exit watchdog:', err);
+  }
+}
 
 async function cleanupWithDeadline(): Promise<void> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -342,17 +381,12 @@ app.on('before-quit', async (event) => {
   shuttingDown = true;
   event.preventDefault();
 
-  // Last resort: app.exit() still runs Chromium teardown, which a wedged
-  // native handle (a serial port mid-write, a stuck GPU process) can block
-  // forever. Nothing below this point is allowed to keep the process alive.
-  const hardKill = setTimeout(() => {
-    console.warn('[App] Exit did not complete, killing the process');
-    process.kill(process.pid, 'SIGKILL');
-  }, SHUTDOWN_DEADLINE_MS);
-  hardKill.unref();
+  console.log('[Shutdown] before-quit, running cleanup');
+  armExitWatchdog();
 
   await cleanupWithDeadline();
 
+  console.log('[Shutdown] cleanup done, exiting');
   app.exit(0);
 });
 

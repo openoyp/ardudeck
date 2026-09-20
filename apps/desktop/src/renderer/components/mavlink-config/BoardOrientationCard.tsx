@@ -1,15 +1,18 @@
 /**
- * Where the autopilot is mounted, for any ArduPilot vehicle.
+ * Where the autopilot is mounted.
  *
- * Writing AHRS_ORIENTATION is one parameter, but getting it wrong is a crash,
+ * Writing the orientation is one parameter, but getting it wrong is a crash,
  * so the card shows the live attitude beside the choice: pick the mounting,
- * tip the vehicle, watch the numbers agree.
+ * tip the vehicle, watch the numbers agree. ArduPilot calls it
+ * AHRS_ORIENTATION and PX4 SENS_BOARD_ROT; both take the same MAV rotation
+ * numbering, so only the name differs.
  */
 
 import { useMemo, useState } from 'react';
 import { Compass, AlertTriangle } from 'lucide-react';
 import { useParameterStore } from '../../stores/parameter-store';
 import { useTelemetryStore } from '../../stores/telemetry-store';
+import { useConnectionStore } from '../../stores/connection-store';
 import { BoardGlyph } from './BoardGlyph';
 import {
   COMMON_ORIENTATIONS,
@@ -20,14 +23,16 @@ import {
 
 export function BoardOrientationCard(): JSX.Element {
   const { parameters, setParameterImmediate } = useParameterStore();
+  const firmware = useConnectionStore((s) => s.connectionState.firmware);
+  const orientParam = firmware === 'px4' ? 'SENS_BOARD_ROT' : 'AHRS_ORIENTATION';
   const attitude = useTelemetryStore((s) => s.attitude);
   const armed = useTelemetryStore((s) => s.flight.armed);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
 
-  const current = (parameters.get('AHRS_ORIENTATION')?.value as number) ?? 0;
-  const supported = parameters.has('AHRS_ORIENTATION');
+  const current = (parameters.get(orientParam)?.value as number) ?? 0;
+  const supported = parameters.has(orientParam);
   const check = useMemo(
     () => orientationCheck(attitude.roll, attitude.pitch),
     [attitude.roll, attitude.pitch],
@@ -37,10 +42,10 @@ export function BoardOrientationCard(): JSX.Element {
     setBusy(true);
     setStatus(null);
     try {
-      const ok = await setParameterImmediate('AHRS_ORIENTATION', value);
+      const ok = await setParameterImmediate(orientParam, value);
       setStatus(ok
         ? `Set to ${orientationName(value)}. Run the level calibration next, the accel trims belong to the old mounting.`
-        : 'Could not write AHRS_ORIENTATION.');
+        : `Could not write ${orientParam}.`);
     } finally {
       setBusy(false);
     }

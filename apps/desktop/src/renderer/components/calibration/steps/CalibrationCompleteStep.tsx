@@ -12,6 +12,7 @@ import { useConnectionStore } from '../../../stores/connection-store';
 import { CALIBRATION_TYPES, type CalibrationVerification } from '../../../../shared/calibration-types';
 import { boardSupportsPersistentParamSave } from '../../../../shared/board-mappings';
 import { CalibrationResultCard } from '../shared/CalibrationResultCard';
+import { CompassFitPanel } from '../shared/CompassFitPanel';
 
 const ROTATION_NAMES: Record<number, string> = {
   0: 'None', 1: 'Yaw 45', 2: 'Yaw 90', 3: 'Yaw 135', 4: 'Yaw 180',
@@ -210,38 +211,10 @@ export function CalibrationCompleteStep() {
         </div>
       )}
 
-      {/* Per-compass fit quality (ArduPilot). Surfaces fitness + detected
-          orientation so a bad cal reads as a warning instead of a bare green. */}
+      {/* Per-compass fit: score, keep-or-drop and priority in one place, so a
+          three-compass result is a decision the pilot can act on here. */}
       {showSuccess && calibrationType === 'compass' && calibrationData?.compassResults?.length ? (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-content uppercase tracking-wide">Compass Fit</h4>
-          {calibrationData.compassResults.map((r) => {
-            const assessment = assessCompassFitness(r.fitness);
-            const v = VERDICT_STYLE[assessment.verdict];
-            return (
-              <div key={r.compass} className="flex items-center justify-between bg-surface rounded-lg border border-subtle p-3">
-                <div className="text-sm text-content">Compass {r.compass}</div>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="text-content-secondary">orient <span className="text-content font-mono">{rotationName(r.orientation)}</span></span>
-                  <span className="text-content-secondary">fitness <span className="text-content font-mono">{r.fitness.toFixed(1)}</span></span>
-                  <span className={`px-2 py-0.5 rounded-full border text-[11px] font-medium ${v.cls}`}>{v.label}</span>
-                </div>
-              </div>
-            );
-          })}
-          {/* Say what to DO about it, not just that it is amber. */}
-          {(() => {
-            const worst = calibrationData.compassResults
-              .map((r) => assessCompassFitness(r.fitness))
-              .reduce((a, b) => (VERDICT_ORDER[b.verdict] > VERDICT_ORDER[a.verdict] ? b : a));
-            if (!worst.advice) return null;
-            return (
-              <p className={`text-xs ${worst.verdict === 'bad' ? 'text-red-400/90' : 'text-amber-400/90'}`}>
-                {worst.advice}
-              </p>
-            );
-          })()}
-        </div>
+        <CompassFitPanel results={calibrationData.compassResults} />
       ) : null}
 
       {/* Accelerometer fit. The six-point cal has no fitness number, so it is

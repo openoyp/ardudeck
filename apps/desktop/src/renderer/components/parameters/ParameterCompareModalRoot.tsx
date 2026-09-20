@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle, XCircle, Info, Cpu } from 'lucide-react';
 import { useParameterStore } from '../../stores/parameter-store.js';
 import { useConnectionStore } from '../../stores/connection-store.js';
 import { useNavigationStore } from '../../stores/navigation-store.js';
+import { useCompareModalHostStore } from './compare-modal-host.js';
 import { classifySitlUnsafeParam } from '../../../shared/sitl-unsafe-params.js';
 import { formatParamValue } from '../../../shared/parameter-types.js';
 
@@ -19,9 +20,12 @@ import { formatParamValue } from '../../../shared/parameter-types.js';
  */
 export function ParameterCompareModalRoot() {
   const currentView = useNavigationStore(s => s.currentView);
-  // ParameterTable renders its own modal when on Parameters view so we don't
-  // duplicate. This root instance covers every other view.
-  if (currentView === 'parameters') return null;
+  const isConnected = useConnectionStore(s => s.connectionState.isConnected);
+  const hosts = useCompareModalHostStore(s => s.hosts);
+  // Stand down only for a view really rendering its own copy: when connected,
+  // ParametersView delegates to MavlinkConfigView and never renders one.
+  if (hosts > 0) return null;
+  if (currentView === 'parameters' && !isConnected) return null;
   return <CompareModal />;
 }
 

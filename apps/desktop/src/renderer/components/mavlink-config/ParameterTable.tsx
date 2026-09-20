@@ -23,6 +23,7 @@ import BitmaskEditor from './BitmaskEditor';
 import ParamHistoryModal from './ParamHistoryModal';
 import { Tooltip } from '../ui/Tooltip';
 import { NON_DEFAULT_COLORS, getNonDefaultColor } from '../parameters/non-default-palette';
+import { useOwnsCompareModal } from '../parameters/compare-modal-host';
 
 // Toast notification state
 type ToastType = 'success' | 'error' | 'info';
@@ -75,6 +76,7 @@ function SortIndicator({ column, currentColumn, direction }: {
 }
 
 const ParameterTable: React.FC = () => {
+  useOwnsCompareModal();
   const connectionState = useConnectionStore((s) => s.connectionState);
   const {
     parameters,

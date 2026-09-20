@@ -11,6 +11,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ShieldCheck, ShieldOff, Sparkles, AlertTriangle, CheckCircle2, MinusCircle } from 'lucide-react';
 import { useParameterStore } from '../../stores/parameter-store';
+import Px4ArmingConfig from './Px4ArmingConfig';
 import { useConnectionStore } from '../../stores/connection-store';
 import { useMessagesStore } from '../../stores/messages-store';
 import { getVehicleClass } from '../../../shared/telemetry-types';
@@ -37,6 +38,7 @@ interface ArmingTabProps {
 export default function ArmingTab({ onGoTo }: ArmingTabProps): JSX.Element {
   const { parameters, setParameter } = useParameterStore();
   const mavType = useConnectionStore((s) => s.connectionState.mavType);
+  const firmware = useConnectionStore((s) => s.connectionState.firmware);
   const statusMessages = useMessagesStore((s) => s.messages);
   const [confirmOff, setConfirmOff] = useState(false);
 
@@ -63,6 +65,8 @@ export default function ArmingTab({ onGoTo }: ArmingTabProps): JSX.Element {
   const write = useCallback((next: number) => {
     if (model) void setParameter(model.param, next);
   }, [model, setParameter]);
+
+  if (firmware === 'px4') return <Px4ArmingConfig />;
 
   if (!model) {
     return (
@@ -145,28 +149,36 @@ export default function ArmingTab({ onGoTo }: ArmingTabProps): JSX.Element {
                 onClick={() => write(toggleCheck(model, value, b.bit, bits))}
                 className={`flex items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors ${
                   blocking
-                    ? 'border-amber-500/40 bg-amber-500/10'
+                    ? 'border-amber-500/50 bg-amber-500/10'
                     : on
-                      ? 'border-subtle bg-surface-raised'
-                      : 'border-subtle bg-surface-raised opacity-60'
+                      ? 'border-emerald-600/30 dark:border-emerald-500/25 bg-emerald-500/[0.07] dark:bg-emerald-500/5'
+                      : 'border-dashed border-content-tertiary/40 bg-surface-inset/60'
                 }`}
               >
                 {on
-                  ? <CheckCircle2 className={`mt-0.5 w-4 h-4 shrink-0 ${blocking ? 'text-amber-400' : 'text-emerald-400'}`} />
+                  ? <CheckCircle2 className={`mt-0.5 w-4 h-4 shrink-0 ${
+                      blocking ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
+                    }`} />
                   : <MinusCircle className="mt-0.5 w-4 h-4 shrink-0 text-content-tertiary" />}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-content">{b.name}</span>
+                    <span className={`text-sm ${on ? 'text-content' : 'text-content-secondary line-through decoration-content-tertiary/50'}`}>
+                      {b.name}
+                    </span>
                     {blocking && (
-                      <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-300">
+                      <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-700 dark:text-amber-300">
                         blocking
                       </span>
                     )}
                   </div>
                   <div className="mt-0.5 text-[11px] text-content-tertiary">{b.description}</div>
                 </div>
-                <span className={`mt-0.5 text-[10px] uppercase tracking-wide ${on ? 'text-emerald-400' : 'text-content-tertiary'}`}>
-                  {on ? 'on' : 'off'}
+                <span className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                  on
+                    ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                    : 'bg-content-tertiary/15 text-content-secondary ring-1 ring-inset ring-content-tertiary/30'
+                }`}>
+                  {on ? 'on' : 'skipped'}
                 </span>
               </button>
             );

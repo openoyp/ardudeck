@@ -140,16 +140,26 @@ export function CompassCard(): JSX.Element {
         </div>
       )}
 
+      <div className="mb-3 rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-[11px] text-content-tertiary">
+        Slot numbers are assigned in the order the drivers come up at boot and can move between
+        reboots. The id is the device, so switch one off by its id, not by its number.
+      </div>
+
       <div className="space-y-2">
         {summary.present.map((slot) => (
           <div key={slot.index} className="rounded-lg border border-subtle bg-surface-raised p-3">
             <div className="flex items-start gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-content">Compass {slot.index}</span>
-                  {slot.priority === 1 && (
-                    <span className="flex items-center gap-1 rounded bg-cyan-500/20 px-1.5 py-0.5 text-[10px] text-cyan-300">
-                      <ArrowUp className="w-2.5 h-2.5" /> primary
+                  <span className="text-sm text-content">
+                    {slot.external ? 'External compass' : 'Onboard compass'}
+                  </span>
+                  <span className="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-[10px] text-content-tertiary">
+                    id {slot.devId}
+                  </span>
+                  {slot.firstUsable && (
+                    <span className="flex items-center gap-1 rounded bg-cyan-500/20 px-1.5 py-0.5 text-[10px] text-cyan-700 dark:text-cyan-300">
+                      <ArrowUp className="w-2.5 h-2.5" /> used for heading
                     </span>
                   )}
                   <span className={`rounded px-1.5 py-0.5 text-[10px] ${
@@ -164,7 +174,8 @@ export function CompassCard(): JSX.Element {
                   )}
                 </div>
                 <div className="mt-0.5 text-[11px] text-content-tertiary">
-                  {place(slot)} · id {slot.devId}
+                  {place(slot)} · slot {slot.index}
+                  {slot.priority !== null && ` · priority ${slot.priority}`}
                 </div>
               </div>
               <button

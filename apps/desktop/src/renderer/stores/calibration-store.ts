@@ -1060,7 +1060,30 @@ async function verifyCalibrationParams(
   // ArduPilot's in milligauss, one epsilon table cannot serve both.
   const epsilon = (isPx4 ? PX4_CALIBRATION_DIFF_EPSILON : CALIBRATION_DIFF_EPSILON)[calType] ?? 1e-4;
 
-  const result = await window.electronAPI?.readParameterBatch([...tracked]);
+  // The firmware reports success from the MAVLink thread but writes the
+  // values from its own update loop a moment later, so an immediate read can
+  // legitimately see the old numbers. Read again before calling it a silent
+  // failure, which is an accusation worth being sure about.
+  const readTracked = async () => window.electronAPI?.readParameterBatch([...tracked]);
+  const compare = (values: Record<string, number>) => {
+    const rows: ParamReadResult[] = [];
+    let changed = 0;
+    let compared = 0;
+    for (const paramId of tracked) {
+      const before = snapshot[paramId];
+      const after = values[paramId];
+      // Skip params that weren't present on this FC (or weren't in snapshot —
+      // possibly because the param store didn't have them at start time).
+      if (before === undefined || after === undefined) continue;
+      const moved = Math.abs(after - before) > epsilon;
+      rows.push({ paramId, before, after, changed: moved });
+      compared++;
+      if (moved) changed++;
+    }
+    return { rows, changed, compared };
+  };
+
+  let result = await readTracked();
   if (!result || !result.success) {
     return {
       status: 'error',
@@ -1069,21 +1092,19 @@ async function verifyCalibrationParams(
     };
   }
 
-  const results: ParamReadResult[] = [];
-  let changedCount = 0;
-  let comparedCount = 0;
+  let { rows: results, changed: changedCount, compared: comparedCount } = compare(result.values);
 
-  for (const paramId of tracked) {
-    const before = snapshot[paramId];
-    const after = result.values[paramId];
-    // Skip params that weren't present on this FC (or weren't in snapshot —
-    // possibly because the param store didn't have them at start time).
-    if (before === undefined || after === undefined) continue;
-
-    const changed = Math.abs(after - before) > epsilon;
-    results.push({ paramId, before, after, changed });
-    comparedCount++;
-    if (changed) changedCount++;
+  if (comparedCount > 0 && changedCount === 0) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const retry = await readTracked();
+    if (retry?.success) {
+      const second = compare(retry.values);
+      if (second.compared > 0) {
+        results = second.rows;
+        changedCount = second.changed;
+        comparedCount = second.compared;
+      }
+    }
   }
 
   if (comparedCount === 0) {

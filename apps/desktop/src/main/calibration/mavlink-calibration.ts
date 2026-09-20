@@ -24,6 +24,12 @@ const MAV_CMD_PREFLIGHT_CALIBRATION = 241;
 // PREFLIGHT_CALIBRATION param2 — AP dropped mag cal from that command and
 // answers MAV_RESULT_UNSUPPORTED, so the whole compass flow must use this.
 const MAV_CMD_DO_START_MAG_CAL = 42424;
+const MAV_CMD_SET_MESSAGE_INTERVAL = 511;
+// MAG_CAL_PROGRESS/REPORT ride STREAM_EXTRA3. A vehicle with SRn_EXTRA3 at 0
+// sends neither, and the calibration then looks frozen with no coverage
+// sphere, so ask for them by message id instead of trusting stream rates.
+const MSG_ID_MAG_CAL_PROGRESS = 191;
+const MSG_ID_MAG_CAL_REPORT = 192;
 // Tells ArduPilot to abandon a running onboard mag cal without saving.
 const MAV_CMD_DO_CANCEL_MAG_CAL = 42426;
 
@@ -159,6 +165,11 @@ let px4LastProgressPct = 0;
 // only complete once the whole batch is done (the report's cal_mask tells us
 // how many to expect).
 const magCalSuccesses = new Set<number>();
+
+// A compass that failed its fit, by 0-based id, with the reason. ArduPilot
+// calibrates and autosaves each compass independently, so one bad fit must not
+// discard the good ones: the run completes with whatever converged.
+const magCalFailures = new Map<number, string>();
 
 // Live per-compass completion percentage from MAG_CAL_PROGRESS, keyed by
 // 0-based compass_id. Drives the per-compass progress bars; the overall bar
@@ -426,6 +437,10 @@ export async function confirmMavlinkPosition(position: number): Promise<{ succes
 }
 
 export function cancelMavlinkCalibration(): void {
+  // Hand the mag cal messages back to the vehicle's own stream rates.
+  if (activeCalType === 'compass' && activeFirmware === 'ardupilot') {
+    void requestMagCalStreams(-1);
+  }
   if (compassCalTimeoutId) {
     clearTimeout(compassCalTimeoutId);
     compassCalTimeoutId = null;
@@ -448,6 +463,7 @@ export function cancelMavlinkCalibration(): void {
   expectedPosition = -1;
   positionStatus = [false, false, false, false, false, false];
   magCalSuccesses.clear();
+  magCalFailures.clear();
   magCalResults.clear();
   magCalPcts.clear();
   px4SidesDone = new Set();
@@ -882,35 +898,62 @@ export function handleMagCalProgress(compassId: number, _calStatus: number, comp
 export function handleMagCalReport(compassId: number, calMask: number, calStatus: number, fitness: number): void {
   if (!deps || activeCalType !== 'compass') return;
 
+  const label = `Compass ${compassId + 1}`;
+
   if (calStatus === MAG_CAL_SUCCESS) {
     magCalSuccesses.add(compassId);
     const prev = magCalResults.get(compassId);
     magCalResults.set(compassId, { fitness, orientation: prev?.orientation ?? null });
-    deps.sendLog('info', `Compass ${compassId} calibrated (fitness ${fitness.toFixed(1)} mGauss)`);
-    // Done once every compass in the batch has reported success.
-    const expected = popcount(calMask);
-    if (expected > 0 && magCalSuccesses.size >= expected) {
-      deps.sendComplete({ type: 'compass', success: true, rebootRequired: true, data: { compassResults: collectedCompassResults() } });
-      cancelMavlinkCalibration();
-    }
+    deps.sendLog('info', `${label} calibrated (fitness ${fitness.toFixed(1)} mGauss)`);
+    finishMagCalIfDone(popcount(calMask));
     return;
   }
 
   if (calStatus === MAG_CAL_FAILED || calStatus === MAG_CAL_BAD_ORIENTATION || calStatus === MAG_CAL_BAD_RADIUS) {
     const reason =
       calStatus === MAG_CAL_BAD_ORIENTATION
-        ? 'bad orientation — check the board/compass mounting direction (COMPASS_ORIENT)'
+        ? 'bad orientation, check the mounting direction (COMPASS_ORIENT)'
         : calStatus === MAG_CAL_BAD_RADIUS
-          ? 'bad radius — strong magnetic interference near the compass'
+          ? 'bad radius, strong magnetic interference near the compass'
           : 'the fit did not converge';
-    deps.sendLog('error', `Compass ${compassId} calibration failed: ${reason}`);
+    magCalFailures.set(compassId, reason);
+    deps.sendLog('error', `${label} calibration failed: ${reason}`);
+    finishMagCalIfDone(popcount(calMask));
+  }
+}
+
+/**
+ * Complete once every compass in the batch has reported. Any compass that
+ * converged has already been saved by the firmware, so a mixed result is a
+ * success with a named casualty, not a failed run.
+ */
+function finishMagCalIfDone(expected: number): void {
+  if (!deps) return;
+  const reported = magCalSuccesses.size + magCalFailures.size;
+  if (expected <= 0 || reported < expected) return;
+
+  const failed = [...magCalFailures.entries()]
+    .map(([id, reason]) => `Compass ${id + 1} (${reason})`)
+    .join(', ');
+
+  if (magCalSuccesses.size === 0) {
     deps.sendComplete({
       type: 'compass',
       success: false,
-      error: `Compass ${compassId} calibration failed: ${reason}. Move away from metal/magnets/wiring and try again.`,
+      error: `No compass calibrated. ${failed}. Move away from metal, magnets and wiring, and try again.`,
     });
-    cancelMavlinkCalibration();
+  } else {
+    deps.sendComplete({
+      type: 'compass',
+      success: true,
+      rebootRequired: true,
+      error: failed
+        ? `${magCalSuccesses.size} of ${expected} calibrated and saved. ${failed} was not, and keeps its previous calibration.`
+        : undefined,
+      data: { compassResults: collectedCompassResults() },
+    });
   }
+  cancelMavlinkCalibration();
 }
 
 // =============================================================================
@@ -1035,7 +1078,11 @@ export function handleCalibrationCommandAck(command: number, result: number): vo
         success: false,
         error: result === 1
           ? 'Flight controller is busy. Disarm, wait a few seconds, and try again.'
-          : `Flight controller rejected compass calibration: ${name}`,
+          : result === 4
+            // start_calibration_all() returns false when every compass was
+            // skipped, and it skips any that is unhealthy or switched off.
+            ? 'The vehicle refused to start: it only calibrates compasses that are switched on AND reporting. Check the Compasses card, at least one must be In use and healthy. Power the vehicle from its battery, not USB alone.'
+            : `Flight controller rejected compass calibration: ${name}`,
       });
       cancelMavlinkCalibration();
     }
@@ -1264,6 +1311,10 @@ async function startCompass(): Promise<{ success: boolean; error?: string }> {
   deps.sendLog('info', 'Starting compass calibration (MAV_CMD_DO_START_MAG_CAL, all compasses)');
 
   magCalSuccesses.clear();
+  magCalFailures.clear();
+
+  // Before the start command, so no progress is missed.
+  if (activeFirmware === 'ardupilot') await requestMagCalStreams(200_000);
 
   const sent = await deps.sendCommandLong(MAV_CMD_DO_START_MAG_CAL, {
     param1: 0, // mag_mask: 0 = calibrate all enabled compasses
@@ -1296,6 +1347,18 @@ async function startCompass(): Promise<{ success: boolean; error?: string }> {
   });
 
   return { success: true };
+}
+
+/** intervalUs < 0 restores the vehicle's own default for that message. */
+async function requestMagCalStreams(intervalUs: number): Promise<void> {
+  if (!deps) return;
+  for (const msgid of [MSG_ID_MAG_CAL_PROGRESS, MSG_ID_MAG_CAL_REPORT]) {
+    await deps.sendCommandLong(MAV_CMD_SET_MESSAGE_INTERVAL, {
+      param1: msgid,
+      param2: intervalUs,
+      param3: 0, param4: 0, param5: 0, param6: 0, param7: 0,
+    });
+  }
 }
 
 function armCompassStallTimer(): void {

@@ -30,6 +30,12 @@ export interface CompassSlot {
   calibrated: boolean;
   /** Position in COMPASS_PRIO1_ID..3, or null when it is not listed. */
   priority: number | null;
+  /**
+   * The compass ArduPilot actually uses for yaw: the first in priority order
+   * that is switched on. A high-priority compass with USE off is NOT this, and
+   * labelling it "primary" sent a pilot to disable the wrong device.
+   */
+  firstUsable: boolean;
 }
 
 const BUS_NAMES: Record<number, CompassBus> = {
@@ -54,7 +60,7 @@ function suffix(index: number): string {
 export function readCompassSlots(get: (name: string) => number | undefined): CompassSlot[] {
   const priorities = [1, 2, 3].map((i) => get(`COMPASS_PRIO${i}_ID`) ?? 0);
 
-  return [1, 2, 3].map((index) => {
+  const slots = [1, 2, 3].map((index) => {
     const s = suffix(index);
     const devId = get(`COMPASS_DEV_ID${s}`) ?? 0;
     const decoded = decodeDeviceId(devId);
@@ -77,8 +83,16 @@ export function readCompassSlots(get: (name: string) => number | undefined): Com
       used: (get(`COMPASS_USE${s}`) ?? 1) !== 0,
       calibrated: offsets.some((v) => v !== 0),
       priority: priorityIndex >= 0 ? priorityIndex + 1 : null,
+      firstUsable: false,
     };
   });
+
+  const inUse = slots
+    .filter((slot) => slot.detected && slot.used)
+    .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+  if (inUse[0]) inUse[0].firstUsable = true;
+
+  return slots;
 }
 
 export interface CompassSummary {

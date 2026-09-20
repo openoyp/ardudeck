@@ -9,8 +9,8 @@
  * screen, and shows the measured rate next to the requested one.
  */
 
-import { useEffect, useMemo, useState } from 'react';
-import { Gauge, HelpCircle, Cable, Zap, RotateCcw, Save, MapPin } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Gauge, HelpCircle, Cable, Zap, RotateCcw, MapPin } from 'lucide-react';
 import { useParameterStore } from '../../stores/parameter-store';
 import { useConnectionStore } from '../../stores/connection-store';
 import { useInspectorStore, startInspector, getInspectorSnapshot } from '../../stores/inspector-store';
@@ -27,7 +27,7 @@ function myLinkKey(sysId: number | undefined): string {
 }
 
 export default function TelemetryRatesTab() {
-  const { parameters, setParameterImmediate } = useParameterStore();
+  const { parameters, setParameter } = useParameterStore();
   const connectionState = useConnectionStore((s) => s.connectionState);
   // measured rates come from the inspector's per-message counters
   const tick = useInspectorStore((s) => s.tick);
@@ -56,7 +56,31 @@ export default function TelemetryRatesTab() {
     () => (channel === null ? {} : readRates(get, channel)),
     [get, channel],
   );
-  useEffect(() => { setDraft(current); }, [current]);
+  // Sliders the pilot has moved but not yet written. Without this the draft
+  // was rebuilt from `current` on every parameter-store update, which arrives
+  // whenever any PARAM_VALUE lands, and an edit in progress was wiped.
+  const dirtyRef = useRef<Set<string>>(new Set());
+  const channelRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (channelRef.current !== channel) {
+      channelRef.current = channel;
+      dirtyRef.current.clear();
+      setDraft(current);
+      return;
+    }
+    setDraft((prev) => {
+      const next: Record<string, number> = { ...current };
+      for (const key of dirtyRef.current) {
+        const held = prev[key];
+        if (held !== undefined) next[key] = held;
+      }
+      const keys = Object.keys(next);
+      const same = keys.length === Object.keys(prev).length
+        && keys.every((k) => next[k] === prev[k]);
+      return same ? prev : next;
+    });
+  }, [current, channel]);
 
   const measured = useMemo(() => {
     const out: Record<string, number> = {};
@@ -82,20 +106,25 @@ export default function TelemetryRatesTab() {
     setMyLink(channel);
   };
 
-  const apply = async () => {
+  // Released the slider = the change is made. Everywhere else in ArduDeck a
+  // parameter edit goes through setParameter and the app's own modified/save
+  // handling; this screen does the same rather than owning a second one.
+  const commitGroup = async (id: string) => {
     if (channel === null) return;
-    setBusy('keep');
-    setNote(null);
-    let written = 0;
-    for (const group of RATE_GROUPS) {
-      const hz = draft[group.id];
-      if (hz === undefined || hz === current[group.id]) continue;
-      const name = rateParamName(get, channel, group.suffix);
-      if (name === null) continue;
-      if (await setParameterImmediate(name, hz)) written++;
+    const group = RATE_GROUPS.find((g) => g.id === id);
+    if (!group) return;
+    const hz = draft[id];
+    if (hz === undefined || hz === current[id]) {
+      dirtyRef.current.delete(id);
+      return;
     }
+    const name = rateParamName(get, channel, group.suffix);
+    if (name === null) return;
+    setBusy(id);
+    const ok = await setParameter(name, hz);
     setBusy(null);
-    setNote(`Kept: ${written} parameter${written === 1 ? '' : 's'} written to ${scheme}${channel}_*`);
+    if (ok) dirtyRef.current.delete(id);
+    setNote(ok ? `${name} set to ${hz} Hz` : `Could not write ${name}`);
   };
 
   const tryNow = async () => {
@@ -257,7 +286,12 @@ export default function TelemetryRatesTab() {
                     max={group.maxHz}
                     step={1}
                     value={hz}
-                    onChange={(e) => setDraft({ ...draft, [group.id]: Number(e.target.value) })}
+                    onChange={(e) => {
+                      dirtyRef.current.add(group.id);
+                      setDraft({ ...draft, [group.id]: Number(e.target.value) });
+                    }}
+                    onPointerUp={() => commitGroup(group.id)}
+                    onKeyUp={() => commitGroup(group.id)}
                     className="flex-1 accent-teal-400"
                   />
                   <span className="w-16 text-right text-sm text-content tabular-nums">
@@ -306,8 +340,9 @@ export default function TelemetryRatesTab() {
 
           <div className="mt-4 flex items-center justify-end gap-2">
             <button
-              onClick={() => setDraft(current)}
+              onClick={() => { dirtyRef.current.clear(); setDraft(current); }}
               disabled={!dirty || busy !== null}
+              data-tip="Drop edits you have not released yet"
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-surface-input hover:bg-surface-raised border border-subtle rounded text-content-secondary hover:text-content disabled:opacity-40 transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -323,15 +358,6 @@ export default function TelemetryRatesTab() {
             >
               <Zap className="w-3.5 h-3.5 text-amber-400" />
               {busy === 'try' ? 'Sending…' : 'Try now'}
-            </button>
-            <button
-              onClick={apply}
-              disabled={!dirty || busy !== null}
-              data-tip="Writes the stream-rate parameters: survives a reboot"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-teal-600 hover:bg-teal-500 text-white rounded disabled:opacity-40 transition-colors"
-            >
-              <Save className="w-3.5 h-3.5" />
-              {busy === 'keep' ? 'Writing…' : 'Keep'}
             </button>
           </div>
         </div>

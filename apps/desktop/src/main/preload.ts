@@ -2649,6 +2649,11 @@ const api = {
     ipcRenderer.invoke(IPC_CHANNELS.NTRIP_DISCONNECT),
   ntripGetSourcetable: (): Promise<NtripSourcetableResult> =>
     ipcRenderer.invoke(IPC_CHANNELS.NTRIP_GET_SOURCETABLE),
+
+  /** Drive the vehicle's LED ring. Needs NTF_LED_OVERRIDE = 1 on ArduPilot. */
+  setLedColour: (rgb: { red: number; green: number; blue: number; rateHz?: number }):
+    Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke(IPC_CHANNELS.LED_CONTROL_SET, rgb),
   ntripGetStatus: (): Promise<NtripStatus> =>
     ipcRenderer.invoke(IPC_CHANNELS.NTRIP_GET_STATUS),
   ntripListSerialPorts: (): Promise<SerialPortInfo[]> =>

@@ -19,6 +19,8 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   Gauge,
   Activity,
+  Satellite,
+  Lightbulb,
   Settings,
   Shield,
   ShieldCheck,
@@ -59,6 +61,8 @@ import AutotuneTab from './AutotuneTab';
 import BatteryTab from './BatteryTab';
 import ParameterTable from './ParameterTable';
 import LoggingTab from './LoggingTab';
+import NotifyTab from './NotifyTab';
+import SensorConfigTab from './SensorConfigTab';
 import ArmingTab from './ArmingTab';
 import RoverTuningTab from './RoverTuningTab';
 import ReceiverTab from './ReceiverTab';
@@ -81,7 +85,7 @@ interface Toast {
   type: ToastType;
 }
 
-type TabId = 'pid' | 'rates' | 'modes' | 'receiver' | 'serial-ports' | 'telemetry-rates' | 'safety' | 'sensors' | 'tuning' | 'autotune' | 'battery' | 'parameters' | 'files' | 'logging' | 'arming' | 'rover-tuning' | 'rover-nav' | 'motor-test' | 'servo-output';
+type TabId = 'pid' | 'rates' | 'modes' | 'receiver' | 'serial-ports' | 'telemetry-rates' | 'safety' | 'sensors' | 'sensor-config' | 'notify' | 'tuning' | 'autotune' | 'battery' | 'parameters' | 'files' | 'logging' | 'arming' | 'rover-tuning' | 'rover-nav' | 'motor-test' | 'servo-output';
 
 interface Tab {
   id: TabId;
@@ -238,6 +242,23 @@ const SAFETY_GROUP: TabGroup = {
 // Tabs ordered by usage frequency (hottest first). "All Parameters" always last
 // even though it's hot, because it's the expert escape hatch.
 
+// Hardware fitted to the vehicle. Sensors was one long page: live health,
+// board orientation, compasses, GPS wiring and the notify hardware all in a
+// column. Split so each answers one question.
+const HARDWARE_GROUP: TabGroup = {
+  kind: 'group',
+  id: 'hardware-group',
+  name: 'Sensors',
+  Icon: Cpu,
+  color: 'text-cyan-400',
+  description: 'Sensor health, orientation, GPS wiring and the indicators',
+  children: [
+    { id: 'sensors', name: 'Health', Icon: Cpu, color: 'text-cyan-400', description: 'Live telemetry and sensor health' },
+    { id: 'sensor-config', name: 'Configuration', Icon: Satellite, color: 'text-emerald-400', description: 'Board orientation, compasses and GPS wiring' },
+    { id: 'notify', name: 'LEDs & Sound', Icon: Lightbulb, color: 'text-amber-400', description: 'Status LED, buzzer and the safety button' },
+  ],
+};
+
 // Copter/multirotor tabs — groups: Tuning · RC · Outputs · Storage
 const COPTER_TABS: TabNode[] = [
   TUNING_GROUP,
@@ -245,7 +266,7 @@ const COPTER_TABS: TabNode[] = [
   OUTPUTS_GROUP,
   SAFETY_GROUP,
   { kind: 'item', id: 'battery', name: 'Battery', Icon: Battery, color: 'text-orange-400', description: 'Battery monitor configuration' },
-  { kind: 'item', id: 'sensors', name: 'Sensors', Icon: Cpu, color: 'text-cyan-400', description: 'Live telemetry and sensor health' },
+  HARDWARE_GROUP,
   LINKS_GROUP,
   STORAGE_GROUP,
 ];
@@ -259,7 +280,7 @@ const PLANE_TABS: TabNode[] = [
   RC_GROUP,
   SAFETY_GROUP,
   { kind: 'item', id: 'battery', name: 'Battery', Icon: Battery, color: 'text-orange-400', description: 'Battery monitor configuration' },
-  { kind: 'item', id: 'sensors', name: 'Sensors', Icon: Cpu, color: 'text-cyan-400', description: 'Live telemetry and sensor health' },
+  HARDWARE_GROUP,
   LINKS_GROUP,
   STORAGE_GROUP,
 ];
@@ -289,7 +310,7 @@ const ROVER_TABS: TabNode[] = [
   { kind: 'item', id: 'servo-output', name: 'Servo Output', Icon: Move, color: 'text-pink-400', description: 'Per-channel servo function, range, and live output' },
   SAFETY_GROUP,
   { kind: 'item', id: 'battery', name: 'Battery', Icon: Battery, color: 'text-orange-400', description: 'Battery monitor configuration' },
-  { kind: 'item', id: 'sensors', name: 'Sensors', Icon: Cpu, color: 'text-cyan-400', description: 'Live telemetry and sensor health' },
+  HARDWARE_GROUP,
   LINKS_GROUP,
   STORAGE_GROUP,
 ];
@@ -548,6 +569,10 @@ export const MavlinkConfigView: React.FC = () => {
         }} />;
       case 'sensors':
         return <SensorsTab />;
+      case 'sensor-config':
+        return <SensorConfigTab />;
+      case 'notify':
+        return <NotifyTab />;
       case 'motor-test':
         return <MotorTestTab />;
       case 'servo-output':

@@ -125,6 +125,11 @@ import {
   getAllMessageInfos,
   type ParamValue,
 } from '@ardudeck/mavlink-ts';
+import {
+  LED_CONTROL_ID,
+  LED_CONTROL_CRC_EXTRA,
+  serializeLedControl,
+} from '../shared/led-control.js';
 import { IPC_CHANNELS, SEVERITY_LABELS, type ConnectOptions, type ConnectionState, type ConsoleLogEntry, type SavedLayout, type LayoutStoreSchema, type SettingsStoreSchema, type SigningStatus, type TelemetrySpeed, type LegacyStreamConsentRequest, type TransportInfoIpc, type VehicleInfoIpc, type SetActiveSelectionPayload, type VehicleCommand, type MissionVehicleProgress, type OrchestrationIntentIpc, type OrchestrationStatusIpc, type OrchestratorSource, type OrchestratorStatus, type CameraSourceConfig, type GimbalCommand, type CameraCommand, type FrameBlueprintResult, type FrameBlueprintRequest } from '../shared/ipc-channels.js';
 import { DEFAULT_USER_UNIT_PREFERENCES } from '../shared/user-units.js';
 import { initAutoUpdater, checkForUpdates, downloadUpdate, installUpdate } from './updater.js';
@@ -4238,6 +4243,32 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   autoLoadSigningKey();
 
   // List available serial ports
+  ipcMain.handle(
+    IPC_CHANNELS.LED_CONTROL_SET,
+    async (_e, rgb: { red: number; green: number; blue: number; rateHz?: number }) => {
+      if (!currentTransport?.isOpen || !connectionState.isConnected) {
+        return { success: false, error: 'Not connected' };
+      }
+      try {
+        const payload = serializeLedControl({
+          targetSystem: connectionState.systemId || 1,
+          targetComponent: 1,
+          instance: 0,
+          red: rgb.red,
+          green: rgb.green,
+          blue: rgb.blue,
+          rateHz: rgb.rateHz ?? 0,
+        });
+        const pkt = await sendMavlinkPacket(LED_CONTROL_ID, payload, LED_CONTROL_CRC_EXTRA);
+        await currentTransport.write(pkt);
+        connectionState.packetsSent++;
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  );
+
   ipcMain.handle(IPC_CHANNELS.COMMS_LIST_PORTS, async (): Promise<SerialPortInfo[]> => {
     return listSerialPorts();
   });
@@ -7569,7 +7600,13 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     if (!boardUid) return { success: false, error: 'No board identity' };
     const boards = calibrationRecordStore.get('boards');
     // One record per calibration type: the latest run is the one that matters.
-    const existing = (boards[boardUid] ?? []).filter((r) => r.type !== record.type);
+    // A record whose every parameter this run rewrote is retired too, or it is
+    // later checked against values it no longer owns and reported as a
+    // reboot loss (a 6-point cal overwriting what a quick cal wrote).
+    const names = new Set(Object.keys(record.written));
+    const existing = (boards[boardUid] ?? []).filter(
+      (r) => r.type !== record.type && !Object.keys(r.written).every((n) => names.has(n)),
+    );
     boards[boardUid] = [record, ...existing].slice(0, 12);
     calibrationRecordStore.set('boards', boards);
     return { success: true };
@@ -7596,7 +7633,21 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     }
 
     const boards = calibrationRecordStore.get('boards');
-    const records = boards[boardUid] ?? [];
+    // Retire records a later run fully overwrote, including ones stored before
+    // save-time superseding existed.
+    const records = (boards[boardUid] ?? []).filter((r, i, all) =>
+      !all.some(
+        (other, j) =>
+          j !== i &&
+          other.completedAt > r.completedAt &&
+          Object.keys(r.written).every((n) => n in other.written),
+      ),
+    );
+    if (records.length !== (boards[boardUid] ?? []).length) {
+      boards[boardUid] = records;
+      calibrationRecordStore.set('boards', boards);
+    }
+
     const unchecked = records.filter((r) => r.persistence === null);
     if (unchecked.length === 0) return { success: true, records };
 
@@ -13802,6 +13853,21 @@ function parseRallyFile(content: string): RallyItem[] {
   return items;
 }
 
+/** A shutdown step that never settles must not hold the whole quit open. */
+async function withDeadline(label: string, ms: number, work: Promise<unknown>): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    work.catch((err) => { console.warn(`[Shutdown] ${label} failed:`, err); }),
+    new Promise<void>((resolve) => {
+      timer = setTimeout(() => {
+        console.warn(`[Shutdown] ${label} did not finish in ${ms} ms, moving on`);
+        resolve();
+      }, ms);
+    }),
+  ]);
+  if (timer) clearTimeout(timer);
+}
+
 /**
  * Cleanup function for app shutdown
  * CRITICAL: Must be called on app quit to properly release USB/serial resources
@@ -13820,7 +13886,7 @@ export async function cleanupOnShutdown(): Promise<void> {
     // Close the sim handover endpoint and remove its discovery file, so the
     // Trainer game never dials a port that died with this app.
     console.log('[Shutdown] stopping sim handover endpoint');
-    await stopSimHandoverServer();
+    await withDeadline('stopping sim handover endpoint', 1500, stopSimHandoverServer());
   } catch (err) {
     console.warn('[Shutdown] Error stopping sim handover endpoint:', err);
   }
@@ -13858,7 +13924,7 @@ export async function cleanupOnShutdown(): Promise<void> {
     // already running - which is true, and useless, because the application it belongs to is
     // not on screen. Found after it blocked three separate launches in one session.
     console.log('[Shutdown] stopping the sim engine');
-    await simEngineProcess.stopAndWait();
+    await withDeadline('stopping the sim engine', 2000, simEngineProcess.stopAndWait());
   } catch (err) {
     console.warn('[Shutdown] Error stopping the sim engine:', err);
   }
@@ -13896,7 +13962,10 @@ export async function cleanupOnShutdown(): Promise<void> {
     // Close transport if open
     if (currentTransport?.isOpen) {
       console.log('[Shutdown] closing the vehicle link');
-      await currentTransport.close();
+      // Not awaited: a serial close can block inside the native binding, which
+      // freezes the event loop and with it every deadline in this file. Start
+      // it, let the OS reclaim the handle at exit, and keep going.
+      void Promise.resolve(currentTransport.close()).catch(() => { /* going away anyway */ });
     }
   } catch (err) {
     console.warn('[Shutdown] Error closing transport:', err);
@@ -13917,6 +13986,8 @@ export async function cleanupOnShutdown(): Promise<void> {
   // Reset state
   currentTransport = null;
   mavlinkParser = null;
+
+  console.log('[Shutdown] cleanup complete');
 
   try {
     // Last, so a step that hangs is still on record in the session log.

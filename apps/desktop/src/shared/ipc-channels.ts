@@ -816,6 +816,7 @@ export const IPC_CHANNELS = {
   NTRIP_CONNECT: 'ntrip:connect',
   NTRIP_DISCONNECT: 'ntrip:disconnect',
   NTRIP_GET_SOURCETABLE: 'ntrip:get-sourcetable',
+  LED_CONTROL_SET: 'led:control-set',
   NTRIP_GET_STATUS: 'ntrip:get-status',
   NTRIP_LIST_SERIAL_PORTS: 'ntrip:list-serial-ports', // free ports for the local base picker
 
