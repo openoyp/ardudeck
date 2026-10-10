@@ -58,6 +58,14 @@ export const IPC_CHANNELS = {
   COMMS_FORMATIONS_CHANGED: 'comms:formations-changed',
   /** Renderer → main: fetch the last-known formations map (hydrates a late window). */
   COMMS_GET_FORMATIONS: 'comms:get-formations',
+  /** Renderer → main: configure the native shape-keeping control loop (geometry + members). */
+  FORMATION_KEEP_CONFIGURE: 'formation-keep:configure',
+  /** Renderer → main: start the shape-keeping control loop. */
+  FORMATION_KEEP_START: 'formation-keep:start',
+  /** Renderer → main: stop the shape-keeping control loop. */
+  FORMATION_KEEP_STOP: 'formation-keep:stop',
+  /** Renderer → main: snapshot of the control loop's live per-member status. */
+  FORMATION_KEEP_STATUS: 'formation-keep:status',
   /** Renderer → main: attach an extra background MAVLink transport. */
   COMMS_ADD_TRANSPORT: 'comms:add-transport',
   /** Renderer → main: detach a background transport (refuses the primary). */
@@ -1164,6 +1172,48 @@ export interface VehicleInfoIpc {
 export interface SetActiveSelectionPayload {
   transportId: string | null;
   vehicleKey?: string | null;
+}
+
+/** Geometry + membership for the native shape-keeping control loop. */
+export interface FormationKeepConfigIpc {
+  shape: 'triangle' | 'circle' | 'line';
+  /** Metres between vehicles. */
+  spacing: number;
+  /** Triangle row fall-back (m). */
+  rowSpacing: number;
+  /** Circle centre offset ahead of the leader (m). */
+  centerOffset: number;
+  /** members[0] is the leader; the rest are wingmen in slot order. */
+  members: Array<{ vehicleKey: string; sysid: number }>;
+}
+
+/** One member's live state in the shape-keeping loop. */
+export interface FormationKeepMemberIpc {
+  vehicleKey: string;
+  sysid: number;
+  role: 'leader' | 'follower';
+  online: boolean;
+  armed: boolean;
+  lat: number | null;
+  lon: number | null;
+  heading: number | null;
+  groundspeed: number | null;
+  desiredGapM: number | null;
+  actualGapM: number | null;
+  targetSpeed: number | null;
+  lastSentAt: number | null;
+  skipReason: string | null;
+}
+
+/** Snapshot of the shape-keeping loop for the renderer. */
+export interface FormationKeepStatusIpc {
+  running: boolean;
+  shape: 'triangle' | 'circle' | 'line' | null;
+  leaderKey: string | null;
+  memberCount: number;
+  members: FormationKeepMemberIpc[];
+  lastTickAt: number | null;
+  lastError: string | null;
 }
 
 /** A command targeted at a single vehicle (see `MAVLINK_VEHICLE_COMMAND`). */

@@ -12,6 +12,7 @@ import { useDraggableSnap } from '../../hooks/useDraggableSnap';
 import { useFleetActionsPanelStore } from '../../stores/fleet-actions-panel-store';
 import { useFormationControl } from '../../hooks/useFormationControl';
 import { FleetCoordination } from './FleetCoordination';
+import { FormationKeepPanel } from './FormationKeepPanel';
 import { FleetGroupActions } from './FleetGroupActions';
 import { FleetRadar } from './FleetMinimap';
 
@@ -99,6 +100,7 @@ export function DraggableFleetActions(): JSX.Element | null {
         <div className="flex-1 min-h-0 overflow-y-auto">
           <FleetRadar />
           <FleetCoordination />
+          <FormationKeepPanel />
           <FleetGroupActions />
         </div>
       )}

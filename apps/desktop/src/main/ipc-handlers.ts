@@ -229,6 +229,7 @@ import { sitlProcess } from './sitl/sitl-process.js';
 import { simEngineProcess } from './sim/sim-engine-process.js';
 import { mediaEngine } from './media/media-engine.js';
 import { vehicleControl } from './vehicle-control/vehicle-control.js';
+import { formationController, type FormationConfig } from './formation/formation-controller.js';
 import { isOwnMedia, listMedia, mediaDir, mediaDragIcon } from './media/media-library.js';
 import { CANVAS_STREAM_PATHS, type CanvasStreamSnapshot, type VisionStreamOpenOptions } from '../shared/camera-types.js';
 import { openVisionStreamWindow, closeVisionStreamWindow, reportVisionStream, visionStreamSnapshot } from './media/vision-stream-window.js';
@@ -2064,6 +2065,7 @@ function createBackgroundDiscoveryHandler(
               setTimeout(reqStreams, 1500);
             }
           }
+          formationController.noteFrame(packet);
           const fields = decodeFleetTelemetry(packet);
           if (fields) {
             const vehicleKey = makeVehicleKey(transportId, packet.sysid, packet.compid);
@@ -4851,6 +4853,19 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   });
   ipcMain.handle(IPC_CHANNELS.COMMS_GET_FORMATIONS, async (): Promise<Record<string, string[]>> => lastFormations);
 
+  // Native shape-keeping control loop (integration option A). Geometry + members come
+  // from the renderer; the 200 ms loop runs here and steers each wingman by key.
+  ipcMain.handle(IPC_CHANNELS.FORMATION_KEEP_CONFIGURE, async (_, cfg: FormationConfig | null): Promise<void> => {
+    formationController.configure(cfg);
+  });
+  ipcMain.handle(IPC_CHANNELS.FORMATION_KEEP_START, async (): Promise<void> => {
+    formationController.start();
+  });
+  ipcMain.handle(IPC_CHANNELS.FORMATION_KEEP_STOP, async (): Promise<void> => {
+    formationController.stop();
+  });
+  ipcMain.handle(IPC_CHANNELS.FORMATION_KEEP_STATUS, async () => formationController.status());
+
   /** Close a background transport: notify of vehicle loss, then unregister. */
   const removeBackgroundTransport = async (transportId: TransportId): Promise<void> => {
     const entry = connectionRegistry.getTransport(transportId);
@@ -5818,6 +5833,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
             // Parse telemetry data from known message types
             parseTelemetry(mainWindow, packet);
             vehicleControl.notePacket(packet);
+            formationController.noteFrame(packet);
 
             // Broadcast raw frame to the renderer windows holding a live
             // onPacket subscription, batched into 50ms buckets (see
@@ -8884,6 +8900,13 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
       sendLog(mainWindow, 'error', 'Failed to send takeoff command', message);
       return false;
     }
+  });
+
+  // The native shape-keeping loop reuses the same by-key command seam and the
+  // primary vehicle's parameter cache (WPNAV_SPEED / ARSPD_FBW_*).
+  formationController.setDeps({
+    send: (vehicleKey, command, params) => sendCommandLongToVehicle(vehicleKey, command, params),
+    lookupParam: (name) => getVehicleParameters().params.find((p) => p.id === name)?.value,
   });
 
   // Cargo steering and commands go to whatever vehicle the pilot is commanding.
