@@ -1,5 +1,5 @@
 {
-  "comment": "Pins which orchestrator (engine) release the desktop app bundles. The tag is a release on the PUBLIC rubenCodeforges/ardudeck repo, produced by the private orchestrator repo's release workflow. Bump this to adopt a newer engine; scripts/fetch-engine.mjs downloads and checksum-verifies the matching binary at package time.",
-  "repo": "rubenCodeforges/ardudeck",
+  "comment": "Pins which orchestrator (engine) release the desktop app bundles. Upstream's orchestrator release is a draft this fork cannot read, so the tag points at a release on this fork that re-hosts the same binary. Bump this to adopt a newer engine; scripts/fetch-engine.mjs downloads and checksum-verifies the matching binary at package time.",
+  "repo": "openoyp/ardudeck",
   "tag": "orchestrator-v0.1.1"
 }
